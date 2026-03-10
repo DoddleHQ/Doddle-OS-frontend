@@ -3,48 +3,13 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-/**
- * ToggleSwitch Component
- *
- * A toggle switch component for boolean options.
- *
- * @component
- */
 export interface ToggleSwitchProps {
-    /**
-     * Whether the toggle is checked
-     */
     checked: boolean;
-
-    /**
-     * Callback when toggle changes
-     */
     onChange: (checked: boolean) => void;
-
-    /**
-     * Label for the toggle
-     */
     label: string;
-
-    /**
-     * Optional description text
-     */
     description?: string;
-
-    /**
-     * Optional disabled state
-     * @default false
-     */
     disabled?: boolean;
-
-    /**
-     * Optional custom className
-     */
     className?: string;
-
-    /**
-     * Optional test ID for testing purposes
-     */
     testId?: string;
 }
 
@@ -68,7 +33,6 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
             )}
             data-testid={testId}
         >
-            {/* Toggle Switch */}
             <div className="relative flex-shrink-0 pt-0.5">
                 <input
                     type="checkbox"
@@ -98,7 +62,6 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
                 </div>
             </div>
 
-            {/* Label and Description */}
             <div className="flex-1">
                 <span className="text-sm font-medium text-neutral-900 block">
                     {label}

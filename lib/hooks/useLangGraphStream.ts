@@ -311,7 +311,6 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
     const artifactsRef = useRef<Map<string, ArtifactPayload>>(new Map());
     const threadIdRef = useRef<string | null>(null);
 
-    // Helper to add a chat message
     const addMessage = useCallback((message: Omit<ChatMessage, 'id' | 'timestamp'>) => {
         const newMessage: ChatMessage = {
             ...message,
@@ -326,14 +325,6 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
         return newMessage.id;
     }, []);
 
-    // ============================================================================
-    // HITL Detection via Thread State Polling
-    // ============================================================================
-
-    /**
-     * Check for pending interrupts in thread state.
-     * This is the new interrupt-based HITL detection mechanism.
-     */
     const checkForInterrupts = useCallback(async (threadId: string): Promise<HITLRequestPayload | null> => {
         try {
             console.log('[useLangGraphStream] Checking for interrupts in thread:', threadId);

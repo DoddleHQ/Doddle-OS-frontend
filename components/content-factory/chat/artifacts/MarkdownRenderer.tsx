@@ -5,21 +5,11 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 interface MarkdownRendererProps {
-    /** The raw markdown string to render */
     content: string;
-    /** Accent color for links (tailwind color name, e.g. 'rose', 'blue', 'indigo'). Defaults to 'slate'. */
     accentColor?: string;
 }
 
-/**
- * Shared markdown renderer for all artifact cards that display markdown content
- * (reports, blueprints, generated content).
- *
- * Uses react-markdown + remark-gfm. Styled with Tailwind prose classes.
- * Accent color customizes link color per-card.
- */
 export default function MarkdownRenderer({ content, accentColor = 'slate' }: MarkdownRendererProps) {
-    // Map accent color to prose link class  
     const linkColorClass = `prose-a:text-${accentColor}-600 hover:prose-a:text-${accentColor}-800`;
 
     return (

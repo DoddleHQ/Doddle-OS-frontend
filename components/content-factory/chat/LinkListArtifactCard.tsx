@@ -27,16 +27,6 @@ interface LinkListArtifactCardProps {
     onAppendToInput?: (text: string) => void;
 }
 
-/**
- * LinkListArtifactCard renders link_list artifacts as an interactive
- * checkbox list with a 5-item selection limit.
- *
- * Features:
- * - Checkbox UI for each link
- * - Max 5 selections — checkboxes disabled when limit reached
- * - "X/5" count on the confirm button
- * - Visual feedback for disabled state
- */
 export default function LinkListArtifactCard({
     artifact,
     onRespond,
@@ -48,7 +38,6 @@ export default function LinkListArtifactCard({
     const [selectedUrls, setSelectedUrls] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Parse content — handle both parsed object and stringified JSON
     const content: LinkListContent = (() => {
         if (typeof artifact.content === 'string') {
             try {
@@ -60,7 +49,6 @@ export default function LinkListArtifactCard({
         return artifact.content as LinkListContent;
     })();
 
-    // Flatten all link categories into a single array with category labels
     const allLinks: (LinkItem & { category: string })[] = [];
     if (content.links) {
         for (const [category, links] of Object.entries(content.links)) {
@@ -88,12 +76,9 @@ export default function LinkListArtifactCard({
         if (selectedUrls.length === 0) return;
 
         if (onAppendToInput) {
-            // Append the selected URLs as a comma-separated string to the chat input
             onAppendToInput(selectedUrls.join(', '));
-            // Deselect all items after appending
             setSelectedUrls([]);
         } else {
-            // Fallback for when onAppendToInput is not provided (shouldn't happen in this flow)
             setIsSubmitting(true);
             onRespond(selectedUrls);
         }
@@ -101,7 +86,6 @@ export default function LinkListArtifactCard({
 
     const isAtLimit = selectedUrls.length >= MAX_SELECTIONS;
 
-    // Extract a display label from the URL
     const getDisplayLabel = (link: LinkItem) => {
         if (link.text && link.text.trim()) return link.text;
         try {
@@ -119,7 +103,6 @@ export default function LinkListArtifactCard({
                     <Link className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div className="bg-white border border-emerald-200 rounded-2xl rounded-tl-sm shadow-sm overflow-hidden flex-1">
-                    {/* Header */}
                     <div className="px-5 py-3 border-b border-emerald-100 bg-emerald-50/50">
                         <div className="flex items-center justify-between">
                             <div>
@@ -137,7 +120,6 @@ export default function LinkListArtifactCard({
                         </p>
                     </div>
 
-                    {/* Link List */}
                     <div className="px-5 py-3 space-y-1.5 max-h-[350px] overflow-y-auto">
                         {allLinks.map((link, index) => {
                             const isSelected = selectedUrls.includes(link.url);
@@ -193,7 +175,6 @@ export default function LinkListArtifactCard({
                         })}
                     </div>
 
-                    {/* Actions */}
                     <div className="px-5 py-3 border-t border-emerald-100 flex items-center gap-2">
                         <button
                             onClick={handleConfirm}

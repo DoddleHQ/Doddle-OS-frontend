@@ -16,15 +16,6 @@ interface ArtifactCardRouterProps {
     onAppendToInput?: (text: string) => void;
 }
 
-/**
- * ArtifactCardRouter maps artifact types to their dedicated card components.
- *
- * Components:
- * - MarkdownArtifactCard  → report, blueprint, content (single component, type-configured)
- * - DataTableArtifactCard → data_table (site context, tech stack, home page)
- * - LinkListArtifactCard  → link_list (checkbox selection, max 5)
- * - GenericArtifactCard   → fallback for unknown types
- */
 export default function ArtifactCardRouter({
     artifact,
     onRespond,

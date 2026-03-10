@@ -7,58 +7,15 @@ import { Button } from '@/components/ui/Button';
 import { X, Plus, Search } from 'lucide-react';
 import { TeamMember } from '../types/project-form.types';
 
-/**
- * TeamMemberSelector Component
- *
- * A multi-select component for choosing team members with avatar chips.
- *
- * @component
- */
 export interface TeamMemberSelectorProps {
-    /**
-     * Currently selected team member IDs
-     */
     selectedIds: string[];
-
-    /**
-     * Available team members to select from
-     */
     availableMembers: TeamMember[];
-
-    /**
-     * Callback when selection changes
-     */
     onChange: (selectedIds: string[]) => void;
-
-    /**
-     * Label for the selector
-     */
     label: string;
-
-    /**
-     * Placeholder text for the input
-     */
     placeholder?: string;
-
-    /**
-     * Maximum number of members that can be selected
-     * @default 10
-     */
     maxSelections?: number;
-
-    /**
-     * Optional custom className
-     */
     className?: string;
-
-    /**
-     * Optional test ID for testing purposes
-     */
     testId?: string;
-
-    /**
-     * Optional disabled state
-     */
     disabled?: boolean;
 }
 
@@ -101,7 +58,6 @@ export const TeamMemberSelector: React.FC<TeamMemberSelectorProps> = ({
 
     return (
         <div className={cn('space-y-2', className)} data-testid={testId}>
-            {/* Selected Members */}
             {selectedMembers.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                     {selectedMembers.map((member) => (
@@ -136,7 +92,6 @@ export const TeamMemberSelector: React.FC<TeamMemberSelectorProps> = ({
                 </div>
             )}
 
-            {/* Add Member Button */}
             {!disabled && canAddMore && (
                 <div className="relative">
                     {isOpen ? (
@@ -151,13 +106,11 @@ export const TeamMemberSelector: React.FC<TeamMemberSelectorProps> = ({
                                     className="w-full pl-9 pr-4 py-2 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
                                     autoFocus
                                     onBlur={(e) => {
-                                        // Delay to allow click events to register
                                         setTimeout(() => setIsOpen(false), 150);
                                     }}
                                 />
                             </div>
 
-                            {/* Dropdown */}
                             {filteredMembers.length > 0 && (
                                 <div className="absolute mt-1 w-full bg-white border border-neutral-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                     {filteredMembers.map((member) => (

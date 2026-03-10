@@ -7,14 +7,6 @@ import { ContentTypesSelector } from '../ContentTypesSelector';
 import { ContentVelocitySelector } from '../ContentVelocitySelector';
 import { FormSectionProps, ContentType, ContentVelocity } from '../../types/project-form.types';
 
-/**
- * PipelineSection Component
- *
- * Form section for production pipeline configuration including content types,
- * target audience, and content velocity.
- *
- * @component
- */
 export const PipelineSection: React.FC<FormSectionProps> = ({
     formData,
     errors,
@@ -32,7 +24,6 @@ export const PipelineSection: React.FC<FormSectionProps> = ({
 
     return (
         <div className="space-y-5" data-testid="pipeline-section">
-            {/* Section Header */}
             <div>
                 <h3 className="text-lg font-semibold text-neutral-900 mb-1">
                     Production Pipeline Configuration
@@ -42,7 +33,6 @@ export const PipelineSection: React.FC<FormSectionProps> = ({
                 </p>
             </div>
 
-            {/* Content Types */}
             <div>
                 <label className="text-sm font-medium text-neutral-900 flex items-center gap-1 mb-2">
                     Content Types
@@ -57,7 +47,6 @@ export const PipelineSection: React.FC<FormSectionProps> = ({
                 />
             </div>
 
-            {/* Target Audience */}
             <FormField
                 label="Target Audience"
                 required
@@ -83,7 +72,6 @@ export const PipelineSection: React.FC<FormSectionProps> = ({
                 </div>
             </FormField>
 
-            {/* Content Velocity */}
             <div>
                 <label className="text-sm font-medium text-neutral-900 flex items-center gap-1 mb-2">
                     Content Velocity

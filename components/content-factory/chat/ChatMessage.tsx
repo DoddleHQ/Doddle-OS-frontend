@@ -32,11 +32,9 @@ export default function ChatMessage({ message, onHITLRespond }: ChatMessageProps
 
     const metadata = message.metadata as ChatMetadata | undefined;
 
-    // HITL messages get special rendering
     if (message.type === 'hitl') {
         const hitlData = metadata?.data as HITLRequestPayload | undefined;
         if (hitlData && onHITLRespond) {
-            // Convert legacy options format to HITLOption format if needed
             const options: HITLOption[] | undefined = hitlData.options?.map((opt: HITLOption | { label: string; value: string }) => {
                 if ('id' in opt) {
                     return opt as HITLOption;
@@ -72,7 +70,6 @@ export default function ChatMessage({ message, onHITLRespond }: ChatMessageProps
         }
     }
 
-    // System messages - center aligned, gray background
     if (message.type === 'system') {
         return (
             <div className="flex justify-center my-6 animate-in fade-in slide-in-from-bottom-2">
@@ -90,7 +87,6 @@ export default function ChatMessage({ message, onHITLRespond }: ChatMessageProps
         );
     }
 
-    // User messages - right aligned, blue background
     if (message.type === 'user') {
         return (
             <div className="flex justify-end my-2">
@@ -106,7 +102,6 @@ export default function ChatMessage({ message, onHITLRespond }: ChatMessageProps
         );
     }
 
-    // Agent messages - left aligned, white background
     return (
         <div className="flex justify-start my-4 animate-in fade-in slide-in-from-bottom-2">
             <div className="flex items-end gap-2.5 max-w-[85%] sm:max-w-[75%]">

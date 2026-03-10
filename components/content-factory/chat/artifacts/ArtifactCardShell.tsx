@@ -7,21 +7,15 @@ import { Copy, Check, Download, ChevronDown, ChevronUp } from 'lucide-react';
 interface ArtifactCardShellProps {
     artifact: ArtifactPayload;
     icon: React.ReactNode;
-    accentColor: string; // e.g. 'emerald', 'rose', 'blue'
+    accentColor: string;
     onCopyArtifact: (artifact: ArtifactPayload) => void;
     onDownloadArtifact: (artifact: ArtifactPayload) => void;
     copiedArtifactId: string | null;
     children: React.ReactNode;
-    /** If set, content is collapsible and defaults to this max height in px */
     collapsibleMaxHeight?: number;
-    /** Extra actions to render alongside copy/download */
     extraActions?: React.ReactNode;
 }
 
-/**
- * Shared shell for all artifact cards.
- * Provides: avatar icon, header (title + type badge), actions bar, optional collapse.
- */
 export default function ArtifactCardShell({
     artifact,
     icon,
@@ -46,14 +40,11 @@ export default function ArtifactCardShell({
     return (
         <div className="flex justify-start my-4 w-full">
             <div className="flex gap-2 sm:gap-3 w-full max-w-[95%] sm:max-w-[85%]">
-                {/* Avatar */}
                 <div className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full ${iconBg} flex items-center justify-center`}>
                     {icon}
                 </div>
 
-                {/* Card */}
                 <div className={`bg-white border ${borderColor} rounded-2xl rounded-tl-sm shadow-sm overflow-hidden flex-1 min-w-0`}>
-                    {/* Header */}
                     <div className={`px-4 sm:px-5 py-3 border-b ${borderAccent} ${bgAccent}`}>
                         <div className="flex items-start sm:items-center justify-between gap-2">
                             <div className="min-w-0 flex-1">
@@ -68,7 +59,6 @@ export default function ArtifactCardShell({
                         </div>
                     </div>
 
-                    {/* Content */}
                     <div className="relative">
                         <div
                             className={`px-4 sm:px-5 py-3 sm:py-4 ${isCollapsible && !isExpanded ? 'overflow-hidden' : ''}`}
@@ -77,13 +67,11 @@ export default function ArtifactCardShell({
                             {children}
                         </div>
 
-                        {/* Collapse gradient overlay */}
                         {isCollapsible && !isExpanded && (
                             <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none" />
                         )}
                     </div>
 
-                    {/* Expand/Collapse toggle */}
                     {isCollapsible && (
                         <button
                             onClick={() => setIsExpanded(!isExpanded)}
@@ -97,7 +85,6 @@ export default function ArtifactCardShell({
                         </button>
                     )}
 
-                    {/* Actions Bar */}
                     <div className="px-3 sm:px-5 py-2.5 border-t border-slate-100 flex items-center gap-1.5 sm:gap-2 flex-wrap">
                         {extraActions}
                         <button

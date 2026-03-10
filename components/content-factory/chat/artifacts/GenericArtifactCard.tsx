@@ -12,10 +12,6 @@ interface GenericArtifactCardProps {
     copiedArtifactId: string | null;
 }
 
-/**
- * GenericArtifactCard — fallback for unknown or generic artifact types.
- * Renders content as prettified JSON with copy/download actions.
- */
 export default function GenericArtifactCard({
     artifact,
     onCopyArtifact,

@@ -10,13 +10,6 @@ interface ChatInputProps {
     onInputChange?: (value: string) => void;
 }
 
-/**
- * ChatInput component for the chat interface
- * - Fixed input field at bottom
- * - Send button
- * - Disabled state with visual indication
- * - Supports external control of input value
- */
 export default function ChatInput({
     onSend,
     disabled,
@@ -24,10 +17,8 @@ export default function ChatInput({
     inputValue,
     onInputChange,
 }: ChatInputProps) {
-    // Use internal state if not controlled externally
     const [internalMessage, setInternalMessage] = useState('');
 
-    // Determine if component is controlled or uncontrolled
     const isControlled = inputValue !== undefined && onInputChange !== undefined;
     const message = isControlled ? inputValue : internalMessage;
     const setMessage = isControlled ? onInputChange : setInternalMessage;

@@ -13,11 +13,9 @@ interface MarkdownArtifactCardProps {
     copiedArtifactId: string | null;
 }
 
-// --- Type configs per artifactType ---
 interface TypeConfig {
     icon: React.ReactNode;
     accentColor: string;
-    /** Top-level key(s) in content to look for markdown string, tried in order */
     markdownKeys: string[];
 }
 
@@ -69,12 +67,6 @@ interface SeoMetadata {
     keywords?: string[];
 }
 
-/**
- * Unified markdown artifact card for `report`, `blueprint`, and `content` types.
- *
- * Renders type-specific metadata headers above a shared MarkdownRenderer.
- * Customised automatically by artifactType via TYPE_CONFIGS.
- */
 export default function MarkdownArtifactCard({
     artifact,
     onCopyArtifact,
@@ -82,7 +74,6 @@ export default function MarkdownArtifactCard({
     copiedArtifactId,
 }: MarkdownArtifactCardProps) {
     const config = TYPE_CONFIGS[artifact.artifactType] || TYPE_CONFIGS.report;
-    // Parse content — handle both parsed object and stringified JSON
     const content = (() => {
         if (typeof artifact.content === 'string') {
             try {
@@ -94,7 +85,6 @@ export default function MarkdownArtifactCard({
         return (artifact.content as Record<string, unknown>) || {};
     })();
 
-    // Find markdown string from configured keys
     let markdownText: string | undefined;
     for (const key of config.markdownKeys) {
         if (content?.[key] && typeof content[key] === 'string') {
@@ -103,7 +93,6 @@ export default function MarkdownArtifactCard({
         }
     }
 
-    // Fallback: If content itself is a string and didn't parse to JSON, treat the whole string as markdown
     if (!markdownText && typeof artifact.content === 'string' && content._rawString) {
         markdownText = artifact.content;
     }
@@ -118,21 +107,16 @@ export default function MarkdownArtifactCard({
             copiedArtifactId={copiedArtifactId}
             collapsibleMaxHeight={320}
         >
-            {/* Type-specific header sections */}
             <TypeSpecificHeader artifactType={artifact.artifactType} content={content} accentColor={config.accentColor} />
 
-            {/* Shared markdown rendering */}
             {markdownText && (
                 <MarkdownRenderer content={preprocessMarkdown(markdownText)} accentColor={config.accentColor} />
             )}
 
-            {/* Fallback for non-markdown content */}
             {!markdownText && <FallbackContent artifactType={artifact.artifactType} content={content} />}
         </ArtifactCardShell>
     );
 }
-
-// ─── Type-specific headers ───────────────────────────────────────────
 
 function TypeSpecificHeader({
     artifactType,
@@ -158,8 +142,6 @@ function TypeSpecificHeader({
     }
 }
 
-// ─── Report header: page count + site URL badges ───
-
 function ReportHeader({ content }: { content: Record<string, unknown> }) {
     const totalPages = (content?.total_pages ?? content?.totalPages) as number | undefined;
     const siteUrl = content?.siteUrl as string | undefined;
@@ -181,7 +163,6 @@ function ReportHeader({ content }: { content: Record<string, unknown> }) {
                     )}
                 </div>
             )}
-            {/* File list for audit reports (no markdown content) */}
             {savedFiles && savedFiles.length > 0 && !content?.reportContent && (
                 <div className="space-y-1.5 mb-3">
                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
@@ -201,8 +182,6 @@ function ReportHeader({ content }: { content: Record<string, unknown> }) {
         </>
     );
 }
-
-// ─── Blueprint header: page info + sections list ───
 
 function BlueprintHeader({ content, accentColor }: { content: Record<string, unknown>; accentColor: string }) {
     const url = content?.url as string | undefined;
@@ -248,8 +227,6 @@ function BlueprintHeader({ content, accentColor }: { content: Record<string, unk
         </>
     );
 }
-
-// ─── Content header: SEO metadata + hero/CTA highlights ───
 
 function ContentHeader({ content, accentColor }: { content: Record<string, unknown>; accentColor: string }) {
     const url = content?.url as string | undefined;
@@ -312,60 +289,36 @@ function ContentHeader({ content, accentColor }: { content: Record<string, unkno
     );
 }
 
-/**
- * Backend sometimes wraps the entire report in ```markdown ... ``` blocks.
- * This helper strips those markers and also ensures that every line starting
- * with a [tag] prefix (e.g. [h1], [p], [ul]) is separated by a blank line.
- *
- * ReactMarkdown requires TWO newlines (\n\n) to create a paragraph/block break.
- * Single \n is treated as a space, collapsing everything onto one line.
- */
 function preprocessMarkdown(content: string): string {
-    // 1. Strip triple-backtick markdown wrappers
     let result = content.replace(/```markdown\n?/g, '').replace(/```\n?/g, '');
-
-    // 2. Ensure every line starting with a [tag] is preceded by a blank line.
-    //    This converts single \n between tag lines into \n\n so ReactMarkdown
-    //    treats each as a separate block rather than collapsing them into one line.
     result = result.replace(/([^\n])\n(\[[a-z0-9]+\])/g, '$1\n\n$2');
 
     return result.trim();
 }
 
-/**
- * Safely renders a metadata value that might be a string or a complex object.
- * If it's an object, tries to extract headline/text or stringifies it.
- */
 function renderMetadataValue(value: any): React.ReactNode {
     if (!value) return null;
     if (typeof value === 'string') return value;
 
     if (typeof value === 'object') {
-        // Handle common object structures from the LLM
         const val = value as Record<string, any>;
-
-        // Priority: headline > text > content > cta_text
         const textToRender = val.headline || val.text || val.content || val.cta_text || val.subheadline;
 
         if (typeof textToRender === 'string') {
             return textToRender;
         }
 
-        // If no primary string found, try to join all string values
         const allStrings = Object.values(val)
             .filter(v => typeof v === 'string')
             .join(' ');
 
         if (allStrings) return allStrings;
 
-        // Final fallback: stringify
         return JSON.stringify(value);
     }
 
     return String(value);
 }
-
-// ─── Shared helpers ───
 
 function UrlLink({ url, accentColor }: { url: string; accentColor: string }) {
     return (
@@ -382,7 +335,6 @@ function UrlLink({ url, accentColor }: { url: string; accentColor: string }) {
 }
 
 function FallbackContent({ artifactType, content }: { artifactType: string; content: Record<string, unknown> }) {
-    // For audit reports with saved_files but no markdown, the file list is shown in ReportHeader
     if (artifactType === 'report' && content?.saved_files) return null;
 
     return (

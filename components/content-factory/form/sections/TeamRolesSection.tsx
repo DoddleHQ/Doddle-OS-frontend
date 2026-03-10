@@ -6,23 +6,8 @@ import { FormField } from '../FormField';
 import { TeamMemberSelector } from '../TeamMemberSelector';
 import { FormSectionProps, TeamMember } from '../../types/project-form.types';
 
-/**
- * TeamRolesSection Component
- *
- * Form section for team roles and permissions including project lead,
- * content writers, and content reviewers.
- *
- * @component
- */
 export interface TeamRolesSectionProps extends FormSectionProps {
-    /**
-     * Current user ID (defaults to project lead)
-     */
     currentUserId?: string;
-
-    /**
-     * Available team members to select from
-     */
     availableMembers: TeamMember[];
 }
 

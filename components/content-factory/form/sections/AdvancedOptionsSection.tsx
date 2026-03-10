@@ -6,14 +6,6 @@ import { FormField } from '../FormField';
 import { ToggleSwitch } from '../ToggleSwitch';
 import { FormSectionProps } from '../../types/project-form.types';
 
-/**
- * AdvancedOptionsSection Component
- *
- * Form section for advanced options including SEO optimization,
- * GSC data integration, brand voice analysis, and custom tech stack.
- *
- * @component
- */
 export const AdvancedOptionsSection: React.FC<FormSectionProps> = ({
     formData,
     errors,
@@ -38,7 +30,6 @@ export const AdvancedOptionsSection: React.FC<FormSectionProps> = ({
 
     return (
         <div className="space-y-5" data-testid="advanced-options-section">
-            {/* Section Header */}
             <div>
                 <h3 className="text-lg font-semibold text-neutral-900 mb-1">
                     Advanced Options
@@ -49,7 +40,6 @@ export const AdvancedOptionsSection: React.FC<FormSectionProps> = ({
                 </p>
             </div>
 
-            {/* Toggle Options */}
             <div className="space-y-4">
                 <ToggleSwitch
                     checked={advancedOptions.enableSeoOptimization}
@@ -88,7 +78,6 @@ export const AdvancedOptionsSection: React.FC<FormSectionProps> = ({
                 />
             </div>
 
-            {/* Custom Tech Stack Input */}
             {advancedOptions.useCustomTechStack && (
                 <div
                     className={cn(
@@ -106,7 +95,6 @@ export const AdvancedOptionsSection: React.FC<FormSectionProps> = ({
                             value={advancedOptions.customTechStack || ''}
                             onChange={(e) => handleCustomTechStackChange(e.target.value)}
                             onBlur={() => {
-                                // Trigger validation for custom tech stack
                                 if (advancedOptions.useCustomTechStack && !advancedOptions.customTechStack?.trim()) {
                                     onChange('advancedOptions', {
                                         ...advancedOptions,

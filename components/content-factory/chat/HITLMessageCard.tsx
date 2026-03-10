@@ -8,24 +8,11 @@ interface HITLMessageCardProps {
     onRespond: (response: Record<string, unknown>) => void;
 }
 
-/**
- * HITLMessageCard renders Human-in-the-Loop requests
- * Supports all HITL types from the new protocol:
- * - confirmation: Yes/No buttons
- * - selection: Single option selection
- * - multi_selection: Multiple options selection
- * - feedback: Text input for user feedback
- * - data_input: Free text/data input
- * - content_review: Review generated content
- * - url_selection: Select from list of URLs
- * - topic_input: Provide topic/question
- */
 export default function HITLMessageCard({ request, onRespond }: HITLMessageCardProps) {
     const [selectedOptions, setSelectedOptions] = useState<unknown[]>([]);
     const [feedbackText, setFeedbackText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Initialize selected options with default values (limited to 5 max)
     useEffect(() => {
         if (request.default !== undefined) {
             if (Array.isArray(request.default)) {
@@ -60,13 +47,10 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
     const toggleOption = (optionValue: unknown) => {
         setSelectedOptions(prev => {
             if (prev.includes(optionValue)) {
-                // Remove if already selected
                 return prev.filter(v => v !== optionValue);
             } else if (prev.length >= 5) {
-                // Limit to 5 max selections
                 return prev;
             }
-            // Add if less than 5
             return [...prev, optionValue];
         });
     };
@@ -77,7 +61,6 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
 
     const getMessage = () => request.message || request.prompt || 'Your input is required';
 
-    // Confirmation type - Yes/No buttons
     if (request.requestType === 'confirmation') {
         return (
             <div className="bg-white border border-amber-200 rounded-2xl p-6 max-w-md shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
@@ -113,7 +96,6 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
         );
     }
 
-    // Selection type - Single option selection
     if (request.requestType === 'selection' && request.options) {
         return (
             <div className="bg-white border border-blue-200 rounded-2xl p-6 max-w-lg shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
@@ -167,7 +149,6 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
         );
     }
 
-    // Multi-selection type - Multiple options selection (max 5)
     if (request.requestType === 'multi_selection' && request.options) {
         return (
             <div className="bg-white border border-indigo-200 rounded-2xl p-6 max-w-lg shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
@@ -224,7 +205,6 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
         );
     }
 
-    // Feedback type - Text input for user feedback
     if (request.requestType === 'feedback') {
         return (
             <div className="bg-white border border-purple-200 rounded-2xl p-6 max-w-md shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
@@ -260,7 +240,6 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
         );
     }
 
-    // Data input type - Free text/data input
     if (request.requestType === 'data_input') {
         return (
             <div className="bg-white border border-teal-200 rounded-2xl p-6 max-w-md shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
@@ -296,7 +275,6 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
         );
     }
 
-    // Topic input type - Provide topic/question
     if (request.requestType === 'topic_input') {
         return (
             <div className="bg-white border border-cyan-200 rounded-2xl p-6 max-w-md shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
@@ -332,7 +310,6 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
         );
     }
 
-    // URL selection type - Select from list of URLs (max 5)
     if (request.requestType === 'url_selection' && request.options) {
         return (
             <div className="bg-white border border-emerald-200 rounded-2xl p-6 max-w-lg shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
@@ -390,7 +367,6 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
         );
     }
 
-    // Content review type - Review generated content
     if (request.requestType === 'content_review') {
         return (
             <div className="bg-white border border-rose-200 rounded-2xl p-6 max-w-lg shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
@@ -443,7 +419,6 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
         );
     }
 
-    // Fallback for unknown types
     return (
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 max-w-md shadow-sm">
             <p className="text-sm text-gray-600">{request.prompt}</p>
