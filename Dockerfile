@@ -28,9 +28,14 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy necessary files from builder
-COPY --from=builder /app/public ./public
+# Create public directory first to avoid errors if it doesn't exist in builder
+RUN mkdir -p ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+# Copy public directory if it exists
+RUN if [ -d "/app/.next/standalone/public" ]; then \
+      cp -r /app/.next/standalone/public ./public || true; \
+    fi
 
 # Set correct permissions
 RUN chown -R nextjs:nodejs /app
