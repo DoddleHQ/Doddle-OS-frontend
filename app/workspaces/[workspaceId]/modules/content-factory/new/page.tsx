@@ -125,31 +125,70 @@ export default function NewProjectPage() {
         }
     }, [streamState.pendingHITL, respondToHITL]);
 
-    // Copy artifact content to clipboard
-    const handleCopyArtifact = useCallback(async (artifact: ArtifactPayload) => {
+    // Helper function to extract markdown content from artifact
+    const extractMarkdownContent = useCallback((artifact: ArtifactPayload): string => {
+        // Parse content if it's a string
         const content = typeof artifact.content === 'string'
+            ? (() => {
+                try {
+                    return JSON.parse(artifact.content);
+                } catch {
+                    return { _rawString: artifact.content };
+                }
+            })()
+            : (artifact.content as Record<string, unknown>) || {};
+
+        // Define markdown keys for different artifact types
+        const markdownKeys: Record<string, string[]> = {
+            report: ['reportContent'],
+            pre_run_report: ['reportContent'],
+            pre_run_audit: ['reportContent'],
+            pre_run_audit_summary: ['reportContent'],
+            blueprint: ['blueprintContent'],
+            content: ['contentText'],
+        };
+
+        const keys = markdownKeys[artifact.artifactType] || [];
+
+        // Try to find markdown content using the keys
+        for (const key of keys) {
+            if (content?.[key] && typeof content[key] === 'string') {
+                return content[key] as string;
+            }
+        }
+
+        // Fallback to raw string if available
+        if (content._rawString) {
+            return content._rawString as string;
+        }
+
+        // Final fallback to stringified content
+        return typeof artifact.content === 'string'
             ? artifact.content
             : JSON.stringify(artifact.content, null, 2);
-        await navigator.clipboard.writeText(content);
+    }, []);
+
+    // Copy artifact content to clipboard
+    const handleCopyArtifact = useCallback(async (artifact: ArtifactPayload) => {
+        const markdownContent = extractMarkdownContent(artifact);
+        await navigator.clipboard.writeText(markdownContent);
         setCopiedArtifactId(artifact.artifactId);
         setTimeout(() => setCopiedArtifactId(null), 2000);
-    }, []);
+    }, [extractMarkdownContent]);
 
     // Download artifact
     const handleDownloadArtifact = useCallback((artifact: ArtifactPayload) => {
-        const content = typeof artifact.content === 'string'
-            ? artifact.content
-            : JSON.stringify(artifact.content, null, 2);
-        const blob = new Blob([content], { type: 'application/json' });
+        const markdownContent = extractMarkdownContent(artifact);
+        const blob = new Blob([markdownContent], { type: 'text/markdown' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${artifact.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
+        a.download = `${artifact.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-    }, []);
+    }, [extractMarkdownContent]);
 
     // Redirect if workspaceId is not available
     useEffect(() => {
@@ -493,55 +532,25 @@ function MessageRenderer({
                         {/* Show interactive elements only when HITL is active */}
                         {hitlData && (
                             <>
-                                {/* Confirmation type */}
-                                {hitlData.requestType === 'confirmation' && hitlData.options && (
-                                    <div className="flex gap-2">
-                                        {hitlData.options.map((option) => (
-                                            <button
-                                                key={option.id}
-                                                onClick={() => onHITLRespond(option.value)}
-                                                className="px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-white border border-amber-200 text-amber-800 hover:bg-amber-100"
-                                            >
-                                                {option.label}
-                                            </button>
-                                        ))}
-                                    </div>
+                                {/* Confirmation type - informational message only */}
+                                {hitlData.requestType === 'confirmation' && (
+                                    <p className="text-xs text-amber-600 italic">
+                                        Please provide your confirmation in the chat input below
+                                    </p>
                                 )}
 
-                                {/* Selection type - single select */}
-                                {hitlData.requestType === 'selection' && hitlData.options && (
-                                    <div className="space-y-2">
-                                        {hitlData.options.map((option) => (
-                                            <button
-                                                key={option.id}
-                                                onClick={() => onHITLRespond(option.value)}
-                                                className="w-full text-left px-4 py-3 text-sm rounded-lg transition-colors bg-white border border-amber-200 hover:bg-amber-100"
-                                            >
-                                                <div className="font-medium text-slate-800">{option.label}</div>
-                                                {option.description && (
-                                                    <div className="text-xs text-slate-500 mt-0.5">{option.description}</div>
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
+                                {/* Selection type - informational message only */}
+                                {hitlData.requestType === 'selection' && (
+                                    <p className="text-xs text-amber-600 italic">
+                                        Please provide your selection in the chat input below
+                                    </p>
                                 )}
 
-                                {/* Multi-selection type */}
-                                {hitlData.requestType === 'multi_selection' && hitlData.options && (
-                                    <div className="space-y-2">
-                                        {hitlData.options.map((option) => (
-                                            <button
-                                                key={option.id}
-                                                onClick={() => onHITLRespond([option.value])}
-                                                className="w-full text-left px-4 py-3 text-sm rounded-lg transition-colors bg-white border border-amber-200 hover:bg-amber-100"
-                                            >
-                                                <div className="font-medium text-slate-800">{option.label}</div>
-                                                {option.description && (
-                                                    <div className="text-xs text-slate-500 mt-0.5">{option.description}</div>
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
+                                {/* Multi-selection type - informational message only */}
+                                {hitlData.requestType === 'multi_selection' && (
+                                    <p className="text-xs text-amber-600 italic">
+                                        Please provide your feedback or selection in the chat input below
+                                    </p>
                                 )}
 
                                 {/* Feedback type - handled by chat input */}
