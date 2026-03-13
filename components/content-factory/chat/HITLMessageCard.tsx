@@ -13,6 +13,7 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
     const [selectedOptions, setSelectedOptions] = useState<unknown[]>([]);
     const [feedbackText, setFeedbackText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [pageFeedback, setPageFeedback] = useState<Record<string, string>>({});
 
     useEffect(() => {
         if (request.default !== undefined) {
@@ -439,7 +440,6 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
     if (request.requestType === 'per_page_feedback') {
         const pages = Array.isArray(request.data?.pages) ? request.data.pages : [];
         const auditReport = typeof request.data?.audit_report === 'string' ? request.data.audit_report : '';
-        const [pageFeedback, setPageFeedback] = useState<Record<string, string>>({});
 
         const handlePageFeedbackChange = (url: string, value: string) => {
             setPageFeedback(prev => ({ ...prev, [url]: value }));
