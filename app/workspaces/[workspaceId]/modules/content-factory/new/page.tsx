@@ -15,6 +15,7 @@ import {
 import { normalizeUrl } from '@/components/content-factory/utils/form-validation';
 import ChatInput from '@/components/content-factory/chat/ChatInput';
 import ArtifactCardRouter from '@/components/content-factory/chat/artifacts/ArtifactCardRouter';
+import MarkdownRenderer from '@/components/content-factory/chat/artifacts/MarkdownRenderer';
 import Notification from '@/components/ui/Notification';
 
 /**
@@ -396,7 +397,7 @@ function MessageRenderer({
         return (
             <div className="flex justify-end my-4">
                 <div className="bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-br-sm max-w-[80%] shadow-sm">
-                    <p className="text-[15px] leading-relaxed">{message.content}</p>
+                    <MarkdownRenderer content={message.content} accentColor="blue" />
                 </div>
             </div>
         );
@@ -407,7 +408,7 @@ function MessageRenderer({
         return (
             <div className="flex justify-center my-2">
                 <div className="bg-slate-100 text-slate-600 px-4 py-2 rounded-full text-xs font-medium">
-                    {message.content}
+                    <MarkdownRenderer content={message.content} accentColor="slate" />
                 </div>
             </div>
         );
@@ -429,7 +430,7 @@ function MessageRenderer({
                             {stepLabel}
                         </span>
                     )}
-                    {message.content}
+                    <MarkdownRenderer content={message.content} accentColor="blue" />
                 </div>
             </div>
         );
@@ -444,7 +445,7 @@ function MessageRenderer({
                         <Bot className="w-4 h-4 text-white" />
                     </div>
                     <div className="bg-white border border-slate-200 px-5 py-4 rounded-2xl rounded-tl-sm shadow-sm">
-                        <p className="text-[15px] leading-relaxed text-slate-800">{message.content}</p>
+                        <MarkdownRenderer content={message.content} accentColor="slate" />
                         {message.sender && (
                             <p className="text-xs text-slate-400 mt-2">{message.sender}</p>
                         )}
@@ -485,9 +486,9 @@ function MessageRenderer({
                         <AlertCircle className={`w-4 h-4 ${isActive ? 'text-amber-600' : 'text-slate-400'}`} />
                     </div>
                     <div className={`rounded-2xl rounded-tl-sm shadow-sm p-5 ${isActive ? 'bg-amber-50 border border-amber-200' : 'bg-slate-50 border border-slate-200'}`}>
-                        <p className={`text-[15px] leading-relaxed ${isActive ? 'text-amber-900' : 'text-slate-600'} ${hitlData ? 'mb-4' : ''}`}>
-                            {message.content}
-                        </p>
+                        <div className={`text-[15px] leading-relaxed ${isActive ? 'text-amber-900' : 'text-slate-600'} ${hitlData ? 'mb-4' : ''}`}>
+                            <MarkdownRenderer content={message.content} accentColor="amber" />
+                        </div>
 
                         {/* Show interactive elements only when HITL is active */}
                         {hitlData && (

@@ -260,7 +260,8 @@ export type HITLType =
     | 'selection'        // Single option selection
     | 'multi_selection'  // Multiple options selection
     | 'feedback'         // User feedback on content
-    | 'data_input';      // Free text/data input
+    | 'data_input'       // Free text/data input
+    | 'per_page_feedback'; // Feedback on multiple pages
 
 /**
  * Option structure for HITL requests

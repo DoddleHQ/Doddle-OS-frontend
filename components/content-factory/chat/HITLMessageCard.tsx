@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { HITLOption, HITLRequestPayload } from '@/lib/types/graph-events.types';
+import MarkdownRenderer from './artifacts/MarkdownRenderer';
 
 interface HITLMessageCardProps {
     request: HITLRequestPayload;
@@ -73,7 +74,9 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                     </div>
                     <div className="flex-1">
                         <h4 className="text-[13px] font-bold text-amber-600 uppercase tracking-wider mb-1.5">Action Required</h4>
-                        <p className="text-[15px] text-slate-700 mb-5 leading-relaxed">{getMessage()}</p>
+                        <div className="text-[15px] text-slate-700 mb-5 leading-relaxed">
+                            <MarkdownRenderer content={getMessage()} accentColor="amber" />
+                        </div>
                         <div className="flex gap-2.5">
                             <button
                                 onClick={() => handleConfirmation(true)}
@@ -108,7 +111,9 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                     </div>
                     <div className="flex-1">
                         <h4 className="text-[13px] font-bold text-blue-600 uppercase tracking-wider mb-1.5">Selection Required</h4>
-                        <p className="text-[15px] text-slate-700 mb-5 leading-relaxed">{getMessage()}</p>
+                        <div className="text-[15px] text-slate-700 mb-5 leading-relaxed">
+                            <MarkdownRenderer content={getMessage()} accentColor="blue" />
+                        </div>
 
                         <div className="space-y-2 mb-5 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
                             {request.options.map((option: HITLOption) => (
@@ -161,7 +166,9 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                     </div>
                     <div className="flex-1">
                         <h4 className="text-[13px] font-bold text-indigo-600 uppercase tracking-wider mb-1.5">Multiple Selection Required</h4>
-                        <p className="text-[15px] text-slate-700 mb-2 leading-relaxed">{getMessage()}</p>
+                        <div className="text-[15px] text-slate-700 mb-2 leading-relaxed">
+                            <MarkdownRenderer content={getMessage()} accentColor="indigo" />
+                        </div>
                         <p className="text-[13px] text-slate-500 mb-5">Select up to 5 options</p>
 
                         <div className="space-y-2 mb-5 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
@@ -217,7 +224,9 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                     </div>
                     <div className="flex-1">
                         <h4 className="text-[13px] font-bold text-purple-600 uppercase tracking-wider mb-1.5">Feedback Requested</h4>
-                        <p className="text-[15px] text-slate-700 mb-4 leading-relaxed">{getMessage()}</p>
+                        <div className="text-[15px] text-slate-700 mb-4 leading-relaxed">
+                            <MarkdownRenderer content={getMessage()} accentColor="purple" />
+                        </div>
 
                         <textarea
                             value={feedbackText}
@@ -252,7 +261,9 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                     </div>
                     <div className="flex-1">
                         <h4 className="text-[13px] font-bold text-teal-600 uppercase tracking-wider mb-1.5">Input Required</h4>
-                        <p className="text-[15px] text-slate-700 mb-4 leading-relaxed">{getMessage()}</p>
+                        <div className="text-[15px] text-slate-700 mb-4 leading-relaxed">
+                            <MarkdownRenderer content={getMessage()} accentColor="teal" />
+                        </div>
 
                         <textarea
                             value={feedbackText}
@@ -287,7 +298,9 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                     </div>
                     <div className="flex-1">
                         <h4 className="text-[13px] font-bold text-cyan-600 uppercase tracking-wider mb-1.5">Topic Required</h4>
-                        <p className="text-[15px] text-slate-700 mb-4 leading-relaxed">{getMessage()}</p>
+                        <div className="text-[15px] text-slate-700 mb-4 leading-relaxed">
+                            <MarkdownRenderer content={getMessage()} accentColor="cyan" />
+                        </div>
 
                         <textarea
                             value={feedbackText}
@@ -322,7 +335,9 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                     </div>
                     <div className="flex-1">
                         <h4 className="text-[13px] font-bold text-emerald-600 uppercase tracking-wider mb-1.5">URL Selection Required</h4>
-                        <p className="text-[15px] text-slate-700 mb-2 leading-relaxed">{getMessage()}</p>
+                        <div className="text-[15px] text-slate-700 mb-2 leading-relaxed">
+                            <MarkdownRenderer content={getMessage()} accentColor="emerald" />
+                        </div>
                         <p className="text-[13px] text-slate-500 mb-5">Select up to 5 URLs</p>
 
                         <div className="space-y-2 mb-5 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
@@ -379,7 +394,9 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                     </div>
                     <div className="flex-1">
                         <h4 className="text-[13px] font-bold text-rose-600 uppercase tracking-wider mb-1.5">Content Review Required</h4>
-                        <p className="text-[15px] text-slate-700 mb-4 leading-relaxed">{getMessage()}</p>
+                        <div className="text-[15px] text-slate-700 mb-4 leading-relaxed">
+                            <MarkdownRenderer content={getMessage()} accentColor="rose" />
+                        </div>
 
                         {request.data && (
                             <div className="mb-4 p-4 bg-slate-50 rounded-xl border border-slate-200 max-h-[200px] overflow-y-auto">
@@ -419,9 +436,109 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
         );
     }
 
+    if (request.requestType === 'per_page_feedback') {
+        const pages = Array.isArray(request.data?.pages) ? request.data.pages : [];
+        const auditReport = typeof request.data?.audit_report === 'string' ? request.data.audit_report : '';
+        const [pageFeedback, setPageFeedback] = useState<Record<string, string>>({});
+
+        const handlePageFeedbackChange = (url: string, value: string) => {
+            setPageFeedback(prev => ({ ...prev, [url]: value }));
+        };
+
+        const handleApproveAll = () => {
+            setIsSubmitting(true);
+            onRespond({ action: 'approve_all' });
+        };
+
+        const handleSubmitFeedback = () => {
+            setIsSubmitting(true);
+            onRespond({ action: 'provide_feedback', feedback: pageFeedback });
+        };
+
+        return (
+            <div className="bg-white border border-violet-200 rounded-2xl p-6 max-w-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-violet-500"></div>
+                <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 bg-violet-50 border border-violet-100 rounded-xl flex items-center justify-center">
+                        <svg className="w-5 h-5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <div className="flex-1">
+                        <h4 className="text-[13px] font-bold text-violet-600 uppercase tracking-wider mb-1.5">Page Feedback Required</h4>
+                        <div className="text-[15px] text-slate-700 mb-4 leading-relaxed">
+                            <MarkdownRenderer content={getMessage()} accentColor="violet" />
+                        </div>
+
+                        {auditReport && (
+                            <div className="mb-4 p-4 bg-slate-50 rounded-xl border border-slate-200 max-h-[300px] overflow-y-auto">
+                                <div className="text-[13px] text-slate-700 whitespace-pre-wrap">
+                                    <MarkdownRenderer content={auditReport} accentColor="slate" />
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="space-y-4 mb-5">
+                            {pages.map((page: any, index: number) => (
+                                <div key={index} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-[12px] font-bold text-violet-600 uppercase tracking-wider">
+                                            Page {index + 1}
+                                        </span>
+                                        {page.name && (
+                                            <span className="text-[14px] font-medium text-slate-800">
+                                                - {page.name}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {page.url && (
+                                        <a
+                                            href={page.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-[12px] text-blue-600 hover:text-blue-800 font-mono block mb-2"
+                                        >
+                                            {page.url}
+                                        </a>
+                                    )}
+                                    <textarea
+                                        value={pageFeedback[page.url] || ''}
+                                        onChange={(e) => handlePageFeedbackChange(page.url, e.target.value)}
+                                        placeholder="Provide feedback for this page (leave empty to approve)..."
+                                        rows={3}
+                                        className="w-full px-3 py-2 text-[13px] border border-slate-200 bg-white rounded-lg focus:bg-white focus:outline-none focus:ring-0 focus:border-violet-400 focus:shadow-sm resize-none transition-all placeholder:text-slate-400"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex gap-2.5">
+                            <button
+                                onClick={handleApproveAll}
+                                disabled={isSubmitting}
+                                className="flex-1 px-4 py-2.5 bg-emerald-600 text-white text-[14px] font-medium rounded-xl hover:bg-emerald-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
+                            >
+                                Approve All
+                            </button>
+                            <button
+                                onClick={handleSubmitFeedback}
+                                disabled={isSubmitting}
+                                className="flex-1 px-4 py-2.5 bg-violet-600 text-white text-[14px] font-medium rounded-xl hover:bg-violet-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
+                            >
+                                Submit Feedback
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 max-w-md shadow-sm">
-            <p className="text-sm text-gray-600">{request.prompt}</p>
+            <div className="text-sm text-gray-600">
+                <MarkdownRenderer content={request.prompt || 'Please continue'} accentColor="slate" />
+            </div>
             <button
                 onClick={() => onRespond({})}
                 className="mt-3 px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"

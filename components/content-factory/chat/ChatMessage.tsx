@@ -79,9 +79,9 @@ export default function ChatMessage({ message, onHITLRespond }: ChatMessageProps
                             Phase: {metadata.phase.replace(/_/g, ' ')}
                         </span>
                     )}
-                    <span className="text-sm text-slate-500 bg-slate-100 px-4 py-2 rounded-full">
-                        {message.content}
-                    </span>
+                    <div className="text-sm text-slate-500 bg-slate-100 px-4 py-2 rounded-full">
+                        <MarkdownRenderer content={message.content} accentColor="slate" />
+                    </div>
                 </div>
             </div>
         );
@@ -92,7 +92,7 @@ export default function ChatMessage({ message, onHITLRespond }: ChatMessageProps
             <div className="flex justify-end my-2">
                 <div className="flex flex-col items-end max-w-[70%] text-[15px]">
                     <div className="bg-gradient-to-tr from-blue-600 to-blue-500 text-white px-5 py-3.5 rounded-2xl rounded-br-sm shadow-md shadow-blue-500/10 hover:shadow-blue-500/20 transition-shadow">
-                        <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                        <MarkdownRenderer content={message.content} accentColor="blue" />
                     </div>
                     <span className="text-[11px] text-slate-400 mt-1.5 mr-2 font-medium">
                         {formatTime(message.timestamp)}
