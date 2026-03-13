@@ -125,6 +125,13 @@ export default function NewProjectPage() {
         }
     }, [streamState.pendingHITL, respondToHITL]);
 
+    // Helper function to preprocess markdown content
+    const preprocessMarkdown = useCallback((content: string): string => {
+        let result = content.replace(/```markdown\n?/g, '').replace(/```\n?/g, '');
+        result = result.replace(/([^\n])\n(\[[a-z0-9]+\])/g, '$1\n\n$2');
+        return result.trim();
+    }, []);
+
     // Helper function to extract markdown content from artifact
     const extractMarkdownContent = useCallback((artifact: ArtifactPayload): string => {
         // Parse content if it's a string
@@ -153,20 +160,21 @@ export default function NewProjectPage() {
         // Try to find markdown content using the keys
         for (const key of keys) {
             if (content?.[key] && typeof content[key] === 'string') {
-                return content[key] as string;
+                return preprocessMarkdown(content[key] as string);
             }
         }
 
         // Fallback to raw string if available
         if (content._rawString) {
-            return content._rawString as string;
+            return preprocessMarkdown(content._rawString as string);
         }
 
         // Final fallback to stringified content
-        return typeof artifact.content === 'string'
+        const fallbackContent = typeof artifact.content === 'string'
             ? artifact.content
             : JSON.stringify(artifact.content, null, 2);
-    }, []);
+        return preprocessMarkdown(fallbackContent);
+    }, [preprocessMarkdown]);
 
     // Copy artifact content to clipboard
     const handleCopyArtifact = useCallback(async (artifact: ArtifactPayload) => {
