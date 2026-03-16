@@ -17,6 +17,7 @@ import ChatInput from '@/components/content-factory/chat/ChatInput';
 import ArtifactCardRouter from '@/components/content-factory/chat/artifacts/ArtifactCardRouter';
 import MarkdownRenderer from '@/components/content-factory/chat/artifacts/MarkdownRenderer';
 import Notification from '@/components/ui/Notification';
+import { extractArtifactMarkdown } from '@/components/content-factory/chat/artifacts/artifactContentUtils';
 
 /**
  * New Project Page - Chat Interface with LangGraph Streaming
@@ -125,68 +126,17 @@ export default function NewProjectPage() {
         }
     }, [streamState.pendingHITL, respondToHITL]);
 
-    // Helper function to preprocess markdown content
-    const preprocessMarkdown = useCallback((content: string): string => {
-        let result = content.replace(/```markdown\n?/g, '').replace(/```\n?/g, '');
-        result = result.replace(/([^\n])\n(\[[a-z0-9]+\])/g, '$1\n\n$2');
-        return result.trim();
-    }, []);
-
-    // Helper function to extract markdown content from artifact
-    const extractMarkdownContent = useCallback((artifact: ArtifactPayload): string => {
-        // Parse content if it's a string
-        const content = typeof artifact.content === 'string'
-            ? (() => {
-                try {
-                    return JSON.parse(artifact.content);
-                } catch {
-                    return { _rawString: artifact.content };
-                }
-            })()
-            : (artifact.content as Record<string, unknown>) || {};
-
-        // Define markdown keys for different artifact types
-        const markdownKeys: Record<string, string[]> = {
-            report: ['reportContent'],
-            pre_run_report: ['reportContent'],
-            pre_run_audit: ['reportContent'],
-            pre_run_audit_summary: ['reportContent'],
-            blueprint: ['blueprintContent'],
-            content: ['contentText'],
-        };
-
-        const keys = markdownKeys[artifact.artifactType] || [];
-
-        // Try to find markdown content using the keys
-        for (const key of keys) {
-            if (content?.[key] && typeof content[key] === 'string') {
-                return preprocessMarkdown(content[key] as string);
-            }
-        }
-
-        // Fallback to raw string if available
-        if (content._rawString) {
-            return preprocessMarkdown(content._rawString as string);
-        }
-
-        // Final fallback to stringified content
-        const fallbackContent = typeof artifact.content === 'string'
-            ? artifact.content
-            : JSON.stringify(artifact.content, null, 2);
-        return preprocessMarkdown(fallbackContent);
-    }, [preprocessMarkdown]);
-
     // Copy artifact content to clipboard
     const handleCopyArtifact = useCallback(async (artifact: ArtifactPayload) => {
-        const markdownContent = extractMarkdownContent(artifact);
+        const markdownContent = extractArtifactMarkdown(artifact);
         await navigator.clipboard.writeText(markdownContent);
         setCopiedArtifactId(artifact.artifactId);
         setTimeout(() => setCopiedArtifactId(null), 2000);
-    }, [extractMarkdownContent]);
+    }, []);
 
     // Download artifact
     const handleDownloadArtifact = useCallback((artifact: ArtifactPayload) => {
-        const markdownContent = extractMarkdownContent(artifact);
+        const markdownContent = extractArtifactMarkdown(artifact);
         const blob = new Blob([markdownContent], { type: 'text/markdown' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -196,7 +146,7 @@ export default function NewProjectPage() {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-    }, [extractMarkdownContent]);
+    }, []);
 
     // Redirect if workspaceId is not available
     useEffect(() => {
