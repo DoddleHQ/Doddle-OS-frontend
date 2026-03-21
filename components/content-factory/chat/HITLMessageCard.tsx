@@ -13,6 +13,7 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
     const [selectedOptions, setSelectedOptions] = useState<unknown[]>([]);
     const [feedbackText, setFeedbackText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSubmitted, setIsSubmitted] = useState(false);
     const [pageFeedback, setPageFeedback] = useState<Record<string, string>>({});
 
     useEffect(() => {
@@ -28,22 +29,34 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
     const handleConfirmation = (confirmed: boolean) => {
         setIsSubmitting(true);
         onRespond({ confirmed });
+        setIsSubmitted(true);
     };
 
     const handleSelection = (isMulti: boolean = false) => {
         if (selectedOptions.length === 0) return;
         setIsSubmitting(true);
         if (isMulti) {
-            onRespond({ selected: selectedOptions });
+            // For multi-select, include both values and labels
+            const selectedLabels = request.options
+                ?.filter(opt => selectedOptions.includes(opt.value))
+                .map(opt => opt.label) || [];
+            onRespond({ selected: selectedOptions, selectedLabels });
         } else {
-            onRespond({ selected: selectedOptions[0] });
+            // For single select, include both value and label
+            const selectedOption = request.options?.find(opt => opt.value === selectedOptions[0]);
+            onRespond({
+                selected: selectedOptions[0],
+                selectedLabel: selectedOption?.label || String(selectedOptions[0])
+            });
         }
+        setIsSubmitted(true);
     };
 
     const handleFeedback = () => {
         if (!feedbackText.trim()) return;
         setIsSubmitting(true);
         onRespond({ feedback: feedbackText });
+        setIsSubmitted(true);
     };
 
     const toggleOption = (optionValue: unknown) => {
@@ -147,7 +160,7 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                             disabled={isSubmitting || selectedOptions.length === 0}
                             className="w-full px-4 py-2.5 bg-slate-900 text-white text-[14px] font-medium rounded-xl hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                         >
-                            {isSubmitting ? 'Submitting...' : 'Confirm Selection'}
+                            {isSubmitted ? 'Submitted' : isSubmitting ? 'Submitting...' : 'Confirm Selection'}
                         </button>
                     </div>
                 </div>
@@ -191,7 +204,7 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                                         className="mt-0.5 h-4 w-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                     />
                                     <div className="flex-1">
-                                        <span className="text-[14px] font-medium text-slate-800 block leading-tight">{option.label}</span>
+                                        <span className="text-[14px] font-medium text-slate-800 block leading-tight">{String(option.value)}</span>
                                         {option.description && (
                                             <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed">{option.description}</p>
                                         )}
@@ -205,7 +218,7 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                             disabled={isSubmitting || selectedOptions.length === 0}
                             className="w-full px-4 py-2.5 bg-slate-900 text-white text-[14px] font-medium rounded-xl hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                         >
-                            {isSubmitting ? 'Submitting...' : `Confirm Selection ${selectedOptions.length > 0 ? `(${selectedOptions.length}/5)` : ''}`}
+                            {isSubmitted ? 'Submitted' : isSubmitting ? 'Submitting...' : `Confirm Selection ${selectedOptions.length > 0 ? `(${selectedOptions.length}/5)` : ''}`}
                         </button>
                     </div>
                 </div>
@@ -242,7 +255,7 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                             disabled={isSubmitting || !feedbackText.trim()}
                             className="w-full mt-4 px-4 py-2.5 bg-slate-900 text-white text-[14px] font-medium rounded-xl hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                         >
-                            {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+                            {isSubmitted ? 'Submitted' : isSubmitting ? 'Submitting...' : 'Submit Feedback'}
                         </button>
                     </div>
                 </div>
@@ -279,7 +292,7 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                             disabled={isSubmitting || !feedbackText.trim()}
                             className="w-full mt-4 px-4 py-2.5 bg-slate-900 text-white text-[14px] font-medium rounded-xl hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                         >
-                            {isSubmitting ? 'Submitting...' : 'Submit Input'}
+                            {isSubmitted ? 'Submitted' : isSubmitting ? 'Submitting...' : 'Submit Input'}
                         </button>
                     </div>
                 </div>
@@ -316,7 +329,7 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                             disabled={isSubmitting || !feedbackText.trim()}
                             className="w-full mt-4 px-4 py-2.5 bg-slate-900 text-white text-[14px] font-medium rounded-xl hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                         >
-                            {isSubmitting ? 'Submitting...' : 'Submit Topic'}
+                            {isSubmitted ? 'Submitted' : isSubmitting ? 'Submitting...' : 'Submit Topic'}
                         </button>
                     </div>
                 </div>
@@ -361,7 +374,6 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                                     />
                                     <div className="flex-1">
                                         <span className="text-[14px] font-medium text-slate-800 block leading-tight">{option.label}</span>
-                                        <span className="text-[12px] text-slate-500 mt-1 block font-mono">{String(option.value)}</span>
                                         {option.description && (
                                             <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed">{option.description}</p>
                                         )}
@@ -375,7 +387,7 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                             disabled={isSubmitting || selectedOptions.length === 0}
                             className="w-full px-4 py-2.5 bg-slate-900 text-white text-[14px] font-medium rounded-xl hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                         >
-                            {isSubmitting ? 'Submitting...' : `Confirm Selection ${selectedOptions.length > 0 ? `(${selectedOptions.length}/5)` : ''}`}
+                            {isSubmitted ? 'Submitted' : isSubmitting ? 'Submitting...' : `Confirm Selection ${selectedOptions.length > 0 ? `(${selectedOptions.length}/5)` : ''}`}
                         </button>
                     </div>
                 </div>
@@ -448,11 +460,13 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
         const handleApproveAll = () => {
             setIsSubmitting(true);
             onRespond({ action: 'approve_all' });
+            setIsSubmitted(true);
         };
 
         const handleSubmitFeedback = () => {
             setIsSubmitting(true);
             onRespond({ action: 'provide_feedback', feedback: pageFeedback });
+            setIsSubmitted(true);
         };
 
         return (
@@ -518,14 +532,14 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                                 disabled={isSubmitting}
                                 className="flex-1 px-4 py-2.5 bg-emerald-600 text-white text-[14px] font-medium rounded-xl hover:bg-emerald-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                             >
-                                Approve All
+                                {isSubmitted ? 'Submitted' : 'Approve All'}
                             </button>
                             <button
                                 onClick={handleSubmitFeedback}
                                 disabled={isSubmitting}
                                 className="flex-1 px-4 py-2.5 bg-violet-600 text-white text-[14px] font-medium rounded-xl hover:bg-violet-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                             >
-                                Submit Feedback
+                                {isSubmitted ? 'Submitted' : 'Submit Feedback'}
                             </button>
                         </div>
                     </div>

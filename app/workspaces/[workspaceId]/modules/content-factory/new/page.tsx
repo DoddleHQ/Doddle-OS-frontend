@@ -6,7 +6,7 @@ import { Loader2, CheckCircle2, AlertCircle, Bot, ExternalLink, Download, Copy, 
 import { useLangGraphStream } from '@/lib/hooks/useLangGraphStream';
 import {
     GraphEvent,
-    ChatMessage,
+    ChatMessage as ChatMessageType,
     ArtifactPayload,
     HITLRequestPayload,
     BROWSING_ARCHITECT_STEPS,
@@ -14,6 +14,7 @@ import {
 } from '@/lib/types/graph-events.types';
 import { normalizeUrl } from '@/components/content-factory/utils/form-validation';
 import ChatInput from '@/components/content-factory/chat/ChatInput';
+import HITLMessageCard from '@/components/content-factory/chat/HITLMessageCard';
 import ArtifactCardRouter from '@/components/content-factory/chat/artifacts/ArtifactCardRouter';
 import MarkdownRenderer from '@/components/content-factory/chat/artifacts/MarkdownRenderer';
 import Notification from '@/components/ui/Notification';
@@ -81,7 +82,7 @@ export default function NewProjectPage() {
         // If workflow is not running, check if it's a URL to start
         if (!isRunning) {
             // Try to extract URL from message (handles formats like "Analyze https://lcinc.ca/")
-            const urlMatch = message.match(/https?:\/\/[^\s]+/);
+            const urlMatch = message.match(/(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[^\s]*/);
             if (urlMatch) {
                 // Extract and normalize the URL
                 let extractedUrl = urlMatch[0];
@@ -367,7 +368,7 @@ export default function NewProjectPage() {
 // ============================================
 
 interface MessageRendererProps {
-    message: ChatMessage;
+    message: ChatMessageType;
     artifacts: ArtifactPayload[];
     pendingHITL: HITLRequestPayload | null;
     onHITLRespond: (response: unknown) => void;
@@ -474,7 +475,25 @@ function MessageRenderer({
     // HITL messages - interactive card (or static if already responded)
     if (message.type === 'hitl') {
         const isActive = pendingHITL !== null && pendingHITL.requestId === metadata?.requestId;
-        const hitlData = isActive ? pendingHITL : null;
+        const hitlData = isActive ? pendingHITL : (metadata?.data as HITLRequestPayload | undefined);
+
+        // Use HITLMessageCard for selection and multi_selection types (have options, but not url_selection)
+        if (hitlData && hitlData.options && hitlData.options.length > 0 && hitlData.requestType !== 'url_selection') {
+            // Check if there's a link_list artifact present - if so, don't render multi_selection card
+            const hasLinkListArtifact = artifacts.some(a => a.artifactType === 'link_list');
+            if (hitlData.requestType === 'multi_selection' && hasLinkListArtifact) {
+                // Don't render the multi_selection card when link_list multi-select is present
+                return null;
+            }
+            return (
+                <div className="flex justify-center my-4">
+                    <HITLMessageCard
+                        request={hitlData}
+                        onRespond={onHITLRespond as (response: Record<string, unknown>) => void}
+                    />
+                </div>
+            );
+        }
 
         return (
             <div className="flex justify-start my-4">
@@ -494,20 +513,6 @@ function MessageRenderer({
                                 {hitlData.requestType === 'confirmation' && (
                                     <p className="text-xs text-amber-600 italic">
                                         Please provide your confirmation in the chat input below
-                                    </p>
-                                )}
-
-                                {/* Selection type - informational message only */}
-                                {hitlData.requestType === 'selection' && (
-                                    <p className="text-xs text-amber-600 italic">
-                                        Please provide your selection in the chat input below
-                                    </p>
-                                )}
-
-                                {/* Multi-selection type - informational message only */}
-                                {hitlData.requestType === 'multi_selection' && (
-                                    <p className="text-xs text-amber-600 italic">
-                                        Please provide your feedback or selection in the chat input below
                                     </p>
                                 )}
 
@@ -542,10 +547,6 @@ function MessageRenderer({
                                                 className="w-full text-left px-4 py-3 text-sm rounded-lg transition-colors bg-white border border-amber-200 hover:bg-amber-100"
                                             >
                                                 <div className="font-medium text-slate-800">{option.label}</div>
-                                                <span className="text-xs text-slate-500 mt-0.5 block font-mono">{String(option.value)}</span>
-                                                {option.description && (
-                                                    <div className="text-xs text-slate-500 mt-0.5">{option.description}</div>
-                                                )}
                                             </button>
                                         ))}
                                     </div>

@@ -272,7 +272,6 @@ export interface HITLOption {
     label: string;
     value: unknown;
     description?: string;
-    icon?: string;
 }
 
 /**

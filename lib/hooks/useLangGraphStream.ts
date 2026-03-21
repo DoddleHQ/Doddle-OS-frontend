@@ -359,7 +359,7 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                     message: typeof interruptValue === 'string'
                         ? interruptValue
                         : 'Your input is required to continue',
-                    requestType: 'data_input',
+                    requestType: (interruptValue as any)?.hitl_type || 'data_input',
                     allowFreeInput: true,
                     priority: 'normal',
                     prompt: typeof interruptValue === 'string'
@@ -623,6 +623,7 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                             content: hitlRequest.message || hitlRequest.prompt || 'Your input is required to continue',
                             metadata: {
                                 requestId: hitlRequest.requestId,
+                                data: hitlRequest,
                             },
                         });
 
@@ -663,6 +664,7 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                         content: syntheticHITL.prompt || syntheticHITL.message || 'Your input is required',
                         metadata: {
                             requestId: syntheticHITL.requestId,
+                            data: syntheticHITL,
                         },
                     });
 
@@ -768,6 +770,16 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                 }
                 if (typeof response === 'object' && response !== null) {
                     const obj = response as Record<string, any>;
+
+                    // HITL selection responses: use selectedLabel if available
+                    if ('selectedLabel' in obj && typeof obj.selectedLabel === 'string') {
+                        return obj.selectedLabel;
+                    }
+                    // HITL multi-selection responses: use selectedLabels if available
+                    if ('selectedLabels' in obj && Array.isArray(obj.selectedLabels)) {
+                        return obj.selectedLabels.join(', ');
+                    }
+
                     // Common patterns: {feedback: "..."}, {value: "..."}, {response: "..."}, {message: "..."}
                     const textValue = obj.feedback || obj.value || obj.response || obj.message || obj.text;
                     if (typeof textValue === 'string' && textValue) return textValue;
@@ -830,6 +842,7 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                             content: hitlRequest.message || hitlRequest.prompt || 'Your input is required to continue',
                             metadata: {
                                 requestId: hitlRequest.requestId,
+                                data: hitlRequest,
                             },
                         });
 
@@ -866,6 +879,7 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                         content: syntheticHITL.prompt || syntheticHITL.message || 'Your input is required',
                         metadata: {
                             requestId: syntheticHITL.requestId,
+                            data: syntheticHITL,
                         },
                     });
 

@@ -35,9 +35,7 @@ export const HITLTypeSchema = z.enum([
 export const HITLOptionSchema = z.object({
     id: z.string(),
     label: z.string(),
-    value: z.unknown(),
-    description: z.string().optional(),
-    icon: z.string().nullish()
+    value: z.unknown()
 });
 
 /**
