@@ -7,13 +7,16 @@ import MarkdownRenderer from './artifacts/MarkdownRenderer';
 interface HITLMessageCardProps {
     request: HITLRequestPayload;
     onRespond: (response: Record<string, unknown>) => void;
+    onAppendToInput?: (text: string) => void;
+    disabled?: boolean;
 }
 
-export default function HITLMessageCard({ request, onRespond }: HITLMessageCardProps) {
+export default function HITLMessageCard({ request, onRespond, onAppendToInput, disabled = false }: HITLMessageCardProps) {
     const [selectedOptions, setSelectedOptions] = useState<unknown[]>([]);
     const [feedbackText, setFeedbackText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const isDisabled = disabled || isSubmitted;
     const [pageFeedback, setPageFeedback] = useState<Record<string, string>>({});
 
     useEffect(() => {
@@ -36,11 +39,18 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
         if (selectedOptions.length === 0) return;
         setIsSubmitting(true);
         if (isMulti) {
-            // For multi-select, include both values and labels
-            const selectedLabels = request.options
+            // For multi-select, append comma-separated values to chat input
+            const selectedValues = request.options
                 ?.filter(opt => selectedOptions.includes(opt.value))
-                .map(opt => opt.label) || [];
-            onRespond({ selected: selectedOptions, selectedLabels });
+                .map(opt => String(opt.value)) || [];
+            if (onAppendToInput) {
+                onAppendToInput(selectedValues.join(', '));
+            } else {
+                const selectedLabels = request.options
+                    ?.filter(opt => selectedOptions.includes(opt.value))
+                    .map(opt => opt.label) || [];
+                onRespond({ selected: selectedOptions, selectedLabels });
+            }
         } else {
             // For single select, include both value and label
             const selectedOption = request.options?.find(opt => opt.value === selectedOptions[0]);
@@ -145,10 +155,10 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                                         onChange={() => selectSingleOption(option.value)}
                                         className="mt-0.5 h-4 w-4 text-blue-600 border-slate-300 focus:ring-blue-500"
                                     />
-                                    <div className="flex-1">
-                                        <span className="text-[14px] font-medium text-slate-800 block leading-tight">{option.label}</span>
+                                    <div className="flex-1 min-w-0">
+                                        <span className="text-[14px] font-medium text-slate-800 block leading-tight break-all">{option.label}</span>
                                         {option.description && (
-                                            <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed">{option.description}</p>
+                                            <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed break-words">{option.description}</p>
                                         )}
                                     </div>
                                 </label>
@@ -157,10 +167,10 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
 
                         <button
                             onClick={() => handleSelection(false)}
-                            disabled={isSubmitting || selectedOptions.length === 0}
+                            disabled={isDisabled || isSubmitting || selectedOptions.length === 0}
                             className="w-full px-4 py-2.5 bg-slate-900 text-white text-[14px] font-medium rounded-xl hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                         >
-                            {isSubmitted ? 'Submitted' : isSubmitting ? 'Submitting...' : 'Confirm Selection'}
+                            {isDisabled ? 'Submitted' : isSubmitting ? 'Submitting...' : 'Confirm Selection'}
                         </button>
                     </div>
                 </div>
@@ -203,10 +213,10 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                                         disabled={selectedOptions.length >= 5 && !selectedOptions.includes(option.value)}
                                         className="mt-0.5 h-4 w-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                     />
-                                    <div className="flex-1">
-                                        <span className="text-[14px] font-medium text-slate-800 block leading-tight">{String(option.value)}</span>
+                                    <div className="flex-1 min-w-0">
+                                        <span className="text-[14px] font-medium text-slate-800 block leading-tight break-all">{String(option.value)}</span>
                                         {option.description && (
-                                            <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed">{option.description}</p>
+                                            <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed break-words">{option.description}</p>
                                         )}
                                     </div>
                                 </label>
@@ -215,10 +225,10 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
 
                         <button
                             onClick={() => handleSelection(true)}
-                            disabled={isSubmitting || selectedOptions.length === 0}
+                            disabled={isDisabled || isSubmitting || selectedOptions.length === 0}
                             className="w-full px-4 py-2.5 bg-slate-900 text-white text-[14px] font-medium rounded-xl hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                         >
-                            {isSubmitted ? 'Submitted' : isSubmitting ? 'Submitting...' : `Confirm Selection ${selectedOptions.length > 0 ? `(${selectedOptions.length}/5)` : ''}`}
+                            {isDisabled ? 'Submitted' : isSubmitting ? 'Submitting...' : `Confirm Selection ${selectedOptions.length > 0 ? `(${selectedOptions.length}/5)` : ''}`}
                         </button>
                     </div>
                 </div>
@@ -252,10 +262,10 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
 
                         <button
                             onClick={handleFeedback}
-                            disabled={isSubmitting || !feedbackText.trim()}
+                            disabled={isDisabled || isSubmitting || !feedbackText.trim()}
                             className="w-full mt-4 px-4 py-2.5 bg-slate-900 text-white text-[14px] font-medium rounded-xl hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                         >
-                            {isSubmitted ? 'Submitted' : isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+                            {isDisabled ? 'Submitted' : isSubmitting ? 'Submitting...' : 'Submit Feedback'}
                         </button>
                     </div>
                 </div>
@@ -289,10 +299,10 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
 
                         <button
                             onClick={handleFeedback}
-                            disabled={isSubmitting || !feedbackText.trim()}
+                            disabled={isDisabled || isSubmitting || !feedbackText.trim()}
                             className="w-full mt-4 px-4 py-2.5 bg-slate-900 text-white text-[14px] font-medium rounded-xl hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                         >
-                            {isSubmitted ? 'Submitted' : isSubmitting ? 'Submitting...' : 'Submit Input'}
+                            {isDisabled ? 'Submitted' : isSubmitting ? 'Submitting...' : 'Submit Input'}
                         </button>
                     </div>
                 </div>
@@ -326,10 +336,10 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
 
                         <button
                             onClick={handleFeedback}
-                            disabled={isSubmitting || !feedbackText.trim()}
+                            disabled={isDisabled || isSubmitting || !feedbackText.trim()}
                             className="w-full mt-4 px-4 py-2.5 bg-slate-900 text-white text-[14px] font-medium rounded-xl hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                         >
-                            {isSubmitted ? 'Submitted' : isSubmitting ? 'Submitting...' : 'Submit Topic'}
+                            {isDisabled ? 'Submitted' : isSubmitting ? 'Submitting...' : 'Submit Topic'}
                         </button>
                     </div>
                 </div>
@@ -372,10 +382,10 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                                         disabled={selectedOptions.length >= 5 && !selectedOptions.includes(option.value)}
                                         className="mt-0.5 h-4 w-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                     />
-                                    <div className="flex-1">
-                                        <span className="text-[14px] font-medium text-slate-800 block leading-tight">{option.label}</span>
+                                    <div className="flex-1 min-w-0">
+                                        <span className="text-[14px] font-medium text-slate-800 block leading-tight break-all">{option.label}</span>
                                         {option.description && (
-                                            <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed">{option.description}</p>
+                                            <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed break-words">{option.description}</p>
                                         )}
                                     </div>
                                 </label>
@@ -384,10 +394,10 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
 
                         <button
                             onClick={() => handleSelection(true)}
-                            disabled={isSubmitting || selectedOptions.length === 0}
+                            disabled={isDisabled || isSubmitting || selectedOptions.length === 0}
                             className="w-full px-4 py-2.5 bg-slate-900 text-white text-[14px] font-medium rounded-xl hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                         >
-                            {isSubmitted ? 'Submitted' : isSubmitting ? 'Submitting...' : `Confirm Selection ${selectedOptions.length > 0 ? `(${selectedOptions.length}/5)` : ''}`}
+                            {isDisabled ? 'Submitted' : isSubmitting ? 'Submitting...' : `Confirm Selection ${selectedOptions.length > 0 ? `(${selectedOptions.length}/5)` : ''}`}
                         </button>
                     </div>
                 </div>
@@ -532,14 +542,14 @@ export default function HITLMessageCard({ request, onRespond }: HITLMessageCardP
                                 disabled={isSubmitting}
                                 className="flex-1 px-4 py-2.5 bg-emerald-600 text-white text-[14px] font-medium rounded-xl hover:bg-emerald-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                             >
-                                {isSubmitted ? 'Submitted' : 'Approve All'}
+                                {isDisabled ? 'Submitted' : 'Approve All'}
                             </button>
                             <button
                                 onClick={handleSubmitFeedback}
                                 disabled={isSubmitting}
                                 className="flex-1 px-4 py-2.5 bg-violet-600 text-white text-[14px] font-medium rounded-xl hover:bg-violet-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                             >
-                                {isSubmitted ? 'Submitted' : 'Submit Feedback'}
+                                {isDisabled ? 'Submitted' : 'Submit Feedback'}
                             </button>
                         </div>
                     </div>

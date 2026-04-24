@@ -92,7 +92,7 @@ export default function ChatMessage({ message, onHITLRespond }: ChatMessageProps
             <div className="flex justify-end my-2">
                 <div className="flex flex-col items-end max-w-[70%] text-[15px]">
                     <div className="bg-gradient-to-tr from-blue-600 to-blue-500 text-white px-5 py-3.5 rounded-2xl rounded-br-sm shadow-md shadow-blue-500/10 hover:shadow-blue-500/20 transition-shadow">
-                        <MarkdownRenderer content={message.content} accentColor="blue" />
+                        <MarkdownRenderer content={message.content} accentColor="blue" invert />
                     </div>
                     <span className="text-[11px] text-slate-400 mt-1.5 mr-2 font-medium">
                         {formatTime(message.timestamp)}

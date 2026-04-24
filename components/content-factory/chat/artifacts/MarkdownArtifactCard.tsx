@@ -290,7 +290,11 @@ function ContentHeader({ content, accentColor }: { content: Record<string, unkno
 }
 
 function preprocessMarkdown(content: string): string {
-    let result = content.replace(/```markdown\n?/g, '').replace(/```\n?/g, '');
+    let result = content;
+    const fencedMatch = result.match(/^```(?:markdown)?\s*\n([\s\S]*?)\n```\s*$/);
+    if (fencedMatch) {
+        result = fencedMatch[1];
+    }
     result = result.replace(/([^\n])\n(\[[a-z0-9]+\])/g, '$1\n\n$2');
 
     return result.trim();
