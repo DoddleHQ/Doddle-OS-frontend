@@ -1,10 +1,15 @@
 'use client';
 
+import { useParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { BarChart3, ShieldCheck, Search } from 'lucide-react';
+import { TechnicalAuditButton } from '@/components/business-audit';
 
 export default function BusinessAuditPage() {
+    const params = useParams();
+    const workspaceId = params.workspaceId as string;
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -12,7 +17,10 @@ export default function BusinessAuditPage() {
                     <h1 className="text-2xl font-bold text-neutral-900">Business Audit</h1>
                     <p className="text-neutral-600">Comprehensive analysis of brand voice, strategy, and business health</p>
                 </div>
-                <Badge variant="warning" withDot>Agents Initializing</Badge>
+                <div className="flex gap-2 items-center">
+                    <Badge variant="warning" withDot>Agents Initializing</Badge>
+                    <TechnicalAuditButton workspaceId={workspaceId} />
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

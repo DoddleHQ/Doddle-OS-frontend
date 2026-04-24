@@ -394,8 +394,8 @@ function MessageRenderer({
     if (message.type === 'user') {
         return (
             <div className="flex justify-end my-4">
-                <div className="bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-br-sm max-w-[80%] shadow-sm">
-                    <MarkdownRenderer content={message.content} accentColor="blue" />
+                <div className="bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-br-sm max-w-[80%] shadow-sm min-w-0 overflow-hidden">
+                    <MarkdownRenderer content={message.content} accentColor="blue" invert />
                 </div>
             </div>
         );
@@ -412,22 +412,11 @@ function MessageRenderer({
         );
     }
 
-    // Step messages - similar to system but with step info
+    // Step messages - show description without step counter
     if (message.type === 'step') {
-        const stepNumber = metadata?.stepNumber;
-        const totalSteps = metadata?.totalSteps;
-        const stepLabel = stepNumber && totalSteps
-            ? `Step ${stepNumber}/${totalSteps}`
-            : '';
-
         return (
             <div className="flex justify-center my-2">
                 <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-xs font-medium">
-                    {stepLabel && (
-                        <span className="bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full">
-                            {stepLabel}
-                        </span>
-                    )}
                     <MarkdownRenderer content={message.content} accentColor="blue" />
                 </div>
             </div>
@@ -490,6 +479,8 @@ function MessageRenderer({
                     <HITLMessageCard
                         request={hitlData}
                         onRespond={onHITLRespond as (response: Record<string, unknown>) => void}
+                        onAppendToInput={onAppendToInput}
+                        disabled={!isActive}
                     />
                 </div>
             );
