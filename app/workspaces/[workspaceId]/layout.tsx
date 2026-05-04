@@ -177,11 +177,16 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
               </Button>
             )}
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-neutral-500">Marketing OS</span>
+              <Link href={`/workspaces/${workspaceId}/mission-control`} className="text-sm font-medium text-neutral-500 hover:text-neutral-700 transition-colors">
+                Marketing OS
+              </Link>
               <span className="text-neutral-300">/</span>
-              <span className="text-sm font-semibold text-neutral-900">
-                {modules.find((m) => pathname.startsWith(m.path))?.name || 'Mission Control'}
-              </span>
+              <Link
+                href={activeModule.path}
+                className="text-sm font-semibold text-neutral-900 hover:text-neutral-700 transition-colors"
+              >
+                {activeModule.name}
+              </Link>
             </div>
           </div>
 
