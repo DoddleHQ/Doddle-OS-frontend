@@ -130,7 +130,7 @@ export async function getThreadState(threadId: string): Promise<ThreadState | nu
  * @example
  * // Thread-based run with HITL resumption
  * const result = await streamLangGraphEvents({
- *     assistantId: "browsing_architect",
+ *     assistantId: "content_architect",
  *     input: { website_url: "https://example.com" },
  *     threadId: "existing-thread-id", // or omit to create new thread
  *     onEvent: (event) => console.log('Event:', event),
@@ -139,7 +139,7 @@ export async function getThreadState(threadId: string): Promise<ThreadState | nu
  * @example
  * // Resume after HITL interrupt
  * const result = await streamLangGraphEvents({
- *     assistantId: "browsing_architect",
+ *     assistantId: "content_architect",
  *     threadId: "same-thread-id-as-before",
  *     command: { resume: { approved: true, selected_pages: [...] } },
  *     onEvent: (event) => console.log('Event:', event),
@@ -396,7 +396,7 @@ export async function streamLangGraphEvents<T = any>(options: StreamOptions): Pr
  * // Resume with user's approval
  * const result = await resumeLangGraphWorkflow(
  *     "thread-123",
- *     "browsing_architect",
+ *     "content_architect",
  *     { approved: true, selected_pages: ["/about", "/services"] }
  * );
  */

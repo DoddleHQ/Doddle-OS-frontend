@@ -39,7 +39,7 @@ export default function ArtifactCardShell({
 
     return (
         <div className="flex justify-start my-4 w-full">
-            <div className="flex gap-2 sm:gap-3 w-full max-w-[95%] sm:max-w-[85%]">
+            <div className="flex gap-2 sm:gap-3 w-full">
                 <div className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full ${iconBg} flex items-center justify-center`}>
                     {icon}
                 </div>

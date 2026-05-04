@@ -570,7 +570,7 @@ export type BrowsingArchitectStepId = typeof BROWSING_ARCHITECT_STEPS[number]['i
  * Helper to get step info by ID
  */
 export function getStepInfo(stepId: string, graphId: string) {
-    if (graphId === 'browsing-architect') {
+    if (graphId === 'content-architect') {
         return BROWSING_ARCHITECT_STEPS.find(s => s.id === stepId);
     }
     return undefined;

@@ -66,7 +66,7 @@ export default function NewProjectPage() {
         messages,
         artifacts,
     } = useLangGraphStream({
-        graphId: 'browsing_architect',
+        graphId: 'content_architect',
         workspaceId,
         onComplete: (summary) => {
             console.log('Workflow completed:', summary);
@@ -197,7 +197,7 @@ export default function NewProjectPage() {
             {/* Status indicator when running (but not during HITL) */}
             {isRunning && !isHITLPending && (
                 <div className="flex-shrink-0 bg-blue-50/50 backdrop-blur border-b border-blue-100/50 px-6 py-2.5 sticky top-0 z-10 transition-all">
-                    <div className="max-w-4xl mx-auto">
+                    <div className="max-w-6xl mx-auto">
                         <div className="flex items-center justify-center gap-2 text-[13px] font-medium text-blue-700 mb-2">
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             <span>
@@ -221,7 +221,7 @@ export default function NewProjectPage() {
             {/* HITL Pending Status Banner */}
             {isHITLPending && (
                 <div className="flex-shrink-0 bg-amber-50/50 backdrop-blur border-b border-amber-100/50 px-6 py-2.5 sticky top-0 z-10 transition-all">
-                    <div className="max-w-4xl mx-auto">
+                    <div className="max-w-6xl mx-auto">
                         <div className="flex items-center justify-center gap-2 text-[13px] font-medium text-amber-700">
                             <AlertCircle className="h-3.5 w-3.5" />
                             <span>Waiting for your response - please check the chat or enter your feedback below</span>
@@ -235,7 +235,7 @@ export default function NewProjectPage() {
                 ref={chatContainerRef}
                 className="flex-1 overflow-y-auto px-4 sm:px-6 py-8 scroll-smooth"
             >
-                <div className="max-w-4xl mx-auto space-y-6">
+                <div className="w-full space-y-6">
                     {/* Welcome message if no messages yet */}
                     {messages.length === 0 && (
                         <div className="flex flex-col items-center justify-center h-full min-h-[50vh] text-center px-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -324,7 +324,7 @@ export default function NewProjectPage() {
             <div className="border-t border-slate-200/80 bg-white/80 backdrop-blur-sm">
                 {/* Toggle - only show before workflow starts */}
                 {!isRunning && messages.length === 0 && (
-                    <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-3">
+                    <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3">
                         <button
                             type="button"
                             onClick={() => setSearchAnalytics(prev => !prev)}
@@ -394,7 +394,7 @@ function MessageRenderer({
     if (message.type === 'user') {
         return (
             <div className="flex justify-end my-4">
-                <div className="bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-br-sm max-w-[80%] shadow-sm min-w-0 overflow-hidden">
+                <div className="bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-br-sm max-w-[65%] shadow-sm min-w-0 overflow-hidden">
                     <MarkdownRenderer content={message.content} accentColor="blue" invert />
                 </div>
             </div>
@@ -415,9 +415,14 @@ function MessageRenderer({
     // Step messages - show description without step counter
     if (message.type === 'step') {
         return (
-            <div className="flex justify-center my-2">
-                <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-xs font-medium">
-                    <MarkdownRenderer content={message.content} accentColor="blue" />
+            <div className="flex justify-start my-4">
+                <div className="flex gap-3 max-w-[75%]">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                        <Bot className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 px-5 py-3 rounded-2xl rounded-tl-sm">
+                        <MarkdownRenderer content={message.content} accentColor="blue" />
+                    </div>
                 </div>
             </div>
         );
@@ -427,7 +432,7 @@ function MessageRenderer({
     if (message.type === 'agent') {
         return (
             <div className="flex justify-start my-4">
-                <div className="flex gap-3 max-w-[85%]">
+                <div className="flex gap-3 max-w-[75%]">
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-sm">
                         <Bot className="w-4 h-4 text-white" />
                     </div>
@@ -475,7 +480,7 @@ function MessageRenderer({
                 return null;
             }
             return (
-                <div className="flex justify-center my-4">
+                <div className="flex justify-start my-4">
                     <HITLMessageCard
                         request={hitlData}
                         onRespond={onHITLRespond as (response: Record<string, unknown>) => void}
@@ -488,7 +493,7 @@ function MessageRenderer({
 
         return (
             <div className="flex justify-start my-4">
-                <div className="flex gap-3 max-w-[85%]">
+                <div className="flex gap-3 max-w-[75%]">
                     <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isActive ? 'bg-amber-100' : 'bg-slate-100'}`}>
                         <AlertCircle className={`w-4 h-4 ${isActive ? 'text-amber-600' : 'text-slate-400'}`} />
                     </div>

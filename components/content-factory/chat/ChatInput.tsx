@@ -39,7 +39,7 @@ export default function ChatInput({
 
     return (
         <div className="sticky bottom-0 bg-gradient-to-t from-slate-50 via-slate-50 to-transparent pt-6 pb-6 px-4 sm:px-6 z-20">
-            <div className="flex flex-col gap-2 max-w-4xl mx-auto relative group">
+            <div className="flex flex-col gap-2 max-w-6xl mx-auto relative group">
                 <div className={`relative flex items-end w-full rounded-[24px] transition-all shadow-sm ${disabled ? 'bg-slate-100 border border-slate-200' : 'bg-white border border-slate-300 hover:border-slate-400 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400'
                     }`}>
                     <div className={`absolute inset-0 -m-1 rounded-[24px] bg-gradient-to-r from-blue-500 to-indigo-500 blur-md opacity-20 transition-opacity duration-300 pointer-events-none ${disabled ? 'opacity-0' : 'group-focus-within:opacity-30 hover:opacity-20'}`} />
