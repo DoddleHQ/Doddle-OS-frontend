@@ -190,37 +190,42 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
                     </div>
                     <div className="flex-1">
                         <h4 className="text-[13px] font-bold text-indigo-600 uppercase tracking-wider mb-1.5">Multiple Selection Required</h4>
-                        <div className="text-[15px] text-slate-700 mb-2 leading-relaxed">
-                            <MarkdownRenderer content={getMessage()} accentColor="indigo" />
+                        <div className="space-y-1.5 text-[13px] text-slate-500 mb-4">
+                            <p>Please provide the URLs you want to scrape, one per line:</p>
+                            <p className="text-[12px] text-slate-400">You can paste any combination of the URLs listed below.</p>
+                            <p className="text-[12px] text-slate-400">Or comma-separated.</p>
+                            <p className="text-[12px] text-slate-400">You can also add additional URLs manually using: <code className="bg-slate-100 px-1 py-0.5 rounded text-[11px] font-mono">Add: https://example.com/page - Page Name</code></p>
+                            <p className="text-[12px] font-medium text-slate-600">Select up to 5 options</p>
                         </div>
-                        <p className="text-[13px] text-slate-500 mb-5">Select up to 5 options</p>
 
                         <div className="space-y-2 mb-5 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-                            {request.options.map((option: HITLOption) => (
-                                <label
-                                    key={option.id}
-                                    className={`flex items-start gap-3 p-3.5 rounded-xl cursor-pointer transition-all border ${selectedOptions.includes(option.value)
-                                        ? 'bg-indigo-50/80 border-indigo-300 shadow-sm'
-                                        : 'bg-white border-slate-200 hover:border-indigo-200 hover:bg-slate-50'
-                                        } ${selectedOptions.length >= 5 && !selectedOptions.includes(option.value)
-                                            ? 'opacity-50 cursor-not-allowed'
-                                            : ''}`}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedOptions.includes(option.value)}
-                                        onChange={() => toggleOption(option.value)}
-                                        disabled={selectedOptions.length >= 5 && !selectedOptions.includes(option.value)}
-                                        className="mt-0.5 h-4 w-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                        <span className="text-[14px] font-medium text-slate-800 block leading-tight break-all">{String(option.value)}</span>
-                                        {option.description && (
-                                            <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed break-words">{option.description}</p>
-                                        )}
-                                    </div>
-                                </label>
-                            ))}
+                            {request.options.map((option: HITLOption) => {
+                                const displayLabel = option.label && option.label.trim() !== '' && option.label !== String(option.value)
+                                    ? option.label
+                                    : String(option.value);
+                                return (
+                                    <label
+                                        key={option.id}
+                                        className={`flex items-start gap-3 p-3.5 rounded-xl cursor-pointer transition-all border ${selectedOptions.includes(option.value)
+                                            ? 'bg-indigo-50/80 border-indigo-300 shadow-sm'
+                                            : 'bg-white border-slate-200 hover:border-indigo-200 hover:bg-slate-50'
+                                            } ${selectedOptions.length >= 5 && !selectedOptions.includes(option.value)
+                                                ? 'opacity-50 cursor-not-allowed'
+                                                : ''}`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedOptions.includes(option.value)}
+                                            onChange={() => toggleOption(option.value)}
+                                            disabled={selectedOptions.length >= 5 && !selectedOptions.includes(option.value)}
+                                            className="mt-0.5 h-4 w-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        />
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-[14px] font-medium text-slate-800 block leading-tight break-all">{String(option.value)}</span>
+                                        </div>
+                                    </label>
+                                );
+                            })}
                         </div>
 
                         <button
