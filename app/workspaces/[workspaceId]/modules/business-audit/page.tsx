@@ -131,7 +131,7 @@ export default function BusinessAuditPage() {
                         </div>
                         <h3 className="text-xl font-semibold text-slate-900 mb-2">No audits yet</h3>
                         <p className="text-sm text-slate-700 max-w-sm">
-                            Start a technical audit to analyze a website's SEO and performance.
+                            Start a technical audit to analyze a website&apos;s SEO and performance.
                         </p>
                     </div>
                 </div>
