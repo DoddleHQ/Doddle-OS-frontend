@@ -107,17 +107,18 @@ export default function LinkListArtifactCard({
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="font-medium text-slate-800">{artifact.title}</p>
-                                {artifact.description && (
-                                    <p className="text-xs text-slate-500 mt-0.5">{artifact.description}</p>
-                                )}
                             </div>
                             <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">
                                 {artifact.artifactType}
                             </span>
                         </div>
-                        <p className="text-[13px] text-slate-500 mt-2">
-                            Select up to {MAX_SELECTIONS} links ({allLinks.length} available)
-                        </p>
+                        <div className="mt-2 space-y-1.5 text-[13px] text-slate-500">
+                            <p>Please provide the URLs you want to scrape, one per line:</p>
+                            <p className="text-[12px] text-slate-400">You can paste any combination of the URLs listed below.</p>
+                            <p className="text-[12px] text-slate-400">Or comma-separated.</p>
+                            <p className="text-[12px] text-slate-400">You can also add additional URLs manually using: <code className="bg-slate-100 px-1 py-0.5 rounded text-[11px] font-mono">Add: https://example.com/page - Page Name</code></p>
+                            <p className="text-[12px] font-medium text-slate-600">Select up to {MAX_SELECTIONS} options</p>
+                        </div>
                     </div>
 
                     <div className="px-5 py-3 space-y-1.5 max-h-[350px] overflow-y-auto">
@@ -144,22 +145,9 @@ export default function LinkListArtifactCard({
                                         className="mt-0.5 h-4 w-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                     />
                                     <div className="flex-1 min-w-0">
-                                        <span className="text-[14px] font-medium text-slate-800 block leading-tight truncate">
+                                        <span className="text-[14px] font-medium text-slate-800 block leading-tight">
                                             {getDisplayLabel(link)}
                                         </span>
-                                        <span className="text-[12px] text-slate-500 mt-0.5 block font-mono truncate">
-                                            {link.url}
-                                        </span>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-[11px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
-                                                {link.category}
-                                            </span>
-                                            {link.predictedType && link.predictedType !== 'custom' && (
-                                                <span className="text-[11px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
-                                                    {link.predictedType}
-                                                </span>
-                                            )}
-                                        </div>
                                     </div>
                                     <a
                                         href={link.url}
