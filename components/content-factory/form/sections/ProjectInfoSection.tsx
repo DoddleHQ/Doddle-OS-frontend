@@ -8,13 +8,6 @@ import { FormSectionProps } from '../../types/project-form.types';
 import { validateField } from '../../utils/form-validation';
 import { debounce } from '../../utils/form-validation';
 
-/**
- * ProjectInfoSection Component
- *
- * Form section for project information including name, description, and website URL.
- *
- * @component
- */
 export const ProjectInfoSection: React.FC<FormSectionProps> = ({
     formData,
     errors,

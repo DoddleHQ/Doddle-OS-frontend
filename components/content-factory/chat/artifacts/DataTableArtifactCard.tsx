@@ -12,14 +12,6 @@ interface DataTableArtifactCardProps {
     copiedArtifactId: string | null;
 }
 
-/**
- * DataTableArtifactCard renders `data_table` artifacts.
- *
- * Handles three sub-types based on stepId:
- * - Home Page Data (home_scraping): URL, title, headings, meta
- * - Site Context (site_context): business info, services, audience
- * - Tech Stack Research (tech_research): stack, conventions, best practices
- */
 export default function DataTableArtifactCard({
     artifact,
     onCopyArtifact,
@@ -29,28 +21,17 @@ export default function DataTableArtifactCard({
     const content = artifact.content as Record<string, unknown>;
     const stepId = artifact.metadata?.stepId as string | undefined;
 
-    // Debug: Log content structure for troubleshooting
-    console.log('[DataTableArtifactCard] artifact.title:', artifact.title);
-    console.log('[DataTableArtifactCard] stepId:', stepId);
-    console.log('[DataTableArtifactCard] content keys:', Object.keys(content));
-    console.log('[DataTableArtifactCard] has meta_title:', 'meta_title' in content);
-    console.log('[DataTableArtifactCard] has headings:', 'headings' in content);
-    console.log('[DataTableArtifactCard] has content_stats:', 'content_stats' in content);
-
-    // Determine sub-type for icon and accent
     const isSiteContext = stepId === 'site_context' ||
         artifact.title.toLowerCase().includes('site context');
     const isTechStack = stepId === 'tech_research' ||
         artifact.title.toLowerCase().includes('tech stack');
-    // Check for home page data by stepId, title, or content structure
+
     const isHomePage = stepId === 'home_scraping' ||
         artifact.title.toLowerCase().includes('home page') ||
-        // Detect by content structure: has meta_title, meta_description, headings, or content_stats
+       
         'meta_title' in content ||
         'headings' in content ||
         'content_stats' in content;
-
-    console.log('[DataTableArtifactCard] isHomePage:', isHomePage);
 
     const icon = isSiteContext
         ? <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-600" />
@@ -83,7 +64,6 @@ export default function DataTableArtifactCard({
     );
 }
 
-/** Site Context: business info key-value cards */
 function SiteContextView({ content }: { content: Record<string, unknown> }) {
     const keyServices = content.key_services as string[] | undefined;
     const brandVoice = content.brand_voice as Record<string, unknown> | undefined;
@@ -143,7 +123,6 @@ function SiteContextView({ content }: { content: Record<string, unknown> }) {
     );
 }
 
-/** Tech Stack Research: conventions + best practices */
 function TechStackView({ content }: { content: Record<string, unknown> }) {
     const conventions = content.conventions as Record<string, string> | undefined;
     const bestPractices = content.best_practices as string[] | undefined;
@@ -197,7 +176,6 @@ function TechStackView({ content }: { content: Record<string, unknown> }) {
     );
 }
 
-/** Home Page Data: title, meta, headings */
 function HomePageView({ content }: { content: HomePageData }) {
     const headings = content.headings;
     const url = content.url;
@@ -259,7 +237,6 @@ function HomePageView({ content }: { content: HomePageData }) {
     );
 }
 
-/** Fallback: generic key-value pairs as JSON-like display */
 function GenericDataView({ content }: { content: Record<string, unknown> }) {
     return (
         <div className="space-y-2">
@@ -271,7 +248,6 @@ function GenericDataView({ content }: { content: Record<string, unknown> }) {
     );
 }
 
-/** Shared components */
 function KeyValueRow({ label, value }: { label: string; value?: string | null }) {
     if (!value) return null;
     return (

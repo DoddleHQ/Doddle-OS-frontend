@@ -3,33 +3,10 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-/**
- * CharacterCounter Component
- *
- * Displays a character count for text inputs with visual feedback
- * when approaching or exceeding the limit.
- *
- * @component
- */
 export interface CharacterCounterProps {
-    /**
-     * Current character count
-     */
     current: number;
-
-    /**
-     * Maximum allowed characters
-     */
     max: number;
-
-    /**
-     * Optional custom className
-     */
     className?: string;
-
-    /**
-     * Optional test ID for testing purposes
-     */
     testId?: string;
 }
 

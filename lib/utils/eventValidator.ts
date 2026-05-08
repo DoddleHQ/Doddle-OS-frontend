@@ -24,7 +24,8 @@ export const HITLTypeSchema = z.enum([
     'selection',
     'multi_selection',
     'feedback',
-    'data_input'
+    'data_input',
+    'per_page_feedback'
 ]);
 
 /**
@@ -34,9 +35,7 @@ export const HITLTypeSchema = z.enum([
 export const HITLOptionSchema = z.object({
     id: z.string(),
     label: z.string(),
-    value: z.unknown(),
-    description: z.string().optional(),
-    icon: z.string().optional()
+    value: z.unknown()
 });
 
 /**
@@ -55,7 +54,7 @@ export const HITLInterruptPayloadSchema = z.object({
     hitl_type: HITLTypeSchema,
     message: z.string(),
     request_id: z.string().optional(),
-    options: z.array(HITLOptionSchema).optional(),
+    options: z.array(HITLOptionSchema).nullish(),
     allow_free_input: z.boolean().optional(),
     default: z.unknown().optional(),
     data: z.record(z.unknown()).optional(),

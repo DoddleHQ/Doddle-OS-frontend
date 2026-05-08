@@ -5,42 +5,13 @@ import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
 import { ContentType, CONTENT_TYPE_LABELS } from '../types/project-form.types';
 
-/**
- * ContentTypesSelector Component
- *
- * A multi-select component for choosing content types using checkboxes.
- *
- * @component
- */
+
 export interface ContentTypesSelectorProps {
-    /**
-     * Currently selected content types
-     */
     selected: ContentType[];
-
-    /**
-     * Callback when selection changes
-     */
     onChange: (selected: ContentType[]) => void;
-
-    /**
-     * Error message to display
-     */
     error?: string;
-
-    /**
-     * Optional custom className
-     */
     className?: string;
-
-    /**
-     * Optional test ID for testing purposes
-     */
     testId?: string;
-
-    /**
-     * Optional disabled state
-     */
     disabled?: boolean;
 }
 

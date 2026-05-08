@@ -1,12 +1,3 @@
-/**
- * TypeScript types and interfaces for the Project Initialization Modal
- * in the Content Factory module.
- */
-
-// ============================================
-// Content Types
-// ============================================
-
 export type ContentType =
     | 'blog'
     | 'social'
@@ -24,17 +15,9 @@ export const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
     'case-study': 'Case Studies',
 };
 
-// ============================================
-// Content Velocity Options
-// ============================================
-
 export type ContentVelocity = 1 | 2 | 3 | 4 | 5 | 10;
 
 export const CONTENT_VELOCITY_OPTIONS: ContentVelocity[] = [1, 2, 3, 4, 5, 10];
-
-// ============================================
-// Team Member
-// ============================================
 
 export interface TeamMember {
     id: string;
@@ -44,10 +27,6 @@ export interface TeamMember {
     initials: string;
 }
 
-// ============================================
-// Advanced Options
-// ============================================
-
 export interface AdvancedOptions {
     enableSeoOptimization: boolean;
     includeGscData: boolean;
@@ -55,10 +34,6 @@ export interface AdvancedOptions {
     useCustomTechStack: boolean;
     customTechStack?: string;
 }
-
-// ============================================
-// Form Data
-// ============================================
 
 export interface ProjectFormData {
     projectName: string;
@@ -73,10 +48,6 @@ export interface ProjectFormData {
     advancedOptions: AdvancedOptions;
 }
 
-// ============================================
-// Form Validation Errors
-// ============================================
-
 export interface FormValidationErrors {
     projectName?: string;
     projectDescription?: string;
@@ -88,26 +59,14 @@ export interface FormValidationErrors {
     customTechStack?: string;
 }
 
-// ============================================
-// Form Field State
-// ============================================
-
 export interface FormFieldState<T = string> {
     value: T;
     touched: boolean;
     error?: string;
 }
 
-// ============================================
-// Modal/Page State
-// ============================================
-
 export type ModalState = 'idle' | 'loading' | 'submitting' | 'success' | 'error';
 export type PageState = 'idle' | 'submitting' | 'success' | 'error';
-
-// ============================================
-// API Request/Response Types
-// ============================================
 
 export interface CreateProjectRequest {
     projectName: string;
@@ -142,28 +101,16 @@ export interface ErrorResponse {
     };
 }
 
-// ============================================
-// Content Type Option (for selector)
-// ============================================
-
 export interface ContentTypeOption {
     value: ContentType;
     label: string;
     icon?: React.ComponentType<{ className?: string }>;
 }
 
-// ============================================
-// Content Velocity Option (for selector)
-// ============================================
-
 export interface VelocityOption {
     value: ContentVelocity;
     label: string;
 }
-
-// ============================================
-// Team Role Types
-// ============================================
 
 export type TeamRole = 'project-lead' | 'content-writer' | 'content-reviewer';
 
@@ -173,10 +120,6 @@ export const TEAM_ROLE_LABELS: Record<TeamRole, string> = {
     'content-reviewer': 'Content Reviewer',
 };
 
-// ============================================
-// Form Section Props
-// ============================================
-
 export interface FormSectionProps {
     formData: ProjectFormData;
     errors: FormValidationErrors;
@@ -184,10 +127,6 @@ export interface FormSectionProps {
     onBlur?: (field: keyof ProjectFormData) => void;
     disabled?: boolean;
 }
-
-// ============================================
-// Validation Rule Types
-// ============================================
 
 export interface ValidationRule {
     required?: boolean;
@@ -200,10 +139,6 @@ export interface ValidationRule {
 export interface ValidationSchema {
     [key: string]: ValidationRule;
 }
-
-// ============================================
-// Default Form Data
-// ============================================
 
 export const DEFAULT_PROJECT_FORM_DATA: ProjectFormData = {
     projectName: '',
@@ -223,10 +158,6 @@ export const DEFAULT_PROJECT_FORM_DATA: ProjectFormData = {
         customTechStack: '',
     },
 };
-
-// ============================================
-// Validation Schema
-// ============================================
 
 export const PROJECT_FORM_VALIDATION_SCHEMA: ValidationSchema = {
     projectName: {

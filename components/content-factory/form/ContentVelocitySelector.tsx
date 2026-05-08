@@ -4,42 +4,12 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { ContentVelocity, CONTENT_VELOCITY_OPTIONS } from '../types/project-form.types';
 
-/**
- * ContentVelocitySelector Component
- *
- * A segmented control for selecting content velocity (articles per week).
- *
- * @component
- */
 export interface ContentVelocitySelectorProps {
-    /**
-     * Currently selected velocity
-     */
     value: ContentVelocity;
-
-    /**
-     * Callback when selection changes
-     */
     onChange: (value: ContentVelocity) => void;
-
-    /**
-     * Error message to display
-     */
     error?: string;
-
-    /**
-     * Optional custom className
-     */
     className?: string;
-
-    /**
-     * Optional test ID for testing purposes
-     */
     testId?: string;
-
-    /**
-     * Optional disabled state
-     */
     disabled?: boolean;
 }
 

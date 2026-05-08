@@ -6,17 +6,11 @@ import { X, CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react'
 export type NotificationVariant = 'success' | 'error' | 'info' | 'warning';
 
 export interface NotificationProps {
-    /** The message to display */
     message: string;
-    /** Visual style variant */
     variant?: NotificationVariant;
-    /** Whether to show the close button */
     showClose?: boolean;
-    /** Callback when close button is clicked */
     onClose?: () => void;
-    /** Additional CSS classes */
     className?: string;
-    /** Whether the notification is visible */
     visible?: boolean;
 }
 
@@ -72,12 +66,6 @@ const variantConfig: Record<NotificationVariant, {
     },
 };
 
-/**
- * Notification Component
- * 
- * A reusable notification banner with optional close button.
- * Supports success, error, info, and warning variants.
- */
 export default function Notification({
     message,
     variant = 'info',

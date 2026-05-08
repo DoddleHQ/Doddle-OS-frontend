@@ -4,49 +4,13 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { AlertCircle } from 'lucide-react';
 
-/**
- * FormField Component
- *
- * A reusable form field wrapper that includes label, input, error message,
- * and optional helper text.
- *
- * @component
- */
 export interface FormFieldProps {
-    /**
-     * The label for the form field
-     */
     label: string;
-
-    /**
-     * Whether the field is required
-     * @default false
-     */
     required?: boolean;
-
-    /**
-     * Error message to display
-     */
     error?: string;
-
-    /**
-     * Helper text to display below the field
-     */
     helperText?: string;
-
-    /**
-     * The input element
-     */
     children: React.ReactNode;
-
-    /**
-     * Optional custom className for the container
-     */
     className?: string;
-
-    /**
-     * Optional test ID for testing purposes
-     */
     testId?: string;
 }
 
@@ -63,13 +27,11 @@ export const FormField: React.FC<FormFieldProps> = ({
 
     return (
         <div className={cn('space-y-1.5', className)} data-testid={testId}>
-            {/* Label */}
             <label className="text-sm font-medium text-neutral-900 flex items-center gap-1">
                 {label}
                 {required && <span className="text-error" aria-label="required">*</span>}
             </label>
 
-            {/* Input Field */}
             <div className={hasError ? 'relative' : ''}>
                 {React.cloneElement(children as React.ReactElement, {
                     className: cn(
@@ -81,7 +43,6 @@ export const FormField: React.FC<FormFieldProps> = ({
                 })}
             </div>
 
-            {/* Error Message */}
             {hasError && (
                 <div
                     id={`${testId}-error`}
@@ -94,7 +55,6 @@ export const FormField: React.FC<FormFieldProps> = ({
                 </div>
             )}
 
-            {/* Helper Text */}
             {!hasError && helperText && (
                 <p id={`${testId}-helper`} className="text-xs text-neutral-500">
                     {helperText}

@@ -148,9 +148,6 @@ export default function SEOClusterPage() {
                       {thread.objective}
                     </p>
                   </div>
-                  <Badge variant={thread.status === 'active' ? 'success' : 'warning'}>
-                    {thread.status}
-                  </Badge>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">

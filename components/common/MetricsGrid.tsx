@@ -18,8 +18,6 @@ interface MetricsGridProps {
     className?: string;
 }
 
-// Helper to determine card theme based on label (case-insensitive partial match)
-// This serves as a default fallback if no explicit intent is provided
 export const getMetricIntent = (label: string): "emerald" | "sky" | "indigo" | "rose" | "slate" => {
     const l = label.toLowerCase();
 

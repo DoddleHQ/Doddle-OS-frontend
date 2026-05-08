@@ -260,7 +260,8 @@ export type HITLType =
     | 'selection'        // Single option selection
     | 'multi_selection'  // Multiple options selection
     | 'feedback'         // User feedback on content
-    | 'data_input';      // Free text/data input
+    | 'data_input'       // Free text/data input
+    | 'per_page_feedback'; // Feedback on multiple pages
 
 /**
  * Option structure for HITL requests
@@ -271,7 +272,6 @@ export interface HITLOption {
     label: string;
     value: unknown;
     description?: string;
-    icon?: string;
 }
 
 /**
@@ -570,7 +570,7 @@ export type BrowsingArchitectStepId = typeof BROWSING_ARCHITECT_STEPS[number]['i
  * Helper to get step info by ID
  */
 export function getStepInfo(stepId: string, graphId: string) {
-    if (graphId === 'browsing-architect') {
+    if (graphId === 'content_architect') {
         return BROWSING_ARCHITECT_STEPS.find(s => s.id === stepId);
     }
     return undefined;

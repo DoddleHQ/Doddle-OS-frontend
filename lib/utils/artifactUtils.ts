@@ -1,0 +1,44 @@
+import { AuditArtifact } from '@/lib/types/thread.types';
+import { ArtifactPayload, ArtifactType } from '@/lib/types/graph-events.types';
+
+function detectArtifactType(artifact: AuditArtifact): ArtifactType {
+    const data = artifact.data;
+    if (!data || typeof data !== 'object') return 'data_table';
+
+    const pageName = (artifact.pageName || '').toLowerCase();
+
+    if ('business_name' in data || 'niche' in data || 'brand_voice' in data) return 'site_context';
+    if ('stack' in data || 'conventions' in data) return 'tech_stack';
+    if ('headings' in data || 'meta_title' in data || 'content_stats' in data) return 'data_table';
+    if ('links' in data || 'total' in data) return 'link_list';
+    if ('reportContent' in data) return 'report';
+    if ('blueprintContent' in data) return 'blueprint';
+    if ('contentText' in data) return 'content';
+
+    if (pageName.includes('site context')) return 'site_context';
+    if (pageName.includes('tech stack')) return 'tech_stack';
+    if (pageName.includes('link')) return 'link_list';
+
+    return 'data_table';
+}
+
+export function toArtifactPayload(artifact: AuditArtifact): ArtifactPayload {
+    let content: unknown = artifact.content;
+    if (typeof content === 'string') {
+        try {
+            content = JSON.parse(content);
+        } catch {
+            // keep as string
+        }
+    }
+
+    return {
+        artifactId: String(artifact.id),
+        artifactType: detectArtifactType(artifact),
+        title: artifact.pageName || `Artifact #${artifact.id}`,
+        content,
+        metadata: {
+            mimeType: 'application/json',
+        },
+    };
+}

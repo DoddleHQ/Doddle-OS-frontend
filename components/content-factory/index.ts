@@ -1,20 +1,10 @@
-/**
- * Content Factory Module Components
- *
- * This module provides components for the Content Factory feature,
- * including project initialization modal and related form components.
- */
-
-// Main Components
 export { QuickActionButton } from './QuickActionButton';
 export { ProjectInitializationModal } from './ProjectInitializationModal';
 export type { QuickActionButtonProps } from './QuickActionButton';
 export type { ProjectInitializationModalProps } from './ProjectInitializationModal';
 
-// Chat Components
 export { ChatMessage as ChatMessageComponent, ChatInput, HITLMessageCard } from './chat';
 
-// Form Components
 export { FormField } from './form/FormField';
 export { CharacterCounter } from './form/CharacterCounter';
 export { ContentTypesSelector } from './form/ContentTypesSelector';
@@ -28,14 +18,12 @@ export type { ContentVelocitySelectorProps } from './form/ContentVelocitySelecto
 export type { ToggleSwitchProps } from './form/ToggleSwitch';
 export type { TeamMemberSelectorProps } from './form/TeamMemberSelector';
 
-// Form Sections
 export { ProjectInfoSection } from './form/sections/ProjectInfoSection';
 export { PipelineSection } from './form/sections/PipelineSection';
 export { TeamRolesSection } from './form/sections/TeamRolesSection';
 export { AdvancedOptionsSection } from './form/sections/AdvancedOptionsSection';
 export type { TeamRolesSectionProps } from './form/sections/TeamRolesSection';
 
-// Types
 export type {
     ContentType,
     ContentVelocity,
@@ -57,7 +45,6 @@ export type {
     ValidationSchema,
 } from './types/project-form.types';
 
-// LangGraph Event Types - Re-exported from central types
 export type {
     GraphEventType,
     BaseGraphEvent,
@@ -110,7 +97,6 @@ export {
     TEAM_ROLE_LABELS,
 } from './types/project-form.types';
 
-// Utilities
 export {
     validateField,
     validateForm,

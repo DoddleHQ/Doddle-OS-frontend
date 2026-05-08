@@ -5,44 +5,11 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
-/**
- * QuickActionButton Component
- *
- * A primary action button that navigates to the New Project page
- * on the Content Factory page.
- *
- * @component
- * @example
- * ```tsx
- * <QuickActionButton workspaceId="workspace-123" />
- * ```
- */
 export interface QuickActionButtonProps {
-    /**
-     * Workspace ID for navigation
-     */
     workspaceId: string;
-
-    /**
-     * Optional custom label for the button
-     * @default "New Project"
-     */
     label?: string;
-
-    /**
-     * Optional disabled state
-     * @default false
-     */
     disabled?: boolean;
-
-    /**
-     * Optional custom className
-     */
     className?: string;
-
-    /**
-     * Optional test ID for testing purposes
-     */
     testId?: string;
 }
 
