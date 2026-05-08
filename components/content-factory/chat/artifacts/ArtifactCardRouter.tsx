@@ -41,6 +41,8 @@ export default function ArtifactCardRouter({
             return <MarkdownArtifactCard {...commonProps} />;
 
         case 'data_table':
+        case 'site_context':
+        case 'tech_stack':
             return <DataTableArtifactCard {...commonProps} />;
 
         case 'link_list':

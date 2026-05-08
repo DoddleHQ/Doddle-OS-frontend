@@ -1,23 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { ShieldCheck, ArrowRight, Clock } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Clock, AlertCircle } from 'lucide-react';
 import { TechnicalAuditButton } from '@/components/business-audit';
 import { useThread } from '@/lib/contexts/ThreadContext';
-import { AuditThread, ThreadStatus } from '@/lib/types/thread.types';
-
-const statusConfig: Record<ThreadStatus, { variant: 'success' | 'warning' | 'error' | 'info' | 'neutral'; label: string }> = {
-    idle: { variant: 'neutral', label: 'Idle' },
-    running: { variant: 'info', label: 'Running' },
-    hitl_pending: { variant: 'warning', label: 'Awaiting Input' },
-    complete: { variant: 'success', label: 'Complete' },
-    error: { variant: 'error', label: 'Error' },
-};
+import { AuditThread } from '@/lib/types/thread.types';
 
 function formatRelativeTime(dateStr: string): string {
     const date = new Date(dateStr);
@@ -34,14 +25,11 @@ function formatRelativeTime(dateStr: string): string {
     return date.toLocaleDateString();
 }
 
-function ThreadCard({ thread }: { thread: AuditThread }) {
-    const config = statusConfig[thread.status];
-    const description = thread.pageNames.length > 0
-        ? `Pages: ${thread.pageNames.join(', ')}`
-        : 'No pages audited yet';
+function ThreadCard({ thread, workspaceId }: { thread: AuditThread; workspaceId: string }) {
+    const description = thread.description || 'No description';
 
     return (
-        <Link href={`/workspaces/${thread.workspaceId}/modules/business-audit/${thread.id}`}>
+        <Link href={`/workspaces/${workspaceId}/modules/business-audit/${thread.id}`}>
             <Card className="p-4 hover:border-primary transition-colors cursor-pointer h-full">
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
@@ -50,16 +38,13 @@ function ThreadCard({ thread }: { thread: AuditThread }) {
                             {description}
                         </p>
                     </div>
-                    <Badge variant={config.variant}>
-                        {config.label}
-                    </Badge>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5" />
                         {formatRelativeTime(thread.createdAt)}
                         <span className="text-neutral-300">·</span>
-                        {thread.artifactCount} {thread.artifactCount === 1 ? 'artifact' : 'artifacts'}
+                        {thread.docCount} {thread.docCount === 1 ? 'doc' : 'docs'}
                     </span>
                     <ArrowRight className="h-4 w-4 text-muted-foreground" />
                 </div>
@@ -72,7 +57,7 @@ export default function BusinessAuditPage() {
     const params = useParams();
     const router = useRouter();
     const workspaceId = params.workspaceId as string;
-    const { threads, isLoading, fetchThreads } = useThread();
+    const { threads, isLoading, error, fetchThreads } = useThread();
 
     useEffect(() => {
         if (!workspaceId || workspaceId === 'undefined') {
@@ -123,6 +108,13 @@ export default function BusinessAuditPage() {
                         ))}
                     </div>
                 </div>
+            ) : error ? (
+                <Card className="p-8 text-center">
+                    <AlertCircle className="h-12 w-12 text-error mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Failed to load threads</h3>
+                    <p className="text-muted-foreground mb-4">{error}</p>
+                    <Button onClick={() => fetchThreads(workspaceId, 'business-audit')}>Retry</Button>
+                </Card>
             ) : threads.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 py-16">
                     <div className="flex flex-col items-center justify-center text-center px-4">
@@ -140,7 +132,7 @@ export default function BusinessAuditPage() {
                     <h2 className="text-lg font-semibold mb-4">Audit Threads</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {threads.map(thread => (
-                            <ThreadCard key={thread.id} thread={thread} />
+                            <ThreadCard key={thread.id} thread={thread} workspaceId={workspaceId} />
                         ))}
                     </div>
                 </div>

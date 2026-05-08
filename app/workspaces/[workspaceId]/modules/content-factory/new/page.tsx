@@ -2,17 +2,17 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Loader2, CheckCircle2, AlertCircle, Bot, ExternalLink, Download, Copy, Check, BarChart3, X } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle, Bot, BarChart3 } from 'lucide-react';
 import { useLangGraphStream } from '@/lib/hooks/useLangGraphStream';
+import { useThread } from '@/lib/contexts/ThreadContext';
 import {
-    GraphEvent,
     ChatMessage as ChatMessageType,
     ArtifactPayload,
     HITLRequestPayload,
-    BROWSING_ARCHITECT_STEPS,
     calculateOverallProgress,
 } from '@/lib/types/graph-events.types';
 import { normalizeUrl } from '@/components/content-factory/utils/form-validation';
+import { extractDomainTitle, extractDomain } from '@/lib/utils/urlUtils';
 import ChatInput from '@/components/content-factory/chat/ChatInput';
 import HITLMessageCard from '@/components/content-factory/chat/HITLMessageCard';
 import ArtifactCardRouter from '@/components/content-factory/chat/artifacts/ArtifactCardRouter';
@@ -31,20 +31,25 @@ export default function NewProjectPage() {
     const router = useRouter();
     const workspaceId = params.workspaceId as string;
 
-    // Chat input state (for external control)
+    const {
+        createThreadFromStream,
+        updateThread,
+        saveArtifact,
+    } = useThread();
+
     const [chatInputValue, setChatInputValue] = useState('');
 
-    // Search Analytics toggle (Google Search Console)
     const [searchAnalytics, setSearchAnalytics] = useState(false);
 
-    // Chat container ref for auto-scrolling
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
-    // Copy state for artifacts
     const [copiedArtifactId, setCopiedArtifactId] = useState<string | null>(null);
 
-    // Success notification dismiss state
     const [successDismissed, setSuccessDismissed] = useState(false);
+    const dbThreadIdRef = useRef<string | null>(null);
+    const urlReplacedRef = useRef(false);
+    const sentMessageRef = useRef<string | null>(null);
+    const [dbThreadId, setDbThreadId] = useState<string | null>(null);
 
     // Use the LangGraph stream hook
     const {
@@ -52,11 +57,8 @@ export default function NewProjectPage() {
         startStream,
         addMessage,
         respondToHITL,
-        cancelStream,
-        reset,
         clearError,
         isRunning,
-        isConnecting,
         isHITLPending,
         isComplete,
         currentStep,
@@ -76,8 +78,8 @@ export default function NewProjectPage() {
 
     // Extract URL from message and start workflow
     const handleSendMessage = useCallback((message: string) => {
-        // Clear the input after sending
         setChatInputValue('');
+        sentMessageRef.current = message;
 
         // If workflow is not running, check if it's a URL to start
         if (!isRunning) {
@@ -118,7 +120,7 @@ export default function NewProjectPage() {
             // Send raw string - LangGraph's interrupt() returns exactly what command.resume contains
             respondToHITL(streamState.pendingHITL.requestId, message);
         }
-    }, [isRunning, isHITLPending, streamState.pendingHITL, startStream, respondToHITL, addMessage]);
+    }, [isRunning, isHITLPending, streamState.pendingHITL, startStream, respondToHITL, addMessage, searchAnalytics]);
 
     // Handle HITL response from the HITL card
     const handleHITLRespond = useCallback((response: unknown) => {
@@ -155,6 +157,50 @@ export default function NewProjectPage() {
             router.push('/workspaces');
         }
     }, [workspaceId, router]);
+
+    useEffect(() => {
+        if (streamState.threadId && !dbThreadIdRef.current) {
+            const message = sentMessageRef.current || '';
+            const urlMatch = message.match(/(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[^\s]*/);
+            const rawUrl = urlMatch ? urlMatch[0].replace(/[.,;:!?\)\]]+$/, '') : '';
+            const domainTitle = rawUrl ? extractDomainTitle(rawUrl) : 'Content Project';
+            const domain = rawUrl ? extractDomain(rawUrl) : '';
+
+            createThreadFromStream({
+                threadId: streamState.threadId,
+                workspaceId,
+                moduleId: 'content-factory',
+                title: domainTitle,
+                description: domain ? `Content project for ${domainTitle} (${domain})` : 'Content project',
+            }).then(() => {
+                dbThreadIdRef.current = streamState.threadId;
+                setDbThreadId(streamState.threadId);
+            });
+        }
+    }, [streamState.threadId, createThreadFromStream]);
+
+    useEffect(() => {
+        if (dbThreadId && !urlReplacedRef.current) {
+            urlReplacedRef.current = true;
+            const newUrl = `/workspaces/${workspaceId}/modules/content-factory/${dbThreadId}`;
+            window.history.replaceState(null, '', newUrl);
+        }
+    }, [dbThreadId, workspaceId]);
+
+    useEffect(() => {
+        if (dbThreadId && artifacts.length > 0) {
+            const latestArtifact = artifacts[artifacts.length - 1];
+            saveArtifact(workspaceId, 'content-factory', dbThreadId, latestArtifact);
+        }
+    }, [artifacts.length, dbThreadId, saveArtifact]);
+
+    useEffect(() => {
+        if (isComplete && dbThreadId && completeEvent) {
+            updateThread(workspaceId, 'content-factory', dbThreadId, {
+                status: 'complete',
+            });
+        }
+    }, [isComplete, completeEvent, artifacts, dbThreadId, workspaceId, updateThread]);
 
     // Auto-scroll to bottom when new messages arrive
     useEffect(() => {

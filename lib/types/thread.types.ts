@@ -1,80 +1,54 @@
-import { ArtifactType } from './graph-events.types';
+export type ModuleId = 'business-audit' | 'content-factory' | 'seo-cluster' | 'social-growth' | 'saas-launch-ops';
 
-export type ThreadStatus = 'idle' | 'running' | 'hitl_pending' | 'complete' | 'error';
+export type ThreadStatus = 'running' | 'complete' | 'error';
 
 export interface AuditThread {
     id: string;
     workspaceId: string;
+    moduleId: ModuleId;
     title: string;
+    description: string;
     status: ThreadStatus;
-    moduleSlug: string;
-    input: Record<string, unknown>;
-    artifactCount: number;
+    docCount: number;
     pageNames: string[];
     createdAt: string;
-    updatedAt: string;
+    updatedAt: string | null;
 }
 
 export interface AuditArtifact {
-    id: string;
+    id: number;
     threadId: string;
-    artifactId: string;
-    artifactType: ArtifactType;
-    title: string;
-    description?: string;
-    content: unknown;
-    metadata?: {
-        mimeType?: string;
-        size?: number;
-        [key: string]: unknown;
-    };
+    moduleId: ModuleId;
+    data: Record<string, unknown>;
+    content: string;
+    pageName: string;
     createdAt: string;
 }
 
 export interface CreateThreadRequest {
-    id: string;
-    workspaceId: string;
-    title?: string;
-    moduleSlug: string;
-    input: Record<string, unknown>;
-}
-
-export interface CreateThreadResponse {
-    thread: AuditThread;
+    threadId: string;
+    moduleId: string;
+    title: string;
+    description: string;
+    status?: string;
 }
 
 export interface UpdateThreadRequest {
     title?: string;
-    status?: ThreadStatus;
-    pageNames?: string[];
+    description?: string;
+    status?: string;
 }
 
 export interface CreateArtifactRequest {
-    threadId: string;
-    artifactId: string;
-    artifactType: ArtifactType;
-    title: string;
-    description?: string;
-    content: unknown;
-    metadata?: Record<string, unknown>;
+    content: string;
+    pageName?: string;
+    moduleId: string;
+    data?: Record<string, unknown>;
 }
 
 export interface ListThreadsParams {
-    workspaceId: string;
-    moduleSlug?: string;
+    moduleId: ModuleId;
+    status?: string;
+    skip?: number;
     limit?: number;
-    offset?: number;
-}
-
-export interface ListThreadsResponse {
-    threads: AuditThread[];
-    total: number;
-}
-
-export interface ListArtifactsParams {
-    threadId: string;
-}
-
-export interface ListArtifactsResponse {
-    artifacts: AuditArtifact[];
 }

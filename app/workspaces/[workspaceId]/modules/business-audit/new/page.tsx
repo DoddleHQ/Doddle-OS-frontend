@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useRouter, usePathname } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Loader2, CheckCircle2, AlertCircle, Bot, ShieldCheck, BarChart3 } from 'lucide-react';
 import { useLangGraphStream } from '@/lib/hooks/useLangGraphStream';
 import { useThread } from '@/lib/contexts/ThreadContext';
@@ -9,10 +9,10 @@ import {
     ChatMessage as ChatMessageType,
     ArtifactPayload,
     HITLRequestPayload,
-    BROWSING_ARCHITECT_STEPS,
     calculateOverallProgress,
 } from '@/lib/types/graph-events.types';
 import { normalizeUrl } from '@/components/content-factory/utils/form-validation';
+import { extractDomainTitle, extractDomain } from '@/lib/utils/urlUtils';
 import ChatInput from '@/components/content-factory/chat/ChatInput';
 import HITLMessageCard from '@/components/content-factory/chat/HITLMessageCard';
 import ArtifactCardRouter from '@/components/content-factory/chat/artifacts/ArtifactCardRouter';
@@ -23,12 +23,11 @@ import { extractArtifactMarkdown } from '@/components/content-factory/chat/artif
 export default function TechnicalAuditPlaygroundPage() {
     const params = useParams();
     const router = useRouter();
-    const pathname = usePathname();
     const workspaceId = params.workspaceId as string;
 
     const {
         createThreadFromStream,
-        updateThreadStatus,
+        updateThread,
         saveArtifact,
     } = useThread();
 
@@ -39,16 +38,16 @@ export default function TechnicalAuditPlaygroundPage() {
     const [successDismissed, setSuccessDismissed] = useState(false);
     const dbThreadIdRef = useRef<string | null>(null);
     const urlReplacedRef = useRef(false);
+    const sentMessageRef = useRef<string | null>(null);
+    const [dbThreadId, setDbThreadId] = useState<string | null>(null);
 
     const {
         state: streamState,
         startStream,
         addMessage,
         respondToHITL,
-        reset,
         clearError,
         isRunning,
-        isConnecting,
         isHITLPending,
         isComplete,
         currentStep,
@@ -67,9 +66,9 @@ export default function TechnicalAuditPlaygroundPage() {
 
     useEffect(() => {
         if (!workspaceId || workspaceId === 'undefined') {
-            window.location.href = '/workspaces';
+            router.push('/workspaces');
         }
-    }, [workspaceId]);
+    }, [workspaceId, router]);
 
     useEffect(() => {
         if (chatContainerRef.current) {
@@ -79,53 +78,51 @@ export default function TechnicalAuditPlaygroundPage() {
 
     useEffect(() => {
         if (streamState.threadId && !dbThreadIdRef.current) {
-            const title = chatInputValue || 'Technical Audit';
+            const message = sentMessageRef.current || '';
+            const urlMatch = message.match(/(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[^\s]*/);
+            const rawUrl = urlMatch ? urlMatch[0].replace(/[.,;:!?\)\]]+$/, '') : '';
+            const domainTitle = rawUrl ? extractDomainTitle(rawUrl) : 'Technical Audit';
+            const domain = rawUrl ? extractDomain(rawUrl) : '';
+
             createThreadFromStream({
-                id: streamState.threadId,
+                threadId: streamState.threadId,
                 workspaceId,
-                moduleSlug: 'business-audit',
-                title: title.replace(/^Audit\s+/i, '').substring(0, 80) || 'Technical Audit',
-                input: {},
+                moduleId: 'business-audit',
+                title: domainTitle,
+                description: domain ? `Business audit for ${domainTitle} (${domain})` : 'Business audit',
             }).then(() => {
                 dbThreadIdRef.current = streamState.threadId;
+                setDbThreadId(streamState.threadId);
             });
         }
-    }, [streamState.threadId, workspaceId, createThreadFromStream]);
+    }, [streamState.threadId, createThreadFromStream]);
 
     useEffect(() => {
-        if (dbThreadIdRef.current && !urlReplacedRef.current) {
+        if (dbThreadId && !urlReplacedRef.current) {
             urlReplacedRef.current = true;
-            const newUrl = `/workspaces/${workspaceId}/modules/business-audit/${dbThreadIdRef.current}`;
+            const newUrl = `/workspaces/${workspaceId}/modules/business-audit/${dbThreadId}`;
             window.history.replaceState(null, '', newUrl);
         }
-    }, [dbThreadIdRef.current, workspaceId]);
+    }, [dbThreadId, workspaceId]);
 
     useEffect(() => {
-        if (!dbThreadIdRef.current) return;
-        const status = isRunning ? 'running' : isHITLPending ? 'hitl_pending' : isComplete ? 'complete' : undefined;
-        if (status) {
-            updateThreadStatus(dbThreadIdRef.current, status);
-        }
-    }, [isRunning, isHITLPending, isComplete, updateThreadStatus]);
-
-    useEffect(() => {
-        const threadId = dbThreadIdRef.current;
-        return () => {
-            if (threadId) {
-                updateThreadStatus(threadId, 'complete');
-            }
-        };
-    }, [updateThreadStatus]);
-
-    useEffect(() => {
-        if (artifacts.length > 0 && dbThreadIdRef.current) {
+        if (dbThreadId && artifacts.length > 0) {
             const latestArtifact = artifacts[artifacts.length - 1];
-            saveArtifact(dbThreadIdRef.current, latestArtifact);
+            saveArtifact(workspaceId, 'business-audit', dbThreadId, latestArtifact);
         }
-    }, [artifacts.length, saveArtifact]);
+    }, [artifacts.length, dbThreadId, saveArtifact]);
+
+    useEffect(() => {
+        if (isComplete && dbThreadId && completeEvent) {
+            updateThread(workspaceId, 'business-audit', dbThreadId, {
+                status: 'complete',
+            });
+        }
+    }, [isComplete, completeEvent, artifacts, dbThreadId, workspaceId, updateThread]);
 
     const handleSendMessage = useCallback((message: string) => {
         setChatInputValue('');
+        sentMessageRef.current = message;
 
         if (!isRunning) {
             const urlMatch = message.match(/(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[^\s]*/);
@@ -153,7 +150,7 @@ export default function TechnicalAuditPlaygroundPage() {
         } else if (isHITLPending && streamState.pendingHITL) {
             respondToHITL(streamState.pendingHITL.requestId, message);
         }
-    }, [isRunning, isHITLPending, streamState.pendingHITL, startStream, respondToHITL, addMessage]);
+    }, [isRunning, isHITLPending, streamState.pendingHITL, startStream, respondToHITL, addMessage, isGSCEnabled]);
 
     const handleHITLRespond = useCallback((response: unknown) => {
         if (streamState.pendingHITL) {

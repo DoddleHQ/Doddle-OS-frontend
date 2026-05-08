@@ -128,9 +128,6 @@ export default function ThreadDetailPage() {
             value={viewMode}
             onChange={(v) => setViewMode(v as ViewMode)}
           />
-          <Badge variant={thread.status === 'active' ? 'success' : 'warning'}>
-            {thread.status}
-          </Badge>
         </div>
       </div>
 

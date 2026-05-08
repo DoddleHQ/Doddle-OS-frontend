@@ -4,9 +4,8 @@ import React, { createContext, useContext, useState, useCallback, useRef } from 
 import {
     AuditThread,
     AuditArtifact,
-    CreateThreadRequest,
     CreateArtifactRequest,
-    ThreadStatus,
+    ModuleId,
 } from '@/lib/types/thread.types';
 import { ArtifactPayload } from '@/lib/types/graph-events.types';
 import { threadService } from '@/lib/services/threadService';
@@ -19,12 +18,19 @@ interface ThreadContextValue {
     isSavingArtifact: boolean;
     error: string | null;
 
-    fetchThreads: (workspaceId: string, moduleSlug?: string) => Promise<void>;
-    createThreadFromStream: (params: { id: string; workspaceId: string; moduleSlug: string; title?: string; input: Record<string, unknown> }) => Promise<AuditThread>;
-    fetchThread: (threadId: string) => Promise<void>;
-    updateThreadStatus: (threadId: string, status: ThreadStatus, title?: string) => Promise<void>;
-    saveArtifact: (threadId: string, artifact: ArtifactPayload) => Promise<void>;
-    fetchArtifacts: (threadId: string) => Promise<void>;
+    fetchThreads: (workspaceId: string, moduleId: ModuleId) => Promise<void>;
+    createThreadFromStream: (params: {
+        workspaceId: string;
+        threadId: string;
+        moduleId: ModuleId;
+        title: string;
+        description: string;
+    }) => Promise<AuditThread>;
+    fetchThread: (workspaceId: string, moduleId: ModuleId, threadId: string) => Promise<void>;
+    updateThread: (workspaceId: string, moduleId: ModuleId, threadId: string, updates: { title?: string; description?: string; status?: string }) => Promise<void>;
+    saveArtifact: (workspaceId: string, moduleId: ModuleId, threadId: string, artifact: ArtifactPayload) => Promise<void>;
+    fetchArtifacts: (workspaceId: string, moduleId: ModuleId, threadId: string) => Promise<void>;
+    deleteThread: (workspaceId: string, moduleId: ModuleId, threadId: string) => Promise<void>;
     setCurrentThread: (thread: AuditThread | null) => void;
     clearError: () => void;
 }
@@ -39,11 +45,11 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
     const [isSavingArtifact, setIsSavingArtifact] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const saveQueueRef = useRef<Map<string, ArtifactPayload>>(new Map());
+    const saveQueueRef = useRef<Map<string, { artifact: ArtifactPayload; moduleId: ModuleId; workspaceId: string; retries: number }>>(new Map());
     const isProcessingQueueRef = useRef(false);
     const threadCreatedRef = useRef(false);
 
-    const processSaveQueue = useCallback(async (threadId: string) => {
+    const processSaveQueue = useCallback(async (workspaceId: string, threadId: string) => {
         if (isProcessingQueueRef.current) return;
         isProcessingQueueRef.current = true;
 
@@ -51,22 +57,27 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
             while (saveQueueRef.current.size > 0) {
                 const entry = saveQueueRef.current.entries().next().value;
                 if (!entry) break;
-                const [artifactId, artifact] = entry;
+                const [artifactId, { artifact, moduleId, workspaceId: wsId, retries }] = entry;
                 saveQueueRef.current.delete(artifactId);
 
                 try {
-                    await threadService.createArtifact({
-                        threadId,
-                        artifactId: artifact.artifactId,
-                        artifactType: artifact.artifactType,
-                        title: artifact.title,
-                        description: artifact.description,
-                        content: artifact.content,
-                        metadata: artifact.metadata,
-                    } as CreateArtifactRequest);
+                    const content = typeof artifact.content === 'string'
+                        ? artifact.content
+                        : JSON.stringify(artifact.content);
+
+                    await threadService.createArtifact(wsId, moduleId, threadId, {
+                        content,
+                        pageName: artifact.title || 'Untitled Artifact',
+                        moduleId,
+                        data: typeof artifact.content === 'object' && artifact.content !== null ? artifact.content as Record<string, unknown> : {},
+                    });
                 } catch (err) {
                     console.error(`[ThreadProvider] Failed to save artifact ${artifactId}:`, err);
-                    saveQueueRef.current.set(artifactId, artifact);
+                    if (retries < 3) {
+                        saveQueueRef.current.set(artifactId, { artifact, moduleId, workspaceId: wsId, retries: retries + 1 });
+                    } else {
+                        console.error(`[ThreadProvider] Artifact ${artifactId} failed after 3 retries, discarding`);
+                    }
                 }
             }
         } finally {
@@ -74,12 +85,12 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    const fetchThreads = useCallback(async (workspaceId: string, moduleSlug?: string) => {
+    const fetchThreads = useCallback(async (workspaceId: string, moduleId: ModuleId) => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await threadService.listThreads({ workspaceId, moduleSlug });
-            setThreads(response.threads);
+            const result = await threadService.listThreads(workspaceId, { moduleId });
+            setThreads(result);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to fetch threads';
             setError(message);
@@ -88,34 +99,44 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    const createThreadFromStream = useCallback(async (params: { id: string; workspaceId: string; moduleSlug: string; title?: string; input: Record<string, unknown> }): Promise<AuditThread> => {
-        if (threadCreatedRef.current) return currentThread!;
-        threadCreatedRef.current = true;
+    const createThreadFromStream = useCallback(
+        async (params: {
+            workspaceId: string;
+            threadId: string;
+            moduleId: ModuleId;
+            title: string;
+            description: string;
+        }): Promise<AuditThread> => {
+            if (threadCreatedRef.current) return currentThread!;
+            threadCreatedRef.current = true;
 
-        setError(null);
-        try {
-            const thread = await threadService.createThread({
-                id: params.id,
-                workspaceId: params.workspaceId,
-                moduleSlug: params.moduleSlug,
-                title: params.title,
-                input: params.input,
-            });
-            setThreads(prev => [thread, ...prev]);
-            setCurrentThread(thread);
-            return thread;
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to create thread';
-            setError(message);
-            throw err;
-        }
-    }, [currentThread]);
+            setError(null);
+            try {
+                const thread = await threadService.createThread(params.workspaceId, {
+                    threadId: params.threadId,
+                    moduleId: params.moduleId,
+                    title: params.title,
+                    description: params.description,
+                    status: 'running',
+                });
+                setThreads(prev => [thread, ...prev]);
+                setCurrentThread(thread);
+                return thread;
+            } catch (err) {
+                threadCreatedRef.current = false;
+                const message = err instanceof Error ? err.message : 'Failed to create thread';
+                setError(message);
+                throw err;
+            }
+        },
+        [currentThread]
+    );
 
-    const fetchThread = useCallback(async (threadId: string) => {
+    const fetchThread = useCallback(async (workspaceId: string, moduleId: ModuleId, threadId: string) => {
         setIsLoading(true);
         setError(null);
         try {
-            const thread = await threadService.getThread(threadId);
+            const thread = await threadService.getThread(workspaceId, moduleId, threadId);
             setCurrentThread(thread);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to fetch thread';
@@ -125,45 +146,70 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    const updateThreadStatus = useCallback(async (threadId: string, status: ThreadStatus, title?: string) => {
-        try {
-            const updates: { status: ThreadStatus; title?: string } = { status };
-            if (title) updates.title = title;
-            const updated = await threadService.updateThread(threadId, updates);
-            setCurrentThread(updated);
-            setThreads(prev => prev.map(t => t.id === threadId ? updated : t));
-        } catch (err) {
-            console.error('[ThreadProvider] Failed to update thread status:', err);
-        }
-    }, []);
-
-    const saveArtifact = useCallback(async (threadId: string, artifact: ArtifactPayload) => {
-        if (saveQueueRef.current.has(artifact.artifactId)) return;
-
-        saveQueueRef.current.set(artifact.artifactId, artifact);
-        setIsSavingArtifact(true);
-
-        processSaveQueue(threadId).then(async () => {
+    const updateThreadFn = useCallback(
+        async (workspaceId: string, moduleId: ModuleId, threadId: string, updates: { title?: string; description?: string; status?: string }) => {
             try {
-                const refreshed = await threadService.getThread(threadId);
-                setThreads(prev => prev.map(t => t.id === threadId ? refreshed : t));
-                setCurrentThread(prev => prev?.id === threadId ? refreshed : prev);
-            } catch {}
-        }).finally(() => {
-            setIsSavingArtifact(false);
-        });
-    }, [processSaveQueue]);
+                const updated = await threadService.updateThread(workspaceId, moduleId, threadId, updates);
+                setCurrentThread(updated);
+                setThreads(prev => prev.map(t => t.id === updated.id ? updated : t));
+            } catch (err) {
+                const message = err instanceof Error ? err.message : 'Failed to update thread';
+                setError(message);
+            }
+        },
+        []
+    );
 
-    const fetchArtifacts = useCallback(async (threadId: string) => {
+    const saveArtifact = useCallback(
+        async (workspaceId: string, moduleId: ModuleId, threadId: string, artifact: ArtifactPayload) => {
+            if (saveQueueRef.current.has(artifact.artifactId)) return;
+
+            saveQueueRef.current.set(artifact.artifactId, { artifact, moduleId, workspaceId, retries: 0 });
+            setIsSavingArtifact(true);
+
+            processSaveQueue(workspaceId, threadId)
+                .then(async () => {
+                    try {
+                        const refreshed = await threadService.getThread(workspaceId, moduleId, threadId);
+                        setThreads(prev => prev.map(t => t.id === refreshed.id ? refreshed : t));
+                        setCurrentThread(prev => (prev?.id === threadId ? refreshed : prev));
+                    } catch {}
+                })
+                .finally(() => {
+                    if (saveQueueRef.current.size === 0 && !isProcessingQueueRef.current) {
+                        setIsSavingArtifact(false);
+                    }
+                });
+        },
+        [processSaveQueue]
+    );
+
+    const fetchArtifacts = useCallback(async (workspaceId: string, moduleId: ModuleId, threadId: string) => {
         setError(null);
         try {
-            const response = await threadService.listArtifacts(threadId);
-            setCurrentArtifacts(response.artifacts);
+            const result = await threadService.listArtifacts(workspaceId, moduleId, threadId);
+            setCurrentArtifacts(result);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to fetch artifacts';
             setError(message);
         }
     }, []);
+
+    const deleteThreadFn = useCallback(
+        async (workspaceId: string, moduleId: ModuleId, threadId: string) => {
+            try {
+                await threadService.deleteThread(workspaceId, moduleId, threadId);
+                setThreads(prev => prev.filter(t => t.id !== threadId));
+                if (currentThread?.id === threadId) {
+                    setCurrentThread(null);
+                }
+            } catch (err) {
+                const message = err instanceof Error ? err.message : 'Failed to delete thread';
+                setError(message);
+            }
+        },
+        [currentThread]
+    );
 
     const clearError = useCallback(() => setError(null), []);
 
@@ -179,9 +225,10 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
                 fetchThreads,
                 createThreadFromStream,
                 fetchThread,
-                updateThreadStatus,
+                updateThread: updateThreadFn,
                 saveArtifact,
                 fetchArtifacts,
+                deleteThread: deleteThreadFn,
                 setCurrentThread,
                 clearError,
             }}

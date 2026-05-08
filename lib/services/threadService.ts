@@ -5,160 +5,181 @@ import {
     UpdateThreadRequest,
     CreateArtifactRequest,
     ListThreadsParams,
-    ListThreadsResponse,
-    ListArtifactsResponse,
+    ModuleId,
+    ThreadStatus,
 } from '@/lib/types/thread.types';
 
-const USE_MOCK = true;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+const API_AUTH_TOKEN = process.env.NEXT_PUBLIC_API_AUTH_TOKEN || '';
 
-const mockThreadsStore = new Map<string, AuditThread>();
-const mockArtifactsStore = new Map<string, AuditArtifact[]>();
-
-function generateId(prefix: string): string {
-    return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+function authHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {};
+    if (API_AUTH_TOKEN) {
+        headers['Authorization'] = `Bearer ${API_AUTH_TOKEN}`;
+    }
+    return headers;
 }
 
-function delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+interface RawThread {
+    id: string;
+    workspace_id: string;
+    module_id: string;
+    title: string;
+    description: string;
+    status: string;
+    docCount: number;
+    page_names: string[];
+    created_at: string;
+    updated_at: string | null;
 }
 
-async function mockCreateThread(request: CreateThreadRequest): Promise<AuditThread> {
-    await delay(300);
+interface RawArtifact {
+    id: number;
+    thread_id: string;
+    module_id: string;
+    data: Record<string, unknown>;
+    content: string;
+    page_name: string;
+    created_at: string;
+}
 
-    const thread: AuditThread = {
-        id: request.id,
-        workspaceId: request.workspaceId,
-        title: request.title || 'New Thread',
-        status: 'running',
-        moduleSlug: request.moduleSlug,
-        input: request.input,
-        artifactCount: 0,
-        pageNames: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+function toThread(raw: RawThread): AuditThread {
+    return {
+        id: raw.id,
+        workspaceId: raw.workspace_id,
+        moduleId: raw.module_id as ModuleId,
+        title: raw.title,
+        description: raw.description,
+        status: raw.status as ThreadStatus,
+        docCount: raw.docCount,
+        pageNames: raw.page_names,
+        createdAt: raw.created_at,
+        updatedAt: raw.updated_at,
     };
-
-    mockThreadsStore.set(thread.id, thread);
-    mockArtifactsStore.set(thread.id, []);
-
-    return thread;
 }
 
-async function mockGetThread(threadId: string): Promise<AuditThread> {
-    await delay(200);
-
-    const thread = mockThreadsStore.get(threadId);
-    if (!thread) {
-        throw new Error(`Thread ${threadId} not found`);
-    }
-    return thread;
-}
-
-async function mockUpdateThread(threadId: string, updates: UpdateThreadRequest): Promise<AuditThread> {
-    await delay(200);
-
-    const thread = mockThreadsStore.get(threadId);
-    if (!thread) {
-        throw new Error(`Thread ${threadId} not found`);
-    }
-
-    const updated: AuditThread = {
-        ...thread,
-        ...updates,
-        updatedAt: new Date().toISOString(),
+function toArtifact(raw: RawArtifact): AuditArtifact {
+    return {
+        id: raw.id,
+        threadId: raw.thread_id,
+        moduleId: raw.module_id as ModuleId,
+        data: raw.data,
+        content: raw.content,
+        pageName: raw.page_name,
+        createdAt: raw.created_at,
     };
-
-    mockThreadsStore.set(threadId, updated);
-    return updated;
 }
 
-async function mockListThreads(params: ListThreadsParams): Promise<ListThreadsResponse> {
-    await delay(400);
-
-    let threads = Array.from(mockThreadsStore.values())
-        .filter(t => t.workspaceId === params.workspaceId)
-        .filter(t => !params.moduleSlug || t.moduleSlug === params.moduleSlug)
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    const total = threads.length;
-
-    if (params.offset) {
-        threads = threads.slice(params.offset);
-    }
-    if (params.limit) {
-        threads = threads.slice(0, params.limit);
-    }
-
-    return { threads, total };
-}
-
-async function mockCreateArtifact(request: CreateArtifactRequest): Promise<AuditArtifact> {
-    await delay(150);
-
-    const artifact: AuditArtifact = {
-        id: generateId('artifact'),
-        threadId: request.threadId,
-        artifactId: request.artifactId,
-        artifactType: request.artifactType,
-        title: request.title,
-        description: request.description,
-        content: request.content,
-        metadata: request.metadata as AuditArtifact['metadata'],
-        createdAt: new Date().toISOString(),
-    };
-
-    const existing = mockArtifactsStore.get(request.threadId) || [];
-    existing.push(artifact);
-    mockArtifactsStore.set(request.threadId, existing);
-
-    const thread = mockThreadsStore.get(request.threadId);
-    if (thread) {
-        thread.artifactCount = existing.length;
-        if (!thread.pageNames.includes(request.title)) {
-            thread.pageNames = [...thread.pageNames, request.title];
-        }
-        thread.updatedAt = new Date().toISOString();
-        mockThreadsStore.set(request.threadId, thread);
-    }
-
-    return artifact;
-}
-
-async function mockListArtifacts(threadId: string): Promise<ListArtifactsResponse> {
-    await delay(300);
-
-    const artifacts = mockArtifactsStore.get(threadId) || [];
-    return { artifacts };
+function threadsUrl(workspaceId: string, moduleId: string, ...segments: string[]): string {
+    const base = `${API_BASE_URL}/api/v1/workspaces/${workspaceId}/modules/${moduleId}/threads`;
+    return segments.length > 0 ? `${base}/${segments.join('/')}` : base;
 }
 
 export const threadService = {
-    async createThread(request: CreateThreadRequest): Promise<AuditThread> {
-        if (USE_MOCK) return mockCreateThread(request);
-        throw new Error('API not configured');
+    async listThreads(workspaceId: string, params: ListThreadsParams): Promise<AuditThread[]> {
+        const url = threadsUrl(workspaceId, params.moduleId);
+        const searchParams = new URLSearchParams();
+        if (params.status) searchParams.set('status', params.status);
+        if (params.skip) searchParams.set('skip', String(params.skip));
+        if (params.limit) searchParams.set('limit', String(params.limit));
+        const fullUrl = searchParams.toString() ? `${url}?${searchParams.toString()}` : url;
+
+        const res = await fetch(fullUrl, { headers: authHeaders() });
+        if (!res.ok) {
+            throw new Error(`Failed to list threads (${res.status})`);
+        }
+        const raw: RawThread[] = await res.json();
+        return raw.map(toThread);
     },
 
-    async getThread(threadId: string): Promise<AuditThread> {
-        if (USE_MOCK) return mockGetThread(threadId);
-        throw new Error('API not configured');
+    async createThread(workspaceId: string, request: CreateThreadRequest): Promise<AuditThread> {
+        const url = threadsUrl(workspaceId, request.moduleId);
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify(request),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || `Failed to create thread (${res.status})`);
+        }
+        const raw: RawThread = await res.json();
+        return toThread(raw);
     },
 
-    async updateThread(threadId: string, updates: UpdateThreadRequest): Promise<AuditThread> {
-        if (USE_MOCK) return mockUpdateThread(threadId, updates);
-        throw new Error('API not configured');
+    async getThread(workspaceId: string, moduleId: ModuleId, threadId: string): Promise<AuditThread> {
+        const url = threadsUrl(workspaceId, moduleId, threadId);
+        const res = await fetch(url, { headers: authHeaders() });
+        if (!res.ok) {
+            throw new Error(`Failed to get thread (${res.status})`);
+        }
+        const raw: RawThread = await res.json();
+        return toThread(raw);
     },
 
-    async listThreads(params: ListThreadsParams): Promise<ListThreadsResponse> {
-        if (USE_MOCK) return mockListThreads(params);
-        throw new Error('API not configured');
+    async updateThread(
+        workspaceId: string,
+        moduleId: ModuleId,
+        threadId: string,
+        updates: UpdateThreadRequest
+    ): Promise<AuditThread> {
+        const url = threadsUrl(workspaceId, moduleId, threadId);
+        const res = await fetch(url, {
+            method: 'PATCH',
+            headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates),
+        });
+        if (!res.ok) {
+            throw new Error(`Failed to update thread (${res.status})`);
+        }
+        const raw: RawThread = await res.json();
+        return toThread(raw);
     },
 
-    async createArtifact(request: CreateArtifactRequest): Promise<AuditArtifact> {
-        if (USE_MOCK) return mockCreateArtifact(request);
-        throw new Error('API not configured');
+    async deleteThread(workspaceId: string, moduleId: ModuleId, threadId: string): Promise<void> {
+        const url = threadsUrl(workspaceId, moduleId, threadId);
+        const res = await fetch(url, { method: 'DELETE', headers: authHeaders() });
+        if (!res.ok) {
+            throw new Error(`Failed to delete thread (${res.status})`);
+        }
     },
 
-    async listArtifacts(threadId: string): Promise<ListArtifactsResponse> {
-        if (USE_MOCK) return mockListArtifacts(threadId);
-        throw new Error('API not configured');
+    async createArtifact(
+        workspaceId: string,
+        moduleId: ModuleId,
+        threadId: string,
+        request: CreateArtifactRequest
+    ): Promise<AuditArtifact> {
+        const url = `${threadsUrl(workspaceId, moduleId, threadId)}/artifacts`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                data: request.data || {},
+                content: request.content,
+                page_name: request.pageName || 'Untitled Artifact',
+                moduleId: request.moduleId,
+            }),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || `Failed to save artifact (${res.status})`);
+        }
+        const raw: RawArtifact = await res.json();
+        return toArtifact(raw);
+    },
+
+    async listArtifacts(
+        workspaceId: string,
+        moduleId: ModuleId,
+        threadId: string
+    ): Promise<AuditArtifact[]> {
+        const url = `${threadsUrl(workspaceId, moduleId, threadId)}/artifacts`;
+        const res = await fetch(url, { headers: authHeaders() });
+        if (!res.ok) {
+            throw new Error(`Failed to list artifacts (${res.status})`);
+        }
+        const raw: RawArtifact[] = await res.json();
+        return raw.map(toArtifact);
     },
 };
