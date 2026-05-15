@@ -1,9 +1,24 @@
 import { AuditArtifact } from '@/lib/types/thread.types';
 import { ArtifactPayload, ArtifactType } from '@/lib/types/graph-events.types';
 
+function parseContent(artifact: AuditArtifact): Record<string, unknown> {
+    if (artifact.data && typeof artifact.data === 'object' && Object.keys(artifact.data).length > 0) {
+        return artifact.data;
+    }
+    if (typeof artifact.content === 'string') {
+        try {
+            const parsed = JSON.parse(artifact.content);
+            if (parsed && typeof parsed === 'object') return parsed;
+        } catch {}
+    }
+    if (artifact.content && typeof artifact.content === 'object') {
+        return artifact.content as Record<string, unknown>;
+    }
+    return {};
+}
+
 function detectArtifactType(artifact: AuditArtifact): ArtifactType {
-    const data = artifact.data;
-    if (!data || typeof data !== 'object') return 'data_table';
+    const data = parseContent(artifact);
 
     const pageName = (artifact.pageName || '').toLowerCase();
 
