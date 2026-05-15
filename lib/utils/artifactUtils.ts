@@ -22,13 +22,13 @@ function detectArtifactType(artifact: AuditArtifact): ArtifactType {
 
     const pageName = (artifact.pageName || '').toLowerCase();
 
-    if ('business_name' in data || 'niche' in data || 'brand_voice' in data) return 'site_context';
-    if ('stack' in data || 'conventions' in data) return 'tech_stack';
-    if ('headings' in data || 'meta_title' in data || 'content_stats' in data) return 'data_table';
-    if ('links' in data || 'total' in data) return 'link_list';
     if ('reportContent' in data) return 'report';
     if ('blueprintContent' in data) return 'blueprint';
     if ('contentText' in data) return 'content';
+    if ('links' in data || 'total' in data) return 'link_list';
+    if ('headings' in data || 'meta_title' in data || 'content_stats' in data) return 'data_table';
+    if ('stack' in data || 'conventions' in data) return 'tech_stack';
+    if ('business_name' in data || 'niche' in data || 'brand_voice' in data) return 'site_context';
 
     if (pageName.includes('site context')) return 'site_context';
     if (pageName.includes('tech stack')) return 'tech_stack';
