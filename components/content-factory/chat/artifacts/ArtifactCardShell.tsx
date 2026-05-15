@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { ArtifactPayload } from '@/lib/types/graph-events.types';
-import { Copy, Check, Download, ChevronDown, ChevronUp } from 'lucide-react';
+import { Copy, Check, Download, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { extractArtifactMarkdown } from './artifactContentUtils';
 
 interface ArtifactCardShellProps {
     artifact: ArtifactPayload;
@@ -38,6 +39,13 @@ export default function ArtifactCardShell({
     const iconBg = `bg-${accentColor}-100`;
     const badgeBg = `bg-${accentColor}-100`;
     const badgeText = `text-${accentColor}-700`;
+
+    const handlePreview = () => {
+        const md = extractArtifactMarkdown(artifact);
+        navigator.clipboard.writeText(md).then(() => {
+            window.open('https://os.doddlehq.com/tools/markdown-renderer', '_blank');
+        });
+    };
 
     return (
         <div className="flex justify-start my-4 w-full">
@@ -107,9 +115,16 @@ export default function ArtifactCardShell({
                         >
                             <Download className="w-3.5 h-3.5" /> Download
                         </button>
+                        <button
+                            onClick={handlePreview}
+                            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+                        >
+                            <Eye className="w-3.5 h-3.5" /> Preview
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     );
 }
+
