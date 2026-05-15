@@ -202,11 +202,11 @@ function convertToGraphEvent(raw: Record<string, unknown>): GraphEvent | null {
             return {
                 ...baseEvent,
                 type: 'artifact',
-                stepId: raw.stepId as string | undefined,
-                stepName: raw.stepName as string | undefined,
+                stepId: (raw.stepId ?? raw.step_id) as string | undefined,
+                stepName: (raw.stepName ?? raw.step_name) as string | undefined,
                 payload: {
-                    artifactId: payload?.artifactId as string,
-                    artifactType: payload?.artifactType as import('@/lib/types/graph-events.types').ArtifactType,
+                    artifactId: (payload?.artifactId ?? payload?.artifact_id) as string,
+                    artifactType: (payload?.artifactType ?? payload?.artifact_type) as import('@/lib/types/graph-events.types').ArtifactType,
                     title: payload?.title as string,
                     description: payload?.description as string | undefined,
                     content: payload?.content,

@@ -14,6 +14,7 @@ interface ArtifactCardShellProps {
     children: React.ReactNode;
     collapsibleMaxHeight?: number;
     extraActions?: React.ReactNode;
+    hideHeader?: boolean;
 }
 
 export default function ArtifactCardShell({
@@ -26,6 +27,7 @@ export default function ArtifactCardShell({
     children,
     collapsibleMaxHeight,
     extraActions,
+    hideHeader,
 }: ArtifactCardShellProps) {
     const [isExpanded, setIsExpanded] = useState(false);
     const isCollapsible = !!collapsibleMaxHeight;
@@ -45,19 +47,21 @@ export default function ArtifactCardShell({
                 </div>
 
                 <div className={`bg-white border ${borderColor} rounded-2xl rounded-tl-sm shadow-sm overflow-hidden flex-1 min-w-0`}>
-                    <div className={`px-4 sm:px-5 py-3 border-b ${borderAccent} ${bgAccent}`}>
-                        <div className="flex items-start sm:items-center justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                                <p className="font-medium text-slate-800 text-sm sm:text-base truncate">{artifact.title}</p>
-                                {artifact.description && (
-                                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{artifact.description}</p>
-                                )}
+                    {!hideHeader && (
+                        <div className={`px-4 sm:px-5 py-3 border-b ${borderAccent} ${bgAccent}`}>
+                            <div className="flex items-start sm:items-center justify-between gap-2">
+                                <div className="min-w-0 flex-1">
+                                    <p className="font-medium text-slate-800 text-sm sm:text-base truncate">{artifact.title}</p>
+                                    {artifact.description && (
+                                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{artifact.description}</p>
+                                    )}
+                                </div>
+                                <span className={`text-[10px] sm:text-xs ${badgeBg} ${badgeText} px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap flex-shrink-0`}>
+                                    {artifact.artifactType}
+                                </span>
                             </div>
-                            <span className={`text-[10px] sm:text-xs ${badgeBg} ${badgeText} px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap flex-shrink-0`}>
-                                {artifact.artifactType}
-                            </span>
                         </div>
-                    </div>
+                    )}
 
                     <div className="relative">
                         <div

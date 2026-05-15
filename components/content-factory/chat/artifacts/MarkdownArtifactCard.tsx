@@ -97,6 +97,9 @@ export default function MarkdownArtifactCard({
         markdownText = artifact.content;
     }
 
+    const hasRichHeader = ['report', 'pre_run_report', 'pre_run_audit', 'pre_run_audit_summary'].includes(artifact.artifactType)
+        && (content?.businessName || content?.niche || content?.reportType);
+
     return (
         <ArtifactCardShell
             artifact={artifact}
@@ -106,6 +109,7 @@ export default function MarkdownArtifactCard({
             onDownloadArtifact={onDownloadArtifact}
             copiedArtifactId={copiedArtifactId}
             collapsibleMaxHeight={320}
+            hideHeader={hasRichHeader}
         >
             <TypeSpecificHeader artifactType={artifact.artifactType} content={content} accentColor={config.accentColor} />
 
@@ -143,22 +147,48 @@ function TypeSpecificHeader({
 }
 
 function ReportHeader({ content }: { content: Record<string, unknown> }) {
-    const totalPages = (content?.total_pages ?? content?.totalPages) as number | undefined;
+    const totalPages = (content?.total_pages ?? content?.totalPages ?? content?.pagesCrawled) as number | undefined;
     const siteUrl = content?.siteUrl as string | undefined;
+    const businessName = content?.businessName as string | undefined;
+    const niche = content?.niche as string | undefined;
+    const reportType = content?.reportType as string | undefined;
+    const generatedAt = content?.generatedAt as string | undefined;
     const savedFiles = content?.saved_files as string[] | undefined;
 
     return (
         <>
-            {(totalPages || siteUrl) && (
+            {(businessName || niche) && (
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                    {businessName && (
+                        <span className="text-sm font-semibold text-slate-800">{businessName}</span>
+                    )}
+                    {niche && (
+                        <span className="text-[10px] sm:text-xs bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full font-medium capitalize">
+                            {niche.replace(/_/g, ' ')}
+                        </span>
+                    )}
+                    {reportType && (
+                        <span className="text-[10px] sm:text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium capitalize">
+                            {reportType.replace(/_/g, ' ')}
+                        </span>
+                    )}
+                </div>
+            )}
+            {(totalPages || siteUrl || generatedAt) && (
                 <div className="flex flex-wrap gap-2 mb-3">
                     {totalPages && (
                         <span className="inline-flex items-center gap-1 text-xs bg-rose-50 text-rose-700 px-2 py-1 rounded-lg font-medium">
-                            📄 {totalPages} pages
+                            📄 {totalPages} pages crawled
                         </span>
                     )}
                     {siteUrl && (
                         <span className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-lg font-mono truncate max-w-[200px] sm:max-w-none">
                             {siteUrl}
+                        </span>
+                    )}
+                    {generatedAt && (
+                        <span className="inline-flex items-center gap-1 text-xs bg-slate-50 text-slate-500 px-2 py-1 rounded-lg">
+                            {new Date(generatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                         </span>
                     )}
                 </div>
