@@ -34,6 +34,12 @@ export function convertDataTableToMarkdown(artifact: ArtifactPayload): string {
 
     // Site Context
     if (stepId === 'site_context' || title.toLowerCase().includes('site context')) {
+        // Business persona reports with rich markdown content
+        if (typeof content.reportContent === 'string') {
+            return preprocessMarkdown(content.reportContent as string);
+        }
+
+        // Simple site context (key-value format)
         markdown += `## Site Context\n\n`;
         if (content.business_name) markdown += `**Business:** ${content.business_name}\n\n`;
         if (content.niche) markdown += `**Niche:** ${content.niche}\n\n`;
@@ -252,8 +258,8 @@ export function extractArtifactMarkdown(artifact: ArtifactPayload): string {
         return preprocessMarkdown(fallbackContent);
     }
 
-    // Data table artifacts
-    if (artifactType === 'data_table') {
+    // Data table artifacts (including site_context and tech_stack)
+    if (artifactType === 'data_table' || artifactType === 'site_context' || artifactType === 'tech_stack') {
         return convertDataTableToMarkdown(artifact);
     }
 

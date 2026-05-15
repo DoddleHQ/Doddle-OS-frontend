@@ -4,12 +4,23 @@ import React from 'react';
 import { ArtifactPayload, HeadingsData, ContentStats, HomePageData } from '@/lib/types/graph-events.types';
 import { Database, Globe, Building2, Cpu, ExternalLink } from 'lucide-react';
 import ArtifactCardShell from './ArtifactCardShell';
+import MarkdownRenderer from './MarkdownRenderer';
 
 interface DataTableArtifactCardProps {
     artifact: ArtifactPayload;
     onCopyArtifact: (artifact: ArtifactPayload) => void;
     onDownloadArtifact: (artifact: ArtifactPayload) => void;
     copiedArtifactId: string | null;
+}
+
+function preprocessMarkdown(content: string): string {
+    let result = content;
+    const fencedMatch = result.match(/^```(?:markdown)?\s*\n([\s\S]*?)\n```\s*$/);
+    if (fencedMatch) {
+        result = fencedMatch[1];
+    }
+    result = result.replace(/([^\n])\n(\[[a-z0-9]+\])/g, '$1\n\n$2');
+    return result.trim();
 }
 
 export default function DataTableArtifactCard({
@@ -33,6 +44,8 @@ export default function DataTableArtifactCard({
         'headings' in content ||
         'content_stats' in content;
 
+   const hasReportContent = isSiteContext && typeof content?.reportContent === 'string';
+
     const icon = isSiteContext
         ? <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-600" />
         : isTechStack
@@ -51,7 +64,9 @@ export default function DataTableArtifactCard({
             copiedArtifactId={copiedArtifactId}
             collapsibleMaxHeight={350}
         >
-            {isSiteContext ? (
+            {isSiteContext && hasReportContent ? (
+                <BusinessPersonaView content={content} accentColor={accentColor} />
+            ) : isSiteContext ? (
                 <SiteContextView content={content} />
             ) : isTechStack ? (
                 <TechStackView content={content} />
@@ -119,6 +134,60 @@ function SiteContextView({ content }: { content: Record<string, unknown> }) {
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+function BusinessPersonaView({ content, accentColor }: { content: Record<string, unknown>; accentColor: string }) {
+    const reportContent = content.reportContent as string;
+    const businessName = (content.businessName ?? content.business_name) as string | undefined;
+    const niche = content.niche as string | undefined;
+    const reportType = content.reportType as string | undefined;
+    const siteUrl = content.siteUrl as string | undefined;
+    const pagesCrawled = content.pagesCrawled as number | undefined;
+    const generatedAt = content.generatedAt as string | undefined;
+
+    return (
+        <div className="space-y-3">
+            {(businessName || niche || reportType) && (
+                <div className="flex flex-wrap items-center gap-2">
+                    {businessName && (
+                        <span className="text-sm font-semibold text-slate-800">{businessName}</span>
+                    )}
+                    {niche && (
+                        <span className={`text-[10px] sm:text-xs bg-${accentColor}-50 text-${accentColor}-700 px-2 py-0.5 rounded-full font-medium capitalize`}>
+                            {niche.replace(/_/g, ' ')}
+                        </span>
+                    )}
+                    {reportType && (
+                        <span className="text-[10px] sm:text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium capitalize">
+                            {reportType.replace(/_/g, ' ')}
+                        </span>
+                    )}
+                </div>
+            )}
+
+            {(pagesCrawled || siteUrl || generatedAt) && (
+                <div className="flex flex-wrap gap-2">
+                    {pagesCrawled && (
+                        <span className={`inline-flex items-center gap-1 text-xs bg-${accentColor}-50 text-${accentColor}-700 px-2 py-1 rounded-lg font-medium`}>
+                            📄 {pagesCrawled} pages crawled
+                        </span>
+                    )}
+                    {siteUrl && (
+                        <span className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-lg font-mono truncate max-w-[200px] sm:max-w-none">
+                            {siteUrl}
+                        </span>
+                    )}
+                    {generatedAt && (
+                        <span className="inline-flex items-center gap-1 text-xs bg-slate-50 text-slate-500 px-2 py-1 rounded-lg">
+                            {new Date(generatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </span>
+                    )}
+                </div>
+            )}
+
+            <MarkdownRenderer content={preprocessMarkdown(reportContent)} accentColor={accentColor} />
         </div>
     );
 }

@@ -17,14 +17,34 @@ function parseContent(artifact: AuditArtifact): Record<string, unknown> {
     return {};
 }
 
+function getMergedContent(artifact: AuditArtifact): Record<string, unknown> {
+    const fromData = (artifact.data && typeof artifact.data === 'object' && Object.keys(artifact.data).length > 0)
+        ? artifact.data
+        : {};
+
+    let fromContent: Record<string, unknown> = {};
+    if (typeof artifact.content === 'string') {
+        try {
+            const parsed = JSON.parse(artifact.content);
+            if (parsed && typeof parsed === 'object') fromContent = parsed;
+        } catch {}
+    } else if (artifact.content && typeof artifact.content === 'object') {
+        fromContent = artifact.content as Record<string, unknown>;
+    }
+
+    return { ...fromContent, ...fromData };
+}
+
 function detectArtifactType(artifact: AuditArtifact): ArtifactType {
-    const data = parseContent(artifact);
+    const data = getMergedContent(artifact);
 
     const pageName = (artifact.pageName || '').toLowerCase();
+
 
     if ('reportContent' in data) return 'report';
     if ('blueprintContent' in data) return 'blueprint';
     if ('contentText' in data) return 'content';
+
     if ('links' in data || 'total' in data) return 'link_list';
     if ('headings' in data || 'meta_title' in data || 'content_stats' in data) return 'data_table';
     if ('stack' in data || 'conventions' in data) return 'tech_stack';
