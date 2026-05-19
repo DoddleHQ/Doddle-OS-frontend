@@ -118,7 +118,7 @@ export default function TechnicalAuditPlaygroundPage() {
                 status: 'complete',
             });
         }
-    }, [isComplete, completeEvent, artifacts, dbThreadId, workspaceId, updateThread]);
+    }, [isComplete, completeEvent, dbThreadId, workspaceId, updateThread]);
 
     const handleSendMessage = useCallback((message: string) => {
         setChatInputValue('');

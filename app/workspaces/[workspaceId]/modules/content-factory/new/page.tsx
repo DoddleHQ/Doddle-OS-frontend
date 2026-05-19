@@ -200,7 +200,7 @@ export default function NewProjectPage() {
                 status: 'complete',
             });
         }
-    }, [isComplete, completeEvent, artifacts, dbThreadId, workspaceId, updateThread]);
+    }, [isComplete, completeEvent, dbThreadId, workspaceId, updateThread]);
 
     // Auto-scroll to bottom when new messages arrive
     useEffect(() => {

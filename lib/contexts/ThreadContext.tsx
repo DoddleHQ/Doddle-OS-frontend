@@ -46,6 +46,7 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
     const [error, setError] = useState<string | null>(null);
 
     const saveQueueRef = useRef<Map<string, { artifact: ArtifactPayload; moduleId: ModuleId; workspaceId: string; retries: number }>>(new Map());
+    const savedArtifactIdsRef = useRef<Set<string>>(new Set());
     const isProcessingQueueRef = useRef(false);
     const threadCreatedRef = useRef(false);
 
@@ -71,6 +72,7 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
                         moduleId,
                         data: typeof artifact.content === 'object' && artifact.content !== null ? artifact.content as Record<string, unknown> : {},
                     });
+                    savedArtifactIdsRef.current.add(artifactId);
                 } catch (err) {
                     console.error(`[ThreadProvider] Failed to save artifact ${artifactId}:`, err);
                     if (retries < 3) {
@@ -162,6 +164,7 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
 
     const saveArtifact = useCallback(
         async (workspaceId: string, moduleId: ModuleId, threadId: string, artifact: ArtifactPayload) => {
+            if (savedArtifactIdsRef.current.has(artifact.artifactId)) return;
             if (saveQueueRef.current.has(artifact.artifactId)) return;
 
             saveQueueRef.current.set(artifact.artifactId, { artifact, moduleId, workspaceId, retries: 0 });

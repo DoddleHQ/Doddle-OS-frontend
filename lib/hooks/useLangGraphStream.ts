@@ -10,7 +10,7 @@
  * @see plans/hitl-streaming-protocol.md
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import {
     GraphEvent,
     GraphStreamState,
@@ -945,6 +945,9 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
         }));
     }, []);
 
+    // Memoize artifacts array to prevent new reference on every render
+    const memoizedArtifacts = useMemo(() => Array.from(state.artifacts.values()), [state.artifacts]);
+
     return {
         // State
         state,
@@ -967,7 +970,7 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
         error: state.error,
         completeEvent: state.completeEvent,
         messages: state.messages,
-        artifacts: Array.from(state.artifacts.values()),
+        artifacts: memoizedArtifacts,
         hitlRequestId: state.pendingHITL?.requestId || null,
     };
 }
