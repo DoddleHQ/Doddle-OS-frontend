@@ -172,9 +172,10 @@ export default function NewProjectPage() {
                 moduleId: 'content-factory',
                 title: domainTitle,
                 description: domain ? `Content project for ${domainTitle} (${domain})` : 'Content project',
-            }).then(() => {
-                dbThreadIdRef.current = streamState.threadId;
-                setDbThreadId(streamState.threadId);
+            }).then((thread) => {
+                const dbId = thread.id || streamState.threadId;
+                dbThreadIdRef.current = dbId;
+                setDbThreadId(dbId);
             });
         }
     }, [streamState.threadId, createThreadFromStream]);

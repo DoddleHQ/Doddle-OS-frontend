@@ -43,9 +43,9 @@ interface RawArtifact {
     created_at: string;
 }
 
-function toThread(raw: RawThread): AuditThread {
+function toThread(raw: RawThread & { thread_id?: string }): AuditThread {
     return {
-        id: raw.id,
+        id: raw.id || raw.thread_id || '',
         workspaceId: raw.workspace_id,
         moduleId: raw.module_id as ModuleId,
         title: raw.title,
@@ -97,7 +97,14 @@ export const threadService = {
         const res = await fetch(url, {
             method: 'POST',
             headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-            body: JSON.stringify(request),
+            body: JSON.stringify({
+                id: request.threadId,
+                thread_id: request.threadId,
+                module_id: request.moduleId,
+                title: request.title,
+                description: request.description,
+                status: request.status || 'running',
+            }),
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));

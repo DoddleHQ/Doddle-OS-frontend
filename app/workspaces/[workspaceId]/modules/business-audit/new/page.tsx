@@ -90,9 +90,10 @@ export default function TechnicalAuditPlaygroundPage() {
                 moduleId: 'business-audit',
                 title: domainTitle,
                 description: domain ? `Business audit for ${domainTitle} (${domain})` : 'Business audit',
-            }).then(() => {
-                dbThreadIdRef.current = streamState.threadId;
-                setDbThreadId(streamState.threadId);
+            }).then((thread) => {
+                const dbId = thread.id || streamState.threadId;
+                dbThreadIdRef.current = dbId;
+                setDbThreadId(dbId);
             });
         }
     }, [streamState.threadId, createThreadFromStream]);
