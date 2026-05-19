@@ -98,9 +98,8 @@ export const threadService = {
             method: 'POST',
             headers: { ...authHeaders(), 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                id: request.threadId,
-                thread_id: request.threadId,
-                module_id: request.moduleId,
+                threadId: request.threadId,
+                moduleId: request.moduleId,
                 title: request.title,
                 description: request.description,
                 status: request.status || 'running',
