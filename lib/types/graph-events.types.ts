@@ -573,6 +573,9 @@ export function getStepInfo(stepId: string, graphId: string) {
     if (graphId === 'content_architect') {
         return BROWSING_ARCHITECT_STEPS.find(s => s.id === stepId);
     }
+    if (graphId === 'gtm_strategy') {
+        return BROWSING_ARCHITECT_STEPS.find(s => s.id === stepId);
+    }
     return undefined;
 }
 

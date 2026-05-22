@@ -108,10 +108,11 @@ export default function TechnicalAuditPlaygroundPage() {
 
     useEffect(() => {
         if (dbThreadId && artifacts.length > 0) {
-            const latestArtifact = artifacts[artifacts.length - 1];
-            saveArtifact(workspaceId, 'business-audit', dbThreadId, latestArtifact);
+            for (const artifact of artifacts) {
+                saveArtifact(workspaceId, 'business-audit', dbThreadId, artifact);
+            }
         }
-    }, [artifacts.length, dbThreadId, saveArtifact]);
+    }, [artifacts.length, dbThreadId, saveArtifact, workspaceId]);
 
     useEffect(() => {
         if (isComplete && dbThreadId && completeEvent) {

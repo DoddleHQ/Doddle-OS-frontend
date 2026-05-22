@@ -21,13 +21,18 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
 
     useEffect(() => {
         if (request.default !== undefined) {
+            const maxSel = (request.data?.max_selections as number) || 5;
+            const validValues = request.options?.map(opt => opt.value) || [];
             if (Array.isArray(request.default)) {
-                setSelectedOptions(request.default.slice(0, 5));
+                const validDefaults = request.default.filter(v => validValues.length === 0 || validValues.includes(v));
+                setSelectedOptions(validDefaults.slice(0, maxSel));
             } else {
-                setSelectedOptions([request.default]);
+                if (validValues.length === 0 || validValues.includes(request.default)) {
+                    setSelectedOptions([request.default]);
+                }
             }
         }
-    }, [request.default]);
+    }, [request.default, request.options]);
 
     const handleConfirmation = (confirmed: boolean) => {
         setIsSubmitting(true);
@@ -71,9 +76,10 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
 
     const toggleOption = (optionValue: unknown) => {
         setSelectedOptions(prev => {
+            const maxSel = (request.data?.max_selections as number) || 5;
             if (prev.includes(optionValue)) {
                 return prev.filter(v => v !== optionValue);
-            } else if (prev.length >= 5) {
+            } else if (prev.length >= maxSel) {
                 return prev;
             }
             return [...prev, optionValue];
@@ -141,8 +147,9 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
 
                         <div className="space-y-2 mb-5 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
                             {request.options.map((option: HITLOption) => (
-                                <label
+                                <div
                                     key={option.id}
+                                    onClick={() => selectSingleOption(option.value)}
                                     className={`flex items-start gap-3 p-3.5 rounded-xl cursor-pointer transition-all border ${selectedOptions.includes(option.value)
                                         ? 'bg-blue-50/80 border-blue-300 shadow-sm'
                                         : 'bg-white border-slate-200 hover:border-blue-200 hover:bg-slate-50'
@@ -153,6 +160,7 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
                                         name="selection-option"
                                         checked={selectedOptions.includes(option.value)}
                                         onChange={() => selectSingleOption(option.value)}
+                                        onClick={(e) => e.stopPropagation()}
                                         className="mt-0.5 h-4 w-4 text-blue-600 border-slate-300 focus:ring-blue-500"
                                     />
                                     <div className="flex-1 min-w-0">
@@ -161,7 +169,7 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
                                             <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed break-words">{option.description}</p>
                                         )}
                                     </div>
-                                </label>
+                                </div>
                             ))}
                         </div>
 
@@ -179,6 +187,7 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
     }
 
     if (request.requestType === 'multi_selection' && request.options) {
+        const maxSelections = (request.data?.max_selections as number) || request.options.length;
         return (
             <div className="bg-white border border-indigo-200 rounded-2xl p-6 max-w-lg shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500"></div>
@@ -190,12 +199,8 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
                     </div>
                     <div className="flex-1">
                         <h4 className="text-[13px] font-bold text-indigo-600 uppercase tracking-wider mb-1.5">Multiple Selection Required</h4>
-                        <div className="space-y-1.5 text-[13px] text-slate-500 mb-4">
-                            <p>Please provide the URLs you want to scrape, one per line:</p>
-                            <p className="text-[12px] text-slate-400">You can paste any combination of the URLs listed below.</p>
-                            <p className="text-[12px] text-slate-400">Or comma-separated.</p>
-                            <p className="text-[12px] text-slate-400">You can also add additional URLs manually using: <code className="bg-slate-100 px-1 py-0.5 rounded text-[11px] font-mono">Add: https://example.com/page - Page Name</code></p>
-                            <p className="text-[12px] font-medium text-slate-600">Select up to 5 options</p>
+                        <div className="text-[15px] text-slate-700 leading-relaxed mb-4">
+                            <MarkdownRenderer content={getMessage()} accentColor="indigo" />
                         </div>
 
                         <div className="space-y-2 mb-5 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
@@ -204,12 +209,13 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
                                     ? option.label
                                     : String(option.value);
                                 return (
-                                    <label
+                                    <div
                                         key={option.id}
+                                        onClick={() => { if (!(selectedOptions.length >= maxSelections && !selectedOptions.includes(option.value))) toggleOption(option.value); }}
                                         className={`flex items-start gap-3 p-3.5 rounded-xl cursor-pointer transition-all border ${selectedOptions.includes(option.value)
                                             ? 'bg-indigo-50/80 border-indigo-300 shadow-sm'
                                             : 'bg-white border-slate-200 hover:border-indigo-200 hover:bg-slate-50'
-                                            } ${selectedOptions.length >= 5 && !selectedOptions.includes(option.value)
+                                            } ${selectedOptions.length >= maxSelections && !selectedOptions.includes(option.value)
                                                 ? 'opacity-50 cursor-not-allowed'
                                                 : ''}`}
                                     >
@@ -217,13 +223,17 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
                                             type="checkbox"
                                             checked={selectedOptions.includes(option.value)}
                                             onChange={() => toggleOption(option.value)}
-                                            disabled={selectedOptions.length >= 5 && !selectedOptions.includes(option.value)}
+                                            onClick={(e) => e.stopPropagation()}
+                                            disabled={selectedOptions.length >= maxSelections && !selectedOptions.includes(option.value)}
                                             className="mt-0.5 h-4 w-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                         />
                                         <div className="flex-1 min-w-0">
-                                            <span className="text-[14px] font-medium text-slate-800 block leading-tight break-all">{String(option.value)}</span>
+                                            <span className="text-[14px] font-medium text-slate-800 block leading-tight break-all">{displayLabel}</span>
+                                            {option.description && (
+                                                <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed break-words">{option.description}</p>
+                                            )}
                                         </div>
-                                    </label>
+                                    </div>
                                 );
                             })}
                         </div>
@@ -233,7 +243,7 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
                             disabled={isDisabled || isSubmitting || selectedOptions.length === 0}
                             className="w-full px-4 py-2.5 bg-slate-900 text-white text-[14px] font-medium rounded-xl hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                         >
-                            {isDisabled ? 'Submitted' : isSubmitting ? 'Submitting...' : `Confirm Selection ${selectedOptions.length > 0 ? `(${selectedOptions.length}/5)` : ''}`}
+                            {isDisabled ? 'Submitted' : isSubmitting ? 'Submitting...' : `Confirm Selection ${selectedOptions.length > 0 ? `(${selectedOptions.length}/${maxSelections})` : ''}`}
                         </button>
                     </div>
                 </div>
@@ -353,6 +363,7 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
     }
 
     if (request.requestType === 'url_selection' && request.options) {
+        const maxSelections = (request.data?.max_selections as number) || request.options.length;
         return (
             <div className="bg-white border border-emerald-200 rounded-2xl p-6 max-w-lg shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
@@ -364,19 +375,19 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
                     </div>
                     <div className="flex-1">
                         <h4 className="text-[13px] font-bold text-emerald-600 uppercase tracking-wider mb-1.5">URL Selection Required</h4>
-                        <div className="text-[15px] text-slate-700 mb-2 leading-relaxed">
+                        <div className="text-[15px] text-slate-700 mb-4 leading-relaxed">
                             <MarkdownRenderer content={getMessage()} accentColor="emerald" />
                         </div>
-                        <p className="text-[13px] text-slate-500 mb-5">Select up to 5 URLs</p>
 
                         <div className="space-y-2 mb-5 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
                             {request.options.map((option: HITLOption) => (
-                                <label
+                                <div
                                     key={option.id}
+                                    onClick={() => { if (!(selectedOptions.length >= maxSelections && !selectedOptions.includes(option.value))) toggleOption(option.value); }}
                                     className={`flex items-start gap-3 p-3.5 rounded-xl cursor-pointer transition-all border ${selectedOptions.includes(option.value)
                                         ? 'bg-emerald-50/80 border-emerald-300 shadow-sm'
                                         : 'bg-white border-slate-200 hover:border-emerald-200 hover:bg-slate-50'
-                                        } ${selectedOptions.length >= 5 && !selectedOptions.includes(option.value)
+                                        } ${selectedOptions.length >= maxSelections && !selectedOptions.includes(option.value)
                                             ? 'opacity-50 cursor-not-allowed'
                                             : ''}`}
                                 >
@@ -384,7 +395,8 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
                                         type="checkbox"
                                         checked={selectedOptions.includes(option.value)}
                                         onChange={() => toggleOption(option.value)}
-                                        disabled={selectedOptions.length >= 5 && !selectedOptions.includes(option.value)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        disabled={selectedOptions.length >= maxSelections && !selectedOptions.includes(option.value)}
                                         className="mt-0.5 h-4 w-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                     />
                                     <div className="flex-1 min-w-0">
@@ -393,7 +405,7 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
                                             <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed break-words">{option.description}</p>
                                         )}
                                     </div>
-                                </label>
+                                </div>
                             ))}
                         </div>
 
@@ -402,7 +414,7 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
                             disabled={isDisabled || isSubmitting || selectedOptions.length === 0}
                             className="w-full px-4 py-2.5 bg-slate-900 text-white text-[14px] font-medium rounded-xl hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
                         >
-                            {isDisabled ? 'Submitted' : isSubmitting ? 'Submitting...' : `Confirm Selection ${selectedOptions.length > 0 ? `(${selectedOptions.length}/5)` : ''}`}
+                            {isDisabled ? 'Submitted' : isSubmitting ? 'Submitting...' : `Confirm Selection ${selectedOptions.length > 0 ? `(${selectedOptions.length}/${maxSelections})` : ''}`}
                         </button>
                     </div>
                 </div>

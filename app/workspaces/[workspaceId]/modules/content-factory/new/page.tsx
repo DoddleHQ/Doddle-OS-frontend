@@ -190,10 +190,11 @@ export default function NewProjectPage() {
 
     useEffect(() => {
         if (dbThreadId && artifacts.length > 0) {
-            const latestArtifact = artifacts[artifacts.length - 1];
-            saveArtifact(workspaceId, 'content-factory', dbThreadId, latestArtifact);
+            for (const artifact of artifacts) {
+                saveArtifact(workspaceId, 'content-factory', dbThreadId, artifact);
+            }
         }
-    }, [artifacts.length, dbThreadId, saveArtifact]);
+    }, [artifacts.length, dbThreadId, saveArtifact, workspaceId]);
 
     useEffect(() => {
         if (isComplete && dbThreadId && completeEvent) {
