@@ -229,6 +229,9 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
                                         />
                                         <div className="flex-1 min-w-0">
                                             <span className="text-[14px] font-medium text-slate-800 block leading-tight break-all">{displayLabel}</span>
+                                            {option.label && option.label.trim() !== '' && option.label !== String(option.value) && String(option.value).startsWith('http') && (
+                                                <p className="text-[12px] text-slate-400 mt-1 leading-relaxed break-all">{String(option.value)}</p>
+                                            )}
                                             {option.description && (
                                                 <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed break-words">{option.description}</p>
                                             )}
@@ -401,6 +404,9 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
                                     />
                                     <div className="flex-1 min-w-0">
                                         <span className="text-[14px] font-medium text-slate-800 block leading-tight break-all">{option.label}</span>
+                                        {option.label && option.label.trim() !== '' && option.label !== String(option.value) && String(option.value).startsWith('http') && (
+                                            <p className="text-[12px] text-slate-400 mt-1 leading-relaxed break-all">{String(option.value)}</p>
+                                        )}
                                         {option.description && (
                                             <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed break-words">{option.description}</p>
                                         )}
