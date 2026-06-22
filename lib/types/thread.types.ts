@@ -1,4 +1,4 @@
-export type ModuleId = 'business-audit' | 'content-factory' | 'seo-cluster' | 'social-growth' | 'saas-launch-ops';
+export type ModuleId = 'business-audit' | 'content-factory' | 'content-architect' | 'magento-content-writer' | 'interactive-website-architect' | 'seo-cluster' | 'social-growth' | 'saas-launch-ops';
 
 export type ThreadStatus = 'running' | 'complete' | 'error';
 

@@ -19,6 +19,19 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
     const isDisabled = disabled || isSubmitted;
     const [pageFeedback, setPageFeedback] = useState<Record<string, string>>({});
 
+    // Structured field values for data_input with fields
+    const fields = Array.isArray(request.data?.fields)
+        ? request.data.fields as Array<{ key: string; label: string; type: string; placeholder?: string; required?: boolean }>
+        : null;
+    const [fieldValues, setFieldValues] = useState<Record<string, string>>(() => {
+        if (!fields) return {};
+        const initial: Record<string, string> = {};
+        for (const field of fields) {
+            initial[field.key] = '';
+        }
+        return initial;
+    });
+
     useEffect(() => {
         if (request.default !== undefined) {
             const maxSel = (request.data?.max_selections as number) || 5;
@@ -51,18 +64,11 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
             if (onAppendToInput) {
                 onAppendToInput(selectedValues.join(', '));
             } else {
-                const selectedLabels = request.options
-                    ?.filter(opt => selectedOptions.includes(opt.value))
-                    .map(opt => opt.label) || [];
-                onRespond({ selected: selectedOptions, selectedLabels });
+                onRespond({ value: selectedOptions });
             }
         } else {
-            // For single select, include both value and label
-            const selectedOption = request.options?.find(opt => opt.value === selectedOptions[0]);
-            onRespond({
-                selected: selectedOptions[0],
-                selectedLabel: selectedOption?.label || String(selectedOptions[0])
-            });
+            // For single select, send { value: selectedValue } as expected by the backend
+            onRespond({ value: selectedOptions[0] });
         }
         setIsSubmitted(true);
     };
@@ -71,6 +77,23 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
         if (!feedbackText.trim()) return;
         setIsSubmitting(true);
         onRespond({ feedback: feedbackText });
+        setIsSubmitted(true);
+    };
+
+    const handleFieldSubmit = () => {
+        if (!fields) return;
+        // Check all required fields are filled
+        const allRequiredFilled = fields
+            .filter(f => f.required !== false)
+            .every(f => fieldValues[f.key]?.trim());
+        if (!allRequiredFilled) return;
+        setIsSubmitting(true);
+        // Send response as an object with field keys matching backend expectations
+        const response: Record<string, unknown> = {};
+        for (const field of fields) {
+            response[field.key] = fieldValues[field.key].trim();
+        }
+        onRespond(response);
         setIsSubmitted(true);
     };
 
@@ -292,6 +315,60 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
     }
 
     if (request.requestType === 'data_input') {
+        // Structured fields mode — render individual form fields
+        if (fields) {
+            const allRequiredFilled = fields
+                .filter(f => f.required !== false)
+                .every(f => fieldValues[f.key]?.trim());
+
+            return (
+                <div className="bg-white border border-teal-200 rounded-2xl p-6 max-w-lg shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-teal-500"></div>
+                    <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-10 h-10 bg-teal-50 border border-teal-100 rounded-xl flex items-center justify-center">
+                            <svg className="w-5 h-5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="text-[13px] font-bold text-teal-600 uppercase tracking-wider mb-1.5">Input Required</h4>
+                            <div className="text-[15px] text-slate-700 mb-4 leading-relaxed">
+                                <MarkdownRenderer content={getMessage()} accentColor="teal" />
+                            </div>
+
+                            <div className="space-y-3 mb-4">
+                                {fields.map((field) => (
+                                    <div key={field.key}>
+                                        <label className="block text-[13px] font-medium text-slate-700 mb-1.5">
+                                            {field.label}
+                                            {field.required !== false && <span className="text-red-400 ml-0.5">*</span>}
+                                        </label>
+                                        <input
+                                            type={field.type === 'password' ? 'password' : field.type === 'url' ? 'url' : 'text'}
+                                            value={fieldValues[field.key] || ''}
+                                            onChange={(e) => setFieldValues(prev => ({ ...prev, [field.key]: e.target.value }))}
+                                            placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}...`}
+                                            disabled={isDisabled}
+                                            className="w-full px-4 py-2.5 text-[14px] border border-slate-200 bg-slate-50 rounded-xl focus:bg-white focus:outline-none focus:ring-0 focus:border-teal-400 focus:shadow-sm transition-all placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+
+                            <button
+                                onClick={handleFieldSubmit}
+                                disabled={isDisabled || isSubmitting || !allRequiredFilled}
+                                className="w-full px-4 py-2.5 bg-slate-900 text-white text-[14px] font-medium rounded-xl hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98]"
+                            >
+                                {isDisabled ? 'Submitted' : isSubmitting ? 'Submitting...' : 'Submit'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Freeform textarea mode (fallback when no structured fields)
         return (
             <div className="bg-white border border-teal-200 rounded-2xl p-6 max-w-md shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-teal-500"></div>

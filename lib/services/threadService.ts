@@ -8,20 +8,15 @@ import {
     ModuleId,
     ThreadStatus,
 } from '@/lib/types/thread.types';
+import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/services/apiClient';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
-const API_AUTH_TOKEN = process.env.NEXT_PUBLIC_API_AUTH_TOKEN || '';
-
-function authHeaders(): Record<string, string> {
-    const headers: Record<string, string> = {};
-    if (API_AUTH_TOKEN) {
-        headers['Authorization'] = `Bearer ${API_AUTH_TOKEN}`;
-    }
-    return headers;
-}
+// ---------------------------------------------------------------------------
+// Raw API response shapes (snake_case from backend)
+// ---------------------------------------------------------------------------
 
 interface RawThread {
     id: string;
+    thread_id?: string;
     workspace_id: string;
     module_id: string;
     title: string;
@@ -43,7 +38,11 @@ interface RawArtifact {
     created_at: string;
 }
 
-function toThread(raw: RawThread & { thread_id?: string }): AuditThread {
+// ---------------------------------------------------------------------------
+// Mappers
+// ---------------------------------------------------------------------------
+
+function toThread(raw: RawThread): AuditThread {
     return {
         id: raw.id || raw.thread_id || '',
         workspaceId: raw.workspace_id,
@@ -70,10 +69,18 @@ function toArtifact(raw: RawArtifact): AuditArtifact {
     };
 }
 
+// ---------------------------------------------------------------------------
+// URL helper
+// ---------------------------------------------------------------------------
+
 function threadsUrl(workspaceId: string, moduleId: string, ...segments: string[]): string {
-    const base = `${API_BASE_URL}/api/v1/workspaces/${workspaceId}/modules/${moduleId}/threads`;
+    const base = `/api/v1/workspaces/${workspaceId}/modules/${moduleId}/threads`;
     return segments.length > 0 ? `${base}/${segments.join('/')}` : base;
 }
+
+// ---------------------------------------------------------------------------
+// Thread Service
+// ---------------------------------------------------------------------------
 
 export const threadService = {
     async listThreads(workspaceId: string, params: ListThreadsParams): Promise<AuditThread[]> {
@@ -84,42 +91,25 @@ export const threadService = {
         if (params.limit) searchParams.set('limit', String(params.limit));
         const fullUrl = searchParams.toString() ? `${url}?${searchParams.toString()}` : url;
 
-        const res = await fetch(fullUrl, { headers: authHeaders() });
-        if (!res.ok) {
-            throw new Error(`Failed to list threads (${res.status})`);
-        }
-        const raw: RawThread[] = await res.json();
+        const raw: RawThread[] = await apiGet(fullUrl);
         return raw.map(toThread);
     },
 
     async createThread(workspaceId: string, request: CreateThreadRequest): Promise<AuditThread> {
         const url = threadsUrl(workspaceId, request.moduleId);
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                threadId: request.threadId,
-                moduleId: request.moduleId,
-                title: request.title,
-                description: request.description,
-                status: request.status || 'running',
-            }),
+        const raw: RawThread = await apiPost(url, {
+            threadId: request.threadId,
+            moduleId: request.moduleId,
+            title: request.title,
+            description: request.description,
+            status: request.status || 'running',
         });
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.detail || `Failed to create thread (${res.status})`);
-        }
-        const raw: RawThread = await res.json();
         return toThread(raw);
     },
 
     async getThread(workspaceId: string, moduleId: ModuleId, threadId: string): Promise<AuditThread> {
         const url = threadsUrl(workspaceId, moduleId, threadId);
-        const res = await fetch(url, { headers: authHeaders() });
-        if (!res.ok) {
-            throw new Error(`Failed to get thread (${res.status})`);
-        }
-        const raw: RawThread = await res.json();
+        const raw: RawThread = await apiGet(url);
         return toThread(raw);
     },
 
@@ -130,24 +120,13 @@ export const threadService = {
         updates: UpdateThreadRequest
     ): Promise<AuditThread> {
         const url = threadsUrl(workspaceId, moduleId, threadId);
-        const res = await fetch(url, {
-            method: 'PATCH',
-            headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-            body: JSON.stringify(updates),
-        });
-        if (!res.ok) {
-            throw new Error(`Failed to update thread (${res.status})`);
-        }
-        const raw: RawThread = await res.json();
+        const raw: RawThread = await apiPatch(url, updates);
         return toThread(raw);
     },
 
     async deleteThread(workspaceId: string, moduleId: ModuleId, threadId: string): Promise<void> {
         const url = threadsUrl(workspaceId, moduleId, threadId);
-        const res = await fetch(url, { method: 'DELETE', headers: authHeaders() });
-        if (!res.ok) {
-            throw new Error(`Failed to delete thread (${res.status})`);
-        }
+        await apiDelete(url);
     },
 
     async createArtifact(
@@ -157,21 +136,12 @@ export const threadService = {
         request: CreateArtifactRequest
     ): Promise<AuditArtifact> {
         const url = `${threadsUrl(workspaceId, moduleId, threadId)}/artifacts`;
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                data: request.data || {},
-                content: request.content,
-                page_name: request.pageName || 'Untitled Artifact',
-                moduleId: request.moduleId,
-            }),
+        const raw: RawArtifact = await apiPost(url, {
+            data: request.data || {},
+            content: request.content,
+            page_name: request.pageName || 'Untitled Artifact',
+            moduleId: request.moduleId,
         });
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.detail || `Failed to save artifact (${res.status})`);
-        }
-        const raw: RawArtifact = await res.json();
         return toArtifact(raw);
     },
 
@@ -181,11 +151,7 @@ export const threadService = {
         threadId: string
     ): Promise<AuditArtifact[]> {
         const url = `${threadsUrl(workspaceId, moduleId, threadId)}/artifacts`;
-        const res = await fetch(url, { headers: authHeaders() });
-        if (!res.ok) {
-            throw new Error(`Failed to list artifacts (${res.status})`);
-        }
-        const raw: RawArtifact[] = await res.json();
+        const raw: RawArtifact[] = await apiGet(url);
         return raw.map(toArtifact);
     },
 };

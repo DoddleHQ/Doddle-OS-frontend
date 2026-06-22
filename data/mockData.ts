@@ -119,64 +119,11 @@ export const mockAgents: Record<string, Agent> = {
   },
 };
 
-// Mock Workspaces
-export const workspaces = {
-  workspaces: [
-    {
-      id: 'techstart',
-      name: 'TechStart',
-      status: 'active' as const,
-      health: 92,
-      modules: [
-        {
-          id: 'SEO_Cluster',
-          name: 'SEO Cluster',
-          description: 'Search engine optimization',
-          activeThreadsCount: 8,
-        },
-        {
-          id: 'Content_Factory',
-          name: 'Content Factory',
-          description: 'Content creation pipeline',
-          activeThreadsCount: 12,
-        },
-        {
-          id: 'Social_Growth',
-          name: 'Social Growth',
-          description: 'Social media amplification',
-          activeThreadsCount: 5,
-        },
-        {
-          id: 'SaaS_Launch_Ops',
-          name: 'SaaS Launch Ops',
-          description: 'Product launch operations',
-          activeThreadsCount: 6,
-        },
-      ] as Module[],
-    },
-    {
-      id: 'doddle',
-      name: 'Doddle',
-      status: 'active' as const,
-      health: 88,
-      modules: [
-        {
-          id: 'SEO_Cluster',
-          name: 'SEO Cluster',
-          description: 'Search engine optimization',
-          activeThreadsCount: 5,
-        },
-        {
-          id: 'Content_Factory',
-          name: 'Content Factory',
-          description: 'Content creation pipeline',
-          activeThreadsCount: 9,
-        },
-      ] as Module[],
-    },
-  ],
-};
+/**
+ * Empty workspace list — workspaces are now fetched from the API
+ * via workspaceService. This export is kept for backward compatibility
+ * with components that import mockWorkspacesWithModules for type usage.
+ */
+export const mockWorkspacesWithModules: WorkspaceWithModules[] = [];
 
-export const mockWorkspacesWithModules = workspaces.workspaces;
-
-export default workspaces;
+export default { workspaces: [] };

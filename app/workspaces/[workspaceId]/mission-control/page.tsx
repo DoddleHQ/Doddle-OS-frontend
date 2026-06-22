@@ -8,7 +8,8 @@ import { KanbanBoard } from '@/components/domains/kanban/KanbanBoard';
 import { LiveActivityRail } from '@/components/domains/kanban/LiveActivityRail';
 import { BoardInsightsStrip } from '@/components/domains/kanban/BoardInsightsStrip';
 import { MetricsGrid } from '@/components/common/MetricsGrid';
-import { getMissionControlData, getWorkspace } from '@/lib/apiMock';
+import { getMissionControlData } from '@/lib/apiMock';
+import { workspaceService } from '@/lib/services/workspaceService';
 import { Activity, AlertTriangle, CheckCircle, Clock, Zap } from 'lucide-react';
 
 export default function MissionControlPage() {
@@ -25,7 +26,7 @@ export default function MissionControlPage() {
         setLoading(true);
         const [missionData, workspaceData] = await Promise.all([
           getMissionControlData(workspaceId),
-          getWorkspace(workspaceId)
+          workspaceService.getWorkspace(workspaceId)
         ]);
         setData(missionData);
         setWorkspace(workspaceData);
@@ -97,8 +98,8 @@ export default function MissionControlPage() {
     <div className="flex flex-col h-screen overflow-hidden bg-slate-50/50">
       {/* Header */}
       <BoardHeader
-        workspaceName={workspace.name}
-        workspaceStatus={workspace.status}
+        workspaceName={workspace.name || 'Untitled'}
+        workspaceStatus="active"
       />
 
       {/* Main Scrollable Area */}

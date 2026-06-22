@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Home,
@@ -22,7 +22,8 @@ import {
   PieChart,
   Megaphone,
   Mail,
-  ShieldAlert
+  ShieldAlert,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -31,27 +32,9 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { cn } from '@/lib/utils';
 import { WorkspaceSwitcher } from '@/components/layout/WorkspaceSwitcher';
-import { workspaces } from '@/data/mockData';
-
-// Mock data - would come from API
-const mockWorkspace = {
-  id: 'techstart',
-  name: 'TechStart',
-  status: 'active',
-  health: 87,
-};
-
-const activeAgents = [
-  { id: 'seo-lead', name: 'SEO_Lead', status: 'active', avatar: 'SL' },
-  { id: 'content-writer', name: 'Content_Writer', status: 'active', avatar: 'CW' },
-  { id: 'social-manager', name: 'Social_Manager', status: 'idle', avatar: 'SM' },
-];
-
-const systemAlerts = [
-  { id: 1, type: 'warning', message: 'Content pipeline at 85% capacity' },
-  { id: 2, type: 'info', message: 'SEO crawl completed successfully' },
-  { id: 3, type: 'error', message: 'Agent timeout: Content_Writer' },
-];
+import { UserMenu } from '@/components/layout/UserMenu';
+import { workspaceService } from '@/lib/services/workspaceService';
+import type { Workspace } from '@/lib/types/workspace.types';
 
 export default function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
@@ -59,15 +42,35 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
   const workspaceId = params.workspaceId as string;
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [rightRailOpen, setRightRailOpen] = useState(true);
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const workspace = workspaces.workspaces.find(w => w.id === workspaceId) || workspaces.workspaces[0];
+  // Fetch workspace data from API
+  useEffect(() => {
+    async function fetchWorkspace() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await workspaceService.getWorkspace(workspaceId);
+        setWorkspace(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load workspace');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    if (workspaceId) {
+      fetchWorkspace();
+    }
+  }, [workspaceId]);
 
   const modules = [
-    { id: 'mission-control', name: 'Mission Control', icon: LayoutDashboard, path: `/workspaces/${workspaceId}/mission-control`, activeThreads: 12 },
-    { id: 'seo-cluster', name: 'SEO Cluster', icon: Search, path: `/workspaces/${workspaceId}/modules/seo-cluster`, activeThreads: 8 },
-    { id: 'content-factory', name: 'Content Factory', icon: FileText, path: `/workspaces/${workspaceId}/modules/content-factory`, activeThreads: 24 },
-    { id: 'social-growth', name: 'Social Growth', icon: Share2, path: `/workspaces/${workspaceId}/modules/social-growth`, activeThreads: 5 },
-    { id: 'saas-launch', name: 'SaaS Launch Ops', icon: Rocket, path: `/workspaces/${workspaceId}/modules/saas-launch-ops`, activeThreads: 3 },
+    { id: 'mission-control', name: 'Mission Control', icon: LayoutDashboard, path: `/workspaces/${workspaceId}/mission-control`, activeThreads: 0 },
+    { id: 'seo-cluster', name: 'SEO Cluster', icon: Search, path: `/workspaces/${workspaceId}/modules/seo-cluster`, activeThreads: 0 },
+    { id: 'content-factory', name: 'Content Factory', icon: FileText, path: `/workspaces/${workspaceId}/modules/content-factory`, activeThreads: 0 },
+    { id: 'social-growth', name: 'Social Growth', icon: Share2, path: `/workspaces/${workspaceId}/modules/social-growth`, activeThreads: 0 },
+    { id: 'saas-launch', name: 'SaaS Launch Ops', icon: Rocket, path: `/workspaces/${workspaceId}/modules/saas-launch-ops`, activeThreads: 0 },
     { id: 'biz-audit', name: 'Business Audit', icon: BarChart3, path: `/workspaces/${workspaceId}/modules/business-audit`, activeThreads: 0 },
     { id: 'analytics', name: 'Analytics Action', icon: PieChart, path: `/workspaces/${workspaceId}/modules/analytics-action`, activeThreads: 0 },
     { id: 'ads', name: 'Ads Execution', icon: Megaphone, path: `/workspaces/${workspaceId}/modules/ads-execution`, activeThreads: 0 },
@@ -109,6 +112,33 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
     </Link>
   );
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex h-screen bg-neutral-50 overflow-hidden">
+        <WorkspaceSwitcher />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !workspace) {
+    return (
+      <div className="flex h-screen bg-neutral-50 overflow-hidden">
+        <WorkspaceSwitcher />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-neutral-500 mb-2">Unable to load workspace</p>
+            <p className="text-sm text-neutral-400">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-neutral-50 overflow-hidden">
       {/* Workspace Switcher (Discord Style) */}
@@ -125,17 +155,13 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
         <div className="flex items-center justify-between p-4 border-b border-neutral-200">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold shadow-sm">
-              {workspace.name.charAt(0)}
+              {(workspace.name || 'W').charAt(0)}
             </div>
             <div>
-              <h1 className="font-semibold text-neutral-900 leading-tight">{workspace.name}</h1>
-              <div className="flex items-center gap-1.5">
-                <div className={cn(
-                  "h-1.5 w-1.5 rounded-full",
-                  workspace.status === 'active' ? 'bg-success-500' : 'bg-neutral-300'
-                )} />
-                <span className="text-xs text-neutral-500 capitalize">{workspace.status}</span>
-              </div>
+              <h1 className="font-semibold text-neutral-900 leading-tight">{workspace.name || 'Untitled Workspace'}</h1>
+              {workspace.websiteDomain && (
+                <span className="text-xs text-neutral-500">{workspace.websiteDomain}</span>
+              )}
             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
@@ -194,7 +220,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
             <Button variant="ghost" size="icon">
               <Bell className="h-4 w-4" />
             </Button>
-            <Avatar initials="AD" size="sm" />
+            <UserMenu />
             {!rightRailOpen && (
               <Button variant="ghost" size="icon" onClick={() => setRightRailOpen(true)}>
                 <ChevronLeft className="h-4 w-4 text-primary-600" />
@@ -222,59 +248,21 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
             </Button>
           </div>
 
-          {/* System Health Card */}
+          {/* Workspace Info */}
           <div className="p-4 border-b border-neutral-200">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-neutral-900">System Health</h3>
-              <Badge variant="success">{workspace.health}%</Badge>
-            </div>
-            <ProgressBar value={workspace.health} />
-          </div>
-
-          {/* Active Agents */}
-          <div className="p-4 border-b border-neutral-200">
-            <h3 className="text-sm font-semibold text-neutral-900 mb-3">Active Agents</h3>
-            <div className="space-y-2">
-              {activeAgents.map((agent) => (
-                <div key={agent.id} className="flex items-center gap-3">
-                  <Avatar initials={agent.avatar} size="sm" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-neutral-900 truncate">{agent.name}</p>
-                    <div className="flex items-center gap-1.5">
-                      <div className={cn(
-                        'h-1.5 w-1.5 rounded-full',
-                        agent.status === 'active' ? 'bg-success-500' : 'bg-neutral-300'
-                      )} />
-                      <span className="text-xs text-neutral-500">{agent.status}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* System Alerts */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <h3 className="text-sm font-semibold text-neutral-900 mb-3">Recent Alerts</h3>
-            <div className="space-y-2">
-              {systemAlerts.map((alert) => (
-                <Card key={alert.id} variant="ghost" className="p-3">
-                  <CardContent className="p-0">
-                    <div className="flex items-start gap-2">
-                      {alert.type === 'warning' && (
-                        <Activity className="h-4 w-4 text-warning-500 flex-shrink-0 mt-0.5" />
-                      )}
-                      {alert.type === 'error' && (
-                        <Zap className="h-4 w-4 text-error-500 flex-shrink-0 mt-0.5" />
-                      )}
-                      {alert.type === 'info' && (
-                        <Clock className="h-4 w-4 text-info-500 flex-shrink-0 mt-0.5" />
-                      )}
-                      <p className="text-xs text-neutral-600">{alert.message}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            <h3 className="text-sm font-semibold text-neutral-900 mb-2">Workspace</h3>
+            <div className="space-y-1">
+              <p className="text-xs text-neutral-500">
+                <span className="font-medium text-neutral-700">Name:</span> {workspace.name || 'Untitled'}
+              </p>
+              {workspace.websiteDomain && (
+                <p className="text-xs text-neutral-500">
+                  <span className="font-medium text-neutral-700">Domain:</span> {workspace.websiteDomain}
+                </p>
+              )}
+              <p className="text-xs text-neutral-500">
+                <span className="font-medium text-neutral-700">Created:</span> {new Date(workspace.createdAt).toLocaleDateString()}
+              </p>
             </div>
           </div>
         </div>
