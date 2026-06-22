@@ -1,5 +1,4 @@
-import { Workspace, Module, Thread, Agent, Event } from '@/data/mockData';
-import workspaces from '@/data/mockData';
+import { Module, Thread, Agent, Event } from '@/data/mockData';
 import { mockMissionControlData as missionControlData } from '@/data/missionControl';
 import { mockSEOThreads, mockSEOMetrics } from '@/data/seoCluster';
 import { contentThreads, contentFactoryMetrics } from '@/data/contentFactory';
@@ -16,60 +15,34 @@ const randomDelay = (min: number = 800, max: number = 1500) => {
 };
 
 /**
- * Fetches a workspace by ID
- * @param id - The workspace identifier
- * @returns Promise resolving to the Workspace object
- */
-export async function getWorkspace(id: string): Promise<Workspace> {
-  await randomDelay(800, 1200);
-  const workspace = workspaces.workspaces.find(w => w.id === id);
-  
-  if (!workspace) {
-    throw new Error(`Workspace with id "${id}" not found`);
-  }
-  
-  return workspace;
-}
-
-/**
  * Fetches a module by ID
  * @param id - The module identifier
  * @returns Promise resolving to the Module object with additional metadata
  */
-export async function getModule(id: string): Promise<Module & { metrics?: any; threads?: Thread[] }> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getModule(id: string): Promise<Module & { metrics?: any; threads?: any[] }> {
   await randomDelay(900, 1400);
-  
-  // Find the module in mockData
-  const moduleData = workspaces.workspaces[0]?.modules.find(m => m.id === id);
-  
-  if (!moduleData) {
-    throw new Error(`Module with id "${id}" not found`);
-  }
 
   // Add module-specific data based on the module ID
-  let result: any = { ...moduleData };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result: Module & { metrics?: any; threads?: any[] } = {
+    id,
+    name: id.replace(/_/g, ' '),
+    description: '',
+    activeThreadsCount: 0,
+  };
   
   switch (id) {
     case 'SEO_Cluster':
-      result.metrics = mockSEOMetrics;
-      result.threads = mockSEOThreads;
-      break;
+      return { ...result, name: 'SEO Cluster', description: 'Search engine optimization', metrics: mockSEOMetrics, threads: mockSEOThreads };
     case 'Content_Factory':
-      result.metrics = contentFactoryMetrics;
-      result.threads = contentThreads;
-      break;
+      return { ...result, name: 'Content Factory', description: 'Content creation pipeline', metrics: contentFactoryMetrics, threads: contentThreads };
     case 'Social_Growth':
-      result.metrics = socialMetrics;
-      result.threads = socialThreads;
-      break;
+      return { ...result, name: 'Social Growth', description: 'Social media amplification', metrics: socialMetrics, threads: socialThreads };
     case 'SaaS_Launch_Ops':
-      result.metrics = saasLaunchOpsMetrics;
-      result.threads = saasLaunchOpsThreads;
-      break;
+      return { ...result, name: 'SaaS Launch Ops', description: 'Product launch operations', metrics: saasLaunchOpsMetrics, threads: saasLaunchOpsThreads };
     default:
-      // Generic module data
-      result.metrics = {};
-      result.threads = [];
+      return { ...result, metrics: {}, threads: [] };
   }
   
   return result;
@@ -148,13 +121,4 @@ export async function postCommand(threadId: string, text: string): Promise<Threa
 export async function getMissionControlData(workspaceId: string) {
   await randomDelay(800, 1300);
   return missionControlData;
-}
-
-/**
- * Fetches all available workspaces
- * @returns Promise resolving to array of workspaces
- */
-export async function getWorkspaces(): Promise<Workspace[]> {
-  await randomDelay(600, 1000);
-  return workspaces.workspaces;
 }

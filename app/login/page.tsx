@@ -3,8 +3,10 @@
 import { useReducer, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Sparkles, Lock, ArrowRight } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { Eye, EyeOff, Sparkles, Lock, ArrowRight, Mail } from 'lucide-react';
 import { login, loginForce, LoginError } from '@/lib/services/authService';
+import { ResendVerificationEmail } from '@/components/auth/ResendVerificationEmail';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -50,6 +52,7 @@ const LoginPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [apiError, setApiError] = useState('');
     const [activeSession, setActiveSession] = useState(false);
+    const [emailNotVerified, setEmailNotVerified] = useState(false);
     const [errors, setErrors] = useState<FieldErrors>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
 
@@ -88,6 +91,7 @@ const LoginPage = () => {
     const handleLogin = async (force: boolean = false) => {
         setApiError('');
         setActiveSession(false);
+        setEmailNotVerified(false);
 
         const allErrors: FieldErrors = {
             ...validateField('email', email),
@@ -105,6 +109,7 @@ const LoginPage = () => {
             } else {
                 await login(payload);
             }
+            toast.success('Welcome back!');
             const next = new URLSearchParams(window.location.search).get('next') || '/';
             router.push(next);
         } catch (err: unknown) {
@@ -112,6 +117,9 @@ const LoginPage = () => {
                 if (err.status === 409 && err.conflict) {
                     setActiveSession(true);
                     setApiError(err.conflict.message);
+                } else if (err.status === 403 && err.message.toLowerCase().includes('verif')) {
+                    setEmailNotVerified(true);
+                    setApiError(err.message);
                 } else {
                     setApiError(err.message);
                 }
@@ -247,6 +255,15 @@ const LoginPage = () => {
                                     >
                                         Replace existing session and continue
                                     </button>
+                                )}
+                                {emailNotVerified && (
+                                    <div className="pt-2">
+                                        <ResendVerificationEmail
+                                            email={email}
+                                            variant="link"
+                                            label="Resend Verification Email"
+                                        />
+                                    </div>
                                 )}
                             </div>
                         )}

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Loader2, FileText, AlertCircle, Trash2, Pencil } from 'lucide-react';
 import { useThread } from '@/lib/contexts/ThreadContext';
 import ArtifactContentView from '@/components/common/ArtifactContentView';
@@ -55,7 +56,7 @@ export default function ThreadViewPage() {
         setIsDeleting(true);
         try {
             await deleteThread(workspaceId, 'content-factory', threadId);
-            router.push(`/workspaces/${workspaceId}/modules/content-factory`);
+            router.push(`/workspaces/${workspaceId}/modules/content-factory/content-architect`);
         } catch {
             setIsDeleting(false);
         }
@@ -94,6 +95,24 @@ export default function ThreadViewPage() {
         <div className="flex flex-col h-full bg-slate-50 min-h-[calc(100vh-100px)] lg:rounded-2xl lg:border lg:border-slate-200 lg:shadow-sm overflow-hidden relative">
             <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-8 scroll-smooth">
                 <div className="max-w-4xl mx-auto space-y-6">
+                    {/* Breadcrumb */}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Link
+                            href={`/workspaces/${workspaceId}/modules/content-factory`}
+                            className="hover:text-foreground transition-colors"
+                        >
+                            Content Factory
+                        </Link>
+                        <span>/</span>
+                        <Link
+                            href={`/workspaces/${workspaceId}/modules/content-factory/content-architect`}
+                            className="hover:text-foreground transition-colors"
+                        >
+                            Content Architect
+                        </Link>
+                        <span>/</span>
+                    </div>
+
                     <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
                             {isEditing ? (

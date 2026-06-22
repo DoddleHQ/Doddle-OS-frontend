@@ -53,7 +53,7 @@ export const HITLInterruptPayloadSchema = z.object({
     type: z.literal('hitl_request'),
     hitl_type: HITLTypeSchema,
     message: z.string(),
-    request_id: z.string().optional(),
+    request_id: z.string().nullish(),
     options: z.array(HITLOptionSchema).nullish(),
     allow_free_input: z.boolean().optional(),
     default: z.unknown().optional(),

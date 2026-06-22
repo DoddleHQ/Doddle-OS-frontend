@@ -3,6 +3,7 @@
 import { useReducer, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 import { Eye, EyeOff, Sparkles, Lock, ArrowRight, Check, X } from 'lucide-react';
 import { signup } from '@/lib/services/authService';
 
@@ -21,14 +22,12 @@ type SignupState = {
     orgName: string;
     email: string;
     password: string;
-    rememberMe: boolean;
 };
 
 type SignupAction =
     | { type: 'SET_ORG_NAME'; payload: string }
     | { type: 'SET_EMAIL'; payload: string }
-    | { type: 'SET_PASSWORD'; payload: string }
-    | { type: 'TOGGLE_REMEMBER_ME' };
+    | { type: 'SET_PASSWORD'; payload: string };
 
 type FieldErrors = {
     orgName?: string;
@@ -44,8 +43,6 @@ const signupReducer = (state: SignupState, action: SignupAction): SignupState =>
             return { ...state, email: action.payload };
         case 'SET_PASSWORD':
             return { ...state, password: action.payload };
-        case 'TOGGLE_REMEMBER_ME':
-            return { ...state, rememberMe: !state.rememberMe };
         default:
             return state;
     }
@@ -55,7 +52,6 @@ const initialState: SignupState = {
     orgName: '',
     email: '',
     password: '',
-    rememberMe: true,
 };
 
 const SignUpPage = () => {
@@ -67,7 +63,7 @@ const SignUpPage = () => {
     const [errors, setErrors] = useState<FieldErrors>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-    const { orgName, email, password, rememberMe } = state;
+    const { orgName, email, password } = state;
 
     const passedCount = password
         ? PASSWORD_RULES.filter((r) => r.test(password)).length
@@ -127,8 +123,9 @@ const SignUpPage = () => {
         if (Object.keys(allErrors).length > 0) return;
         setIsLoading(true);
         try {
-            await signup({ orgName, email, password, rememberMe });
-            router.push('/');
+            const result = await signup({ orgName, email, password });
+            toast.success(result.message, { autoClose: 5000 });
+            router.push(`/check-email?email=${encodeURIComponent(email)}`);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
             setApiError(message);
@@ -270,21 +267,6 @@ const SignUpPage = () => {
                                 {apiError}
                             </div>
                         )}
-
-                        <label className="flex items-center justify-between cursor-pointer select-none">
-                            <span className="text-sm text-neutral-600">Keep me signed in</span>
-                            <button
-                                type="button"
-                                role="switch"
-                                aria-checked={rememberMe}
-                                onClick={() => dispatch({ type: 'TOGGLE_REMEMBER_ME' })}
-                                className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${rememberMe ? 'bg-primary-600' : 'bg-neutral-300'}`}
-                            >
-                                <span
-                                    className={`pointer-events-none inline-block h-4 w-4 mt-0.5 ml-0.5 rounded-full bg-white shadow transition-transform duration-200 ease-in-out ${rememberMe ? 'translate-x-4' : 'translate-x-0'}`}
-                                />
-                            </button>
-                        </label>
 
                         <button
                             type="submit"

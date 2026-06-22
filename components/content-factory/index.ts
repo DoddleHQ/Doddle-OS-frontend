@@ -1,6 +1,8 @@
 export { QuickActionButton } from './QuickActionButton';
+export { MagentoContentWriterButton } from './MagentoContentWriterButton';
 export { ProjectInitializationModal } from './ProjectInitializationModal';
 export type { QuickActionButtonProps } from './QuickActionButton';
+export type { MagentoContentWriterButtonProps } from './MagentoContentWriterButton';
 export type { ProjectInitializationModalProps } from './ProjectInitializationModal';
 
 export { ChatMessage as ChatMessageComponent, ChatInput, HITLMessageCard } from './chat';

@@ -30,7 +30,7 @@ export interface WorkspaceSettings {
 }
 
 export const workspaceSettings: WorkspaceSettings = {
-  id: 'ws-techstart',
+  id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
   name: 'TechStart Marketing',
   status: 'active',
   createdAt: '2024-01-15T10:00:00Z',

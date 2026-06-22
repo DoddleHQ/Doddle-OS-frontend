@@ -4,60 +4,52 @@ import React, { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { FileText, ArrowRight, Clock, AlertCircle } from 'lucide-react';
-import { QuickActionButton } from '@/components/content-factory';
-import { useThread } from '@/lib/contexts/ThreadContext';
-import { AuditThread } from '@/lib/types/thread.types';
+import { PenTool, Globe, ArrowRight, Layout } from 'lucide-react';
 
-function formatRelativeTime(dateStr: string): string {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
+interface GraphTool {
+    id: string;
+    name: string;
+    description: string;
+    icon: React.ReactNode;
+    gradient: string;
+    shadowColor: string;
+    hoverBorder: string;
 }
 
-function ThreadCard({ thread, workspaceId }: { thread: AuditThread; workspaceId: string }) {
-    const description = thread.description || 'No description';
-
-    return (
-        <Link href={`/workspaces/${workspaceId}/modules/content-factory/${thread.id}`}>
-            <Card className="p-4 hover:border-primary transition-colors cursor-pointer h-full">
-                <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                        <h3 className="font-medium mb-1">{thread.title}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                            {description}
-                        </p>
-                    </div>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5" />
-                        {formatRelativeTime(thread.createdAt)}
-                        <span className="text-neutral-300">·</span>
-                        {thread.docCount} {thread.docCount === 1 ? 'doc' : 'docs'}
-                    </span>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-            </Card>
-        </Link>
-    );
-}
+const graphTools: GraphTool[] = [
+    {
+        id: 'content-architect',
+        name: 'Content Architect',
+        description: 'AI-powered content analysis and generation. Enter a website URL to analyze and generate optimized content strategies.',
+        icon: <Globe className="w-6 h-6 text-white" />,
+        gradient: 'from-blue-600 to-indigo-500',
+        shadowColor: 'shadow-blue-500/20',
+        hoverBorder: 'hover:border-blue-300',
+    },
+    {
+        id: 'magento-content-writer',
+        name: 'Magento Content Writer',
+        description: 'Write content for product, category, and collection pages — and push directly to Magento.',
+        icon: <PenTool className="w-6 h-6 text-white" />,
+        gradient: 'from-purple-600 to-pink-500',
+        shadowColor: 'shadow-purple-500/20',
+        hoverBorder: 'hover:border-purple-300',
+    },
+    {
+        id: 'interactive-website-architect',
+        name: 'Interactive Website Architect',
+        description: 'Design and build interactive websites with AI-powered architecture and real-time collaboration.',
+        icon: <Layout className="w-6 h-6 text-white" />,
+        gradient: 'from-emerald-600 to-teal-500',
+        shadowColor: 'shadow-emerald-500/20',
+        hoverBorder: 'hover:border-emerald-300',
+    },
+];
 
 export default function ContentFactoryPage() {
     const params = useParams();
     const router = useRouter();
     const workspaceId = params.workspaceId as string;
-    const { threads, isLoading, error, fetchThreads } = useThread();
 
     useEffect(() => {
         if (!workspaceId || workspaceId === 'undefined') {
@@ -65,78 +57,41 @@ export default function ContentFactoryPage() {
         }
     }, [workspaceId, router]);
 
-    useEffect(() => {
-        if (workspaceId) {
-            fetchThreads(workspaceId, 'content-factory');
-        }
-    }, [workspaceId, fetchThreads]);
-
     if (!workspaceId || workspaceId === 'undefined') {
         return null;
     }
 
     return (
         <div className="p-6 space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold mb-1">Content Factory</h1>
-                    <p className="text-muted-foreground">AI-powered content creation and optimization</p>
-                </div>
-                <div className="flex gap-2 items-center">
-                    <QuickActionButton workspaceId={workspaceId} />
-                </div>
+            <div>
+                <h1 className="text-2xl font-bold mb-1">Content Factory</h1>
+                <p className="text-muted-foreground">Choose a graph tool to start creating content</p>
             </div>
 
-            {isLoading ? (
-                <div className="space-y-4">
-                    <div className="h-6 w-40 bg-slate-100 animate-pulse rounded" />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {[1, 2].map(i => (
-                            <div key={i} className="h-32 rounded-xl border border-slate-200 bg-white p-4 space-y-4">
-                                <div className="flex justify-between">
-                                    <div className="h-6 w-3/4 bg-slate-100 animate-pulse rounded" />
-                                    <div className="h-6 w-16 bg-slate-100 animate-pulse rounded-full" />
+            {/* Graph Tool Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {graphTools.map((tool) => (
+                    <Link
+                        key={tool.id}
+                        href={`/workspaces/${workspaceId}/modules/content-factory/${tool.id}`}
+                    >
+                        <Card className={`p-5 ${tool.hoverBorder} transition-all cursor-pointer group h-full`}>
+                            <div className="flex items-start gap-4">
+                                <div className={`flex-shrink-0 w-12 h-12 bg-gradient-to-tr ${tool.gradient} rounded-xl shadow-lg ${tool.shadowColor} flex items-center justify-center group-hover:scale-105 transition-transform`}>
+                                    {tool.icon}
                                 </div>
-                                <div className="space-y-2">
-                                    <div className="h-4 w-full bg-slate-50 animate-pulse rounded" />
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-semibold text-slate-900 mb-1">{tool.name}</h3>
+                                    <p className="text-sm text-muted-foreground line-clamp-2">
+                                        {tool.description}
+                                    </p>
                                 </div>
-                                <div className="pt-2 flex justify-between items-center">
-                                    <div className="h-4 w-24 bg-slate-50 animate-pulse rounded" />
-                                    <div className="h-4 w-4 bg-slate-100 animate-pulse rounded" />
-                                </div>
+                                <ArrowRight className="h-5 w-5 text-muted-foreground mt-1 group-hover:translate-x-1 transition-transform" />
                             </div>
-                        ))}
-                    </div>
-                </div>
-            ) : error ? (
-                <Card className="p-8 text-center">
-                    <AlertCircle className="h-12 w-12 text-error mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Failed to load threads</h3>
-                    <p className="text-muted-foreground mb-4">{error}</p>
-                    <Button onClick={() => fetchThreads(workspaceId, 'content-factory')}>Retry</Button>
-                </Card>
-            ) : threads.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-slate-200 py-16">
-                    <div className="flex flex-col items-center justify-center text-center px-4">
-                        <div className="mb-4 text-slate-700">
-                            <FileText className="h-12 w-12" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-slate-900 mb-2">No threads yet</h3>
-                        <p className="text-sm text-slate-700 max-w-sm">
-                            Start a content project to analyze a website and generate AI-powered content.
-                        </p>
-                    </div>
-                </div>
-            ) : (
-                <div>
-                    <h2 className="text-lg font-semibold mb-4">Content Threads</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {threads.map(thread => (
-                            <ThreadCard key={thread.id} thread={thread} workspaceId={workspaceId} />
-                        ))}
-                    </div>
-                </div>
-            )}
+                        </Card>
+                    </Link>
+                ))}
+            </div>
         </div>
     );
 }
