@@ -87,9 +87,15 @@ export default function GTMStrategyPlaygroundPage() {
                 title,
                 description: `GTM Strategy for ${title}`,
             }).then((thread) => {
-                const dbId = thread.id || streamState.threadId;
+                const dbId = thread.id;
+                if (!dbId) {
+                    console.error('[SocialGrowthNew] Thread created but returned no database ID:', thread);
+                    return;
+                }
                 dbThreadIdRef.current = dbId;
                 setDbThreadId(dbId);
+            }).catch((err) => {
+                console.error('[SocialGrowthNew] Failed to create thread in database:', err);
             });
         }
     }, [streamState.threadId, createThreadFromStream, workspaceId]);

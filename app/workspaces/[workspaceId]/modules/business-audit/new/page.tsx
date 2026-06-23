@@ -91,9 +91,15 @@ export default function TechnicalAuditPlaygroundPage() {
                 title: domainTitle,
                 description: domain ? `Business audit for ${domainTitle} (${domain})` : 'Business audit',
             }).then((thread) => {
-                const dbId = thread.id || streamState.threadId;
+                const dbId = thread.id;
+                if (!dbId) {
+                    console.error('[BusinessAuditNew] Thread created but returned no database ID:', thread);
+                    return;
+                }
                 dbThreadIdRef.current = dbId;
                 setDbThreadId(dbId);
+            }).catch((err) => {
+                console.error('[BusinessAuditNew] Failed to create thread in database:', err);
             });
         }
     }, [streamState.threadId, createThreadFromStream, workspaceId]);
