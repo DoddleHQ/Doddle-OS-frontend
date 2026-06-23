@@ -92,7 +92,7 @@ export default function GTMStrategyPlaygroundPage() {
                 setDbThreadId(dbId);
             });
         }
-    }, [streamState.threadId, createThreadFromStream]);
+    }, [streamState.threadId, createThreadFromStream, workspaceId]);
 
     useEffect(() => {
         if (dbThreadId && !urlReplacedRef.current) {
@@ -108,7 +108,7 @@ export default function GTMStrategyPlaygroundPage() {
                 saveArtifact(workspaceId, 'social-growth', dbThreadId, artifact);
             }
         }
-    }, [artifacts.length, dbThreadId, saveArtifact, workspaceId]);
+    }, [artifacts, dbThreadId, saveArtifact, workspaceId]);
 
     useEffect(() => {
         if (isComplete && dbThreadId && completeEvent) {

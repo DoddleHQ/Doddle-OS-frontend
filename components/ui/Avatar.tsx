@@ -4,6 +4,7 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 import { User } from 'lucide-react';
+import Image from 'next/image';
 
 const avatarVariants = cva('relative flex shrink-0 overflow-hidden rounded-full', {
   variants: {
@@ -44,11 +45,13 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
     };
 
     const avatarContent = src && !imageError ? (
-      <img
+      <Image
         src={src}
         alt={alt || 'Avatar'}
-        className="aspect-square h-full w-full object-cover"
+        fill
+        className="object-cover"
         onError={() => setImageError(true)}
+        unoptimized
       />
     ) : fallback ? (
       <div className="flex h-full w-full items-center justify-center bg-neutral-200 text-neutral-600">

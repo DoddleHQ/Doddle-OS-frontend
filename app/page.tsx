@@ -103,7 +103,7 @@ export default function RootPage() {
                     </div>
                     <h3 className="text-xl font-bold mb-2">Welcome{orgName ? `, ${orgName}` : ''}!</h3>
                     <p className="text-neutral-500 mb-6 max-w-md mx-auto">
-                        You don't have any workspaces yet. Create your first workspace to start deploying AI agents for your marketing operations.
+                        You don&apos;t have any workspaces yet. Create your first workspace to start deploying AI agents for your marketing operations.
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Button

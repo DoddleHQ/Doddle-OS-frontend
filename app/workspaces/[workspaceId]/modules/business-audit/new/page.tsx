@@ -96,7 +96,7 @@ export default function TechnicalAuditPlaygroundPage() {
                 setDbThreadId(dbId);
             });
         }
-    }, [streamState.threadId, createThreadFromStream]);
+    }, [streamState.threadId, createThreadFromStream, workspaceId]);
 
     useEffect(() => {
         if (dbThreadId && !urlReplacedRef.current) {
@@ -112,7 +112,7 @@ export default function TechnicalAuditPlaygroundPage() {
                 saveArtifact(workspaceId, 'business-audit', dbThreadId, artifact);
             }
         }
-    }, [artifacts.length, dbThreadId, saveArtifact, workspaceId]);
+    }, [artifacts, dbThreadId, saveArtifact, workspaceId]);
 
     useEffect(() => {
         if (isComplete && dbThreadId && completeEvent) {
