@@ -98,7 +98,9 @@ export const threadService = {
     async createThread(workspaceId: string, request: CreateThreadRequest): Promise<AuditThread> {
         const url = threadsUrl(workspaceId, request.moduleId);
         const raw: RawThread = await apiPost(url, {
-            threadId: request.threadId,
+            // The backend expects `langId` (LangGraph thread ID), not `threadId`.
+            // `request.threadId` carries the LangGraph-assigned ID from the stream.
+            langId: request.threadId,
             moduleId: request.moduleId,
             title: request.title,
             description: request.description,
