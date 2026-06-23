@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react';
 
 export default function RootPage() {
+  const router = useRouter();
   const { workspaces, isLoading, error } = useWorkspaces();
   const auth = useAuth();
   const isAuthenticated = auth.status === 'authenticated';
@@ -84,12 +86,14 @@ export default function RootPage() {
                     </Button>
                 )}
                 {!isAuthenticated && (
-                    <Link href="/login">
-                        <Button size="lg" className="h-14 px-10 text-lg rounded-full shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] bg-primary-600 hover:bg-primary-500 transition-all font-bold">
-                            Sign In to Get Started
-                            <ArrowRight className="w-6 h-6 ml-2" />
-                        </Button>
-                    </Link>
+                    <Button
+                        size="lg"
+                        onClick={() => router.push('/login')}
+                        className="h-14 px-10 text-lg rounded-full shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] bg-primary-600 hover:bg-primary-500 transition-all font-bold"
+                    >
+                        Sign In to Get Started
+                        <ArrowRight className="w-6 h-6 ml-2" />
+                    </Button>
                 )}
             </div>
         </div>
