@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -9,7 +9,7 @@ import { inviteLinkService } from '@/lib/services/workspaceService';
 import { CheckCircle, XCircle, Loader2, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
 
-export default function AcceptInvitePage() {
+function AcceptInviteContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const token = searchParams.get('token');
@@ -41,40 +41,55 @@ export default function AcceptInvitePage() {
     }, [token]);
 
     return (
+        <Card className="p-8 max-w-md w-full text-center">
+            {status === 'loading' && (
+                <>
+                    <Loader2 className="w-16 h-16 text-primary-500 animate-spin mx-auto mb-6" />
+                    <h1 className="text-2xl font-bold mb-2">Accepting Invite...</h1>
+                    <p className="text-muted-foreground">
+                        Joining the workspace. Please wait.
+                    </p>
+                </>
+            )}
+
+            {status === 'success' && (
+                <>
+                    <CheckCircle className="w-16 h-16 text-success-500 mx-auto mb-6" />
+                    <h1 className="text-2xl font-bold mb-2">Welcome!</h1>
+                    <p className="text-muted-foreground mb-6">{message}</p>
+                    <Link href="/">
+                        <Button>Go to Dashboard</Button>
+                    </Link>
+                </>
+            )}
+
+            {status === 'error' && (
+                <>
+                    <XCircle className="w-16 h-16 text-error mx-auto mb-6" />
+                    <h1 className="text-2xl font-bold mb-2">Invite Failed</h1>
+                    <p className="text-muted-foreground mb-6">{message}</p>
+                    <Link href="/">
+                        <Button variant="outline">Go to Dashboard</Button>
+                    </Link>
+                </>
+            )}
+        </Card>
+    );
+}
+
+export default function AcceptInvitePage() {
+    return (
         <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
-            <Card className="p-8 max-w-md w-full text-center">
-                {status === 'loading' && (
-                    <>
+            <Suspense
+                fallback={
+                    <Card className="p-8 max-w-md w-full text-center">
                         <Loader2 className="w-16 h-16 text-primary-500 animate-spin mx-auto mb-6" />
-                        <h1 className="text-2xl font-bold mb-2">Accepting Invite...</h1>
-                        <p className="text-muted-foreground">
-                            Joining the workspace. Please wait.
-                        </p>
-                    </>
-                )}
-
-                {status === 'success' && (
-                    <>
-                        <CheckCircle className="w-16 h-16 text-success-500 mx-auto mb-6" />
-                        <h1 className="text-2xl font-bold mb-2">Welcome!</h1>
-                        <p className="text-muted-foreground mb-6">{message}</p>
-                        <Link href="/">
-                            <Button>Go to Dashboard</Button>
-                        </Link>
-                    </>
-                )}
-
-                {status === 'error' && (
-                    <>
-                        <XCircle className="w-16 h-16 text-error mx-auto mb-6" />
-                        <h1 className="text-2xl font-bold mb-2">Invite Failed</h1>
-                        <p className="text-muted-foreground mb-6">{message}</p>
-                        <Link href="/">
-                            <Button variant="outline">Go to Dashboard</Button>
-                        </Link>
-                    </>
-                )}
-            </Card>
+                        <h1 className="text-2xl font-bold mb-2">Loading...</h1>
+                    </Card>
+                }
+            >
+                <AcceptInviteContent />
+            </Suspense>
         </div>
     );
 }

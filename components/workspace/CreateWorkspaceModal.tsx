@@ -147,7 +147,7 @@ export function CreateWorkspaceModal({ isOpen, onClose }: CreateWorkspaceModalPr
                     </div>
                     <h2 className="text-xl font-bold text-neutral-900 mb-2">Workspace Created!</h2>
                     <p className="text-neutral-500 mb-6">
-                        Your workspace <strong>{name}</strong> is ready. Let's start configuring your marketing operations.
+                        Your workspace <strong>{name}</strong> is ready. Let&apos;s start configuring your marketing operations.
                     </p>
                     <div className="flex gap-3">
                         <Button

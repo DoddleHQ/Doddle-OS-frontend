@@ -45,7 +45,7 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
                 }
             }
         }
-    }, [request.default, request.options]);
+    }, [request.default, request.options, request.data?.max_selections]);
 
     const handleConfirmation = (confirmed: boolean) => {
         setIsSubmitting(true);

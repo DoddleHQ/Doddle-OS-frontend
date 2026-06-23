@@ -188,7 +188,7 @@ export default function MagentoContentWriterNewPage() {
                 saveArtifact(workspaceId, 'magento-content-writer', dbThreadId, artifact);
             }
         }
-    }, [artifacts.length, dbThreadId, saveArtifact, workspaceId]);
+    }, [artifacts, dbThreadId, saveArtifact, workspaceId]);
 
     useEffect(() => {
         if (isComplete && dbThreadId && completeEvent) {

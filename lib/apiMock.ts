@@ -19,12 +19,10 @@ const randomDelay = (min: number = 800, max: number = 1500) => {
  * @param id - The module identifier
  * @returns Promise resolving to the Module object with additional metadata
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getModule(id: string): Promise<Module & { metrics?: any; threads?: any[] }> {
   await randomDelay(900, 1400);
 
   // Add module-specific data based on the module ID
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result: Module & { metrics?: any; threads?: any[] } = {
     id,
     name: id.replace(/_/g, ' '),

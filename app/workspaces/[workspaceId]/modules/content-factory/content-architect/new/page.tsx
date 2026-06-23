@@ -181,7 +181,7 @@ export default function NewProjectPage() {
                 saveArtifact(workspaceId, 'content-factory', dbThreadId, artifact);
             }
         }
-    }, [artifacts.length, dbThreadId, saveArtifact, workspaceId]);
+    }, [artifacts, dbThreadId, saveArtifact, workspaceId]);
 
     useEffect(() => {
         if (isComplete && dbThreadId && completeEvent) {

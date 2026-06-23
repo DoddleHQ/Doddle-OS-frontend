@@ -557,7 +557,7 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
 
             onComplete?.(event.payload.summary);
         }
-    }, [onEvent, onError, onComplete, addMessage, cancelStream]);
+    }, [onEvent, onError, onComplete, addMessage]);
 
     // Start streaming using thread-based runs for HITL support
     const startStream = useCallback(async (input: Record<string, unknown>) => {
