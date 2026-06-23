@@ -142,7 +142,7 @@ export const threadService = {
         const raw: RawArtifact = await apiPost(url, {
             data: request.data || {},
             content: request.content,
-            page_name: request.pageName || 'Untitled Artifact',
+            pageName: request.pageName || 'Untitled Artifact',
             moduleId: request.moduleId,
         });
         return toArtifact(raw);

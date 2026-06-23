@@ -63,22 +63,17 @@ function getStatusMessage(status: number): string {
  */
 async function parseErrorMessage(res: Response): Promise<string> {
     const contentType = res.headers.get('content-type') || '';
-    console.log('[parseErrorMessage] Content-Type:', contentType);
-    
+
     if (!contentType.includes('application/json')) {
-        console.log('[parseErrorMessage] Not JSON, using status message');
         return getStatusMessage(res.status);
     }
     try {
         const body = await res.json();
-        console.log('[parseErrorMessage] Parsed body:', body);
         if (body.Detail) return body.Detail;
         if (body.error?.message) return body.error.message;
         if (body.error?.detail) return body.error.detail;
-        console.log('[parseErrorMessage] No error fields found, using status message');
         return getStatusMessage(res.status);
-    } catch (e) {
-        console.log('[parseErrorMessage] Failed to parse JSON:', e);
+    } catch {
         return getStatusMessage(res.status);
     }
 }
@@ -140,26 +135,14 @@ export async function apiGet<T = unknown>(url: string): Promise<T> {
  */
 export async function apiPost<T = unknown>(url: string, body?: unknown): Promise<T> {
     const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
-    console.log('[apiPost] Request:', { fullUrl, body });
-    
+
     const res = await apiFetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: body !== undefined ? JSON.stringify(body) : undefined,
     });
-    
-    console.log('[apiPost] Response:', { status: res.status, ok: res.ok });
-    
+
     if (!res.ok) {
-        // Try to get the response body for debugging
-        let responseText = '';
-        try {
-            responseText = await res.text();
-            console.log('[apiPost] Error response body:', responseText);
-        } catch (e) {
-            console.log('[apiPost] Could not read error response body');
-        }
-        
         const message = await parseErrorMessage(res);
         throw new Error(message);
     }

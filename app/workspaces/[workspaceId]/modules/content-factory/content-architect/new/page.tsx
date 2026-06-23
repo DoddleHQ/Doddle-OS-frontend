@@ -160,9 +160,15 @@ export default function NewProjectPage() {
                 title: domainTitle,
                 description: domain ? `Content project for ${domainTitle} (${domain})` : 'Content project',
             }).then((thread) => {
-                const dbId = thread.id || streamState.threadId;
+                const dbId = thread.id;
+                if (!dbId) {
+                    console.error('[ContentArchitectNew] Thread created but returned no database ID:', thread);
+                    return;
+                }
                 dbThreadIdRef.current = dbId;
                 setDbThreadId(dbId);
+            }).catch((err) => {
+                console.error('[ContentArchitectNew] Failed to create thread in database:', err);
             });
         }
     }, [streamState.threadId, createThreadFromStream, workspaceId]);

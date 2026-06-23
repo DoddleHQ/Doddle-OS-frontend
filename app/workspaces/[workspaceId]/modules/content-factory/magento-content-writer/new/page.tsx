@@ -167,9 +167,17 @@ export default function MagentoContentWriterNewPage() {
                 title: `Magento Content: ${message.substring(0, 50)}`,
                 description: `Magento content writer session: ${message.substring(0, 100)}`,
             }).then((thread) => {
-                const dbId = thread.id || streamState.threadId;
+                // Only use the database-returned ID — never fall back to the
+                // LangGraph thread ID, which does not exist in the database.
+                const dbId = thread.id;
+                if (!dbId) {
+                    console.error('[MagentoNew] Thread created but returned no database ID:', thread);
+                    return;
+                }
                 dbThreadIdRef.current = dbId;
                 setDbThreadId(dbId);
+            }).catch((err) => {
+                console.error('[MagentoNew] Failed to create thread in database:', err);
             });
         }
     }, [streamState.threadId, createThreadFromStream, workspaceId]);
