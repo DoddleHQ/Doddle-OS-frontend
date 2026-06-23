@@ -9,6 +9,7 @@ import {
     type ReactNode,
 } from 'react';
 import { workspaceService } from '@/lib/services/workspaceService';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import type { Workspace } from '@/lib/types/workspace.types';
 
 // ---------------------------------------------------------------------------
@@ -39,8 +40,9 @@ const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 // ---------------------------------------------------------------------------
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
+    const { status: authStatus } = useAuth();
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const fetchWorkspaces = useCallback(async () => {
@@ -57,9 +59,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    // Only fetch workspaces when the user is authenticated.
+    // This prevents 401/403 errors when the session hasn't been established yet.
     useEffect(() => {
-        fetchWorkspaces();
-    }, [fetchWorkspaces]);
+        if (authStatus === 'authenticated') {
+            fetchWorkspaces();
+        } else {
+            // Clear workspace data when user logs out
+            setWorkspaces([]);
+            setIsLoading(false);
+            setError(null);
+        }
+    }, [authStatus, fetchWorkspaces]);
 
     const createWorkspace = useCallback(
         async (name: string, websiteDomain?: string): Promise<Workspace> => {

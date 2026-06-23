@@ -16,6 +16,7 @@ import {
     logout as apiLogout,
     DEFAULT_EXPIRES_IN,
     type OrgResponse,
+    type AuthResponse,
 } from '@/lib/services/authService';
 
 // ---------------------------------------------------------------------------
@@ -35,6 +36,12 @@ type AuthContextValue = AuthState & {
     refresh: () => Promise<void>;
     /** Log out and clear the session. */
     logout: () => Promise<void>;
+    /**
+     * Called after a successful login or force-login to immediately update the
+     * AuthContext state with the new session data (org + expiresIn) and schedule
+     * the proactive refresh timer. This avoids the need to re-bootstrap.
+     */
+    loginSuccess: (authRes: AuthResponse) => void;
     /**
      * Auth-aware fetch wrapper. Automatically retries once on 401 by refreshing
      * the access token first.
@@ -195,6 +202,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     // -----------------------------------------------------------------------
+    // Login success — immediately update auth state (called by login page)
+    // -----------------------------------------------------------------------
+    const loginSuccess = useCallback(
+        (authRes: AuthResponse) => {
+            setState({ status: 'authenticated', org: authRes.org, expiresIn: authRes.expiresIn });
+            scheduleRefresh(authRes.expiresIn);
+        },
+        [scheduleRefresh],
+    );
+
+    // -----------------------------------------------------------------------
     // Manual refresh (exposed via context)
     // -----------------------------------------------------------------------
     const refresh = useCallback(async () => {
@@ -253,7 +271,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Render
     // -----------------------------------------------------------------------
     return (
-        <AuthContext.Provider value={{ ...state, refresh, logout, authFetch }}>
+        <AuthContext.Provider value={{ ...state, refresh, logout, loginSuccess, authFetch }}>
             {children}
         </AuthContext.Provider>
     );

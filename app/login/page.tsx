@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import { Eye, EyeOff, Sparkles, Lock, ArrowRight, Mail } from 'lucide-react';
 import { login, loginForce, LoginError } from '@/lib/services/authService';
 import { ResendVerificationEmail } from '@/components/auth/ResendVerificationEmail';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -47,6 +48,7 @@ const initialState: LoginState = {
 
 const LoginPage = () => {
     const router = useRouter();
+    const { loginSuccess } = useAuth();
     const [state, dispatch] = useReducer(loginReducer, initialState);
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -104,11 +106,15 @@ const LoginPage = () => {
         setIsLoading(true);
         try {
             const payload = { email, password, rememberMe };
+            let result;
             if (force) {
-                await loginForce(payload);
+                result = await loginForce(payload);
             } else {
-                await login(payload);
+                result = await login(payload);
             }
+            // Immediately update AuthContext so the app knows the user is
+            // authenticated without waiting for a page refresh / re-bootstrap.
+            loginSuccess(result);
             toast.success('Welcome back!');
             const next = new URLSearchParams(window.location.search).get('next') || '/';
             router.push(next);
