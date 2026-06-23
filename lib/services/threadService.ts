@@ -11,31 +11,32 @@ import {
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/services/apiClient';
 
 // ---------------------------------------------------------------------------
-// Raw API response shapes (snake_case from backend)
+// Raw API response shapes (camelCase from backend)
 // ---------------------------------------------------------------------------
 
 interface RawThread {
-    id: string;
-    thread_id?: string;
-    workspace_id: string;
-    module_id: string;
+    id?: string;
+    threadId?: string;
+    langId?: string;
+    workspaceId: string;
+    moduleId: string;
     title: string;
     description: string;
     status: string;
-    docCount: number;
-    page_names: string[];
-    created_at: string;
-    updated_at: string | null;
+    artifactCount?: number;
+    pageNames: string[];
+    createdAt: string;
+    updatedAt: string | null;
 }
 
 interface RawArtifact {
     id: number;
-    thread_id: string;
-    module_id: string;
+    threadId: string;
+    moduleId: string;
     data: Record<string, unknown>;
     content: string;
-    page_name: string;
-    created_at: string;
+    pageName: string;
+    createdAt: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -44,28 +45,28 @@ interface RawArtifact {
 
 function toThread(raw: RawThread): AuditThread {
     return {
-        id: raw.id || raw.thread_id || '',
-        workspaceId: raw.workspace_id,
-        moduleId: raw.module_id as ModuleId,
+        id: raw.id || raw.threadId || '',
+        workspaceId: raw.workspaceId,
+        moduleId: raw.moduleId as ModuleId,
         title: raw.title,
         description: raw.description,
         status: raw.status as ThreadStatus,
-        docCount: raw.docCount,
-        pageNames: raw.page_names,
-        createdAt: raw.created_at,
-        updatedAt: raw.updated_at,
+        docCount: raw.artifactCount ?? 0,
+        pageNames: raw.pageNames || [],
+        createdAt: raw.createdAt,
+        updatedAt: raw.updatedAt,
     };
 }
 
 function toArtifact(raw: RawArtifact): AuditArtifact {
     return {
         id: raw.id,
-        threadId: raw.thread_id,
-        moduleId: raw.module_id as ModuleId,
+        threadId: raw.threadId,
+        moduleId: raw.moduleId as ModuleId,
         data: raw.data,
         content: raw.content,
-        pageName: raw.page_name,
-        createdAt: raw.created_at,
+        pageName: raw.pageName,
+        createdAt: raw.createdAt,
     };
 }
 
