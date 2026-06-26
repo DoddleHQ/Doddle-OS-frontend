@@ -154,7 +154,7 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
 
     if (request.requestType === 'selection' && request.options) {
         return (
-            <div className="bg-white border border-blue-200 rounded-2xl p-6 max-w-lg shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-white border border-blue-200 rounded-2xl p-6 w-full max-w-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
                 <div className="flex items-start gap-4">
                     <div className="flex-shrink-0 w-10 h-10 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center">
@@ -212,21 +212,21 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
     if (request.requestType === 'multi_selection' && request.options) {
         const maxSelections = (request.data?.max_selections as number) || request.options.length;
         return (
-            <div className="bg-white border border-indigo-200 rounded-2xl p-6 max-w-lg shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-white border border-indigo-200 rounded-2xl p-6 w-full max-w-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500"></div>
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-4 min-w-0">
                     <div className="flex-shrink-0 w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center">
                         <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                         </svg>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                         <h4 className="text-[13px] font-bold text-indigo-600 uppercase tracking-wider mb-1.5">Multiple Selection Required</h4>
                         <div className="text-[15px] text-slate-700 leading-relaxed mb-4">
                             <MarkdownRenderer content={getMessage()} accentColor="indigo" />
                         </div>
 
-                        <div className="space-y-2 mb-5 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="space-y-2 mb-5 max-h-[250px] overflow-y-auto overflow-x-hidden pr-2 custom-scrollbar">
                             {request.options.map((option: HITLOption) => {
                                 const displayLabel = option.label && option.label.trim() !== '' && option.label !== String(option.value)
                                     ? option.label
@@ -235,7 +235,7 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
                                     <div
                                         key={option.id}
                                         onClick={() => { if (!(selectedOptions.length >= maxSelections && !selectedOptions.includes(option.value))) toggleOption(option.value); }}
-                                        className={`flex items-start gap-3 p-3.5 rounded-xl cursor-pointer transition-all border ${selectedOptions.includes(option.value)
+                                        className={`flex items-start gap-3 p-3.5 rounded-xl cursor-pointer transition-all border overflow-hidden ${selectedOptions.includes(option.value)
                                             ? 'bg-indigo-50/80 border-indigo-300 shadow-sm'
                                             : 'bg-white border-slate-200 hover:border-indigo-200 hover:bg-slate-50'
                                             } ${selectedOptions.length >= maxSelections && !selectedOptions.includes(option.value)
