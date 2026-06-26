@@ -99,7 +99,7 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
 
     const toggleOption = (optionValue: unknown) => {
         setSelectedOptions(prev => {
-            const maxSel = (request.data?.max_selections as number) || 5;
+            const maxSel = (request.data?.max_selections as number) || request.options?.length || 5;
             if (prev.includes(optionValue)) {
                 return prev.filter(v => v !== optionValue);
             } else if (prev.length >= maxSel) {
