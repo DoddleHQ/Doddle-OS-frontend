@@ -1,14 +1,6 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import { Providers } from "./providers";
 import "./globals.css";
-
-const inter = localFont({
-  src: "./fonts/InterVariable.woff2",
-  variable: "--font-inter",
-  display: "swap",
-  fallback: ["system-ui", "sans-serif"],
-});
 
 export const metadata: Metadata = {
   title: "Agentic Marketing OS",
@@ -22,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.variable}>
+      <body>
         <Providers>{children}</Providers>
       </body>
     </html>
