@@ -40,7 +40,6 @@ function detectArtifactType(artifact: AuditArtifact): ArtifactType {
 
     const pageName = (artifact.pageName || '').toLowerCase();
 
-
     if ('reportContent' in data) return 'report';
     if ('blueprintContent' in data) return 'blueprint';
     if ('contentText' in data) return 'content';
@@ -53,6 +52,16 @@ function detectArtifactType(artifact: AuditArtifact): ArtifactType {
     if (pageName.includes('site context')) return 'site_context';
     if (pageName.includes('tech stack')) return 'tech_stack';
     if (pageName.includes('link')) return 'link_list';
+    if (pageName.includes('analysis')) return 'report';
+
+    // If content is a plain string (not parseable JSON), treat as report/markdown
+    if (typeof artifact.content === 'string') {
+        try {
+            JSON.parse(artifact.content);
+        } catch {
+            return 'report';
+        }
+    }
 
     return 'data_table';
 }

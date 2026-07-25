@@ -21,7 +21,7 @@ import { extractArtifactMarkdown } from '@/components/content-factory/chat/artif
 /**
  * Interactive Website Architect - New Thread Page
  *
- * A chat interface that streams the interactive_website_architect LangGraph workflow
+ * A chat interface that streams the interactive_website_architect_v2 LangGraph workflow
  * events in real-time using the unified event system.
  */
 export default function InteractiveWebsiteArchitectNewPage() {
