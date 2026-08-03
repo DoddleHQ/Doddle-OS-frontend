@@ -1,15 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-/**
- * Paths that are accessible without authentication.
- *
- * - /login, /signup — auth pages
- * - /terms, /privacy — legal pages
- * - /api-playground — dev-only API testing
- * - /forgot-password, /reset-password — password reset flow
- * - /v2 — v2 redesign showcase (standalone, not yet auth-aware)
- */
+
 const PUBLIC_PATHS = [
     '/login',
     '/signup',
@@ -101,7 +93,7 @@ async function isAuthenticated(request: NextRequest): Promise<boolean> {
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    const isPublic = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
+    const isPublic = pathname === '/' || PUBLIC_PATHS.some((path) => pathname.startsWith(path));
     const isAuthRoute = pathname === '/login' || pathname === '/signup';
 
     if (isPublic) {
