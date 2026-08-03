@@ -1,0 +1,161 @@
+/*
+ * V2 — Specimen Terminal design system tokens.
+ * Scoped to .v2-scope so this never bleeds into v1 routes.
+ * Two registers: paper (warm press paper) and ink (tinted near-black terminal).
+ */
+
+.v2-scope {
+  /* ---- PAPER REGISTER (default) ----
+   * Warm press paper — deeper and warmer than cream/ivory so it reads as a
+   * distinct tinted surface, not off-white. */
+  --v2-paper-ground: #efe7d6;
+  --v2-paper-ink: #1a1612;
+  --v2-paper-ink-2: #6a6055;
+  --v2-paper-rule: #ddd0b8;
+  --v2-paper-rule-strong: #c2b495;
+
+  /* ---- INK REGISTER (terminal) ---- */
+  --v2-ink-ground: #141210;
+  --v2-ink-text: #ede7db;
+  --v2-ink-text-2: #9a9189;
+  --v2-ink-rule: #2a2622;
+  --v2-ink-rule-strong: #3a342e;
+
+  /* ---- ACCENTS (through-line across both registers) ---- */
+  --v2-vermilion: #c8321b;
+  --v2-vermilion-lift: #e8442e; /* lifted for dark-register legibility */
+  --v2-vermilion-ink: #efe7d6;
+  --v2-sage: #7fb069; /* success/complete — muted, never neon */
+
+  /* ---- TYPE ----
+   * next/font exposes each family via a generated CSS variable (--v2-display etc.)
+   * applied to the wrapper; we reference those first, with real fallback stacks. */
+  --v2-font-display: var(--v2-display), 'Times New Roman', Georgia, serif;
+  --v2-font-sans: var(--v2-sans), system-ui, -apple-system, sans-serif;
+  --v2-font-mono: var(--v2-mono), ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* ---- RHYTHM ---- */
+  --v2-rule: 1px;
+  --v2-rule-hair: 0.5px;
+
+  /* The page paints on paper; ink sections opt in via .v2-ink. */
+  background: var(--v2-paper-ground);
+  color: var(--v2-paper-ink);
+  font-family: var(--v2-font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* --------------------------------------------------------------- */
+/* Register helpers                                                */
+/* --------------------------------------------------------------- */
+
+.v2-ink {
+  background: var(--v2-ink-ground);
+  color: var(--v2-ink-text);
+}
+
+/* --------------------------------------------------------------- */
+/* Type primitives                                                 */
+/* --------------------------------------------------------------- */
+
+.v2-display {
+  font-family: var(--v2-font-display);
+  font-weight: 400; /* Instrument Serif is a single weight; contrast from size, not weight */
+  letter-spacing: -0.02em;
+  line-height: 1.0; /* 1.0 (not 0.95) so serif descenders (g, j, p, y) aren't clipped */
+}
+
+.v2-mono {
+  font-family: var(--v2-font-mono);
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+  letter-spacing: 0;
+}
+
+.v2-label {
+  font-family: var(--v2-font-sans);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* --------------------------------------------------------------- */
+/* Motion primitives — authored, not scattered                     */
+/* --------------------------------------------------------------- */
+
+/* Original marquee + heartbeat */
+@keyframes v2-tape-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+
+@keyframes v2-pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.82); }
+}
+
+@keyframes v2-blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* The live "incoming" flash on the tape when a new event lands */
+@keyframes v2-flash-in {
+  0%   { opacity: 0; transform: translateY(-6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* A single vermilion pulse on the conflict border when it surfaces */
+@keyframes v2-conflict-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(232, 68, 46, 0.55); }
+  70%  { box-shadow: 0 0 0 9px rgba(232, 68, 46, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(232, 68, 46, 0); }
+}
+
+/* The token's fading trail at each handoff point */
+@keyframes v2-trail-fade {
+  0%   { opacity: 0.45; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.82); }
+}
+
+/* Cursor blink for the typed conflict sides */
+@keyframes v2-caret {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* A metric that breathes — subtle, never distracting */
+@keyframes v2-metric-breath {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.8; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2-scope,
+  .v2-scope * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --------------------------------------------------------------- */
+/* Focus — keyboard legibility on both registers                    */
+/* --------------------------------------------------------------- */
+
+.v2-scope :focus-visible {
+  outline: 2px solid var(--v2-vermilion);
+  outline-offset: 3px;
+  border-radius: 1px;
+}
+
+/* --------------------------------------------------------------- */
+/* Selection                                                       */
+/* --------------------------------------------------------------- */
+
+.v2-scope ::selection {
+  background: var(--v2-vermilion);
+  color: var(--v2-vermilion-ink);
+}

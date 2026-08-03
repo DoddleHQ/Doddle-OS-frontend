@@ -24,6 +24,7 @@ Thumbs.db
 
 # TypeScript build cache
 *.tsbuildinfo
+.playwright-mcp
 
 # Docker
 docker-compose.override.yml

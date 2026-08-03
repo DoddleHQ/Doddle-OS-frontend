@@ -8,6 +8,7 @@ import type { NextRequest } from 'next/server';
  * - /terms, /privacy — legal pages
  * - /api-playground — dev-only API testing
  * - /forgot-password, /reset-password — password reset flow
+ * - /v2 — v2 redesign showcase (standalone, not yet auth-aware)
  */
 const PUBLIC_PATHS = [
     '/login',
@@ -19,6 +20,7 @@ const PUBLIC_PATHS = [
     '/reset-password',
     '/verify-email',
     '/check-email',
+    '/v2',
 ];
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';

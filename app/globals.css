@@ -61,3 +61,58 @@ body {
   border-radius: 0.25rem;
   font-size: 0.75rem;
 }
+
+/* ---------------------------------------------------------------
+ * Custom scrollbar — follows the surface it sits on.
+ * The track matches the page ground (so the bar reads as belonging
+ * to the surface, not overlaid on it), and the thumb is a quiet
+ * tinted element that only asserts itself on hover. Per-register
+ * variables make it match both the warm-paper ground and the
+ * tinted-ink terminal without a seam.
+ * --------------------------------------------------------------- */
+
+/* Defaults = warm paper ground (v1 light + v2 paper sections). */
+:root {
+  --st-track: #efe7d6;      /* matches --v2-paper-ground */
+  --st-thumb: #c2b495;      /* paper-rule-strong tint */
+  --st-thumb-hover: #c8321b;/* vermilion */
+}
+
+/* Dark (ink-terminal) sections flip the whole palette. */
+.v2-ink {
+  --st-track: #141210;      /* matches --v2-ink-ground */
+  --st-thumb: #3a342e;      /* ink-rule-strong tint */
+  --st-thumb-hover: #e8442e;/* vermilion lift */
+}
+
+/* Firefox — thumb over track, both from the surface. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--st-thumb, #c2b495) var(--st-track, #efe7d6);
+}
+
+/* WebKit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--st-track, #efe7d6);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--st-thumb, #c2b495);
+  /* The border uses the TRACK color (not transparent) so there's no gap
+   * artifact where a mismatched background bleeds through. */
+  border: 2px solid var(--st-track, #efe7d6);
+  border-radius: 9999px;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--st-thumb-hover, #c8321b);
+  border: 2px solid var(--st-track, #efe7d6);
+  border-radius: 9999px;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-corner {
+  background: var(--st-track, #efe7d6);
+}
