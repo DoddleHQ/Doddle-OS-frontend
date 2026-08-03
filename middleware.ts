@@ -1,14 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-/**
- * Paths that are accessible without authentication.
- *
- * - /login, /signup — auth pages
- * - /terms, /privacy — legal pages
- * - /api-playground — dev-only API testing
- * - /forgot-password, /reset-password — password reset flow
- */
+
 const PUBLIC_PATHS = [
     '/login',
     '/signup',
@@ -19,6 +12,7 @@ const PUBLIC_PATHS = [
     '/reset-password',
     '/verify-email',
     '/check-email',
+    '/v2',
 ];
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
@@ -99,7 +93,7 @@ async function isAuthenticated(request: NextRequest): Promise<boolean> {
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    const isPublic = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
+    const isPublic = pathname === '/' || PUBLIC_PATHS.some((path) => pathname.startsWith(path));
     const isAuthRoute = pathname === '/login' || pathname === '/signup';
 
     if (isPublic) {
