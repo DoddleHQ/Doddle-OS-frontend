@@ -33,6 +33,7 @@ export function LiveBoard() {
   const tokenRef = useRef<HTMLDivElement>(null);
   const trailRef = useRef<HTMLDivElement>(null);
   const colRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const agentLabelsRef = useRef<(HTMLSpanElement | null)[]>([]);
   const noteRef = useRef<HTMLSpanElement>(null);
   const ownerRef = useRef<HTMLSpanElement>(null);
   const stateRef = useRef<HTMLSpanElement>(null);
@@ -61,7 +62,19 @@ export function LiveBoard() {
           const boardRect = board.getBoundingClientRect();
           gsap.set(token, {
             x: colRect.left - boardRect.left + colRect.width / 2 - token.offsetWidth / 2,
-            y: colRect.top - boardRect.top + 24,
+            y: colRect.top - boardRect.top + 54,
+          });
+
+          // Highlight the active column's resident agent label, and reset others
+          agentLabelsRef.current.forEach((label, idx) => {
+            if (!label) return;
+            if (idx === col) {
+              label.style.color = idx === 3 ? 'var(--v2-vermilion-lift)' : 'var(--v2-ink-text)';
+              label.style.fontWeight = '700';
+            } else {
+              label.style.color = 'var(--v2-ink-rule-strong)';
+              label.style.fontWeight = '400';
+            }
           });
         };
         placeStatic(STEPS.length - 1);
@@ -72,9 +85,6 @@ export function LiveBoard() {
       });
 
       // ALL screen sizes with motion allowed get the scroll choreography.
-      // The math uses getBoundingClientRect against actual column positions,
-      // so it's layout-agnostic — it works for the 5-col desktop and the
-      // 2-col mobile reflow identically.
       mm.add('(prefers-reduced-motion: no-preference)', () => {
         const placeToken = (stepIndex: number) => {
           const col = colOf(stepIndex);
@@ -87,7 +97,19 @@ export function LiveBoard() {
           const boardRect = board.getBoundingClientRect();
           gsap.set(token, {
             x: colRect.left - boardRect.left + colRect.width / 2 - token.offsetWidth / 2,
-            y: colRect.top - boardRect.top + 24,
+            y: colRect.top - boardRect.top + 54,
+          });
+
+          // Also highlight the initial column's label
+          agentLabelsRef.current.forEach((label, idx) => {
+            if (!label) return;
+            if (idx === col) {
+              label.style.color = idx === 3 ? 'var(--v2-vermilion-lift)' : 'var(--v2-ink-text)';
+              label.style.fontWeight = '700';
+            } else {
+              label.style.color = 'var(--v2-ink-rule-strong)';
+              label.style.fontWeight = '400';
+            }
           });
         };
 
@@ -124,8 +146,8 @@ export function LiveBoard() {
                 const tr = toCol.getBoundingClientRect();
                 const fromX = fr.left - boardRect.left + fr.width / 2 - token.offsetWidth / 2;
                 const toX = tr.left - boardRect.left + tr.width / 2 - token.offsetWidth / 2;
-                const fromY = fr.top - boardRect.top + 24;
-                const toY = tr.top - boardRect.top + 24;
+                const fromY = fr.top - boardRect.top + 54;
+                const toY = tr.top - boardRect.top + 54;
                 const sameCol = fromColI === toColI;
                 gsap.set(token, {
                   x: fromX + (sameCol ? 0 : (toX - fromX) * localP),
@@ -156,6 +178,19 @@ export function LiveBoard() {
                     ? 'var(--v2-sage)'
                     : 'var(--v2-ink-text)';
             }
+
+            // Highlight the active column's resident agent label, and reset others
+            const activeColI = showNext ? toColI : fromColI;
+            agentLabelsRef.current.forEach((label, idx) => {
+              if (!label) return;
+              if (idx === activeColI) {
+                label.style.color = idx === 3 ? 'var(--v2-vermilion-lift)' : 'var(--v2-ink-text)';
+                label.style.fontWeight = '700';
+              } else {
+                label.style.color = 'var(--v2-ink-rule-strong)';
+                label.style.fontWeight = '400';
+              }
+            });
 
             // Conflict panel: surfaces on steps 3 (conflict) and 4 (escalated)
             const conflictStep = idx >= 3 && idx <= 4;
@@ -243,7 +278,11 @@ export function LiveBoard() {
                   >
                     {/* Faint resident agent label — real graph name for this column */}
                     <div className="absolute inset-0 flex items-start justify-center pt-3 pointer-events-none">
-                      <span className="v2-mono text-[10px]" style={{ color: 'var(--v2-ink-rule-strong)' }}>
+                      <span
+                        ref={(el) => { agentLabelsRef.current[i] = el; }}
+                        className="v2-mono text-[10px] transition-colors duration-300"
+                        style={{ color: 'var(--v2-ink-rule-strong)' }}
+                      >
                         {BOARD_RESIDENTS[i] ?? ''}
                       </span>
                     </div>
