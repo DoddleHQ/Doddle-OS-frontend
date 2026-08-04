@@ -6,6 +6,9 @@ import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { TapeTicker } from './TapeTicker';
 
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
+
 gsap.registerPlugin(useGSAP);
 
 /*
@@ -23,6 +26,12 @@ const LINES = [
 
 export function HeroSpecimen() {
   const heroRef = useRef<HTMLElement>(null);
+  const { status } = useAuth();
+  const { workspaces } = useWorkspaces();
+
+  const enterUrl = (status === 'authenticated' && workspaces && workspaces.length > 0)
+    ? `/workspaces/${workspaces[0].workspaceId}`
+    : '/login';
 
   useGSAP(
     () => {
@@ -104,7 +113,7 @@ export function HeroSpecimen() {
             </p>
 
             <Link
-              href="/v2#board"
+              href={enterUrl}
               className="group inline-flex items-center gap-3 px-7 py-3.5 transition-colors"
               style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)' }}
             >
