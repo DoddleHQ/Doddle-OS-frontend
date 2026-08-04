@@ -1,310 +1,262 @@
 'use client';
 
-import { useReducer, useState, type FormEvent } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
-import { Eye, EyeOff, Sparkles, Lock, ArrowRight, Mail } from 'lucide-react';
-import { login, loginForce, LoginError } from '@/lib/services/authService';
-import { ResendVerificationEmail } from '@/components/auth/ResendVerificationEmail';
+import { motion, AnimatePresence } from 'motion/react';
+import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
+import { Instrument_Serif, Hanken_Grotesk, JetBrains_Mono } from 'next/font/google';
+import { AuthLayout } from '@/app/v2/landing/AuthLayout';
+import { AuthInput } from '@/app/v2/landing/AuthInput';
+import { login, loginForce, sendVerification, LoginError } from '@/lib/services/authService';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { workspaceService } from '@/lib/services/workspaceService';
+import '@/app/v2/globals.css';
+
+const displayFont = Instrument_Serif({
+  weight: '400',
+  style: ['normal', 'italic'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--v2-display',
+});
+
+const sansFont = Hanken_Grotesk({
+  weight: ['400', '500', '600', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--v2-sans',
+});
+
+const monoFont = JetBrains_Mono({
+  weight: ['400', '500', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--v2-mono',
+});
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+type Status = 'idle' | 'loading' | 'success';
 
-type LoginState = {
-    email: string;
-    password: string;
-    rememberMe: boolean;
-};
+export default function LoginPage() {
+  const router = useRouter();
+  const { loginSuccess } = useAuth();
 
-type LoginAction =
-    | { type: 'SET_EMAIL'; payload: string }
-    | { type: 'SET_PASSWORD'; payload: string }
-    | { type: 'TOGGLE_REMEMBER_ME' };
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [status, setStatus] = useState<Status>('idle');
+  const [apiError, setApiError] = useState('');
+  const [activeSession, setActiveSession] = useState(false);
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
 
-type FieldErrors = {
-    email?: string;
-    password?: string;
-};
+  // Resend verification flow state
+  const [resendStatus, setResendStatus] = useState<'idle' | 'loading' | 'sent' | 'error'>('idle');
+  const [cooldown, setCooldown] = useState(0);
 
-const loginReducer = (state: LoginState, action: LoginAction): LoginState => {
-    switch (action.type) {
-        case 'SET_EMAIL':
-            return { ...state, email: action.payload };
-        case 'SET_PASSWORD':
-            return { ...state, password: action.payload };
-        case 'TOGGLE_REMEMBER_ME':
-            return { ...state, rememberMe: !state.rememberMe };
-        default:
-            return state;
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((c) => c - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  const handleResend = async () => {
+    if (resendStatus === 'loading' || cooldown > 0) return;
+    setResendStatus('loading');
+    try {
+      await sendVerification(email);
+      setResendStatus('sent');
+      setCooldown(60);
+    } catch (err: unknown) {
+      setResendStatus('error');
     }
-};
+  };
 
-const initialState: LoginState = {
-    email: '',
-    password: '',
-    rememberMe: true,
-};
+  const validate = () => {
+    const e: typeof errors = {};
+    if (!email) {
+      e.email = 'Email is required';
+    } else if (!EMAIL_RE.test(email)) {
+      e.email = 'Enter a valid email address';
+    }
+    if (!password) {
+      e.password = 'Password is required';
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
-const LoginPage = () => {
-    const router = useRouter();
-    const { loginSuccess } = useAuth();
-    const [state, dispatch] = useReducer(loginReducer, initialState);
-    const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [apiError, setApiError] = useState('');
-    const [activeSession, setActiveSession] = useState(false);
-    const [emailNotVerified, setEmailNotVerified] = useState(false);
-    const [errors, setErrors] = useState<FieldErrors>({});
-    const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const performLogin = async (force: boolean = false) => {
+    setApiError('');
+    setActiveSession(false);
+    setEmailNotVerified(false);
 
-    const { email, password, rememberMe } = state;
+    if (!validate()) return;
 
-    const validateField = (field: string, value: string) => {
-        const errs: FieldErrors = {};
-        switch (field) {
-            case 'email':
-                if (!value.trim()) errs.email = 'Work email is required.';
-                else if (!EMAIL_RE.test(value)) errs.email = 'Please enter a valid email address.';
-                break;
-            case 'password':
-                if (!value) errs.password = 'Password is required.';
-                break;
-        }
-        return errs;
-    };
-
-    const handleBlur = (field: string, value: string) => {
-        setTouched((prev) => ({ ...prev, [field]: true }));
-        const fieldErrors = validateField(field, value);
-        setErrors((prev) => ({ ...prev, ...fieldErrors }));
-    };
-
-    const clearFieldError = (field: keyof FieldErrors) => {
-        if (errors[field]) {
-            setErrors((prev) => {
-                const next = { ...prev };
-                delete next[field];
-                return next;
-            });
-        }
-    };
-
-    const handleLogin = async (force: boolean = false) => {
-        setApiError('');
-        setActiveSession(false);
-        setEmailNotVerified(false);
-
-        const allErrors: FieldErrors = {
-            ...validateField('email', email),
-            ...validateField('password', password),
-        };
-        setTouched({ email: true, password: true });
-        setErrors(allErrors);
-        if (Object.keys(allErrors).length > 0) return;
-
-        setIsLoading(true);
+    setStatus('loading');
+    try {
+      const payload = { email, password, rememberMe };
+      let result;
+      if (force) {
+        result = await loginForce(payload);
+      } else {
+        result = await login(payload);
+      }
+      loginSuccess(result);
+      setStatus('success');
+      
+      const next = new URLSearchParams(window.location.search).get('next');
+      if (next) {
+        setTimeout(() => {
+          router.push(next);
+        }, 1200);
+      } else {
         try {
-            const payload = { email, password, rememberMe };
-            let result;
-            if (force) {
-                result = await loginForce(payload);
-            } else {
-                result = await login(payload);
-            }
-            // Immediately update AuthContext so the app knows the user is
-            // authenticated without waiting for a page refresh / re-bootstrap.
-            loginSuccess(result);
-            toast.success('Welcome back!');
-            const next = new URLSearchParams(window.location.search).get('next') || '/';
-            router.push(next);
-        } catch (err: unknown) {
-            if (err instanceof LoginError) {
-                if (err.status === 409 && err.conflict) {
-                    setActiveSession(true);
-                    setApiError(err.conflict.message);
-                } else if (err.status === 403 && err.message.toLowerCase().includes('verif')) {
-                    setEmailNotVerified(true);
-                    setApiError(err.message);
-                } else {
-                    setApiError(err.message);
-                }
-            } else {
-                setApiError('Something went wrong. Please try again.');
-            }
-        } finally {
-            setIsLoading(false);
+          const workspaceRes = await workspaceService.listWorkspaces(0, 100);
+          if (workspaceRes.items && workspaceRes.items.length > 0) {
+            const firstWorkspace = workspaceRes.items[0];
+            setTimeout(() => {
+              router.push(`/workspaces/${firstWorkspace.workspaceId}`);
+            }, 1200);
+          } else {
+            setTimeout(() => {
+              router.push('/');
+            }, 1200);
+          }
+        } catch (err) {
+          setTimeout(() => {
+            router.push('/');
+          }, 1200);
         }
-    };
+      }
+    } catch (err: unknown) {
+      setStatus('idle');
+      if (err instanceof LoginError) {
+        if (err.status === 409 && err.conflict) {
+          setActiveSession(true);
+          setApiError(err.conflict.message);
+        } else if (err.status === 403 && err.message.toLowerCase().includes('verif')) {
+          setEmailNotVerified(true);
+          setApiError(err.message);
+        } else {
+          setApiError(err.message);
+        }
+      } else {
+        setApiError(err instanceof Error ? err.message : 'Unable to connect to the server. Please check your connection and try again.');
+      }
+    }
+  };
 
-    const handleSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        handleLogin(false);
-    };
+  const handleSubmit = (ev: React.FormEvent) => {
+    ev.preventDefault();
+    performLogin(false);
+  };
 
-    const handleForceLogin = () => {
-        handleLogin(true);
-    };
+  const handleForceLogin = () => {
+    performLogin(true);
+  };
 
-    const inputClass = (field: keyof FieldErrors) =>
-        touched[field] && errors[field]
-            ? 'border-error-500 focus:ring-2 focus:ring-error-500 focus:border-error-500'
-            : 'border-neutral-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500';
+  return (
+    <div className={`v2-scope ${displayFont.variable} ${sansFont.variable} ${monoFont.variable}`}>
+      <AuthLayout positioning="An operating system where strategy reads like a specimen book and runs like a dealing floor.">
+        <AnimatePresence mode="wait">
+          {status === 'success' ? (
+            <motion.div key="success" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
+              <motion.div className="w-14 h-14 mx-auto mb-5 rounded-full flex items-center justify-center" style={{ background: 'var(--v2-vermilion)' }} initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
+                <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="var(--v2-vermilion-ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><motion.path d="M5 13l4 4L19 7" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5, delay: 0.2 }} /></svg>
+              </motion.div>
+              <motion.h2 className="v2-display text-[1.75rem] mb-2" style={{ color: 'var(--v2-paper-ink)' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>Welcome back.</motion.h2>
+              <motion.p className="text-[14px] mb-7" style={{ color: 'var(--v2-paper-ink-2)' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>Redirecting to your workspaces…</motion.p>
+            </motion.div>
+          ) : (
+            <motion.form key="form" onSubmit={handleSubmit} noValidate initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.09, delayChildren: 0.15 } } }}>
+              <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="mb-8">
+                <h1 className="v2-display text-[2.25rem] leading-[1] mb-2" style={{ color: 'var(--v2-paper-ink)' }}>Sign in</h1>
+                <p className="text-[14px]" style={{ color: 'var(--v2-paper-ink-2)' }}>Access your autonomous agent workspaces.</p>
+              </motion.div>
 
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4 py-8 sm:px-6">
-            <div className="w-full max-w-md">
-                <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 sm:p-8">
-                    <div className="flex flex-col items-center mb-8">
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center">
-                                <Sparkles className="w-5 h-5 text-white" />
-                            </div>
-                            <span className="text-lg font-semibold text-neutral-900">
-                                Doddle OS
-                            </span>
-                        </div>
-                        <p className="text-sm text-neutral-500 text-center">
-                            Let agents handle the hustle, not you.
-                        </p>
+              {/* Impeccable design error alert container */}
+              {apiError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 mb-5 border text-[13px] leading-relaxed rounded-[8px] v2-mono"
+                  style={{
+                    borderColor: 'var(--v2-vermilion)',
+                    background: 'rgba(200, 50, 27, 0.04)',
+                    color: 'var(--v2-vermilion)',
+                  }}
+                >
+                  <p className="font-semibold mb-1">{apiError}</p>
+                  
+                  {activeSession && (
+                    <button
+                      type="button"
+                      onClick={handleForceLogin}
+                      className="mt-2.5 px-3 py-1.5 v2-label text-[10px] rounded-[4px] hover:opacity-90 active:scale-95 transition-all font-bold cursor-pointer"
+                      style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)' }}
+                    >
+                      Replace session & continue
+                    </button>
+                  )}
+
+                  {emailNotVerified && (
+                    <div className="mt-2.5">
+                      <button
+                        type="button"
+                        onClick={handleResend}
+                        disabled={resendStatus === 'loading' || cooldown > 0}
+                        className="v2-mono text-[11px] underline font-bold hover:opacity-80 disabled:opacity-50 disabled:no-underline flex items-center gap-1.5 cursor-pointer"
+                      >
+                        {resendStatus === 'loading' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        {resendStatus === 'sent' && cooldown > 0 && `Verification sent. Resend in ${cooldown}s`}
+                        {resendStatus === 'idle' && 'Resend Verification Email'}
+                        {resendStatus === 'error' && 'Failed to send. Try again.'}
+                      </button>
                     </div>
+                  )}
+                </motion.div>
+              )}
 
-                    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-                        <div>
-                            <label
-                                htmlFor="email"
-                                className="block text-sm font-medium text-neutral-700 mb-1.5"
-                            >
-                                Work email
-                            </label>
-                            <input
-                                id="email"
-                                type="email"
-                                required
-                                autoComplete="email"
-                                placeholder="you@company.com"
-                                value={email}
-                                onChange={(e) => { dispatch({ type: 'SET_EMAIL', payload: e.target.value }); clearFieldError('email'); }}
-                                onBlur={() => handleBlur('email', email)}
-                                className={`w-full rounded-lg border px-4 py-3 text-base text-neutral-900 placeholder:text-neutral-400 focus:outline-none transition-colors ${inputClass('email')}`}
-                            />
-                            {touched.email && errors.email && (
-                                <p className="mt-1.5 text-xs text-error-600">{errors.email}</p>
-                            )}
-                        </div>
+              <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="space-y-4 mb-5">
+                <AuthInput id="email" label="Work email" type="email" value={email} onChange={(v) => { setEmail(v); setErrors((p) => ({ ...p, email: undefined })); }} placeholder="you@company.com" autoComplete="email" error={errors.email} />
+                <AuthInput id="password" label="Password" type={showPassword ? 'text' : 'password'} value={password} onChange={(v) => { setPassword(v); setErrors((p) => ({ ...p, password: undefined })); }} placeholder="Enter your password" autoComplete="current-password" error={errors.password}
+                  trailing={<button type="button" onClick={() => setShowPassword((s) => !s)} className="p-1 hover:opacity-70 cursor-pointer" aria-label={showPassword ? 'Hide password' : 'Show password'} style={{ color: 'var(--v2-paper-ink-2)' }}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>} />
+              </motion.div>
 
-                        <div>
-                            <label
-                                htmlFor="password"
-                                className="block text-sm font-medium text-neutral-700 mb-1.5"
-                            >
-                                Password
-                            </label>
-                            <div className="relative">
-                                <input
-                                    id="password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    required
-                                    autoComplete="current-password"
-                                    placeholder="Enter your password"
-                                    value={password}
-                                    onChange={(e) => { dispatch({ type: 'SET_PASSWORD', payload: e.target.value }); clearFieldError('password'); }}
-                                    onBlur={() => handleBlur('password', password)}
-                                    className={`w-full rounded-lg border px-4 py-3 pr-12 text-base text-neutral-900 placeholder:text-neutral-400 focus:outline-none transition-colors ${inputClass('password')}`}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 focus:outline-none focus:text-neutral-600"
-                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                                >
-                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                </button>
-                            </div>
-                            {touched.password && errors.password && (
-                                <p className="mt-1.5 text-xs text-error-600">{errors.password}</p>
-                            )}
-                        </div>
+              <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="flex items-center justify-between mb-7">
+                <button type="button" onClick={() => setRememberMe((r) => !r)} className="flex items-center gap-2.5 cursor-pointer">
+                  <motion.span className="w-9 h-5 rounded-full relative flex-shrink-0" animate={{ backgroundColor: rememberMe ? 'var(--v2-vermilion)' : 'var(--v2-paper-rule-strong)' }}>
+                    <motion.span layout transition={{ type: 'spring', stiffness: 500, damping: 30 }} className="absolute top-0.5 w-4 h-4 rounded-full" style={{ background: 'var(--v2-paper-ground)', left: rememberMe ? '18px' : '2px', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }} />
+                  </motion.span>
+                  <span className="v2-mono text-[12px]" style={{ color: 'var(--v2-paper-ink-2)' }}>Keep me signed in</span>
+                </button>
+                <Link href="/forgot-password" className="v2-mono text-[12px] hover:underline font-bold" style={{ color: 'var(--v2-vermilion)' }}>Forgot?</Link>
+              </motion.div>
 
-                        <div className="flex items-center justify-between">
-                            <label className="flex items-center gap-3 cursor-pointer select-none">
-                                <span className="text-sm text-neutral-600">Keep me signed in</span>
-                                <button
-                                    type="button"
-                                    role="switch"
-                                    aria-checked={rememberMe}
-                                    onClick={() => dispatch({ type: 'TOGGLE_REMEMBER_ME' })}
-                                    className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${rememberMe ? 'bg-primary-600' : 'bg-neutral-300'}`}
-                                >
-                                    <span
-                                        className={`pointer-events-none inline-block h-4 w-4 mt-0.5 ml-0.5 rounded-full bg-white shadow transition-transform duration-200 ease-in-out ${rememberMe ? 'translate-x-4' : 'translate-x-0'}`}
-                                    />
-                                </button>
-                            </label>
-                            <Link
-                                href="/forgot-password"
-                                className="text-sm text-primary-600 hover:text-primary-700"
-                            >
-                                Forgot password?
-                            </Link>
-                        </div>
+              <motion.button type="submit" disabled={status === 'loading'} variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} whileHover={{ scale: status === 'loading' ? 1 : 1.01 }} whileTap={{ scale: status === 'loading' ? 1 : 0.99 }}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 v2-label text-[12px] rounded-[10px]"
+                style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)', opacity: status === 'loading' ? 0.85 : 1, cursor: status === 'loading' ? 'wait' : 'pointer', boxShadow: '0 4px 14px rgba(200,50,27,0.2)' }}>
+                <AnimatePresence mode="wait">
+                  {status === 'loading' ? (
+                    <motion.span key="l" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2"><span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />Signing in…</motion.span>
+                  ) : (
+                    <motion.span key="i" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">Sign in <ArrowRight className="w-4 h-4" /></motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
 
-                        {apiError && (
-                            <div className="rounded-lg bg-error-50 border border-error-200 px-4 py-3 space-y-2">
-                                <p className="text-sm text-error-700">{apiError}</p>
-                                {activeSession && (
-                                    <button
-                                        type="button"
-                                        onClick={handleForceLogin}
-                                        disabled={isLoading}
-                                        className="text-sm font-medium text-error-700 underline hover:text-error-800 disabled:opacity-50"
-                                    >
-                                        Replace existing session and continue
-                                    </button>
-                                )}
-                                {emailNotVerified && (
-                                    <div className="pt-2">
-                                        <ResendVerificationEmail
-                                            email={email}
-                                            variant="link"
-                                            label="Resend Verification Email"
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-3 text-base font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            {isLoading ? (
-                                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                            ) : (
-                                <>
-                                    Log in
-                                    <ArrowRight className="w-4 h-4" />
-                                </>
-                            )}
-                        </button>
-                    </form>
-
-                    <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-neutral-400">
-                        <Lock className="w-3.5 h-3.5" />
-                        <span>Enterprise-grade security</span>
-                    </div>
-                </div>
-
-                <p className="mt-6 text-center text-sm text-neutral-500">
-                    New here?{' '}
-                    <Link href="/signup" className="font-medium text-primary-600 hover:text-primary-700">
-                        Create an account
-                    </Link>
-                </p>
-            </div>
-        </div>
-    );
-};
-
-export default LoginPage;
+              <motion.p variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="v2-mono text-[12px] text-center mt-6" style={{ color: 'var(--v2-paper-ink-2)' }}>
+                No account? <Link href="/signup" className="hover:underline font-medium font-bold" style={{ color: 'var(--v2-vermilion)' }}>Create one</Link>
+              </motion.p>
+            </motion.form>
+          )}
+        </AnimatePresence>
+      </AuthLayout>
+    </div>
+  );
+}
