@@ -1,192 +1,111 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { Sparkles, Lock, ArrowLeft, Mail } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Mail, ArrowRight } from 'lucide-react';
+import { AuthLayout } from '@/components/v2/AuthLayout';
+import { AuthInput } from '@/components/v2/AuthInput';
 import { forgotPassword } from '@/lib/services/authService';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+type Status = 'idle' | 'loading' | 'success';
 
-type FieldErrors = {
-    email?: string;
-};
+export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState('');
+  const [errors, setErrors] = useState<{ email?: string }>({});
+  const [status, setStatus] = useState<Status>('idle');
+  const [apiError, setApiError] = useState('');
 
-const ForgotPasswordPage = () => {
-    const [email, setEmail] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [apiError, setApiError] = useState('');
-    const [sent, setSent] = useState(false);
-    const [errors, setErrors] = useState<FieldErrors>({});
-    const [touched, setTouched] = useState<Record<string, boolean>>({});
-
-    const validateField = (field: string, value: string) => {
-        const errs: FieldErrors = {};
-        if (field === 'email') {
-            if (!value.trim()) errs.email = 'Email is required.';
-            else if (!EMAIL_RE.test(value)) errs.email = 'Please enter a valid email address.';
-        }
-        return errs;
-    };
-
-    const handleBlur = (field: string, value: string) => {
-        setTouched((prev) => ({ ...prev, [field]: true }));
-        const fieldErrors = validateField(field, value);
-        setErrors((prev) => ({ ...prev, ...fieldErrors }));
-    };
-
-    const clearFieldError = (field: keyof FieldErrors) => {
-        if (errors[field]) {
-            setErrors((prev) => {
-                const next = { ...prev };
-                delete next[field];
-                return next;
-            });
-        }
-    };
-
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
-        setApiError('');
-
-        const allErrors: FieldErrors = validateField('email', email);
-        setTouched({ email: true });
-        setErrors(allErrors);
-        if (Object.keys(allErrors).length > 0) return;
-
-        setIsLoading(true);
-        try {
-            await forgotPassword(email);
-            setSent(true);
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
-            setApiError(message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const inputClass = (field: keyof FieldErrors) =>
-        touched[field] && errors[field]
-            ? 'border-error-500 focus:ring-2 focus:ring-error-500 focus:border-error-500'
-            : 'border-neutral-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500';
-
-    if (sent) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4 py-8 sm:px-6">
-                <div className="w-full max-w-md">
-                    <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 sm:p-8 text-center">
-                        <div className="flex flex-col items-center mb-6">
-                            <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center mb-4">
-                                <Mail className="w-6 h-6 text-primary-600" />
-                            </div>
-                            <h1 className="text-xl font-semibold text-neutral-900 mb-2">
-                                Check your email
-                            </h1>
-                            <p className="text-sm text-neutral-500">
-                                If <span className="font-medium text-neutral-700">{email}</span> is registered,
-                                a password reset link has been sent. Please check your inbox.
-                            </p>
-                        </div>
-
-                        <div className="space-y-3">
-                            <Link
-                                href="/login"
-                                className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-3 text-base font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors"
-                            >
-                                <ArrowLeft className="w-4 h-4" />
-                                Back to login
-                            </Link>
-                        </div>
-
-                        <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-neutral-400">
-                            <Lock className="w-3.5 h-3.5" />
-                            <span>Enterprise-grade security</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
+  const validate = () => {
+    const e: typeof errors = {};
+    if (!email) {
+      e.email = 'Email is required';
+    } else if (!EMAIL_RE.test(email)) {
+      e.email = 'Enter a valid email address';
     }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4 py-8 sm:px-6">
-            <div className="w-full max-w-md">
-                <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 sm:p-8">
-                    <div className="flex flex-col items-center mb-8">
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center">
-                                <Sparkles className="w-5 h-5 text-white" />
-                            </div>
-                            <span className="text-lg font-semibold text-neutral-900">
-                                Doddle OS
-                            </span>
-                        </div>
-                            <p className="text-sm text-neutral-500 text-center">
-                                Enter your email and we&apos;ll send you a reset link.
-                            </p>
-                    </div>
+  const handleSubmit = async (ev: React.FormEvent) => {
+    ev.preventDefault();
+    setApiError('');
+    if (!validate()) return;
 
-                    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-                        <div>
-                            <label
-                                htmlFor="email"
-                                className="block text-sm font-medium text-neutral-700 mb-1.5"
-                            >
-                                Work email
-                            </label>
-                            <input
-                                id="email"
-                                type="email"
-                                required
-                                autoComplete="email"
-                                placeholder="you@company.com"
-                                value={email}
-                                onChange={(e) => { setEmail(e.target.value); clearFieldError('email'); }}
-                                onBlur={() => handleBlur('email', email)}
-                                className={`w-full rounded-lg border px-4 py-3 text-base text-neutral-900 placeholder:text-neutral-400 focus:outline-none transition-colors ${inputClass('email')}`}
-                            />
-                            {touched.email && errors.email && (
-                                <p className="mt-1.5 text-xs text-error-600">{errors.email}</p>
-                            )}
-                        </div>
+    setStatus('loading');
+    try {
+      await forgotPassword(email);
+      setStatus('success');
+    } catch (err: unknown) {
+      setStatus('idle');
+      setApiError(err instanceof Error ? err.message : 'Unable to send reset link. Please check your connection and try again.');
+    }
+  };
 
-                        {apiError && (
-                            <div className="rounded-lg bg-error-50 border border-error-200 px-4 py-3 text-sm text-error-700">
-                                {apiError}
-                            </div>
-                        )}
+  return (
+    <div className="v2-scope">
+      <AuthLayout positioning="Enter your email to request a password reset. Manage your strategy without boundaries.">
+        <AnimatePresence mode="wait">
+          {status === 'success' ? (
+            <motion.div key="success" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
+              <motion.div className="w-14 h-14 mx-auto mb-5 rounded-full flex items-center justify-center" style={{ background: 'var(--v2-vermilion)' }} initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
+                <Mail className="w-7 h-7" style={{ color: 'var(--v2-vermilion-ink)' }} strokeWidth={1.5} />
+              </motion.div>
+              <motion.h2 className="v2-display text-[1.75rem] mb-2" style={{ color: 'var(--v2-paper-ink)' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>Check your email.</motion.h2>
+              <motion.p className="text-[14px] mb-7" style={{ color: 'var(--v2-paper-ink-2)' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
+                If an account exists for <span className="v2-mono" style={{ color: 'var(--v2-paper-ink)' }}>{email}</span>, we have sent a password reset link.
+              </motion.p>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}>
+                <Link href="/login" className="inline-flex items-center gap-2 px-6 py-3 v2-label text-[11px]" style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)', boxShadow: '0 4px 14px rgba(200,50,27,0.2)' }}>Back to sign in <ArrowRight className="w-4 h-4" /></Link>
+              </motion.div>
+            </motion.div>
+          ) : (
+            <motion.form key="form" onSubmit={handleSubmit} noValidate initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08, delayChildren: 0.15 } } }}>
+              <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="mb-7">
+                <h1 className="v2-display text-[2.25rem] leading-[1] mb-2" style={{ color: 'var(--v2-paper-ink)' }}>Reset password</h1>
+                <p className="text-[14px]" style={{ color: 'var(--v2-paper-ink-2)' }}>Enter your email and we&rsquo;ll send you a password reset link.</p>
+              </motion.div>
 
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-3 text-base font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            {isLoading ? (
-                                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                            ) : (
-                                <>
-                                    Send reset link
-                                    <Mail className="w-4 h-4" />
-                                </>
-                            )}
-                        </button>
-                    </form>
+              {/* Impeccable design error alert container */}
+              {apiError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 mb-5 border text-[13px] leading-relaxed rounded-[8px] v2-mono"
+                  style={{
+                    borderColor: 'var(--v2-vermilion)',
+                    background: 'rgba(200, 50, 27, 0.04)',
+                    color: 'var(--v2-vermilion)',
+                  }}
+                >
+                  <p className="font-semibold">{apiError}</p>
+                </motion.div>
+              )}
 
-                    <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-neutral-400">
-                        <Lock className="w-3.5 h-3.5" />
-                        <span>Enterprise-grade security</span>
-                    </div>
-                </div>
+              <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="space-y-4 mb-6">
+                <AuthInput id="email" label="Work email" type="email" value={email} onChange={(v) => { setEmail(v); setErrors((p) => ({ ...p, email: undefined })); }} placeholder="you@company.com" autoComplete="email" error={errors.email} />
+              </motion.div>
 
-                <p className="mt-6 text-center text-sm text-neutral-500">
-                    Remember your password?{' '}
-                    <Link href="/login" className="font-medium text-primary-600 hover:text-primary-700">
-                        Log in
-                    </Link>
-                </p>
-            </div>
-        </div>
-    );
-};
+              <motion.button type="submit" disabled={status === 'loading'} variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} whileHover={{ scale: status === 'loading' ? 1 : 1.01 }} whileTap={{ scale: status === 'loading' ? 1 : 0.99 }}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 v2-label text-[12px] rounded-[10px]"
+                style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)', opacity: status === 'loading' ? 0.85 : 1, cursor: status === 'loading' ? 'wait' : 'pointer', boxShadow: '0 4px 14px rgba(200,50,27,0.2)' }}>
+                <AnimatePresence mode="wait">
+                  {status === 'loading' ? (
+                    <motion.span key="l" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2"><span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />Sending link…</motion.span>
+                  ) : (
+                    <motion.span key="i" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">Send reset link <ArrowRight className="w-4 h-4" /></motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
 
-export default ForgotPasswordPage;
+              <motion.p variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="v2-mono text-[12px] text-center mt-6" style={{ color: 'var(--v2-paper-ink-2)' }}>
+                Remember your password? <Link href="/login" className="hover:underline font-medium font-bold" style={{ color: 'var(--v2-vermilion)' }}>Sign in</Link>
+              </motion.p>
+            </motion.form>
+          )}
+        </AnimatePresence>
+      </AuthLayout>
+    </div>
+  );
+}

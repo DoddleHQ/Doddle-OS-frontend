@@ -1,33 +1,26 @@
-import { Instrument_Serif, Hanken_Grotesk, JetBrains_Mono } from 'next/font/google';
-import './v2/globals.css';
-import V2LandingPage from './v2/page';
+'use client';
 
-const display = Instrument_Serif({
-  weight: '400',
-  style: ['normal', 'italic'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--v2-display',
-});
-
-const sans = Hanken_Grotesk({
-  weight: ['400', '500', '600', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--v2-sans',
-});
-
-const mono = JetBrains_Mono({
-  weight: ['400', '500', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--v2-mono',
-});
+import { HeroSpecimen } from '@/components/v2/HeroSpecimen';
+import { LiveBoard } from '@/components/v2/LiveBoard';
+import { Pipeline } from '@/components/v2/Pipeline';
+import { HowItWorks } from '@/components/v2/HowItWorks';
+import { OperatorSection } from '@/components/v2/OperatorSection';
+import { CloseCta } from '@/components/v2/CloseCta';
+import { SmoothScroll } from '@/components/v2/SmoothScroll';
+import { RegisterTransition } from '@/components/v2/RegisterTransition';
 
 export default function RootPage() {
   return (
-    <div className={`v2-scope ${display.variable} ${sans.variable} ${mono.variable}`}>
-      <V2LandingPage />
+    <div className="v2-scope">
+      <SmoothScroll>
+        <RegisterTransition />
+        <HeroSpecimen />
+        <LiveBoard />
+        <Pipeline />
+        <HowItWorks />
+        <OperatorSection />
+        <CloseCta />
+      </SmoothScroll>
     </div>
   );
 }

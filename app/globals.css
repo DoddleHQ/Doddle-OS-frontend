@@ -116,3 +116,85 @@ body {
 ::-webkit-scrollbar-corner {
   background: var(--st-track, #efe7d6);
 }
+
+/* ===============================================================
+ * V2 — Specimen Terminal design system (scoped to .v2-scope)
+ * Two registers: paper (warm press paper) and ink (tinted near-black).
+ * All v2 tokens, type, motion, and component styles live here, scoped
+ * so they never bleed into v1-styled routes.
+ * =============================================================== */
+
+.v2-scope {
+  --v2-paper-ground: #efe7d6;
+  --v2-paper-ink: #1a1612;
+  --v2-paper-ink-2: #6a6055;
+  --v2-paper-rule: #ddd0b8;
+  --v2-paper-rule-strong: #c2b495;
+  --v2-ink-ground: #141210;
+  --v2-ink-text: #ede7db;
+  --v2-ink-text-2: #9a9189;
+  --v2-ink-rule: #2a2622;
+  --v2-ink-rule-strong: #3a342e;
+  --v2-vermilion: #c8321b;
+  --v2-vermilion-lift: #e8442e;
+  --v2-vermilion-ink: #efe7d6;
+  --v2-sage: #7fb069;
+  --v2-font-display: var(--v2-display), 'Times New Roman', Georgia, serif;
+  --v2-font-sans: var(--v2-sans), system-ui, -apple-system, sans-serif;
+  --v2-font-mono: var(--v2-mono), ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --v2-rule: 1px;
+  --v2-rule-hair: 0.5px;
+  background: var(--v2-paper-ground);
+  color: var(--v2-paper-ink);
+  font-family: var(--v2-font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.v2-ink { background: var(--v2-ink-ground); color: var(--v2-ink-text); }
+
+.v2-display {
+  font-family: var(--v2-font-display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.0;
+}
+
+.v2-mono {
+  font-family: var(--v2-font-mono);
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+  letter-spacing: 0;
+}
+
+.v2-label {
+  font-family: var(--v2-font-sans);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@keyframes v2-tape-scroll { from { transform: translate3d(0,0,0); } to { transform: translate3d(-50%,0,0); } }
+@keyframes v2-pulse-dot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.82); } }
+@keyframes v2-blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
+@keyframes v2-flash-in { 0% { opacity: 0; transform: translateY(-6px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes v2-conflict-pulse { 0% { box-shadow: 0 0 0 0 rgba(232,68,46,0.55); } 70% { box-shadow: 0 0 0 9px rgba(232,68,46,0); } 100% { box-shadow: 0 0 0 0 rgba(232,68,46,0); } }
+@keyframes v2-trail-fade { 0% { opacity: 0.45; transform: scale(1); } 100% { opacity: 0; transform: scale(0.82); } }
+@keyframes v2-caret { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
+@keyframes v2-metric-breath { 0%,100% { opacity: 1; } 50% { opacity: 0.8; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .v2-scope, .v2-scope * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.v2-scope :focus-visible { outline: 2px solid var(--v2-vermilion); outline-offset: 3px; border-radius: 1px; }
+.v2-scope ::selection { background: var(--v2-vermilion); color: var(--v2-vermilion-ink); }
+
+/* Auth inputs */
+.v2-auth-input::placeholder { color: var(--v2-paper-ink-2); opacity: 0.5; }
+.v2-auth-input:focus { border-color: var(--v2-vermilion); box-shadow: 0 0 0 3px rgba(200,50,27,0.12); }

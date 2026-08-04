@@ -3,37 +3,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'motion/react';
 import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
-import { Instrument_Serif, Hanken_Grotesk, JetBrains_Mono } from 'next/font/google';
-import { AuthLayout } from '@/app/v2/landing/AuthLayout';
-import { AuthInput } from '@/app/v2/landing/AuthInput';
+import { AuthLayout } from '@/components/v2/AuthLayout';
+import { AuthInput } from '@/components/v2/AuthInput';
 import { login, loginForce, sendVerification, LoginError } from '@/lib/services/authService';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { workspaceService } from '@/lib/services/workspaceService';
-import '@/app/v2/globals.css';
-
-const displayFont = Instrument_Serif({
-  weight: '400',
-  style: ['normal', 'italic'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--v2-display',
-});
-
-const sansFont = Hanken_Grotesk({
-  weight: ['400', '500', '600', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--v2-sans',
-});
-
-const monoFont = JetBrains_Mono({
-  weight: ['400', '500', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--v2-mono',
-});
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type Status = 'idle' | 'loading' | 'success';
@@ -107,6 +84,7 @@ export default function LoginPage() {
         result = await login(payload);
       }
       loginSuccess(result);
+      toast.success('Welcome back!');
       setStatus('success');
       
       const next = new URLSearchParams(window.location.search).get('next');
@@ -161,7 +139,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className={`v2-scope ${displayFont.variable} ${sansFont.variable} ${monoFont.variable}`}>
+    <div className="v2-scope">
       <AuthLayout positioning="An operating system where strategy reads like a specimen book and runs like a dealing floor.">
         <AnimatePresence mode="wait">
           {status === 'success' ? (
