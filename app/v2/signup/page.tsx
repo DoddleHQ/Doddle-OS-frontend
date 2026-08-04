@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Eye, EyeOff, Check, X, ArrowRight, Mail } from 'lucide-react';
 import { AuthLayout } from '../landing/AuthLayout';
 import { AuthInput } from '../landing/AuthInput';
+import { signup } from '@/lib/services/authService';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_RULES = [
@@ -25,6 +26,7 @@ export default function V2SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ orgName?: string; email?: string; password?: string }>({});
   const [status, setStatus] = useState<Status>('idle');
+  const [apiError, setApiError] = useState('');
 
   const passedCount = PASSWORD_RULES.filter((r) => r.test(password)).length;
   const strengthLabel = passedCount <= 2 ? 'Weak' : passedCount <= 4 ? 'Medium' : 'Strong';
@@ -32,7 +34,7 @@ export default function V2SignupPage() {
 
   const validate = () => {
     const e: typeof errors = {};
-    if (!orgName) e.orgName = 'Organization name is required';
+    if (!orgName.trim()) e.orgName = 'Organization name is required';
     if (!email) e.email = 'Email is required';
     else if (!EMAIL_RE.test(email)) e.email = 'Enter a valid email address';
     if (!password) e.password = 'Password is required';
@@ -41,11 +43,19 @@ export default function V2SignupPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (ev: React.FormEvent) => {
+  const handleSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault();
+    setApiError('');
     if (!validate()) return;
+    
     setStatus('loading');
-    setTimeout(() => setStatus('success'), 1100);
+    try {
+      await signup({ orgName, email, password });
+      setStatus('success');
+    } catch (err: unknown) {
+      setStatus('idle');
+      setApiError(err instanceof Error ? err.message : 'Unable to complete signup. Please check your connection and try again.');
+    }
   };
 
   return (
@@ -58,7 +68,7 @@ export default function V2SignupPage() {
             </motion.div>
             <motion.h2 className="v2-display text-[1.75rem] mb-2" style={{ color: 'var(--v2-paper-ink)' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>Check your email.</motion.h2>
             <motion.p className="text-[14px] mb-7" style={{ color: 'var(--v2-paper-ink-2)' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
-              We&rsquo;ve sent a verification link to <span className="v2-mono" style={{ color: 'var(--v2-paper-ink)' }}>{email}</span>. <span className="v2-mono text-[10px]">(demo)</span>
+              We&rsquo;ve sent a verification link to <span className="v2-mono" style={{ color: 'var(--v2-paper-ink)' }}>{email}</span>.
             </motion.p>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}>
               <Link href="/v2/login" className="inline-flex items-center gap-2 px-6 py-3 v2-label text-[11px]" style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)', boxShadow: '0 4px 14px rgba(200,50,27,0.2)' }}>Back to sign in <ArrowRight className="w-4 h-4" /></Link>
@@ -71,11 +81,27 @@ export default function V2SignupPage() {
               <p className="text-[14px]" style={{ color: 'var(--v2-paper-ink-2)' }}>Set up your organization and deploy your first agent.</p>
             </motion.div>
 
+            {/* Impeccable design error alert container */}
+            {apiError && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 mb-5 border text-[13px] leading-relaxed rounded-[8px] v2-mono"
+                style={{
+                  borderColor: 'var(--v2-vermilion)',
+                  background: 'rgba(200, 50, 27, 0.04)',
+                  color: 'var(--v2-vermilion)',
+                }}
+              >
+                <p className="font-semibold">{apiError}</p>
+              </motion.div>
+            )}
+
             <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="space-y-4 mb-4">
               <AuthInput id="orgName" label="Organization name" value={orgName} onChange={(v) => { setOrgName(v); setErrors((p) => ({ ...p, orgName: undefined })); }} placeholder="Your Organization" autoComplete="organization" error={errors.orgName} />
               <AuthInput id="email" label="Work email" type="email" value={email} onChange={(v) => { setEmail(v); setErrors((p) => ({ ...p, email: undefined })); }} placeholder="you@company.com" autoComplete="email" error={errors.email} />
               <AuthInput id="password" label="Password" type={showPassword ? 'text' : 'password'} value={password} onChange={(v) => { setPassword(v); setErrors((p) => ({ ...p, password: undefined })); }} placeholder="Create a password" autoComplete="new-password" error={errors.password}
-                trailing={<button type="button" onClick={() => setShowPassword((s) => !s)} className="p-1 hover:opacity-70" aria-label={showPassword ? 'Hide password' : 'Show password'} style={{ color: 'var(--v2-paper-ink-2)' }}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>} />
+                trailing={<button type="button" onClick={() => setShowPassword((s) => !s)} className="p-1 hover:opacity-70 cursor-pointer" aria-label={showPassword ? 'Hide password' : 'Show password'} style={{ color: 'var(--v2-paper-ink-2)' }}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>} />
             </motion.div>
 
             <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="mb-7">
@@ -119,7 +145,7 @@ export default function V2SignupPage() {
             </motion.button>
 
             <motion.p variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="v2-mono text-[12px] text-center mt-6" style={{ color: 'var(--v2-paper-ink-2)' }}>
-              Already have an account? <Link href="/v2/login" className="hover:underline font-medium" style={{ color: 'var(--v2-vermilion)' }}>Sign in</Link>
+              Already have an account? <Link href="/v2/login" className="hover:underline font-medium font-bold" style={{ color: 'var(--v2-vermilion)' }}>Sign in</Link>
             </motion.p>
           </motion.form>
         )}
