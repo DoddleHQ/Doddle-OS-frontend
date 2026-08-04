@@ -3,9 +3,6 @@
 import Link from 'next/link';
 import { motion } from 'motion/react';
 
-import { useAuth } from '@/lib/contexts/AuthContext';
-import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
-
 /*
  * CloseCta — paper register, the close.
  * Anchored, quiet, specimen-book registration. One CTA, no manufactured urgency,
@@ -13,11 +10,6 @@ import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
  */
 
 export function CloseCta() {
-  const { status } = useAuth();
-  const { workspaces } = useWorkspaces();
-
-  const isAuthed = status === 'authenticated' && workspaces && workspaces.length > 0;
-  const enterUrl = isAuthed ? `/workspaces/${workspaces[0].workspaceId}` : '/login';
 
   return (
     <section
@@ -48,7 +40,7 @@ export function CloseCta() {
             transition={{ duration: 0.8, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
           >
             <Link
-              href={enterUrl}
+              href="/login"
               className="group inline-flex items-center gap-3 px-7 py-3.5 transition-colors"
               style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)' }}
             >

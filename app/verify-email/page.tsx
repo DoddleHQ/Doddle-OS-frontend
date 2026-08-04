@@ -3,27 +3,12 @@
 import { Suspense, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-    Sparkles,
-    Lock,
-    ArrowLeft,
-    Check,
-    X,
-    Mail,
-    AlertTriangle,
-    Info,
-} from 'lucide-react';
+import { motion } from 'motion/react';
+import { Check, X, Mail, AlertTriangle, Info, ArrowRight, ArrowLeft } from 'lucide-react';
+import { AuthLayout } from '@/components/v2/AuthLayout';
 import { verifyEmail, type VerifyEmailResult } from '@/lib/services/authService';
 
-type VerificationStatus =
-    | 'loading'
-    | 'verified'
-    | 'already_verified'
-    | 'expired'
-    | 'invalid'
-    | 'error';
-
-/** Auto-redirect countdown in seconds after successful verification. */
+type VerificationStatus = 'loading' | 'verified' | 'already_verified' | 'expired' | 'invalid' | 'error';
 const REDIRECT_SECONDS = 3;
 
 function VerifyEmailContent() {
@@ -37,278 +22,127 @@ function VerifyEmailContent() {
     const [countdown, setCountdown] = useState(REDIRECT_SECONDS);
     const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    // Verify email on mount
     useEffect(() => {
-        if (!token || token.length < 10) {
-            setStatus('invalid');
-            return;
-        }
-
+        if (!token || token.length < 10) { setStatus('invalid'); return; }
         let cancelled = false;
-
         async function verify() {
             try {
                 const result: VerifyEmailResult = await verifyEmail(token);
                 if (cancelled) return;
-
                 switch (result.status) {
-                    case 'verified':
-                        setStatus('verified');
-                        break;
-                    case 'already_verified':
-                        setStatus('already_verified');
-                        setAlreadyVerifiedMessage(result.message);
-                        break;
+                    case 'verified': setStatus('verified'); break;
+                    case 'already_verified': setStatus('already_verified'); setAlreadyVerifiedMessage(result.message); break;
                     case 'error':
-                        // Distinguish between expired and invalid
                         const msg = result.message.toLowerCase();
-                        if (msg.includes('expired') || msg.includes('invalid')) {
-                            setStatus('expired');
-                        } else {
-                            setStatus('invalid');
-                        }
+                        if (msg.includes('expired') || msg.includes('invalid')) setStatus('expired');
+                        else setStatus('invalid');
                         setErrorMessage(result.message);
                         break;
                 }
-            } catch {
-                if (!cancelled) {
-                    setStatus('error');
-                }
-            }
+            } catch { if (!cancelled) setStatus('error'); }
         }
-
         verify();
-
-        return () => {
-            cancelled = true;
-        };
+        return () => { cancelled = true; };
     }, [token]);
 
-    // Auto-redirect countdown after successful verification
     useEffect(() => {
         if (status !== 'verified') return;
-
         countdownRef.current = setInterval(() => {
             setCountdown((prev) => {
-                if (prev <= 1) {
-                    if (countdownRef.current) clearInterval(countdownRef.current);
-                    router.push('/login');
-                    return 0;
-                }
+                if (prev <= 1) { if (countdownRef.current) clearInterval(countdownRef.current); router.push('/login'); return 0; }
                 return prev - 1;
             });
         }, 1000);
-
-        return () => {
-            if (countdownRef.current) clearInterval(countdownRef.current);
-        };
+        return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
     }, [status, router]);
 
-    // ── Loading State ──────────────────────────────────────────────────────
-    if (status === 'loading') {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4 py-8 sm:px-6">
-                <div className="w-full max-w-md">
-                    <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 sm:p-8 text-center">
-                        <div className="flex flex-col items-center">
-                            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-600 border-t-transparent mb-4" />
-                            <p className="text-sm text-neutral-500">Verifying your email…</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    const renderState = () => {
+        // Loading
+        if (status === 'loading') return (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
+                <div className="w-8 h-8 mx-auto rounded-full border-2 border-current border-t-transparent animate-spin mb-4" style={{ color: 'var(--v2-vermilion)' }} />
+                <p className="text-[14px]" style={{ color: 'var(--v2-paper-ink-2)' }}>Verifying your email…</p>
+            </motion.div>
         );
-    }
 
-    // ── Verified State ─────────────────────────────────────────────────────
-    if (status === 'verified') {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4 py-8 sm:px-6">
-                <div className="w-full max-w-md">
-                    <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 sm:p-8 text-center">
-                        <div className="flex flex-col items-center mb-6">
-                            <div className="w-14 h-14 rounded-full bg-success-100 flex items-center justify-center mb-4">
-                                <Check className="w-7 h-7 text-success-600" />
-                            </div>
-                            <h1 className="text-xl font-semibold text-neutral-900 mb-2">
-                                Email verified successfully!
-                            </h1>
-                            <p className="text-sm text-neutral-500">
-                                Your email has been verified. Redirecting to login in{' '}
-                                <span className="font-medium text-primary-600">{countdown}</span> seconds…
-                            </p>
-                        </div>
-
-                        <Link
-                            href="/login"
-                            className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-3 text-base font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors"
-                        >
-                            Go to Login
-                        </Link>
-
-                        <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-neutral-400">
-                            <Lock className="w-3.5 h-3.5" />
-                            <span>Enterprise-grade security</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        // Verified
+        if (status === 'verified') return (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
+                <motion.div className="w-14 h-14 mx-auto mb-5 rounded-full flex items-center justify-center" style={{ background: 'var(--v2-vermilion)' }} initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
+                    <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="var(--v2-vermilion-ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><motion.path d="M5 13l4 4L19 7" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5, delay: 0.2 }} /></svg>
+                </motion.div>
+                <motion.h2 className="v2-display text-[1.75rem] mb-2" style={{ color: 'var(--v2-paper-ink)' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>Email verified.</motion.h2>
+                <motion.p className="text-[14px] mb-7" style={{ color: 'var(--v2-paper-ink-2)' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>Redirecting to login in <span style={{ color: 'var(--v2-vermilion)' }}>{countdown}</span>s…</motion.p>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}>
+                    <Link href="/login" className="inline-flex items-center gap-2 px-6 py-3 v2-label text-[11px]" style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)', boxShadow: '0 4px 14px rgba(200,50,27,0.2)' }}>Go to login <ArrowRight className="w-4 h-4" /></Link>
+                </motion.div>
+            </motion.div>
         );
-    }
 
-    // ── Already Verified State ──────────────────────────────────────────────
-    if (status === 'already_verified') {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4 py-8 sm:px-6">
-                <div className="w-full max-w-md">
-                    <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 sm:p-8 text-center">
-                        <div className="flex flex-col items-center mb-6">
-                            <div className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center mb-4">
-                                <Info className="w-7 h-7 text-primary-600" />
-                            </div>
-                            <h1 className="text-xl font-semibold text-neutral-900 mb-2">
-                                Already verified
-                            </h1>
-                            <p className="text-sm text-neutral-500">
-                                {alreadyVerifiedMessage || 'Your email is already verified. You can log in now.'}
-                            </p>
-                        </div>
-
-                        <Link
-                            href="/login"
-                            className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-3 text-base font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors"
-                        >
-                            Go to Login
-                        </Link>
-
-                        <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-neutral-400">
-                            <Lock className="w-3.5 h-3.5" />
-                            <span>Enterprise-grade security</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        // Already verified
+        if (status === 'already_verified') return (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
+                <motion.div className="w-14 h-14 mx-auto mb-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(200,50,27,0.08)' }} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
+                    <Info className="w-7 h-7" style={{ color: 'var(--v2-vermilion)' }} strokeWidth={1.5} />
+                </motion.div>
+                <h2 className="v2-display text-[1.75rem] mb-2" style={{ color: 'var(--v2-paper-ink)' }}>Already verified</h2>
+                <p className="text-[14px] mb-7" style={{ color: 'var(--v2-paper-ink-2)' }}>{alreadyVerifiedMessage || 'Your email is already verified. You can log in now.'}</p>
+                <Link href="/login" className="inline-flex items-center gap-2 px-6 py-3 v2-label text-[11px]" style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)', boxShadow: '0 4px 14px rgba(200,50,27,0.2)' }}>Go to login <ArrowRight className="w-4 h-4" /></Link>
+            </motion.div>
         );
-    }
 
-    // ── Expired / Invalid Token State ───────────────────────────────────────
-    if (status === 'expired' || status === 'invalid') {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4 py-8 sm:px-6">
-                <div className="w-full max-w-md">
-                    <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 sm:p-8 text-center">
-                        <div className="flex flex-col items-center mb-6">
-                            <div className="w-14 h-14 rounded-full bg-error-100 flex items-center justify-center mb-4">
-                                {status === 'expired' ? (
-                                    <AlertTriangle className="w-7 h-7 text-error-600" />
-                                ) : (
-                                    <X className="w-7 h-7 text-error-600" />
-                                )}
-                            </div>
-                            <h1 className="text-xl font-semibold text-neutral-900 mb-2">
-                                {status === 'expired'
-                                    ? 'Verification link expired'
-                                    : 'Invalid verification link'}
-                            </h1>
-                            <p className="text-sm text-neutral-500">
-                                {status === 'expired'
-                                    ? 'This verification link has expired. Please request a new one.'
-                                    : 'This verification link is invalid. Please request a new one.'}
-                            </p>
-                        </div>
-
-                        {/* Resend section — link to signup for a new link */}
-                        <div className="space-y-3 mb-6">
-                            <p className="text-sm text-neutral-600">
-                                Need a new verification link?
-                            </p>
-                            <Link
-                                href="/signup"
-                                className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-3 text-base font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors"
-                            >
-                                <Mail className="w-4 h-4" />
-                                Sign up again to get a new link
-                            </Link>
-                            <Link
-                                href="/login"
-                                className="w-full flex items-center justify-center gap-2 rounded-lg border border-neutral-200 px-4 py-3 text-base font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
-                            >
-                                <ArrowLeft className="w-4 h-4" />
-                                Back to Login
-                            </Link>
-                        </div>
-
-                        <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-neutral-400">
-                            <Lock className="w-3.5 h-3.5" />
-                            <span>Enterprise-grade security</span>
-                        </div>
-                    </div>
+        // Expired / Invalid
+        if (status === 'expired' || status === 'invalid') return (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
+                <motion.div className="w-14 h-14 mx-auto mb-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(200,50,27,0.08)' }} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
+                    {status === 'expired' ? <AlertTriangle className="w-7 h-7" style={{ color: 'var(--v2-vermilion)' }} strokeWidth={1.5} /> : <X className="w-7 h-7" style={{ color: 'var(--v2-vermilion)' }} strokeWidth={1.5} />}
+                </motion.div>
+                <h2 className="v2-display text-[1.75rem] mb-2" style={{ color: 'var(--v2-paper-ink)' }}>{status === 'expired' ? 'Link expired' : 'Invalid link'}</h2>
+                <p className="text-[14px] mb-7" style={{ color: 'var(--v2-paper-ink-2)' }}>{status === 'expired' ? 'This verification link has expired.' : 'This verification link is invalid.'} Please request a new one.</p>
+                <div className="space-y-3">
+                    <Link href="/signup" className="w-full flex items-center justify-center gap-2 px-6 py-3.5 v2-label text-[11px] rounded-[10px]" style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)', boxShadow: '0 4px 14px rgba(200,50,27,0.2)' }}><Mail className="w-4 h-4" /> Sign up again</Link>
+                    <Link href="/login" className="w-full flex items-center justify-center gap-2 px-6 py-3.5 v2-label text-[11px] rounded-[10px] border" style={{ borderColor: 'var(--v2-paper-rule-strong)', color: 'var(--v2-paper-ink)' }}><ArrowLeft className="w-4 h-4" /> Back to login</Link>
                 </div>
-            </div>
+            </motion.div>
         );
-    }
 
-    // ── Generic Error State ─────────────────────────────────────────────────
+        // Generic error
+        return (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
+                <motion.div className="w-14 h-14 mx-auto mb-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(200,50,27,0.08)' }} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
+                    <X className="w-7 h-7" style={{ color: 'var(--v2-vermilion)' }} strokeWidth={1.5} />
+                </motion.div>
+                <h2 className="v2-display text-[1.75rem] mb-2" style={{ color: 'var(--v2-paper-ink)' }}>Something went wrong</h2>
+                <p className="text-[14px] mb-7" style={{ color: 'var(--v2-paper-ink-2)' }}>{errorMessage || 'An unexpected error occurred during verification.'}</p>
+                <div className="space-y-3">
+                    <Link href="/login" className="w-full flex items-center justify-center gap-2 px-6 py-3.5 v2-label text-[11px] rounded-[10px]" style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)', boxShadow: '0 4px 14px rgba(200,50,27,0.2)' }}><ArrowLeft className="w-4 h-4" /> Back to login</Link>
+                    <Link href="/signup" className="w-full flex items-center justify-center gap-2 px-6 py-3.5 v2-label text-[11px] rounded-[10px] border" style={{ borderColor: 'var(--v2-paper-rule-strong)', color: 'var(--v2-paper-ink)' }}>Sign up again</Link>
+                </div>
+            </motion.div>
+        );
+    };
+
     return (
-        <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4 py-8 sm:px-6">
-            <div className="w-full max-w-md">
-                <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 sm:p-8 text-center">
-                    <div className="flex flex-col items-center mb-6">
-                        <div className="w-14 h-14 rounded-full bg-error-100 flex items-center justify-center mb-4">
-                            <X className="w-7 h-7 text-error-600" />
-                        </div>
-                        <h1 className="text-xl font-semibold text-neutral-900 mb-2">
-                            Something went wrong
-                        </h1>
-                        <p className="text-sm text-neutral-500">
-                            {errorMessage || 'An unexpected error occurred during verification. Please try again.'}
-                        </p>
-                    </div>
-
-                    <div className="space-y-3">
-                        <Link
-                            href="/login"
-                            className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-3 text-base font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            Back to Login
-                        </Link>
-                        <Link
-                            href="/signup"
-                            className="w-full flex items-center justify-center gap-2 rounded-lg border border-neutral-200 px-4 py-3 text-base font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
-                        >
-                            Sign up again
-                        </Link>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-neutral-400">
-                        <Lock className="w-3.5 h-3.5" />
-                        <span>Enterprise-grade security</span>
-                    </div>
-                </div>
-            </div>
+        <div className="v2-scope">
+            <AuthLayout positioning="Verifying your email address to activate your account.">
+                {renderState()}
+            </AuthLayout>
         </div>
     );
 }
 
 function VerifyEmailLoading() {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4 py-8 sm:px-6">
-            <div className="w-full max-w-md">
-                <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 sm:p-8 text-center">
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-600 border-t-transparent mx-auto" />
-                </div>
-            </div>
+        <div className="v2-scope min-h-screen flex items-center justify-center" style={{ background: 'var(--v2-paper-ground)' }}>
+            <div className="w-8 h-8 rounded-full border-2 border-current border-t-transparent animate-spin" style={{ color: 'var(--v2-vermilion)' }} />
         </div>
     );
 }
 
-const VerifyEmailPage = () => {
+export default function VerifyEmailPage() {
     return (
         <Suspense fallback={<VerifyEmailLoading />}>
             <VerifyEmailContent />
         </Suspense>
     );
-};
-
-export default VerifyEmailPage;
+}

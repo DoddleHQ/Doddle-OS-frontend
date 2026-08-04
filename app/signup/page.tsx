@@ -1,36 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import { Eye, EyeOff, Check, X, ArrowRight, Mail } from 'lucide-react';
-import { Instrument_Serif, Hanken_Grotesk, JetBrains_Mono } from 'next/font/google';
-import { AuthLayout } from '@/app/v2/landing/AuthLayout';
-import { AuthInput } from '@/app/v2/landing/AuthInput';
+import { AuthLayout } from '@/components/v2/AuthLayout';
+import { AuthInput } from '@/components/v2/AuthInput';
 import { signup } from '@/lib/services/authService';
-import '@/app/v2/globals.css';
-
-const displayFont = Instrument_Serif({
-  weight: '400',
-  style: ['normal', 'italic'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--v2-display',
-});
-
-const sansFont = Hanken_Grotesk({
-  weight: ['400', '500', '600', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--v2-sans',
-});
-
-const monoFont = JetBrains_Mono({
-  weight: ['400', '500', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--v2-mono',
-});
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_RULES = [
@@ -51,6 +28,7 @@ export default function SignupPage() {
   const [errors, setErrors] = useState<{ orgName?: string; email?: string; password?: string }>({});
   const [status, setStatus] = useState<Status>('idle');
   const [apiError, setApiError] = useState('');
+  const router = useRouter();
 
   const passedCount = PASSWORD_RULES.filter((r) => r.test(password)).length;
   const strengthLabel = passedCount <= 2 ? 'Weak' : passedCount <= 4 ? 'Medium' : 'Strong';
@@ -75,7 +53,7 @@ export default function SignupPage() {
     setStatus('loading');
     try {
       await signup({ orgName, email, password });
-      setStatus('success');
+      router.push(`/check-email?email=${encodeURIComponent(email)}`);
     } catch (err: unknown) {
       setStatus('idle');
       setApiError(err instanceof Error ? err.message : 'Unable to complete signup. Please check your connection and try again.');
@@ -83,7 +61,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className={`v2-scope ${displayFont.variable} ${sansFont.variable} ${monoFont.variable}`}>
+    <div className="v2-scope">
       <AuthLayout positioning="Deploy a fleet of specialized agents. Watch them hand the work to each other. Approve what ships.">
         <AnimatePresence mode="wait">
           {status === 'success' ? (
