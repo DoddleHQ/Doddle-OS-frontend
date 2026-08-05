@@ -96,12 +96,12 @@ export async function middleware(request: NextRequest) {
     const isAuthRoute = pathname === '/login' || pathname === '/signup';
 
     if (isPublic) {
-        // If the user is already authenticated and visits an auth page,
-        // redirect them to the home page
+        // If the user is already authenticated and visits an auth page (login/signup),
+        // redirect them to their workspaces instead of making them log in again.
         if (isAuthRoute) {
             const authenticated = await isAuthenticated(request);
             if (authenticated) {
-                return NextResponse.redirect(new URL('/', request.url));
+                return NextResponse.redirect(new URL('/workspaces', request.url));
             }
         }
         return NextResponse.next();

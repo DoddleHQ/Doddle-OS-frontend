@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { TapeTicker } from './TapeTicker';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 
 gsap.registerPlugin(useGSAP);
 
@@ -23,6 +25,15 @@ const LINES = [
 
 export function HeroSpecimen() {
   const heroRef = useRef<HTMLElement>(null);
+  const { status } = useAuth();
+  const { workspaces } = useWorkspaces();
+
+  const isAuthenticated = status === 'authenticated';
+  const hasWorkspaces = workspaces.length > 0;
+  const ctaHref = isAuthenticated && hasWorkspaces
+    ? `/workspaces/${workspaces[0].workspaceId}`
+    : '/login';
+  const ctaLabel = isAuthenticated && hasWorkspaces ? 'Enter the OS' : 'Sign in to get started';
 
   useGSAP(
     () => {
@@ -104,11 +115,11 @@ export function HeroSpecimen() {
             </p>
 
             <Link
-              href="/login"
+              href={ctaHref}
               className="group inline-flex items-center gap-3 px-7 py-3.5 transition-colors"
               style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)' }}
             >
-              <span className="v2-label text-[12px]">Enter the OS</span>
+              <span className="v2-label text-[12px]">{ctaLabel}</span>
               <span className="transition-transform duration-200 group-hover:translate-x-1" aria-hidden>
                 →
               </span>
