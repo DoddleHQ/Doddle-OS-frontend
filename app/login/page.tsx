@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'motion/react';
 import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import { AuthLayout } from '@/components/v2/AuthLayout';
@@ -84,9 +83,8 @@ export default function LoginPage() {
         result = await login(payload);
       }
       loginSuccess(result);
-      toast.success('Welcome back!');
       setStatus('success');
-      
+
       const next = new URLSearchParams(window.location.search).get('next');
       if (next) {
         setTimeout(() => {
@@ -101,13 +99,15 @@ export default function LoginPage() {
               router.push(`/workspaces/${firstWorkspace.workspaceId}`);
             }, 1200);
           } else {
+            // No workspaces — go to workspace list (shows create CTA)
             setTimeout(() => {
-              router.push('/');
+              router.push('/workspaces');
             }, 1200);
           }
         } catch (err) {
+          // Can't fetch workspaces — try the workspace list anyway
           setTimeout(() => {
-            router.push('/');
+            router.push('/workspaces');
           }, 1200);
         }
       }

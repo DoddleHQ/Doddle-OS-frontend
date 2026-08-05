@@ -30,7 +30,7 @@ export function AuthLayout({ children, positioning }: { children: React.ReactNod
       </div>
 
       {/* === WORDMARK — top-left === */}
-      <Link href="/v2" className="fixed top-5 left-5 md:top-8 md:left-10 z-20">
+      <Link href="/" className="fixed top-5 left-5 md:top-8 md:left-10 z-20">
         <motion.span
           className="v2-display text-[1.125rem] md:text-[1.5rem] block"
           style={{ color: 'var(--v2-paper-ink)' }}

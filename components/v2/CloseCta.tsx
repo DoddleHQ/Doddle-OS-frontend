@@ -2,14 +2,26 @@
 
 import Link from 'next/link';
 import { motion } from 'motion/react';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 
 /*
  * CloseCta — paper register, the close.
  * Anchored, quiet, specimen-book registration. One CTA, no manufactured urgency,
  * no social proof the product can't back (PRODUCT.md: no real customers/logos).
+ * Auth-aware: shows "Enter the OS" + workspace link if authenticated, otherwise
+ * "Sign in to get started" + /login.
  */
 
 export function CloseCta() {
+  const { status } = useAuth();
+  const { workspaces } = useWorkspaces();
+  const isAuthenticated = status === 'authenticated';
+  const hasWorkspaces = workspaces.length > 0;
+  const ctaHref = isAuthenticated && hasWorkspaces
+    ? `/workspaces/${workspaces[0].workspaceId}`
+    : '/login';
+  const ctaLabel = isAuthenticated && hasWorkspaces ? 'Enter the OS' : 'Sign in to get started';
 
   return (
     <section
@@ -40,11 +52,11 @@ export function CloseCta() {
             transition={{ duration: 0.8, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
           >
             <Link
-              href="/login"
+              href={ctaHref}
               className="group inline-flex items-center gap-3 px-7 py-3.5 transition-colors"
               style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)' }}
             >
-              <span className="v2-label text-[12px]">Sign in to get started</span>
+              <span className="v2-label text-[12px]">{ctaLabel}</span>
               <span className="transition-transform duration-200 group-hover:translate-x-1" aria-hidden>
                 →
               </span>

@@ -68,7 +68,7 @@ const REFRESH_RATIO = 0.8;
  * When true, auth redirects to /login are disabled.
  * Set to false to re-enable authentication enforcement.
  */
-const DISABLE_AUTH_REDIRECT = true;
+const DISABLE_AUTH_REDIRECT = process.env.NODE_ENV !== 'production';
 
 // ---------------------------------------------------------------------------
 // Provider
