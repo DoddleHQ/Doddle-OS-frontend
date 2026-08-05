@@ -42,8 +42,6 @@ export async function getModule(id: string): Promise<Module & { metrics?: any; t
     default:
       return { ...result, metrics: {}, threads: [] };
   }
-  
-  return result;
 }
 
 /**

@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import { motion } from 'motion/react';
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getMissionControlData } from '@/lib/apiMock';
-import { mockMissionControlData } from '@/data/missionControl';
+import { mockMissionControlData as initialData } from '@/data/missionControl';
+import type { mockMissionControlData as MockDataType } from '@/data/missionControl';
 
 /*
  * Mission Control — kanban board with proper accordion behavior.
@@ -50,13 +51,16 @@ function formatTime(ts?: string): string {
 export default function MissionControlPage() {
   const params = useParams();
   const workspaceId = params.workspaceId as string;
+  const [data, setData] = useState(initialData);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedCol, setExpandedCol] = useState<string | null>(
-    mockMissionControlData.columns[0]?.id || null
+    initialData.columns[0]?.id || null
   );
 
   useEffect(() => {
-    getMissionControlData(workspaceId).then(() => setIsLoading(false)).catch(() => setIsLoading(false));
+    getMissionControlData(workspaceId)
+      .then((d) => { setData(d); setIsLoading(false); })
+      .catch(() => setIsLoading(false));
   }, [workspaceId]);
 
   if (isLoading) {
@@ -67,7 +71,7 @@ export default function MissionControlPage() {
     );
   }
 
-  const { stats, columns, items } = mockMissionControlData;
+  const { stats, columns, items } = data;
 
   const toggleCol = (id: string) => setExpandedCol(prev => prev === id ? null : id);
 
