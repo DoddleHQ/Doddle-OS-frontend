@@ -7,10 +7,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight, Send } from 'lucide-react';
 import { FlowingThreads } from '@/components/v2/FlowingThreads';
 import { DeskCard, AgentTyping } from './DeskCard';
-import { OptionSelector, type Option } from './OptionSelector';
-import HITLMessageCard from '@/components/content-factory/chat/HITLMessageCard';
-import ArtifactCardRouter from '@/components/content-factory/chat/artifacts/ArtifactCardRouter';
-import { extractArtifactMarkdown } from '@/components/content-factory/chat/artifacts/artifactContentUtils';
+import { V2HITLCard } from './V2HITLCard';
+import { V2ArtifactCard } from './V2ArtifactCard';
+import { V2Markdown } from './V2Markdown';
 import { useLangGraphStream } from '@/lib/hooks/useLangGraphStream';
 import type { ArtifactPayload } from '@/lib/types/graph-events.types';
 
@@ -55,7 +54,6 @@ export function OnboardingDesk() {
   });
 
   const isListening = !isRunning && !isHITLPending && !isComplete && messages.length > 0;
-  const [copiedArtifactId, setCopiedArtifactId] = useCopiedArtifact();
 
   // Auto-start the graph on mount — the first node (input_mode) fires an
   // interrupt immediately, so the user sees the "How would you like to provide
@@ -85,15 +83,6 @@ export function OnboardingDesk() {
       respondToHITL(streamState.pendingHITL.requestId, response);
     }
   }, [streamState.pendingHITL, respondToHITL]);
-
-  const handleCopyArtifact = useCallback((artifact: ArtifactPayload) => {
-    const markdown = extractArtifactMarkdown(artifact);
-    if (markdown) {
-      navigator.clipboard.writeText(markdown);
-      setCopiedArtifactId(artifact.artifactId);
-      setTimeout(() => setCopiedArtifactId(null), 2000);
-    }
-  }, [setCopiedArtifactId]);
 
   // Auto-scroll
   useEffect(() => {
@@ -189,21 +178,20 @@ export function OnboardingDesk() {
               return <DeskCard key={msg.id} variant="system">{msg.content}</DeskCard>;
             }
             if (msg.type === 'agent') {
-              return <DeskCard key={msg.id} variant="agent">{msg.content}</DeskCard>;
+              return (
+                <DeskCard key={msg.id} variant="agent">
+                  <V2Markdown content={msg.content} />
+                </DeskCard>
+              );
             }
             if (msg.type === 'artifact') {
               const artifact = artifacts.find((a) => a.artifactId === msg.metadata?.artifactId);
               if (artifact) {
                 return (
-                  <DeskCard key={msg.id} variant="summary" delay={0.1}>
-                    <ArtifactCardRouter
-                      artifact={artifact}
-                      onRespond={handleHITLRespond}
-                      onCopyArtifact={handleCopyArtifact}
-                      onDownloadArtifact={() => {}}
-                      copiedArtifactId={copiedArtifactId}
-                    />
-                  </DeskCard>
+                  <V2ArtifactCard
+                    key={msg.id}
+                    artifact={artifact}
+                  />
                 );
               }
             }
@@ -216,17 +204,10 @@ export function OnboardingDesk() {
 
           {/* HITL card (selection / multi_selection / content_review etc.) */}
           {showHITLCard && streamState.pendingHITL && (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, ease: PREMIUM_EASE }}
-              className="mb-4"
-            >
-              <HITLMessageCard
-                request={streamState.pendingHITL}
-                onRespond={handleHITLRespond}
-              />
-            </motion.div>
+            <V2HITLCard
+              request={streamState.pendingHITL}
+              onRespond={handleHITLRespond}
+            />
           )}
 
           {/* Agent typing */}
@@ -295,10 +276,3 @@ export function OnboardingDesk() {
     </div>
   );
 }
-
-// Small helper hook for copied artifact state
-function useCopiedArtifact(): [string | null, (id: string | null) => void] {
-  return useReactState<string | null>(null);
-}
-// Avoid importing useState separately — use React's default
-import { useState as useReactState } from 'react';
