@@ -60,7 +60,12 @@ export function OnboardingDesk() {
   // Auto-start the graph on mount — the first node (input_mode) fires an
   // interrupt immediately, so the user sees the "How would you like to provide
   // your business information?" prompt without typing anything first.
+  // Use a ref to prevent the infinite re-render loop (startStream changes
+  // identity on every render from the hook).
+  const startedRef = useRef(false);
   useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
     startStream({ human_input: '' });
   }, [startStream]);
 
