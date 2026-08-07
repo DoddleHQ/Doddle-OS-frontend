@@ -52,7 +52,29 @@ export function V2ArtifactCard({ artifact, onCopy, onDownload, copied }: V2Artif
     }
   };
 
-  const markdown = extractArtifactMarkdown(artifact) || '';
+  const markdown = (() => {
+    const extracted = extractArtifactMarkdown(artifact);
+    if (extracted && extracted.trim() !== '{}' && extracted.trim() !== '') return extracted;
+
+    // Fallback: try common content paths for brand persona
+    const content = typeof artifact.content === 'string'
+      ? (() => { try { return JSON.parse(artifact.content); } catch { return null; } })()
+      : artifact.content;
+
+    if (content && typeof content === 'object') {
+      // Try reportContent, personaData.reportContent, or the full content as markdown
+      if (typeof content.reportContent === 'string') return content.reportContent;
+      if (content.personaData?.reportContent) return content.personaData.reportContent;
+      // Last resort: if the content has a markdown-like structure, render it
+    }
+
+    return '';
+  })();
+
+  // If no markdown could be extracted, render the raw content as formatted text
+  const displayContent = markdown || (typeof artifact.content === 'string'
+    ? artifact.content
+    : '');
 
   return (
     <motion.div
@@ -101,7 +123,10 @@ export function V2ArtifactCard({ artifact, onCopy, onDownload, copied }: V2Artif
 
         {/* Content */}
         <div className="px-4 py-3 max-h-[400px] overflow-y-auto">
-          <V2Markdown content={markdown} />
+          {displayContent
+            ? <V2Markdown content={displayContent} />
+            : <p className="v2-mono text-[12px]" style={{ color: 'var(--v2-paper-ink-2)' }}>No content available</p>
+          }
         </div>
       </div>
     </motion.div>

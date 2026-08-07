@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
@@ -54,6 +54,7 @@ export function OnboardingDesk() {
   });
 
   const isListening = !isRunning && !isHITLPending && !isComplete && messages.length > 0;
+  const [chatValue, setChatValue] = useState('');
 
   // Auto-start the graph on mount — the first node (input_mode) fires an
   // interrupt immediately, so the user sees the "How would you like to provide
@@ -91,19 +92,12 @@ export function OnboardingDesk() {
     }
   }, [messages, artifacts, isRunning]);
 
-  // Check if input should be enabled (freetext HITL types or no HITL pending)
-  const inputEnabled = !isRunning && !isComplete && (
-    !isHITLPending ||
-    streamState.pendingHITL?.requestType === 'feedback' ||
-    streamState.pendingHITL?.requestType === 'topic_input' ||
-    streamState.pendingHITL?.requestType === 'data_input'
-  );
+  // V2HITLCard handles ALL HITL types internally (including feedback with its own textarea).
+  // Show it whenever there's a pending HITL. The chat input only shows when NO HITL is pending.
+  const showHITLCard = isHITLPending && !!streamState.pendingHITL;
 
-  // Determine if we should show the OptionSelector-style HITL (for selection/multi_selection)
-  const showHITLCard = isHITLPending && streamState.pendingHITL &&
-    streamState.pendingHITL.requestType !== 'feedback' &&
-    streamState.pendingHITL.requestType !== 'topic_input' &&
-    streamState.pendingHITL.requestType !== 'data_input';
+  // Chat input only when no HITL pending (V2HITLCard has its own inputs for feedback)
+  const showChatInput = !isRunning && !isComplete && !isHITLPending;
 
   return (
     <div className="v2-scope min-h-screen flex flex-col relative overflow-hidden" style={{ background: 'var(--v2-paper-ground)' }}>
@@ -244,7 +238,7 @@ export function OnboardingDesk() {
       {/* Chat input */}
       <div className="flex-shrink-0 px-6 md:px-10 pb-6 pt-2 relative z-10">
         <div className="max-w-[720px] mx-auto">
-          {inputEnabled && !isComplete && (
+          {showChatInput && !isComplete && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -253,19 +247,20 @@ export function OnboardingDesk() {
               style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid var(--v2-paper-rule)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
             >
               <input
-                value={''}
-                onChange={() => {}}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); const v = (e.target as HTMLInputElement).value; if (v.trim()) { (e.target as HTMLInputElement).value = ''; handleSendMessage(v); } } }}
-                placeholder={isHITLPending ? 'Enter your response...' : isRunning ? 'Generating...' : 'Enter your website URL or describe your business...'}
+                value={chatValue}
+                onChange={(e) => setChatValue(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (chatValue.trim()) { handleSendMessage(chatValue); setChatValue(''); } } }}
+                placeholder="Enter your website URL or describe your business..."
                 className="flex-1 bg-transparent px-3.5 py-2.5 text-[14px] outline-none"
                 style={{ color: 'var(--v2-paper-ink)' }}
                 autoFocus
               />
               <motion.button
-                onClick={(e) => { const input = (e.currentTarget.previousElementSibling as HTMLInputElement); if (input?.value?.trim()) { handleSendMessage(input.value); input.value = ''; } }}
+                onClick={() => { if (chatValue.trim()) { handleSendMessage(chatValue); setChatValue(''); } }}
+                disabled={!chatValue.trim()}
                 whileTap={{ scale: 0.92 }}
                 className="w-10 h-10 rounded-[10px] flex items-center justify-center transition-colors flex-shrink-0"
-                style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)' }}
+                style={{ background: chatValue.trim() ? 'var(--v2-vermilion)' : 'var(--v2-paper-rule-strong)', color: 'var(--v2-vermilion-ink)', opacity: chatValue.trim() ? 1 : 0.4 }}
               >
                 <Send className="w-4 h-4" />
               </motion.button>
