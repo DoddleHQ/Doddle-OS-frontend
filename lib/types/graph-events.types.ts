@@ -576,10 +576,6 @@ export function getStepInfo(stepId: string, graphId: string) {
     if (graphId === 'gtm_strategy') {
         return BROWSING_ARCHITECT_STEPS.find(s => s.id === stepId);
     }
-    if (graphId === 'brand_persona_generator') {
-        // Brand persona steps are dynamic (custom events), not from BROWSING_ARCHITECT_STEPS
-        return undefined;
-    }
     return undefined;
 }
 

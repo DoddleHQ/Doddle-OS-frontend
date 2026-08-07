@@ -108,15 +108,6 @@ export const GRAPH_AGENTS: GraphAgent[] = [
     inputHint: 'Enter a website URL to draft go-to-market strategy…',
     tone: 'default',
   },
-  {
-    graphId: 'brand_persona_generator',
-    name: 'Brand Persona Generator',
-    module: 'Brand Guardrails',
-    job: 'Generate comprehensive brand personas from a website URL or business description.',
-    artifacts: ['report'],
-    inputHint: 'Enter your website URL or describe your business',
-    tone: 'default',
-  },
 ];
 
 // ---------------------------------------------------------------------------
