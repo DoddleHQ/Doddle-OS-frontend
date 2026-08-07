@@ -57,6 +57,13 @@ export function OnboardingDesk() {
   const isListening = !isRunning && !isHITLPending && !isComplete && messages.length > 0;
   const [copiedArtifactId, setCopiedArtifactId] = useCopiedArtifact();
 
+  // Auto-start the graph on mount — the first node (input_mode) fires an
+  // interrupt immediately, so the user sees the "How would you like to provide
+  // your business information?" prompt without typing anything first.
+  useEffect(() => {
+    startStream({ human_input: '' });
+  }, [startStream]);
+
   const handleSendMessage = useCallback((message: string) => {
     if (isHITLPending && streamState.pendingHITL) {
       respondToHITL(streamState.pendingHITL.requestId, message);
