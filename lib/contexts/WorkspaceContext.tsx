@@ -26,7 +26,7 @@ type WorkspaceContextValue = {
     /** Refetch the workspace list. */
     refresh: () => Promise<void>;
     /** Create a new workspace and refresh the list. */
-    createWorkspace: (name: string, websiteDomain?: string) => Promise<Workspace>;
+    createWorkspace: (name: string, websiteDomain?: string, brandPersona?: string) => Promise<Workspace>;
 };
 
 // ---------------------------------------------------------------------------
@@ -73,10 +73,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }, [authStatus, fetchWorkspaces]);
 
     const createWorkspace = useCallback(
-        async (name: string, websiteDomain?: string): Promise<Workspace> => {
+        async (name: string, websiteDomain?: string, brandPersona?: string): Promise<Workspace> => {
             const workspace = await workspaceService.createWorkspace({
                 name,
                 websiteDomain,
+                brandPersona,
             });
             // Refresh the list to include the new workspace
             await fetchWorkspaces();

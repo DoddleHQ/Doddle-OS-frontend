@@ -83,6 +83,8 @@ export interface PaginatedWorkspaces {
 export interface CreateWorkspaceRequest {
     name?: string;
     websiteDomain?: string;
+    /** Initial brand persona markdown. Optional. */
+    brandPersona?: string;
 }
 
 export interface UpdateWorkspaceRequest {
