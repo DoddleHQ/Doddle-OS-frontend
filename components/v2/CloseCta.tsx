@@ -18,10 +18,20 @@ export function CloseCta() {
   const { workspaces } = useWorkspaces();
   const isAuthenticated = status === 'authenticated';
   const hasWorkspaces = workspaces.length > 0;
-  const ctaHref = isAuthenticated && hasWorkspaces
-    ? `/workspaces/${workspaces[0].workspaceId}`
-    : '/login';
-  const ctaLabel = isAuthenticated && hasWorkspaces ? 'Enter the OS' : 'Sign in to get started';
+
+  // Three real session states — the old two-way check sent authenticated
+  // users with no workspaces to /login, which middleware then bounced back
+  // to / (isAuthRoute guard), making the CTA appear dead.
+  const ctaHref = !isAuthenticated
+    ? '/login'
+    : hasWorkspaces
+      ? `/workspaces/${workspaces[0].workspaceId}`
+      : '/onboarding';
+  const ctaLabel = !isAuthenticated
+    ? 'Sign in to get started'
+    : hasWorkspaces
+      ? 'Enter the OS'
+      : 'Set up your workspace';
 
   return (
     <section
