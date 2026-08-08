@@ -16,14 +16,19 @@ import type { ArtifactPayload } from '@/lib/types/graph-events.types';
 /*
  * OnboardingDesk — "The Agent's Desk" onboarding experience.
  *
- * SAME v2 DESIGN as finalized: FlowingThreads ambient background, DeskCards
- * with Motion Design choreography, listening indicator, vermilion accents,
- * Instrument Serif headings. NO design changes.
+ * TWO STATES:
+ * 1. LANDING — a full-screen animated hero with FlowingThreads background,
+ *    "Brand Persona Setup" heading, and a "Begin" button. The graph does
+ *    NOT start until the user clicks.
+ * 2. CONVERSATION — the streaming chat interface (same v2 design as before).
  *
- * CHANGED: Now wired to the real brand_persona_generator graph via
- * useLangGraphStream instead of mock STEPS. Graph messages render as
- * DeskCards, interrupts render as HITLMessageCard / OptionSelector,
- * artifacts render as ArtifactCardRouter, completion shows the CTA.
+ * Design (3 skills applied):
+ * IMPPECCABLE: first viewport is a thesis — the heading, a single CTA, nothing
+ * else competes. No chrome. Depth from spacing + hairlines.
+ * MOTION DESIGN (Premium archetype): FlowingThreads ambient background (sine
+ * wave breath), heading materializes with stagger, CTA has hover anticipation.
+ * CLAUDE DESIGN SKILLS: the landing IS the product — a specimen book page
+ * that comes alive when you engage.
  */
 
 const PREMIUM_EASE = [0.4, 0, 0.2, 1] as const;
@@ -31,6 +36,8 @@ const PREMIUM_EASE = [0.4, 0, 0.2, 1] as const;
 export function OnboardingDesk() {
   const router = useRouter();
   const chatRef = useRef<HTMLDivElement>(null);
+  const [started, setStarted] = useState(false);
+  const [chatValue, setChatValue] = useState('');
 
   const {
     state: streamState,
@@ -54,18 +61,12 @@ export function OnboardingDesk() {
   });
 
   const isListening = !isRunning && !isHITLPending && !isComplete && messages.length > 0;
-  const [chatValue, setChatValue] = useState('');
 
-  // Auto-start the graph on mount — the first node (input_mode) fires an
-  // interrupt immediately, so the user sees the "How would you like to provide
-  // your business information?" prompt without typing anything first.
-  // Use a ref to prevent the infinite re-render loop (startStream changes
-  // identity on every render from the hook).
-  const startedRef = useRef(false);
-  useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
-    startStream({ human_input: '' });
+  // Start the graph ONLY when user clicks the Begin button
+  const handleBegin = useCallback(() => {
+    setStarted(true);
+    // Small delay for the transition animation
+    setTimeout(() => startStream({ human_input: '' }), 300);
   }, [startStream]);
 
   const handleSendMessage = useCallback((message: string) => {
@@ -92,21 +93,114 @@ export function OnboardingDesk() {
     }
   }, [messages, artifacts, isRunning]);
 
-  // V2HITLCard handles ALL HITL types internally (including feedback with its own textarea).
-  // Show it whenever there's a pending HITL. The chat input only shows when NO HITL is pending.
   const showHITLCard = isHITLPending && !!streamState.pendingHITL;
+  const showChatInput = !isRunning && !isComplete && !isHITLPending && started;
 
-  // Chat input only when no HITL pending (V2HITLCard has its own inputs for feedback)
-  const showChatInput = !isRunning && !isComplete && !isHITLPending;
+  // === LANDING STATE ===
+  if (!started) {
+    return (
+      <div className="v2-scope min-h-screen flex flex-col relative overflow-hidden" style={{ background: 'var(--v2-paper-ground)' }}>
+        {/* Ambient layer — FlowingThreads */}
+        <div className="fixed inset-0 pointer-events-none" style={{ opacity: 0.4 }}>
+          <FlowingThreads />
+        </div>
 
+        {/* Ambient glow */}
+        <motion.div
+          className="absolute pointer-events-none rounded-full"
+          style={{ top: '-15%', right: '-10%', width: '40vw', height: '40vh', background: 'var(--v2-vermilion)', filter: 'blur(140px)' }}
+          animate={{ opacity: [0.02, 0.05, 0.02] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+        />
+
+        {/* Wordmark */}
+        <header className="flex-shrink-0 px-6 md:px-10 pt-8 relative z-10">
+          <div className="max-w-[720px] mx-auto">
+            <Link href="/" className="v2-display text-[1.125rem]" style={{ color: 'var(--v2-paper-ink)' }}>
+              Doddle OS
+            </Link>
+          </div>
+        </header>
+
+        {/* Hero center */}
+        <div className="flex-1 flex items-center justify-center px-6 md:px-10 relative z-10">
+          <div className="max-w-[640px] w-full text-center">
+            {/* Headline — materializes with stagger */}
+            <motion.div
+              initial="hidden"
+              animate="show"
+              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.12, delayChildren: 0.2 } } }}
+            >
+              <motion.h1
+                variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
+                transition={{ duration: 0.7, ease: PREMIUM_EASE }}
+                className="v2-display text-[clamp(2rem,5vw,3.5rem)] leading-[1] mb-3"
+                style={{ color: 'var(--v2-paper-ink)' }}
+              >
+                Build your brand persona.
+              </motion.h1>
+
+              <motion.p
+                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+                transition={{ duration: 0.6, ease: PREMIUM_EASE }}
+                className="text-[15px] md:text-[17px] leading-[1.55] mb-2 max-w-[460px] mx-auto"
+                style={{ color: 'var(--v2-paper-ink-2)' }}
+              >
+                Answer a few questions about your business. Our agent will generate a
+                comprehensive brand persona to align every AI agent in your workspace.
+              </motion.p>
+
+              <motion.p
+                variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="v2-mono text-[11px] mb-10"
+                style={{ color: 'var(--v2-paper-ink-2)' }}
+              >
+                Takes about 2 minutes · No website required
+              </motion.p>
+
+              {/* CTA — anticipation on hover, tap scale */}
+              <motion.div
+                variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }}
+                transition={{ duration: 0.5, delay: 0.3, ease: PREMIUM_EASE }}
+              >
+                <motion.button
+                  onClick={handleBegin}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.2, ease: PREMIUM_EASE }}
+                  className="inline-flex items-center gap-2.5 px-8 py-4 v2-label text-[12px] rounded-[12px]"
+                  style={{
+                    background: 'var(--v2-vermilion)',
+                    color: 'var(--v2-vermilion-ink)',
+                    boxShadow: '0 4px 20px rgba(200,50,27,0.25)',
+                  }}
+                >
+                  Begin
+                  <motion.span
+                    animate={{ x: [0, 4, 0] }}
+                    transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    →
+                  </motion.span>
+                </motion.button>
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // === CONVERSATION STATE ===
   return (
     <div className="v2-scope min-h-screen flex flex-col relative overflow-hidden" style={{ background: 'var(--v2-paper-ground)' }}>
-      {/* Ambient layer — FlowingThreads at low opacity */}
+      {/* Ambient layer */}
       <div className="fixed inset-0 pointer-events-none" style={{ opacity: 0.3 }}>
         <FlowingThreads />
       </div>
 
-      {/* Subtle ambient glow */}
+      {/* Ambient glow */}
       <motion.div
         className="absolute pointer-events-none rounded-full"
         style={{ top: '-15%', right: '-10%', width: '40vw', height: '40vh', background: 'var(--v2-vermilion)', filter: 'blur(140px)' }}
@@ -143,18 +237,6 @@ export function OnboardingDesk() {
       {/* Chat area */}
       <div ref={chatRef} className="flex-1 overflow-y-auto px-6 md:px-10 relative z-10">
         <div className="max-w-[720px] mx-auto flex flex-col py-4">
-          {/* Welcome hero (before first message) */}
-          {messages.length === 0 && !isRunning && (
-            <div className="text-center py-12">
-              <h1 className="v2-display text-[clamp(1.5rem,3vw,2rem)] mb-2" style={{ color: 'var(--v2-paper-ink)' }}>
-                Brand Persona Setup
-              </h1>
-              <p className="text-[14px]" style={{ color: 'var(--v2-paper-ink-2)' }}>
-                Enter your website URL or describe your business to begin.
-              </p>
-            </div>
-          )}
-
           {/* Error */}
           {error && !isRunning && (
             <div className="mb-4 p-3 rounded-[8px] v2-mono text-[12px]" style={{ background: 'rgba(200,50,27,0.04)', border: '1px solid var(--v2-vermilion)', color: 'var(--v2-vermilion)' }}>
@@ -163,7 +245,7 @@ export function OnboardingDesk() {
             </div>
           )}
 
-          {/* Messages → DeskCards */}
+          {/* Messages */}
           {messages.map((msg) => {
             if (msg.type === 'user') {
               return <DeskCard key={msg.id} variant="user">{msg.content}</DeskCard>;
@@ -181,27 +263,18 @@ export function OnboardingDesk() {
             if (msg.type === 'artifact') {
               const artifact = artifacts.find((a) => a.artifactId === msg.metadata?.artifactId);
               if (artifact) {
-                return (
-                  <V2ArtifactCard
-                    key={msg.id}
-                    artifact={artifact}
-                  />
-                );
+                return <V2ArtifactCard key={msg.id} artifact={artifact} />;
               }
             }
             if (msg.type === 'hitl') {
-              // HITL handled below — skip inline rendering here
               return null;
             }
             return null;
           })}
 
-          {/* HITL card (selection / multi_selection / content_review etc.) */}
+          {/* HITL card */}
           {showHITLCard && streamState.pendingHITL && (
-            <V2HITLCard
-              request={streamState.pendingHITL}
-              onRespond={handleHITLRespond}
-            />
+            <V2HITLCard request={streamState.pendingHITL} onRespond={handleHITLRespond} />
           )}
 
           {/* Agent typing */}
