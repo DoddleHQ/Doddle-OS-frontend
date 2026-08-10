@@ -6,11 +6,9 @@ import { TAPE_EVENTS, type TapeEvent, type TapeTone } from './content';
  * the project's own thread + activity data (content.ts). Lives in both
  * registers: paper (muted) above the fold, ink (live vermilion) below.
  *
- * HYDRATION SAFETY: the marquee is a pure/stateless server component (no
- * 'use client', no useState/useEffect) — it renders identical static output on
- * server and client, so it can NEVER cause a hydration mismatch. Only the
- * 'tail' variant needs client interactivity; it lives in a separate file with
- * a mounted() gate so its dynamic content only appears after hydration.
+ * HYDRATION SAFETY: pure/stateless server component (no 'use client', no
+ * useState/useEffect) — renders identical static output on server and client,
+ * so it can never cause a hydration mismatch.
  */
 
 export function toneColor(tone: TapeTone, onInk?: boolean) {
@@ -37,17 +35,10 @@ export function TapeRow({ e, onInk }: { e: TapeEvent; onInk?: boolean }) {
 
 interface TapeTickerProps {
   onInk?: boolean;
-  variant?: 'marquee' | 'tail';
   className?: string;
 }
 
-export function TapeTicker({ onInk, variant = 'marquee', className = '' }: TapeTickerProps) {
-  if (variant === 'tail') {
-    // Lazy-load the client-only tail to keep this file server-safe.
-    const Tail = require('./TapeTail').TapeTail as (p: { onInk?: boolean; className?: string }) => JSX.Element;
-    return <Tail onInk={onInk} className={className} />;
-  }
-
+export function TapeTicker({ onInk, className = '' }: TapeTickerProps) {
   // Marquee — pure, stateless, identical on server and client.
   const loop = [...TAPE_EVENTS, ...TAPE_EVENTS];
   return (
