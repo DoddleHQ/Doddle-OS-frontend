@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { motion } from 'motion/react';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
-import { useAuth } from '@/lib/contexts/AuthContext';
+import { useAuthStore } from '@/lib/stores/authStore';
 import type { Workspace } from '@/lib/types/workspace.types';
 
 /*
@@ -23,7 +23,7 @@ const PREMIUM_EASE = [0.4, 0, 0.2, 1] as const;
 export default function WorkspacesPage() {
   const router = useRouter();
   const { workspaces, isLoading } = useWorkspaces();
-  const { status } = useAuth();
+  const status = useAuthStore((s) => s.status);
 
   // No workspaces → go to onboarding (the agent creates the workspace)
   useEffect(() => {
