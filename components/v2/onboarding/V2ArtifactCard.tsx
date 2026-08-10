@@ -6,6 +6,7 @@ import { Copy, Check, Download, FileText } from 'lucide-react';
 import type { ArtifactPayload } from '@/lib/types/graph-events.types';
 import { extractArtifactMarkdown } from '@/components/content-factory/chat/artifacts/artifactContentUtils';
 import { V2Markdown } from './V2Markdown';
+import { PREMIUM_EASE } from '@/components/v2/motion';
 
 /*
  * V2ArtifactCard — Specimen Terminal artifact display.
@@ -14,8 +15,6 @@ import { V2Markdown } from './V2Markdown';
  * paper-register card, vermilion accents, hairline borders.
  * Copy + download actions.
  */
-
-const PREMIUM_EASE = [0.4, 0, 0.2, 1] as const;
 
 interface V2ArtifactCardProps {
   artifact: ArtifactPayload;

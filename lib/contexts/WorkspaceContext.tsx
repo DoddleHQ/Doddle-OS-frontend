@@ -9,7 +9,7 @@ import {
     type ReactNode,
 } from 'react';
 import { workspaceService } from '@/lib/services/workspaceService';
-import { useAuth } from '@/lib/contexts/AuthContext';
+import { useAuthStore } from '@/lib/stores/authStore';
 import type { Workspace } from '@/lib/types/workspace.types';
 
 // ---------------------------------------------------------------------------
@@ -40,7 +40,7 @@ const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 // ---------------------------------------------------------------------------
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-    const { status: authStatus } = useAuth();
+    const authStatus = useAuthStore((s) => s.status);
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);

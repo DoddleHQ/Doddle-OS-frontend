@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, X } from 'lucide-react';
 import type { HITLRequestPayload } from '@/lib/types/graph-events.types';
+import { PREMIUM_EASE } from '@/components/v2/motion';
 
 /*
  * V2HITLCard — Specimen Terminal replacement for HITLMessageCard.
@@ -20,8 +21,6 @@ import type { HITLRequestPayload } from '@/lib/types/graph-events.types';
  * Same response formats as v1 (confirmed, value, feedback) so the hook
  * doesn't need changes.
  */
-
-const PREMIUM_EASE = [0.4, 0, 0.2, 1] as const;
 
 interface V2HITLCardProps {
   request: HITLRequestPayload;

@@ -31,8 +31,8 @@ const monoFont = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Agentic Marketing OS",
-  description: "Production-ready UI for Agentic Marketing OS with Discord-like persistent shell",
+  title: "Doddle OS",
+  description: "An operating system for autonomous marketing agents. Deploy a fleet of specialized agents. Watch them hand the work to each other. Resolve their conflicts. Approve what ships.",
 };
 
 export default function RootLayout({

@@ -3,10 +3,9 @@
 import {
     createContext,
     useContext,
-    useState,
-    useEffect,
-    useCallback,
     useRef,
+    useCallback,
+    useEffect,
     type ReactNode,
 } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -18,42 +17,53 @@ import {
     type OrgResponse,
     type AuthResponse,
 } from '@/lib/services/authService';
+import { useAuthStore, type AuthStatus } from '@/lib/stores/authStore';
 
 // ---------------------------------------------------------------------------
-// Types
+// Public hook + types
 // ---------------------------------------------------------------------------
 
-type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'error';
-
-type AuthState =
-    | { status: 'loading' }
-    | { status: 'authenticated'; org: OrgResponse; expiresIn: number }
-    | { status: 'unauthenticated' }
-    | { status: 'error'; message: string };
-
-type AuthContextValue = AuthState & {
-    /** Manually refresh the access token (e.g. before an important API call). */
+/**
+ * AuthContext now holds only the ACTIONS (refresh, logout, loginSuccess) and
+ * runs the bootstrap effect. The reactive STATE (status, org, expiresIn) lives
+ * in the Zustand store so components can subscribe to exactly the field they
+ * need without over-subscribing.
+ *
+ * For new code, prefer the selector API directly:
+ *   const status = useAuthStore(s => s.status);
+ *   const org    = useAuthStore(s => s.org);
+ *
+ * `useAuth()` is kept for components that need the actions (refresh / logout /
+ * loginSuccess), and re-exports the reactive fields for backward compatibility.
+ */
+interface AuthActions {
     refresh: () => Promise<void>;
-    /** Log out and clear the session. */
     logout: () => Promise<void>;
-    /**
-     * Called after a successful login or force-login to immediately update the
-     * AuthContext state with the new session data (org + expiresIn) and schedule
-     * the proactive refresh timer. This avoids the need to re-bootstrap.
-     */
     loginSuccess: (authRes: AuthResponse) => void;
-    /**
-     * Auth-aware fetch wrapper. Automatically retries once on 401 by refreshing
-     * the access token first.
-     */
-    authFetch: (url: string, init?: RequestInit) => Promise<Response>;
-};
+}
 
-// ---------------------------------------------------------------------------
-// Context
-// ---------------------------------------------------------------------------
+const AuthActionsContext = createContext<AuthActions | null>(null);
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+/** Backward-compatible hook: reactive auth state + actions. */
+export function useAuth() {
+    const actions = useContext(AuthActionsContext);
+    const status = useAuthStore((s) => s.status);
+    const org = useAuthStore((s) => s.org);
+    const expiresIn = useAuthStore((s) => s.expiresIn);
+    const errorMessage = useAuthStore((s) => s.errorMessage);
+
+    if (!actions) {
+        throw new Error('useAuth must be used within an <AuthProvider>.');
+    }
+
+    return {
+        status,
+        org,
+        expiresIn,
+        errorMessage,
+        ...actions,
+    };
+}
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -77,7 +87,6 @@ const DISABLE_AUTH_REDIRECT = process.env.NODE_ENV !== 'production';
 export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
-    const [state, setState] = useState<AuthState>({ status: 'loading' });
 
     // Use a ref for pathname so timer callbacks always read the latest value
     const pathnameRef = useRef(pathname);
@@ -89,8 +98,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Ref to track whether a refresh is already in-flight (prevents concurrent refreshes).
     const refreshingRef = useRef(false);
-    // Ref to hold pending 401 requests that should be retried after refresh.
-    const pendingRetriesRef = useRef<(() => void)[]>([]);
+
+    const setAuthState = useAuthStore((s) => s.setAuthState);
+    const clearAuth = useAuthStore((s) => s.clear);
 
     // -----------------------------------------------------------------------
     // Clear any scheduled refresh
@@ -111,12 +121,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshTimerRef.current = setTimeout(async () => {
             try {
                 const authRes = await refreshAccessToken();
-                setState({ status: 'authenticated', org: authRes.org, expiresIn: authRes.expiresIn });
+                setAuthState({ status: 'authenticated', org: authRes.org, expiresIn: authRes.expiresIn });
                 // Schedule the next refresh
                 scheduleRefresh(authRes.expiresIn);
             } catch {
                 // Refresh failed — session is dead
-                setState({ status: 'unauthenticated' });
+                clearAuth();
                 if (!DISABLE_AUTH_REDIRECT) {
                     const currentPath = pathnameRef.current;
                     const isCurrentPublic = PUBLIC_PATHS.some((p) => currentPath.startsWith(p));
@@ -126,10 +136,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             }
         }, delay);
-    }, [clearRefreshTimer, router]);
+    }, [clearRefreshTimer, router, setAuthState, clearAuth]);
 
     // -----------------------------------------------------------------------
-    // Core refresh logic (used by manual refresh + 401 interceptor)
+    // Core refresh logic
     // -----------------------------------------------------------------------
     const doRefresh = useCallback(async (): Promise<boolean> => {
         // Prevent concurrent refreshes
@@ -138,16 +148,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         try {
             const authRes = await refreshAccessToken();
-            setState({ status: 'authenticated', org: authRes.org, expiresIn: authRes.expiresIn });
+            setAuthState({ status: 'authenticated', org: authRes.org, expiresIn: authRes.expiresIn });
             scheduleRefresh(authRes.expiresIn);
-
-            // Retry any pending requests that failed with 401
-            pendingRetriesRef.current.forEach((retry) => retry());
-            pendingRetriesRef.current = [];
-
             return true;
         } catch {
-            setState({ status: 'unauthenticated' });
+            clearAuth();
             if (!DISABLE_AUTH_REDIRECT) {
                 const currentPath = pathnameRef.current;
                 const isCurrentPublic = PUBLIC_PATHS.some((p) => currentPath.startsWith(p));
@@ -159,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } finally {
             refreshingRef.current = false;
         }
-    }, [router, scheduleRefresh]);
+    }, [router, scheduleRefresh, setAuthState, clearAuth]);
 
     // -----------------------------------------------------------------------
     // Bootstrap: check session on mount
@@ -169,20 +174,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         async function bootstrap() {
             try {
-                // getMe() returns OrgResponse (no expiresIn), so we use the
-                // default TTL. The first proactive refresh will give us the
-                // actual expiresIn from the refresh response.
                 const org = await getMe();
                 if (!cancelled) {
-                    setState({ status: 'authenticated', org, expiresIn: DEFAULT_EXPIRES_IN });
+                    setAuthState({ status: 'authenticated', org, expiresIn: DEFAULT_EXPIRES_IN });
                     scheduleRefresh(DEFAULT_EXPIRES_IN);
                 }
             } catch {
-                // Access token may have expired — try refresh
                 if (!cancelled) {
                     const refreshed = await doRefresh();
                     if (!refreshed && !cancelled) {
-                        setState({ status: 'unauthenticated' });
+                        clearAuth();
                         if (!DISABLE_AUTH_REDIRECT && !isPublicPath) {
                             router.replace(`/login?next=${encodeURIComponent(pathname)}`);
                         }
@@ -202,14 +203,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     // -----------------------------------------------------------------------
-    // Login success — immediately update auth state (called by login page)
+    // Login success — immediately update store (called by login page)
     // -----------------------------------------------------------------------
     const loginSuccess = useCallback(
         (authRes: AuthResponse) => {
-            setState({ status: 'authenticated', org: authRes.org, expiresIn: authRes.expiresIn });
+            setAuthState({ status: 'authenticated', org: authRes.org, expiresIn: authRes.expiresIn });
             scheduleRefresh(authRes.expiresIn);
         },
-        [scheduleRefresh],
+        [scheduleRefresh, setAuthState],
     );
 
     // -----------------------------------------------------------------------
@@ -229,73 +230,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch {
             // best-effort
         }
-        setState({ status: 'unauthenticated' });
+        clearAuth();
         if (!DISABLE_AUTH_REDIRECT) {
             router.replace('/login');
         }
-    }, [clearRefreshTimer, router]);
+    }, [clearRefreshTimer, router, clearAuth]);
 
-    // -----------------------------------------------------------------------
-    // Auth-aware fetch: retries once on 401
-    // -----------------------------------------------------------------------
-    const authFetch = useCallback(
-        async (url: string, init?: RequestInit): Promise<Response> => {
-            const res = await fetch(url, {
-                ...init,
-                credentials: 'include',
-            });
+    const actions: AuthActions = { refresh, logout, loginSuccess };
 
-            if (res.status === 401) {
-                // Queue this request for retry after refresh
-                return new Promise<Response>((resolve) => {
-                    pendingRetriesRef.current.push(async () => {
-                        const retryRes = await fetch(url, {
-                            ...init,
-                            credentials: 'include',
-                        });
-                        resolve(retryRes);
-                    });
-                    // Trigger refresh if not already in-flight
-                    if (!refreshingRef.current) {
-                        doRefresh();
-                    }
-                });
-            }
-
-            return res;
-        },
-        [doRefresh],
-    );
-
-    // -----------------------------------------------------------------------
-    // Render
-    // -----------------------------------------------------------------------
     return (
-        <AuthContext.Provider value={{ ...state, refresh, logout, loginSuccess, authFetch }}>
+        <AuthActionsContext.Provider value={actions}>
             {children}
-        </AuthContext.Provider>
+        </AuthActionsContext.Provider>
     );
 }
 
 // ---------------------------------------------------------------------------
-// Hook
+// Re-export the store selector hook + status type for ergonomic imports
 // ---------------------------------------------------------------------------
 
-/**
- * Access the current auth state from any client component.
- *
- * ```tsx
- * const { status, org, refresh, logout, authFetch } = useAuth();
- *
- * if (status === 'loading') return <Skeleton />;
- * if (status === 'unauthenticated') return null;
- * // org is available
- * ```
- */
-export function useAuth(): AuthContextValue {
-    const ctx = useContext(AuthContext);
-    if (!ctx) {
-        throw new Error('useAuth must be used within an <AuthProvider>.');
-    }
-    return ctx;
-}
+export { useAuthStore, type AuthStatus };
+export type { OrgResponse };

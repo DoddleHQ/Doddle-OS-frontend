@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'motion/react';
-import { useAuth } from '@/lib/contexts/AuthContext';
-import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
+import { useEntryCta } from '@/lib/hooks/useEntryCta';
 
 /*
  * CloseCta — paper register, the close.
@@ -14,24 +13,7 @@ import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
  */
 
 export function CloseCta() {
-  const { status } = useAuth();
-  const { workspaces } = useWorkspaces();
-  const isAuthenticated = status === 'authenticated';
-  const hasWorkspaces = workspaces.length > 0;
-
-  // Three real session states — the old two-way check sent authenticated
-  // users with no workspaces to /login, which middleware then bounced back
-  // to / (isAuthRoute guard), making the CTA appear dead.
-  const ctaHref = !isAuthenticated
-    ? '/login'
-    : hasWorkspaces
-      ? `/workspaces/${workspaces[0].workspaceId}`
-      : '/onboarding';
-  const ctaLabel = !isAuthenticated
-    ? 'Sign in to get started'
-    : hasWorkspaces
-      ? 'Enter the OS'
-      : 'Set up your workspace';
+  const { href: ctaHref, label: ctaLabel } = useEntryCta();
 
   return (
     <section
@@ -87,7 +69,7 @@ export function CloseCta() {
           transition={{ duration: 0.8 }}
         >
           <span className="v2-mono text-[11px]" style={{ color: 'var(--v2-paper-ink-2)' }}>
-            Agentic Marketing OS
+            Doddle OS
           </span>
           <span className="v2-label text-[10px]" style={{ color: 'var(--v2-paper-ink-2)' }}>
             autonomous agent orchestration

@@ -1,11 +1,9 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { InstrumentShell } from '@/components/v2/dashboard/InstrumentShell';
-import { workspaceService } from '@/lib/services/workspaceService';
-import type { Workspace } from '@/lib/types/workspace.types';
+import { useCurrentWorkspace } from '@/lib/hooks/useCurrentWorkspace';
 
 /*
  * Workspace layout — 3-zone instrument panel shell.
@@ -14,29 +12,15 @@ import type { Workspace } from '@/lib/types/workspace.types';
  * Zone 2 (paper): top bar + scrollable page content
  * Zone 3 (ink feed): collapsible live activity
  *
- * Familiar pro layout executed at Specimen Terminal craft.
+ * Familiar pro layout executed at Specimen Terminal craft. Uses
+ * useCurrentWorkspace so the workspace detail is cached and shared with the
+ * settings page instead of fetched twice.
  */
 
 export default function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const workspaceId = params.workspaceId as string;
-  const [workspace, setWorkspace] = useState<Workspace | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchWorkspace() {
-      try {
-        const ws = await workspaceService.getWorkspace(workspaceId);
-        setWorkspace(ws);
-      } catch {
-        // Use placeholder if API unreachable (design review / no backend)
-        setWorkspace({ workspaceId, name: 'Workspace', websiteDomain: null, createdAt: new Date().toISOString(), updatedAt: null });
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    if (workspaceId) fetchWorkspace();
-  }, [workspaceId]);
+  const { workspace, isLoading } = useCurrentWorkspace(workspaceId);
 
   if (isLoading) {
     return (

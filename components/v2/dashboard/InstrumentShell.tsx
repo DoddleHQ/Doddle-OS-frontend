@@ -5,12 +5,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  LayoutDashboard, Search, FileText, Share2, Rocket,
-  BarChart3, PieChart, Megaphone, Mail, ShieldAlert,
   Settings, ChevronLeft, ChevronRight, Bell, Plus,
 } from 'lucide-react';
 import { UserMenu } from '@/components/layout/UserMenu';
 import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
+import { WORKSPACE_MODULES as MODULES } from './modules';
 import type { Workspace } from '@/lib/types/workspace.types';
 
 /*
@@ -23,19 +22,6 @@ import type { Workspace } from '@/lib/types/workspace.types';
  *
  * Mobile: rail + nav hidden, hamburger drawer replaces both.
  */
-
-const MODULES = [
-  { name: 'Mission Control', icon: LayoutDashboard, path: 'mission-control' },
-  { name: 'SEO Cluster', icon: Search, path: 'modules/seo-cluster' },
-  { name: 'Content Factory', icon: FileText, path: 'modules/content-factory' },
-  { name: 'Social Growth', icon: Share2, path: 'modules/social-growth' },
-  { name: 'SaaS Launch Ops', icon: Rocket, path: 'modules/saas-launch-ops' },
-  { name: 'Business Audit', icon: BarChart3, path: 'modules/business-audit' },
-  { name: 'Analytics Action', icon: PieChart, path: 'modules/analytics-action' },
-  { name: 'Ads Execution', icon: Megaphone, path: 'modules/ads-execution' },
-  { name: 'Email Nurture', icon: Mail, path: 'modules/email-nurture' },
-  { name: 'Brand Guardrails', icon: ShieldAlert, path: 'modules/brand-guardrails' },
-];
 
 interface InstrumentShellProps {
   workspaceId: string;
