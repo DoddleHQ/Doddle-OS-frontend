@@ -1,3 +1,5 @@
+import { debugLog } from '../utils/debugLog';
+
 export type LangGraphEnvironment = 'local' | 'tunnel' | 'production';
 
 export interface LangGraphConfig {
@@ -64,7 +66,7 @@ export function getLangGraphApiUrl(): string {
     }
 
     if (config.isDevelopment) {
-        console.log('[LangGraph Config]', {
+        debugLog('[LangGraph Config]', {
             environment: config.environment,
             baseUrl: config.baseUrl,
         });

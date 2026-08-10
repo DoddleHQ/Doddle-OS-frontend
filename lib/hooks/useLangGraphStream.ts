@@ -33,6 +33,7 @@ import {
 } from '@/lib/types/graph-events.types';
 import { streamLangGraphEvents, resumeLangGraphWorkflow, getThreadState, ThreadState } from '@/lib/streamLangGraph';
 import { validateHITLPayload } from '@/lib/utils/eventValidator';
+import { debugLog } from '@/lib/utils/debugLog';
 
 // ============================================================================
 // Feature Flags
@@ -287,13 +288,13 @@ function convertToGraphEvent(raw: Record<string, unknown>): GraphEvent | null {
                 };
             }
             // When using interrupt-based HITL, ignore hitl_request events
-            console.log('[useLangGraphStream] Ignoring deprecated hitl_request event (using interrupt-based detection)');
+            debugLog('[useLangGraphStream] Ignoring deprecated hitl_request event (using interrupt-based detection)');
             return null;
         }
 
         default:
             // Unknown event type - log and skip
-            console.log('[useLangGraphStream] Unknown event type:', type, raw);
+            debugLog('[useLangGraphStream] Unknown event type:', type, raw);
             return null;
     }
 }
@@ -327,12 +328,12 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
 
     const checkForInterrupts = useCallback(async (threadId: string): Promise<HITLRequestPayload | null> => {
         try {
-            console.log('[useLangGraphStream] Checking for interrupts in thread:', threadId);
+        debugLog('[useLangGraphStream] Checking for interrupts in thread:', threadId);
 
             const threadState = await getThreadState(threadId);
 
             if (!threadState) {
-                console.log('[useLangGraphStream] No thread state returned');
+                debugLog('[useLangGraphStream] No thread state returned');
                 return null;
             }
 
@@ -342,12 +343,12 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
             );
 
             if (!interruptedTask?.interrupts?.[0]) {
-                console.log('[useLangGraphStream] No interrupts found in thread state');
+                debugLog('[useLangGraphStream] No interrupts found in thread state');
                 return null;
             }
 
             const interruptValue = interruptedTask.interrupts[0].value;
-            console.log('[useLangGraphStream] Found interrupt:', interruptValue);
+            debugLog('[useLangGraphStream] Found interrupt:', interruptValue);
 
             // Validate the payload using Zod schema
             const validation = validateHITLPayload(interruptValue);
@@ -375,7 +376,7 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                 interruptedTask.id || `task-${Date.now()}`
             );
 
-            console.log('[useLangGraphStream] Converted HITL request:', hitlRequest);
+            debugLog('[useLangGraphStream] Converted HITL request:', hitlRequest);
             return hitlRequest;
 
         } catch (error) {
@@ -606,7 +607,7 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                     threadIdRef.current = result.threadId;
                 }
 
-                console.log('[useLangGraphStream] Stream result:', {
+                debugLog('[useLangGraphStream] Stream result:', {
                     success: result.success,
                     threadId: result.threadId,
                     hasInterrupts: result.interrupts && result.interrupts.length > 0,
@@ -736,7 +737,7 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
         }
 
         try {
-            console.log('[respondToHITL] Resuming workflow:', {
+            debugLog('[respondToHITL] Resuming workflow:', {
                 threadId: currentThreadId,
                 graphId,
                 requestId,
@@ -826,7 +827,7 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
             });
 
             if (result.success) {
-                console.log('[respondToHITL] Resume result:', {
+                debugLog('[respondToHITL] Resume result:', {
                     success: result.success,
                     hasInterrupts: result.interrupts && result.interrupts.length > 0,
                 });

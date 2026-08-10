@@ -13,6 +13,8 @@ import { V2Markdown } from './V2Markdown';
 import { useLangGraphStream } from '@/lib/hooks/useLangGraphStream';
 import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { debugLog } from '@/lib/utils/debugLog';
+import { PREMIUM_EASE } from '@/components/v2/motion';
 import { extractArtifactMarkdown } from '@/components/content-factory/chat/artifacts/artifactContentUtils';
 import type { ArtifactPayload } from '@/lib/types/graph-events.types';
 
@@ -79,8 +81,6 @@ function extractWorkspaceMeta(
  * that comes alive when you engage.
  */
 
-const PREMIUM_EASE = [0.4, 0, 0.2, 1] as const;
-
 export function OnboardingDesk() {
   const router = useRouter();
   const { createWorkspace } = useWorkspaces();
@@ -109,7 +109,7 @@ export function OnboardingDesk() {
   } = useLangGraphStream({
     graphId: 'brand_persona_generator',
     onComplete: (summary) => {
-      console.log('Brand persona completed:', summary);
+      debugLog('Brand persona completed:', summary);
     },
   });
 

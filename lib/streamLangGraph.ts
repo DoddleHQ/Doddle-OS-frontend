@@ -8,6 +8,7 @@
  */
 
 import { getLangGraphApiUrl, getLangGraphConfig } from './config/langgraph.config';
+import { debugLog } from './utils/debugLog';
 
 export interface StreamOptions {
     assistantId: string;
@@ -188,7 +189,7 @@ export async function streamLangGraphEvents<T = any>(options: StreamOptions): Pr
             : `${baseUrl}/runs/stream`;
 
         // Log the request details for debugging
-        console.log('[LangGraph] Starting stream request:', {
+        debugLog('[LangGraph] Starting stream request:', {
             endpoint,
             assistantId,
             threadId: currentThreadId,
@@ -280,7 +281,7 @@ export async function streamLangGraphEvents<T = any>(options: StreamOptions): Pr
                         const events = Array.isArray(parsed) ? parsed : [parsed];
 
                         for (const event of events) {
-                            console.log('[SSE Event]', event?.type || 'unknown', JSON.stringify(event).substring(0, 200));
+                            debugLog('[SSE Event]', event?.type || 'unknown', JSON.stringify(event).substring(0, 200));
 
                             if (onEvent) {
                                 onEvent(event);
@@ -288,7 +289,7 @@ export async function streamLangGraphEvents<T = any>(options: StreamOptions): Pr
                         }
                     } catch (e) {
                         // Not a JSON event, skip silently
-                        console.debug('Non-JSON SSE data:', trimmedLine);
+                        debugLog('Non-JSON SSE data:', trimmedLine);
                     }
                 }
             }
@@ -301,9 +302,9 @@ export async function streamLangGraphEvents<T = any>(options: StreamOptions): Pr
         let interrupts: any[] | undefined;
         if (currentThreadId) {
             try {
-                console.log('[LangGraph] Stream ended. Checking thread state for interrupts...');
+                debugLog('[LangGraph] Stream ended. Checking thread state for interrupts...');
                 const threadState = await getThreadState(currentThreadId);
-                console.log('[LangGraph] Thread state:', JSON.stringify({
+                debugLog('[LangGraph] Thread state:', JSON.stringify({
                     hasValues: !!threadState?.values,
                     next: threadState?.next,
                     tasksCount: threadState?.tasks?.length,
@@ -332,18 +333,18 @@ export async function streamLangGraphEvents<T = any>(options: StreamOptions): Pr
 
                     if (pendingInterrupts.length > 0) {
                         interrupts = pendingInterrupts;
-                        console.log('[LangGraph] Detected pending interrupts:', pendingInterrupts.length);
+                        debugLog('[LangGraph] Detected pending interrupts:', pendingInterrupts.length);
                     } else {
-                        console.log('[LangGraph] No pending interrupts found in thread state');
+                        debugLog('[LangGraph] No pending interrupts found in thread state');
                     }
                 } else {
-                    console.log('[LangGraph] No tasks in thread state (threadState null?', !threadState, ')');
+                    debugLog('[LangGraph] No tasks in thread state (threadState null?', !threadState, ')');
                 }
             } catch (e) {
                 console.error('[LangGraph] Error checking thread state:', e);
             }
         } else {
-            console.log('[LangGraph] No thread ID available to check for interrupts');
+            debugLog('[LangGraph] No thread ID available to check for interrupts');
         }
 
         if (onComplete) {
