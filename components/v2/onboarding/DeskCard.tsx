@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
+import { PREMIUM_EASE } from '@/components/v2/motion';
 
 /*
  * DeskCard — the animated paper card for the Agent's Desk onboarding.
@@ -24,8 +25,6 @@ interface DeskCardProps {
   children: React.ReactNode;
   delay?: number;
 }
-
-const PREMIUM_EASE = [0.4, 0, 0.2, 1] as const;
 
 const variantStyles: Record<CardVariant, { bg: string; color: string; align: string; border: string; radius: string; maxWidth: string }> = {
   agent: {
