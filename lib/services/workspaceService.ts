@@ -158,7 +158,14 @@ export const inviteLinkService = {
                 const body = await res.json().catch(() => ({}));
                 throw new InviteLinkConflictError(body as ActiveInviteLinkExistsError);
             }
-            const message = await res.text().then(() => 'Failed to create invite link');
+            // Try to extract a human-readable message from the error body
+            let message = 'Failed to create invite link';
+            try {
+                const body = await res.json();
+                message = body?.error?.message || body?.detail || body?.message || message;
+            } catch {
+                // body wasn't JSON — keep the default message
+            }
             throw new Error(message);
         }
 
