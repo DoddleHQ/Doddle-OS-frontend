@@ -13,6 +13,8 @@ import {
     Search,
     ChevronDown,
     ChevronUp,
+    ShoppingBag,
+    BarChart3,
 } from 'lucide-react';
 import { connectionService } from '@/lib/services/connectionService';
 import type {
@@ -20,20 +22,21 @@ import type {
     SyncState,
     CreateMagentoConnectionReq,
     CreateGscConnectionReq,
+    CreateGmcConnectionReq,
+    CreateGa4ConnectionReq,
 } from '@/lib/types/connection.types';
 import { FREQUENCY_OPTIONS, cronToFrequency, type SyncFrequency } from '@/lib/utils/cron';
 import { toast } from 'react-toastify';
 
 /*
- * DataSyncSection — Magento + GSC connection management.
+ * DataSyncSection — data-source connection management.
  *
- * Two collapsible source panels. Each shows one of:
- *   1. Not connected → connect form
- *   2. Connected → summary + sync trigger + disconnect
+ * Four sources grouped by category:
+ *   E-commerce: Magento
+ *   Google: Search Console, Merchant Center, Analytics 4
  *
- * Follows the impeccable Operate rules: single sans (Hanken Grotesk),
- * vermilion accent reserved for state/actions, 150-250ms functional motion,
- * complete loading/error/empty states.
+ * Each source is a collapsible panel showing connect/disconnect/sync.
+ * Follows impeccable Operate rules.
  */
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -55,8 +58,6 @@ export function DataSyncSection({ workspaceId }: { workspaceId: string }) {
         }
     }, [workspaceId]);
 
-    // Optimistically add/update a connection in the list so the status badge
-    // flips immediately without waiting for a refetch.
     const upsertConnection = useCallback((conn: DataSourceConnection) => {
         setConnections((prev) => {
             const filtered = prev.filter((c) => c.sourceType !== conn.sourceType);
@@ -68,43 +69,83 @@ export function DataSyncSection({ workspaceId }: { workspaceId: string }) {
         fetchConnections();
     }, [fetchConnections]);
 
-    const magentoConn = connections.find((c) => c.sourceType === 'magento' && c.isActive);
-    const gscConn = connections.find((c) => c.sourceType === 'gsc' && c.isActive);
-
+    const findConn = (type: string) => connections.find((c) => c.sourceType === type && c.isActive);
     const toggleSource = (source: string) =>
         setExpandedSource((prev) => (prev === source ? null : source));
 
-    return (
-        <div className="space-y-4">
-            {/* Magento */}
-            <SourcePanel
-                sourceType="magento"
-                title="Magento"
-                subtitle="E-commerce data sync"
-                icon={<Database className="w-4 h-4" strokeWidth={1.75} />}
-                connection={magentoConn}
-                workspaceId={workspaceId}
-                expanded={expandedSource === 'magento'}
-                onToggle={() => toggleSource('magento')}
-                onChanged={fetchConnections}
-                onConnect={upsertConnection}
-                loading={loading}
-            />
+    const panelProps = {
+        workspaceId,
+        onChanged: fetchConnections,
+        onConnect: upsertConnection,
+        loading,
+        expanded: expandedSource,
+        onToggle: toggleSource,
+    };
 
-            {/* GSC */}
-            <SourcePanel
-                sourceType="gsc"
-                title="Google Search Console"
-                subtitle="Search performance data"
-                icon={<Search className="w-4 h-4" strokeWidth={1.75} />}
-                connection={gscConn}
-                workspaceId={workspaceId}
-                expanded={expandedSource === 'gsc'}
-                onToggle={() => toggleSource('gsc')}
-                onChanged={fetchConnections}
-                onConnect={upsertConnection}
-                loading={loading}
-            />
+    return (
+        <div className="space-y-6">
+            {/* E-commerce */}
+            <CategoryGroup label="E-commerce">
+                <SourcePanel
+                    {...panelProps}
+                    sourceType="magento"
+                    title="Magento"
+                    subtitle="Product + order data sync"
+                    icon={<Database className="w-4 h-4" strokeWidth={1.75} />}
+                    connection={findConn('magento')}
+                    expanded={expandedSource === 'magento'}
+                    onToggle={() => toggleSource('magento')}
+                />
+            </CategoryGroup>
+
+            {/* Google */}
+            <CategoryGroup label="Google">
+                <SourcePanel
+                    {...panelProps}
+                    sourceType="gsc"
+                    title="Search Console"
+                    subtitle="Search performance data"
+                    icon={<Search className="w-4 h-4" strokeWidth={1.75} />}
+                    connection={findConn('gsc')}
+                    expanded={expandedSource === 'gsc'}
+                    onToggle={() => toggleSource('gsc')}
+                />
+                <SourcePanel
+                    {...panelProps}
+                    sourceType="gmc"
+                    title="Merchant Center"
+                    subtitle="Product feed + shopping data"
+                    icon={<ShoppingBag className="w-4 h-4" strokeWidth={1.75} />}
+                    connection={findConn('gmc')}
+                    expanded={expandedSource === 'gmc'}
+                    onToggle={() => toggleSource('gmc')}
+                />
+                <SourcePanel
+                    {...panelProps}
+                    sourceType="ga4"
+                    title="Analytics 4"
+                    subtitle="Traffic + engagement metrics"
+                    icon={<BarChart3 className="w-4 h-4" strokeWidth={1.75} />}
+                    connection={findConn('ga4')}
+                    expanded={expandedSource === 'ga4'}
+                    onToggle={() => toggleSource('ga4')}
+                />
+            </CategoryGroup>
+        </div>
+    );
+}
+
+/* === Category group label === */
+function CategoryGroup({ label, children }: { label: string; children: React.ReactNode }) {
+    return (
+        <div>
+            <div
+                className="v2-label mb-2.5"
+                style={{ fontSize: '0.62rem', color: 'var(--v2-paper-ink-2)', letterSpacing: '0.1em' }}
+            >
+                {label}
+            </div>
+            <div className="space-y-2.5">{children}</div>
         </div>
     );
 }
@@ -123,7 +164,7 @@ function SourcePanel({
     onConnect,
     loading,
 }: {
-    sourceType: 'magento' | 'gsc';
+    sourceType: 'magento' | 'gsc' | 'gmc' | 'ga4';
     title: string;
     subtitle: string;
     icon: React.ReactNode;
@@ -213,8 +254,12 @@ function SourcePanel({
                             />
                         ) : sourceType === 'magento' ? (
                             <MagentoConnectForm workspaceId={workspaceId} onConnected={onChanged} onConnect={onConnect} />
-                        ) : (
+                        ) : sourceType === 'gsc' ? (
                             <GscConnectForm workspaceId={workspaceId} onConnected={onChanged} onConnect={onConnect} />
+                        ) : sourceType === 'gmc' ? (
+                            <GmcConnectForm workspaceId={workspaceId} onConnected={onChanged} onConnect={onConnect} />
+                        ) : (
+                            <Ga4ConnectForm workspaceId={workspaceId} onConnected={onChanged} onConnect={onConnect} />
                         )}
                     </div>
                 </motion.div>
@@ -246,7 +291,7 @@ function ConnectedView({
     workspaceId,
     onChanged,
 }: {
-    sourceType: 'magento' | 'gsc';
+    sourceType: 'magento' | 'gsc' | 'gmc' | 'ga4';
     connection: DataSourceConnection;
     workspaceId: string;
     onChanged: () => void;
@@ -315,6 +360,20 @@ function ConnectedView({
                     <DetailRow label="Site URL" value={connection.gsc.siteUrl} mono />
                     <DetailRow label="Credentials" value={connection.gsc.hasCredentials ? 'Stored' : 'Missing'}
                         valueColor={connection.gsc.hasCredentials ? 'var(--v2-sage)' : 'var(--v2-vermilion)'} />
+                </>
+            )}
+            {sourceType === 'gmc' && connection.gmc && (
+                <>
+                    <DetailRow label="Merchant ID" value={connection.gmc.merchantId} mono />
+                    <DetailRow label="Credentials" value={connection.gmc.hasCredentials ? 'Stored' : 'Missing'}
+                        valueColor={connection.gmc.hasCredentials ? 'var(--v2-sage)' : 'var(--v2-vermilion)'} />
+                </>
+            )}
+            {sourceType === 'ga4' && connection.ga4 && (
+                <>
+                    <DetailRow label="Property ID" value={connection.ga4.propertyId} mono />
+                    <DetailRow label="Credentials" value={connection.ga4.hasCredentials ? 'Stored' : 'Missing'}
+                        valueColor={connection.ga4.hasCredentials ? 'var(--v2-sage)' : 'var(--v2-vermilion)'} />
                 </>
             )}
 
@@ -528,6 +587,114 @@ function GscConnectForm({
             extraFields={
                 <FrequencySelect value={frequency} onChange={setFrequency} />
             }
+        />
+    );
+}
+
+/* === GMC connect form === */
+function GmcConnectForm({
+    workspaceId,
+    onConnected,
+    onConnect,
+}: {
+    workspaceId: string;
+    onConnected: () => void;
+    onConnect: (conn: DataSourceConnection) => void;
+}) {
+    const [merchantId, setMerchantId] = useState('');
+    const [clientId, setClientId] = useState('');
+    const [clientSecret, setClientSecret] = useState('');
+    const [refreshToken, setRefreshToken] = useState('');
+    const [frequency, setFrequency] = useState<SyncFrequency>('daily');
+    const [connecting, setConnecting] = useState(false);
+
+    const handleConnect = async () => {
+        if (!merchantId || !clientId || !clientSecret || !refreshToken) {
+            toast.error('All fields are required');
+            return;
+        }
+        try {
+            setConnecting(true);
+            const cronExpr = FREQUENCY_OPTIONS.find((f) => f.value === frequency)?.cron ?? null;
+            const conn = await connectionService.connectGmc(workspaceId, {
+                credentials: { merchantId, clientId, clientSecret, refreshToken },
+                schedule: { syncCron: cronExpr, syncTimezone: 'UTC' },
+            });
+            onConnect(conn);
+            toast.success('Google Merchant Center connected');
+            onConnected();
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Connection failed');
+        } finally {
+            setConnecting(false);
+        }
+    };
+
+    return (
+        <FormGrid
+            onConnect={handleConnect}
+            connecting={connecting}
+            fields={[
+                { label: 'Merchant ID', value: merchantId, onChange: setMerchantId, placeholder: '123456789', mono: true },
+                { label: 'Client ID', value: clientId, onChange: setClientId, placeholder: 'Google OAuth2 client ID', mono: true },
+                { label: 'Client Secret', value: clientSecret, onChange: setClientSecret, placeholder: 'Google OAuth2 client secret', type: 'password', mono: true },
+                { label: 'Refresh Token', value: refreshToken, onChange: setRefreshToken, placeholder: 'OAuth2 refresh token', type: 'password', mono: true },
+            ]}
+            extraFields={<FrequencySelect value={frequency} onChange={setFrequency} />}
+        />
+    );
+}
+
+/* === GA4 connect form === */
+function Ga4ConnectForm({
+    workspaceId,
+    onConnected,
+    onConnect,
+}: {
+    workspaceId: string;
+    onConnected: () => void;
+    onConnect: (conn: DataSourceConnection) => void;
+}) {
+    const [propertyId, setPropertyId] = useState('');
+    const [clientId, setClientId] = useState('');
+    const [clientSecret, setClientSecret] = useState('');
+    const [refreshToken, setRefreshToken] = useState('');
+    const [frequency, setFrequency] = useState<SyncFrequency>('daily');
+    const [connecting, setConnecting] = useState(false);
+
+    const handleConnect = async () => {
+        if (!propertyId || !clientId || !clientSecret || !refreshToken) {
+            toast.error('All fields are required');
+            return;
+        }
+        try {
+            setConnecting(true);
+            const cronExpr = FREQUENCY_OPTIONS.find((f) => f.value === frequency)?.cron ?? null;
+            const conn = await connectionService.connectGa4(workspaceId, {
+                credentials: { propertyId, clientId, clientSecret, refreshToken },
+                schedule: { syncCron: cronExpr, syncTimezone: 'UTC' },
+            });
+            onConnect(conn);
+            toast.success('Google Analytics 4 connected');
+            onConnected();
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Connection failed');
+        } finally {
+            setConnecting(false);
+        }
+    };
+
+    return (
+        <FormGrid
+            onConnect={handleConnect}
+            connecting={connecting}
+            fields={[
+                { label: 'Property ID', value: propertyId, onChange: setPropertyId, placeholder: '123456789', mono: true },
+                { label: 'Client ID', value: clientId, onChange: setClientId, placeholder: 'Google OAuth2 client ID', mono: true },
+                { label: 'Client Secret', value: clientSecret, onChange: setClientSecret, placeholder: 'Google OAuth2 client secret', type: 'password', mono: true },
+                { label: 'Refresh Token', value: refreshToken, onChange: setRefreshToken, placeholder: 'OAuth2 refresh token', type: 'password', mono: true },
+            ]}
+            extraFields={<FrequencySelect value={frequency} onChange={setFrequency} />}
         />
     );
 }

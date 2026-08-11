@@ -15,14 +15,20 @@ import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/services/apiClient';
 import type {
     CreateMagentoConnectionReq,
     CreateGscConnectionReq,
+    CreateGmcConnectionReq,
+    CreateGa4ConnectionReq,
     UpdateMagentoConnectionReq,
     UpdateGscConnectionReq,
+    UpdateGmcConnectionReq,
+    UpdateGa4ConnectionReq,
     TriggerSyncReq,
     TriggerSyncResponse,
     DataSourceConnection,
     DataSourceType,
     MagentoCredentialsResponse,
     GscCredentialsResponse,
+    GmcCredentialsResponse,
+    Ga4CredentialsResponse,
     SyncSchedule,
     SyncState,
     SyncLoadMode,
@@ -60,6 +66,20 @@ function toGscCredentials(raw: Record<string, unknown>): GscCredentialsResponse 
     };
 }
 
+function toGmcCredentials(raw: Record<string, unknown>): GmcCredentialsResponse {
+    return {
+        merchantId: raw.merchant_id as string,
+        hasCredentials: (raw.has_credentials as boolean) ?? true,
+    };
+}
+
+function toGa4Credentials(raw: Record<string, unknown>): Ga4CredentialsResponse {
+    return {
+        propertyId: raw.property_id as string,
+        hasCredentials: (raw.has_credentials as boolean) ?? true,
+    };
+}
+
 function toSchedule(raw: Record<string, unknown>): SyncSchedule {
     return {
         syncCron: (raw.sync_cron as string | null) ?? null,
@@ -79,6 +99,8 @@ function toConnection(raw: Record<string, unknown>): DataSourceConnection {
         updatedAt: (raw.updated_at as string | null) ?? null,
         magento: raw.magento ? toMagentoCredentials(raw.magento as Record<string, unknown>) : null,
         gsc: raw.gsc ? toGscCredentials(raw.gsc as Record<string, unknown>) : null,
+        gmc: raw.gmc ? toGmcCredentials(raw.gmc as Record<string, unknown>) : null,
+        ga4: raw.ga4 ? toGa4Credentials(raw.ga4 as Record<string, unknown>) : null,
         schedule: raw.schedule
             ? toSchedule(raw.schedule as Record<string, unknown>)
             : { syncCron: null, syncTimezone: 'UTC', blackoutStartHour: null, blackoutEndHour: null },
@@ -229,6 +251,80 @@ export const connectionService = {
      */
     async disconnect(workspaceId: string, sourceType: DataSourceType): Promise<void> {
         await apiDelete(connectionsUrl(workspaceId, sourceType));
+    },
+
+    /**
+     * POST /api/v1/workspaces/{workspaceId}/connections/gmc
+     * Connect a Google Merchant Center account. Admin only.
+     */
+    async connectGmc(workspaceId: string, req: CreateGmcConnectionReq): Promise<DataSourceConnection> {
+        const body: Record<string, unknown> = {
+            credentials: {
+                merchant_id: req.credentials.merchantId,
+                client_id: req.credentials.clientId,
+                client_secret: req.credentials.clientSecret,
+                refresh_token: req.credentials.refreshToken,
+            },
+        };
+        const schedule = buildScheduleBody(req.schedule);
+        if (schedule) body.schedule = schedule;
+
+        const raw = (await apiPost(connectionsUrl(workspaceId, 'gmc'), body)) as Record<string, unknown>;
+        return toConnection(raw);
+    },
+
+    /**
+     * PATCH /api/v1/workspaces/{workspaceId}/connections/gmc
+     * Update GMC credentials or schedule. Admin only.
+     */
+    async updateGmc(workspaceId: string, req: UpdateGmcConnectionReq): Promise<DataSourceConnection> {
+        const body: Record<string, unknown> = {};
+        if (req.merchantId !== undefined) body.merchant_id = req.merchantId;
+        if (req.clientId !== undefined) body.client_id = req.clientId;
+        if (req.clientSecret !== undefined) body.client_secret = req.clientSecret;
+        if (req.refreshToken !== undefined) body.refresh_token = req.refreshToken;
+        const schedule = buildScheduleBody(req.schedule);
+        if (schedule) body.schedule = schedule;
+
+        const raw = (await apiPatch(connectionsUrl(workspaceId, 'gmc'), body)) as Record<string, unknown>;
+        return toConnection(raw);
+    },
+
+    /**
+     * POST /api/v1/workspaces/{workspaceId}/connections/ga4
+     * Connect a Google Analytics 4 property. Admin only.
+     */
+    async connectGa4(workspaceId: string, req: CreateGa4ConnectionReq): Promise<DataSourceConnection> {
+        const body: Record<string, unknown> = {
+            credentials: {
+                property_id: req.credentials.propertyId,
+                client_id: req.credentials.clientId,
+                client_secret: req.credentials.clientSecret,
+                refresh_token: req.credentials.refreshToken,
+            },
+        };
+        const schedule = buildScheduleBody(req.schedule);
+        if (schedule) body.schedule = schedule;
+
+        const raw = (await apiPost(connectionsUrl(workspaceId, 'ga4'), body)) as Record<string, unknown>;
+        return toConnection(raw);
+    },
+
+    /**
+     * PATCH /api/v1/workspaces/{workspaceId}/connections/ga4
+     * Update GA4 credentials or schedule. Admin only.
+     */
+    async updateGa4(workspaceId: string, req: UpdateGa4ConnectionReq): Promise<DataSourceConnection> {
+        const body: Record<string, unknown> = {};
+        if (req.propertyId !== undefined) body.property_id = req.propertyId;
+        if (req.clientId !== undefined) body.client_id = req.clientId;
+        if (req.clientSecret !== undefined) body.client_secret = req.clientSecret;
+        if (req.refreshToken !== undefined) body.refresh_token = req.refreshToken;
+        const schedule = buildScheduleBody(req.schedule);
+        if (schedule) body.schedule = schedule;
+
+        const raw = (await apiPatch(connectionsUrl(workspaceId, 'ga4'), body)) as Record<string, unknown>;
+        return toConnection(raw);
     },
 
     /**

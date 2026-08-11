@@ -63,6 +63,58 @@ export interface CreateGscConnectionReq {
     schedule?: SyncScheduleReq;
 }
 
+// ---------------------------------------------------------------------------
+// GMC (Google Merchant Center) — OAuth2-based, like GSC
+// ---------------------------------------------------------------------------
+
+export interface GmcCredentialsReq {
+    merchantId: string;
+    clientId: string;
+    /** Write-only. */
+    clientSecret: string;
+    /** Write-only. */
+    refreshToken: string;
+}
+
+export interface CreateGmcConnectionReq {
+    credentials: GmcCredentialsReq;
+    schedule?: SyncScheduleReq;
+}
+
+export interface UpdateGmcConnectionReq {
+    merchantId?: string;
+    clientId?: string;
+    clientSecret?: string;
+    refreshToken?: string;
+    schedule?: SyncScheduleReq;
+}
+
+// ---------------------------------------------------------------------------
+// GA4 (Google Analytics 4) — OAuth2-based
+// ---------------------------------------------------------------------------
+
+export interface Ga4CredentialsReq {
+    propertyId: string;
+    clientId: string;
+    /** Write-only. */
+    clientSecret: string;
+    /** Write-only. */
+    refreshToken: string;
+}
+
+export interface CreateGa4ConnectionReq {
+    credentials: Ga4CredentialsReq;
+    schedule?: SyncScheduleReq;
+}
+
+export interface UpdateGa4ConnectionReq {
+    propertyId?: string;
+    clientId?: string;
+    clientSecret?: string;
+    refreshToken?: string;
+    schedule?: SyncScheduleReq;
+}
+
 export interface UpdateMagentoConnectionReq {
     baseUrl?: string;
     /** Provide only to rotate. */
@@ -106,6 +158,16 @@ export interface GscCredentialsResponse {
     hasCredentials: boolean;
 }
 
+export interface GmcCredentialsResponse {
+    merchantId: string;
+    hasCredentials: boolean;
+}
+
+export interface Ga4CredentialsResponse {
+    propertyId: string;
+    hasCredentials: boolean;
+}
+
 export interface SyncSchedule {
     syncCron: string | null;
     syncTimezone: string;
@@ -124,6 +186,10 @@ export interface DataSourceConnection {
     magento: MagentoCredentialsResponse | null;
     /** Populated when sourceType is 'gsc'. */
     gsc: GscCredentialsResponse | null;
+    /** Populated when sourceType is 'gmc'. */
+    gmc: GmcCredentialsResponse | null;
+    /** Populated when sourceType is 'ga4'. */
+    ga4: Ga4CredentialsResponse | null;
     schedule: SyncSchedule;
 }
 
