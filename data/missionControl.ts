@@ -27,6 +27,15 @@ export interface AgentActivity {
   type: 'command' | 'resolution' | 'system';
 }
 
+export interface LiveActivity {
+  id: string;
+  type: 'resolution' | 'message' | 'system' | 'command';
+  timestamp: string;
+  agent?: { name: string; role: string; avatar: string };
+  content: string;
+  meta?: { domain?: string; severity?: string };
+}
+
 export const mockMissionControlData = {
   // KPI / Insights Strip
   stats: [
@@ -167,5 +176,5 @@ export const mockMissionControlData = {
       content: 'Requested approval for launch video',
       meta: { domain: 'Launch' }
     },
-  ] as any[], // Using any[] to bypass strict interface matching for mock data simplicity if needed, or matching ActivityItem
+  ] as LiveActivity[],
 };

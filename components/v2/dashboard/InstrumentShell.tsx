@@ -4,24 +4,32 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  Settings, ChevronLeft, ChevronRight, Bell, Plus,
-} from 'lucide-react';
+import { Settings, ChevronLeft, ChevronRight, Plus, Home } from 'lucide-react';
 import { UserMenu } from '@/components/layout/UserMenu';
 import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 import { WORKSPACE_MODULES as MODULES } from './modules';
+import { NavItem, StatusDot } from './primitives';
 import type { Workspace } from '@/lib/types/workspace.types';
+import { mockMissionControlData, type LiveActivity } from '@/data/missionControl';
 
 /*
- * InstrumentShell — the professional dashboard layout.
+ * InstrumentShell — Operate-mode dashboard layout.
  *
- * Zone 1 (ink rail, 56px): workspace switcher tiles
- * Zone 2 (paper nav, 220px): module navigation list
- * Zone 3 (paper, flex-1): top bar + scrollable content
- * Zone 4 (ink feed, 288px): collapsible live activity
+ * Four zones, refined for scanability and consistency (impeccable Operate):
+ *   1. Icon rail (56px, ink): workspace switcher tiles
+ *   2. Module nav (220px, paper): orientation + navigation
+ *   3. Content (flex-1, paper): top bar + scrollable page
+ *   4. Live feed (288px, ink): agent activity, wired to mock data
  *
- * Mobile: rail + nav hidden, hamburger drawer replaces both.
+ * Operate-mode compliance:
+ * - No Instrument Serif in the interior (Hanken Grotesk throughout)
+ * - No eyebrow/kicker labels above content
+ * - Active nav = solid fill, NOT border-left (hard ban)
+ * - Accent reserved for state/selection only
+ * - Motion: 150-250ms functional, cubic-bezier(0.16,1,0.3,1)
  */
+
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 interface InstrumentShellProps {
   workspaceId: string;
@@ -35,19 +43,19 @@ export function InstrumentShell({ workspaceId, workspace, children }: Instrument
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { workspaces } = useWorkspaces();
 
-  const activeModule = MODULES.find(m => pathname.includes(m.path)) || MODULES[0];
+  const activeModule = MODULES.find((m) => pathname.includes(m.path)) || MODULES[0];
 
   return (
     <div className="v2-scope flex h-screen overflow-hidden" style={{ background: 'var(--v2-paper-ground)' }}>
       {/* === ZONE 1: ICON RAIL === */}
       <IconRail workspaceId={workspaceId} workspaces={workspaces} />
 
-      {/* === ZONE 2: MODULE NAV (hidden on mobile, shown md+) === */}
+      {/* === ZONE 2: MODULE NAV === */}
       <aside
         className="hidden md:flex flex-col flex-shrink-0 w-[220px]"
         style={{ background: 'var(--v2-paper-ground)', borderRight: '1px solid var(--v2-paper-rule)' }}
       >
-        <ModuleNavList workspaceId={workspaceId} pathname={pathname} />
+        <ModuleNavList workspaceId={workspaceId} workspace={workspace} pathname={pathname} />
       </aside>
 
       {/* === ZONE 3: CENTER CONTENT === */}
@@ -65,22 +73,28 @@ export function InstrumentShell({ workspaceId, workspace, children }: Instrument
             >
               <ChevronRight className="w-5 h-5" />
             </button>
-            <h1 className="v2-display text-[1.25rem] truncate" style={{ color: 'var(--v2-paper-ink)' }}>
+            <h1
+              className="truncate"
+              style={{
+                fontFamily: 'var(--v2-font-sans)',
+                fontSize: '1.05rem',
+                fontWeight: 600,
+                color: 'var(--v2-paper-ink)',
+                letterSpacing: '-0.01em',
+              }}
+            >
               {activeModule.name}
             </h1>
-            {workspace?.websiteDomain && (
-              <span className="v2-mono text-[11px] hidden lg:block" style={{ color: 'var(--v2-paper-ink-2)' }}>
-                · {workspace.websiteDomain}
-              </span>
-            )}
           </div>
-          <div className="flex items-center gap-2">
-            <button className="p-1.5" style={{ color: 'var(--v2-paper-ink-2)' }} aria-label="Notifications">
-              <Bell className="w-4 h-4" />
-            </button>
+          <div className="flex items-center gap-1">
             <UserMenu />
             {!feedOpen && (
-              <button onClick={() => setFeedOpen(true)} className="p-1.5" style={{ color: 'var(--v2-paper-ink-2)' }} aria-label="Open feed">
+              <button
+                onClick={() => setFeedOpen(true)}
+                className="p-1.5 rounded-[6px]"
+                style={{ color: 'var(--v2-paper-ink-2)' }}
+                aria-label="Open activity feed"
+              >
                 <ChevronLeft className="w-4 h-4" />
               </button>
             )}
@@ -96,10 +110,30 @@ export function InstrumentShell({ workspaceId, workspace, children }: Instrument
       <AnimatePresence>
         {mobileNavOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMobileNavOpen(false)} className="fixed inset-0 z-40 bg-black/40 md:hidden" />
-            <motion.div initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="fixed left-0 top-0 bottom-0 z-50 w-[260px] overflow-y-auto md:hidden" style={{ background: 'var(--v2-ink-ground)' }}>
-              <MobileNavContent workspaceId={workspaceId} pathname={pathname} onNavigate={() => setMobileNavOpen(false)} />
-            </motion.div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setMobileNavOpen(false)}
+              className="fixed inset-0 z-40 md:hidden"
+              style={{ background: 'rgba(0,0,0,0.45)' }}
+            />
+            <motion.aside
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+              className="fixed left-0 top-0 bottom-0 z-50 w-[260px] overflow-y-auto md:hidden"
+              style={{ background: 'var(--v2-ink-ground)' }}
+            >
+              <MobileNavContent
+                workspaceId={workspaceId}
+                workspace={workspace}
+                pathname={pathname}
+                onNavigate={() => setMobileNavOpen(false)}
+              />
+            </motion.aside>
           </>
         )}
       </AnimatePresence>
@@ -107,71 +141,142 @@ export function InstrumentShell({ workspaceId, workspace, children }: Instrument
   );
 }
 
-/* === Module nav list (used in both sidebar + mobile drawer) === */
-function ModuleNavList({ workspaceId, pathname }: { workspaceId: string; pathname: string }) {
+/* === Module nav list (sidebar) === */
+function ModuleNavList({
+  workspaceId,
+  workspace,
+  pathname,
+}: {
+  workspaceId: string;
+  workspace: Workspace | null;
+  pathname: string;
+}) {
+  const [coreModules, moduleEntries] = [MODULES.slice(0, 1), MODULES.slice(1)];
+
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--v2-paper-rule)' }}>
-        <span className="v2-label text-[8px]" style={{ color: 'var(--v2-paper-ink-2)' }}>Navigate</span>
+      {/* Orientation: workspace name + domain (replaces banned eyebrow) */}
+      <div className="px-3 py-3.5" style={{ borderBottom: '1px solid var(--v2-paper-rule)' }}>
+        <div
+          className="truncate"
+          style={{
+            fontFamily: 'var(--v2-font-sans)',
+            fontSize: '0.82rem',
+            fontWeight: 600,
+            color: 'var(--v2-paper-ink)',
+            lineHeight: 1.3,
+          }}
+        >
+          {workspace?.name || 'Workspace'}
+        </div>
+        {workspace?.websiteDomain && (
+          <div
+            className="v2-mono truncate mt-0.5"
+            style={{ fontSize: '0.7rem', color: 'var(--v2-paper-ink-2)' }}
+          >
+            {workspace.websiteDomain}
+          </div>
+        )}
       </div>
-      <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
-        {MODULES.map((mod) => {
-          const fullPath = `/workspaces/${workspaceId}/${mod.path}`;
-          const isActive = pathname.includes(mod.path);
+
+      {/* Core section (Mission Control) */}
+      <nav className="p-2 space-y-0.5">
+        {coreModules.map((mod) => {
           const Icon = mod.icon;
           return (
-            <Link
+            <NavItem
               key={mod.path}
-              href={fullPath}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-[8px] transition-colors group"
-              style={{
-                background: isActive ? 'rgba(200,50,27,0.06)' : 'transparent',
-                borderLeft: isActive ? '2px solid var(--v2-vermilion)' : '2px solid transparent',
-              }}
-            >
-              <Icon className="w-4 h-4 flex-shrink-0" style={{ color: isActive ? 'var(--v2-vermilion)' : 'var(--v2-paper-ink-2)' }} />
-              <span className="text-[13px] truncate" style={{ color: isActive ? 'var(--v2-paper-ink)' : 'var(--v2-paper-ink-2)', fontWeight: isActive ? 500 : 400 }}>
-                {mod.name}
-              </span>
-            </Link>
+              href={`/workspaces/${workspaceId}/${mod.path}`}
+              active={pathname.includes(mod.path)}
+              icon={<Icon className="w-4 h-4" strokeWidth={1.75} />}
+              label={mod.name}
+            />
           );
         })}
       </nav>
+
+      {/* Hairline separator between sections */}
+      <div className="mx-3 my-1" style={{ borderTop: '1px solid var(--v2-paper-rule)' }} />
+
+      {/* Modules section */}
+      <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
+        {moduleEntries.map((mod) => {
+          const Icon = mod.icon;
+          return (
+            <NavItem
+              key={mod.path}
+              href={`/workspaces/${workspaceId}/${mod.path}`}
+              active={pathname.includes(mod.path)}
+              icon={<Icon className="w-4 h-4" strokeWidth={1.75} />}
+              label={mod.name}
+            />
+          );
+        })}
+      </nav>
+
+      {/* Settings pinned at bottom */}
       <div className="p-2" style={{ borderTop: '1px solid var(--v2-paper-rule)' }}>
-        <Link
+        <NavItem
           href={`/workspaces/${workspaceId}/settings`}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-[8px] transition-colors"
-          style={{
-            background: pathname.includes('/settings') ? 'rgba(200,50,27,0.06)' : 'transparent',
-            borderLeft: pathname.includes('/settings') ? '2px solid var(--v2-vermilion)' : '2px solid transparent',
-          }}
-        >
-          <Settings className="w-4 h-4" style={{ color: pathname.includes('/settings') ? 'var(--v2-vermilion)' : 'var(--v2-paper-ink-2)' }} />
-          <span className="text-[13px]" style={{ color: pathname.includes('/settings') ? 'var(--v2-paper-ink)' : 'var(--v2-paper-ink-2)' }}>Settings</span>
-        </Link>
+          active={pathname.includes('/settings')}
+          icon={<Settings className="w-4 h-4" strokeWidth={1.75} />}
+          label="Settings"
+        />
       </div>
     </div>
   );
 }
 
-/* === Icon rail === */
+/* === Icon rail (workspace switcher) === */
 function IconRail({ workspaceId, workspaces }: { workspaceId: string; workspaces: Workspace[] }) {
   return (
-    <aside className="flex flex-col items-center py-3 gap-1.5 flex-shrink-0 w-[56px] hidden md:flex" style={{ background: 'var(--v2-ink-ground)', borderRight: '1px solid var(--v2-ink-rule)' }}>
-      <Link href="/" className="w-9 h-9 rounded-[10px] flex items-center justify-center transition-transform hover:scale-105" style={{ background: 'var(--v2-vermilion)' }} title="Doddle OS">
-        <span className="v2-display text-[0.9rem]" style={{ color: 'var(--v2-vermilion-ink)' }}>D</span>
+    <aside
+      className="hidden md:flex flex-col items-center py-3 gap-1.5 flex-shrink-0 w-[56px]"
+      style={{ background: 'var(--v2-ink-ground)', borderRight: '1px solid var(--v2-ink-rule)' }}
+    >
+      <Link
+        href="/"
+        className="v2-rail-home w-9 h-9 rounded-[10px] flex items-center justify-center transition-colors"
+        style={{
+          background: 'rgba(232,68,46,0.12)',
+          border: '1px solid rgba(232,68,46,0.25)',
+        }}
+        title="Back to home"
+        aria-label="Back to home"
+      >
+        <Home className="w-4 h-4" strokeWidth={1.75} style={{ color: 'var(--v2-vermilion-lift)' }} />
       </Link>
       <span className="w-7 h-px my-1" style={{ background: 'var(--v2-ink-rule)' }} />
       <div className="flex-1 flex flex-col gap-1.5 overflow-y-auto no-scrollbar">
         {workspaces.slice(0, 8).map((ws) => {
           const isActive = ws.workspaceId === workspaceId;
           return (
-            <Link key={ws.workspaceId} href={`/workspaces/${ws.workspaceId}/mission-control`} className="w-9 h-9 rounded-[10px] flex items-center justify-center text-[11px] font-semibold transition-all hover:rounded-[8px] flex-shrink-0" style={{ background: isActive ? 'rgba(232,68,46,0.15)' : 'transparent', border: isActive ? '1px solid var(--v2-vermilion-lift)' : '1px solid var(--v2-ink-rule)', color: isActive ? 'var(--v2-ink-text)' : 'var(--v2-ink-text-2)' }} title={ws.name || 'Workspace'}>
+            <Link
+              key={ws.workspaceId}
+              href={`/workspaces/${ws.workspaceId}/mission-control`}
+              className="w-9 h-9 flex items-center justify-center flex-shrink-0"
+              style={{
+                borderRadius: 10,
+                background: isActive ? 'rgba(232,68,46,0.15)' : 'transparent',
+                border: isActive
+                  ? '1px solid var(--v2-vermilion-lift)'
+                  : '1px solid var(--v2-ink-rule)',
+                color: isActive ? 'var(--v2-ink-text)' : 'var(--v2-ink-text-2)',
+                fontSize: '0.7rem',
+                fontWeight: 600,
+              }}
+              title={ws.name || 'Workspace'}
+            >
               {(ws.name || 'W').charAt(0).toUpperCase()}
             </Link>
           );
         })}
-        <Link href="/workspaces" className="w-9 h-9 rounded-[10px] flex items-center justify-center transition-colors hover:rounded-[8px] flex-shrink-0" style={{ color: 'var(--v2-ink-text-2)' }} title="All workspaces">
+        <Link
+          href="/workspaces"
+          className="w-9 h-9 flex items-center justify-center flex-shrink-0"
+          style={{ color: 'var(--v2-ink-text-2)' }}
+          title="All workspaces"
+        >
           <Plus className="w-4 h-4" />
         </Link>
       </div>
@@ -179,34 +284,80 @@ function IconRail({ workspaceId, workspaces }: { workspaceId: string; workspaces
   );
 }
 
-/* === Feed panel === */
+/* === Feed panel (wired to mock liveActivity data) === */
 function FeedPanel({ onClose }: { onClose: () => void }) {
+  const activities = mockMissionControlData.liveActivity as LiveActivity[];
+
   return (
     <div className="w-[288px] flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--v2-ink-rule)' }}>
+      {/* Header: pulsing dot + "Activity" (no eyebrow label) */}
+      <div
+        className="flex items-center justify-between px-4 py-3"
+        style={{ borderBottom: '1px solid var(--v2-ink-rule)' }}
+      >
         <div className="flex items-center gap-2">
-          <motion.span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: 'var(--v2-vermilion-lift)' }} animate={{ opacity: [1, 0.3, 1], scale: [1, 0.8, 1] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }} />
-          <span className="v2-label text-[9px]" style={{ color: 'var(--v2-ink-text-2)' }}>Live · System</span>
+          <StatusDot variant="active" onInk pulse size={6} />
+          <span
+            style={{
+              fontFamily: 'var(--v2-font-sans)',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              color: 'var(--v2-ink-text)',
+            }}
+          >
+            Activity
+          </span>
         </div>
-        <button onClick={onClose} className="p-1" style={{ color: 'var(--v2-ink-text-2)' }}>
+        <button
+          onClick={onClose}
+          className="p-1 rounded-[4px]"
+          style={{ color: 'var(--v2-ink-text-2)' }}
+          aria-label="Close activity feed"
+        >
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-        {[
-          { time: '14:02', agent: 'Content Architect', action: '→ research · crawling site', type: 'running' },
-          { time: '14:03', agent: 'Technical Architect', action: '→ operator · CONFLICT', type: 'conflict' },
-          { time: '14:05', agent: 'operator', action: '→ Content Architect · approved', type: 'resolved' },
-          { time: '14:06', agent: 'Content Architect', action: '→ review · blueprint drafted', type: 'artifact' },
-          { time: '14:08', agent: 'Content Architect', action: '→ done · content shipped', type: 'complete' },
-        ].map((e, i) => {
-          const color = e.type === 'conflict' ? 'var(--v2-vermilion-lift)' : e.type === 'complete' ? 'var(--v2-sage)' : 'var(--v2-ink-text-2)';
+
+      {/* Activity entries — denser, spacing not borders between items */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3.5">
+        {activities.map((act) => {
+          const isResolution = act.type === 'resolution';
+          const isSystem = act.type === 'system';
           return (
-            <motion.div key={i} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.1 }} className="v2-mono text-[11px] py-2" style={{ borderBottom: i < 4 ? '1px solid var(--v2-ink-rule)' : 'none' }}>
-              <span style={{ color: 'var(--v2-ink-text-2)' }}>{e.time} </span>
-              <span style={{ color: 'var(--v2-ink-text)' }}>{e.agent}</span>
-              <span style={{ color }}> {e.action}</span>
-            </motion.div>
+            <div key={act.id} className="flex gap-2.5">
+              {/* Type indicator dot */}
+              <div className="flex-shrink-0 pt-1">
+                <StatusDot
+                  variant={isResolution ? 'active' : isSystem ? 'warning' : 'neutral'}
+                  onInk
+                  size={5}
+                />
+              </div>
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-1.5 mb-0.5">
+                  {act.agent && (
+                    <span
+                      className="truncate"
+                      style={{
+                        fontFamily: 'var(--v2-font-sans)',
+                        fontSize: '0.72rem',
+                        fontWeight: 500,
+                        color: 'var(--v2-ink-text)',
+                      }}
+                    >
+                      {act.agent.name}
+                    </span>
+                  )}
+                  <span className="v2-mono tabular-nums flex-shrink-0" style={{ fontSize: '0.62rem', color: 'var(--v2-ink-text-2)' }}>
+                    {formatRelativeTime(act.timestamp)}
+                  </span>
+                </div>
+                <p style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.72rem', lineHeight: 1.4, color: 'var(--v2-ink-text-2)' }}>
+                  {act.content}
+                </p>
+              </div>
+            </div>
           );
         })}
       </div>
@@ -215,34 +366,94 @@ function FeedPanel({ onClose }: { onClose: () => void }) {
 }
 
 /* === Mobile nav content === */
-function MobileNavContent({ workspaceId, pathname, onNavigate }: { workspaceId: string; pathname: string; onNavigate: () => void }) {
+function MobileNavContent({
+  workspaceId,
+  workspace,
+  pathname,
+  onNavigate,
+}: {
+  workspaceId: string;
+  workspace: Workspace | null;
+  pathname: string;
+  onNavigate: () => void;
+}) {
+  const [coreModules, moduleEntries] = [MODULES.slice(0, 1), MODULES.slice(1)];
+
   return (
-    <div className="p-4">
-      <Link href="/" onClick={onNavigate} className="v2-display text-[1.25rem] block mb-4" style={{ color: 'var(--v2-ink-text)' }}>Doddle OS</Link>
-      <span className="w-full h-px block mb-3" style={{ background: 'var(--v2-ink-rule)' }} />
-      <nav className="space-y-1">
-        {MODULES.map((mod) => {
-          const fullPath = `/workspaces/${workspaceId}/${mod.path}`;
-          const isActive = pathname.includes(mod.path);
-          const Icon = mod.icon;
-          return (
-            <Link key={mod.path} href={fullPath} onClick={onNavigate} className="flex items-center gap-3 px-3 py-2.5 rounded-[8px] transition-colors" style={{ background: isActive ? 'rgba(232,68,46,0.1)' : 'transparent', borderLeft: isActive ? '2px solid var(--v2-vermilion-lift)' : '2px solid transparent' }}>
-              <Icon className="w-4 h-4 flex-shrink-0" style={{ color: isActive ? 'var(--v2-vermilion-lift)' : 'var(--v2-ink-text-2)' }} />
-              <span className="text-[13px]" style={{ color: isActive ? 'var(--v2-ink-text)' : 'var(--v2-ink-text-2)' }}>{mod.name}</span>
-            </Link>
-          );
-        })}
-        <span className="w-full h-px block my-3" style={{ background: 'var(--v2-ink-rule)' }} />
-        <Link href={`/workspaces/${workspaceId}/settings`} onClick={onNavigate} className="flex items-center gap-3 px-3 py-2.5 rounded-[8px] transition-colors" style={{ borderLeft: pathname.includes('/settings') ? '2px solid var(--v2-vermilion-lift)' : '2px solid transparent' }}>
-          <Settings className="w-4 h-4" style={{ color: 'var(--v2-ink-text-2)' }} />
-          <span className="text-[13px]" style={{ color: 'var(--v2-ink-text-2)' }}>Settings</span>
-        </Link>
-      </nav>
+    <div className="flex flex-col h-full">
+      {/* Orientation */}
+      <div className="px-4 py-4" style={{ borderBottom: '1px solid var(--v2-ink-rule)' }}>
+        <div
+          className="truncate"
+          style={{
+            fontFamily: 'var(--v2-font-sans)',
+            fontSize: '0.88rem',
+            fontWeight: 600,
+            color: 'var(--v2-ink-text)',
+          }}
+        >
+          {workspace?.name || 'Workspace'}
+        </div>
+        {workspace?.websiteDomain && (
+          <div className="v2-mono truncate mt-0.5" style={{ fontSize: '0.7rem', color: 'var(--v2-ink-text-2)' }}>
+            {workspace.websiteDomain}
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-3">
+        {/* Core */}
+        <div className="space-y-0.5 mb-2">
+          {coreModules.map((mod) => {
+            const Icon = mod.icon;
+            return (
+              <NavItem
+                key={mod.path}
+                href={`/workspaces/${workspaceId}/${mod.path}`}
+                active={pathname.includes(mod.path)}
+                onClick={onNavigate}
+                onInk
+                icon={<Icon className="w-4 h-4" strokeWidth={1.75} />}
+                label={mod.name}
+              />
+            );
+          })}
+        </div>
+
+        <div className="mx-1 my-2" style={{ borderTop: '1px solid var(--v2-ink-rule)' }} />
+
+        {/* Modules */}
+        <div className="space-y-0.5">
+          {moduleEntries.map((mod) => {
+            const Icon = mod.icon;
+            return (
+              <NavItem
+                key={mod.path}
+                href={`/workspaces/${workspaceId}/${mod.path}`}
+                active={pathname.includes(mod.path)}
+                onClick={onNavigate}
+                onInk
+                icon={<Icon className="w-4 h-4" strokeWidth={1.75} />}
+                label={mod.name}
+              />
+            );
+          })}
+          <div className="mx-1 my-2" style={{ borderTop: '1px solid var(--v2-ink-rule)' }} />
+          <NavItem
+            href={`/workspaces/${workspaceId}/settings`}
+            active={pathname.includes('/settings')}
+            onClick={onNavigate}
+            onInk
+            icon={<Settings className="w-4 h-4" strokeWidth={1.75} />}
+            label="Settings"
+          />
+        </div>
+      </div>
     </div>
   );
 }
 
-/* === Feed wrapper — handles lg breakpoint visibility without breaking AnimatePresence === */
+/* === Feed wrapper — lg breakpoint visibility === */
 function FeedWrapper({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [isLg, setIsLg] = useState(false);
 
@@ -263,7 +474,7 @@ function FeedWrapper({ open, onClose }: { open: boolean; onClose: () => void }) 
           initial={{ width: 0 }}
           animate={{ width: 288 }}
           exit={{ width: 0 }}
-          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.2, ease: EASE }}
           className="flex-shrink-0 overflow-hidden"
           style={{ background: 'var(--v2-ink-ground)' }}
         >
@@ -272,4 +483,14 @@ function FeedWrapper({ open, onClose }: { open: boolean; onClose: () => void }) 
       )}
     </AnimatePresence>
   );
+}
+
+/* === Relative time formatter (shared) === */
+function formatRelativeTime(ts: string): string {
+  const diffMs = Date.now() - new Date(ts).getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'now';
+  if (diffMin < 60) return `${diffMin}m`;
+  if (diffMin < 1440) return `${Math.floor(diffMin / 60)}h`;
+  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }

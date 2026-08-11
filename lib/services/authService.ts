@@ -286,7 +286,13 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
  * from PostgreSQL. Requires a valid access_token cookie.
  */
 export async function getMe(): Promise<OrgResponse> {
-    const res = await authFetch(`${API_BASE_URL}/api/v1/auth/me`, {
+    // Use apiClient's refresh-aware fetch so an expired access token is
+    // automatically refreshed and retried. The old authFetch wrapper had no
+    // 401-refresh logic, so getMe() would fail on expired tokens even though
+    // the rest of the app (which uses apiClient) would succeed — leaving the
+    // auth store stuck on 'unauthenticated' while workspace data loaded fine.
+    const { apiFetch } = await import('./apiClient');
+    const res = await apiFetch(`${API_BASE_URL}/api/v1/auth/me`, {
         method: 'GET',
     });
 

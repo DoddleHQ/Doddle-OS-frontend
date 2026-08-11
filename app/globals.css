@@ -198,3 +198,120 @@ body {
 /* Auth inputs */
 .v2-auth-input::placeholder { color: var(--v2-paper-ink-2); opacity: 0.5; }
 .v2-auth-input:focus { border-color: var(--v2-vermilion); box-shadow: 0 0 0 3px rgba(200,50,27,0.12); }
+
+/* Icon rail — home (navigation) tile hover. Distinct from workspace tiles:
+   solidifies toward vermilion on hover to signal it's an action, not a workspace. */
+.v2-rail-home:hover {
+  background: rgba(232,68,46,0.22) !important;
+  border-color: rgba(232,68,46,0.4) !important;
+}
+
+/* ============================================================
+   Toast notifications — v2 Specimen Terminal theme
+   Replaces react-toastify's default white-card + green-checkmark
+   with paper/ink tokens, Hanken Grotesk, vermilion accent.
+
+   Toasts render in a portal at body level, so these selectors are NOT
+   scoped under .v2-scope. They use the v2 CSS variables directly (which
+   are defined on :root via the font loaders + the .v2-scope block; for
+   the toast portal we redefine the few we need).
+   ============================================================ */
+
+.v2-toast-container {
+  --toast-paper: #efe7d6;
+  --toast-ink: #1a1612;
+  --toast-ink-2: #6a6055;
+  --toast-rule: #ddd0b8;
+  --toast-vermilion: #c8321b;
+  --toast-sage: #7fb069;
+  --toast-font-sans: var(--v2-font-sans, var(--v2-sans), system-ui, -apple-system, sans-serif);
+  width: 340px;
+  z-index: 9999;
+}
+
+.v2-toast-container .Toastify__toast {
+  font-family: var(--toast-font-sans);
+  font-size: 0.82rem;
+  color: var(--toast-ink);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--toast-rule);
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  padding: 10px 14px;
+  min-height: auto;
+}
+
+/* Remove the default icon circle — we use a left-border accent instead */
+.v2-toast-container .Toastify__toast-icon {
+  display: none;
+}
+
+/* Success: sage left border */
+.v2-toast-container .Toastify__toast--success {
+  border-left: 3px solid var(--toast-sage);
+}
+
+/* Error: vermilion left border */
+.v2-toast-container .Toastify__toast--error {
+  border-left: 3px solid var(--toast-vermilion);
+}
+
+/* Warning: vermilion left border */
+.v2-toast-container .Toastify__toast--warning {
+  border-left: 3px solid var(--toast-vermilion);
+}
+
+/* Info: ink-2 left border */
+.v2-toast-container .Toastify__toast--info {
+  border-left: 3px solid var(--toast-ink-2);
+}
+
+/* Toast body — tight, readable */
+.v2-toast-container .Toastify__toast-body {
+  padding: 0;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Close button — muted, vermilion on hover */
+.v2-toast-container .Toastify__close-button {
+  color: var(--toast-ink-2);
+  opacity: 0.5;
+  align-self: center;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.v2-toast-container .Toastify__close-button:hover {
+  color: var(--toast-vermilion);
+  opacity: 1;
+}
+
+/* Progress bar — semantic colors */
+.v2-toast-container .Toastify__progress-bar {
+  background: var(--toast-vermilion);
+}
+
+.v2-toast-container .Toastify__progress-bar--success {
+  background: var(--toast-sage);
+}
+
+/* Entrance/exit animation — functional, 200ms */
+@keyframes v2-toast-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes v2-toast-out {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(20px); }
+}
+
+.v2-toast-container .Toastify__toast--animate-in {
+  animation: v2-toast-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.v2-toast-container .Toastify__toast--animate-out {
+  animation: v2-toast-out 0.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
