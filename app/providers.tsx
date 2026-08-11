@@ -27,6 +27,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     draggable
                     pauseOnHover
                     theme="light"
+                    className="v2-toast-container"
+                    toastClassName="v2-toast"
                 />
             </WorkspaceProvider>
         </AuthProvider>
