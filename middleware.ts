@@ -184,7 +184,11 @@ export async function middleware(request: NextRequest) {
     const result = await checkAuth(request);
     if (!result.authenticated) {
         const loginUrl = new URL('/login', request.url);
-        loginUrl.searchParams.set('next', pathname);
+        // Preserve the full path INCLUDING query string (e.g. ?token=abc123
+        // on /accept-invite) so the login page can redirect back to the
+        // original URL after successful authentication.
+        const fullPath = pathname + (request.nextUrl.search || '');
+        loginUrl.searchParams.set('next', fullPath);
         return NextResponse.redirect(loginUrl);
     }
 
