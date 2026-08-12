@@ -46,10 +46,13 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
 
   const handleSelection = (isMulti: boolean) => {
     setSubmitted(true);
+    // Send both 'value' and 'selected' keys — different backend graphs check
+    // different keys (content_architect niche selection checks 'selected',
+    // other graphs use extract_user_response which checks 'value').
     if (isMulti) {
-      onRespond({ value: selected });
+      onRespond({ value: selected, selected });
     } else {
-      onRespond({ value: selected[0] });
+      onRespond({ value: selected[0], selected: selected[0] });
     }
   };
 

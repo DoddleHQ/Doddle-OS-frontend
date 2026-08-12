@@ -64,11 +64,15 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
             if (onAppendToInput) {
                 onAppendToInput(selectedValues.join(', '));
             } else {
-                onRespond({ value: selectedOptions });
+                // Send both 'value' and 'selected' keys — different backend graphs
+                // check different keys (content_architect niche selection checks
+                // 'selected', while other graphs use extract_user_response which
+                // checks 'value'). Sending both ensures compatibility.
+                onRespond({ value: selectedOptions, selected: selectedOptions });
             }
         } else {
-            // For single select, send { value: selectedValue } as expected by the backend
-            onRespond({ value: selectedOptions[0] });
+            // Single select — send both 'value' and 'selected' for the same reason.
+            onRespond({ value: selectedOptions[0], selected: selectedOptions[0] });
         }
         setIsSubmitted(true);
     };
