@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { motion } from 'motion/react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles, Check } from 'lucide-react';
 import { WORKSPACE_MODULES as MODULES } from '@/components/v2/dashboard/modules';
+import { workspaceService } from '@/lib/services/workspaceService';
 import type { ModuleId } from '@/lib/types/thread.types';
 
 /*
@@ -41,6 +42,14 @@ export default function WorkspacePage() {
   const params = useParams();
   const workspaceId = params.workspaceId as string;
   const [threadCounts, setThreadCounts] = useState<Record<string, ThreadCount>>({});
+  const [hasPersona, setHasPersona] = useState<boolean | null>(null); // null = loading
+
+  // Check if a brand persona exists for this workspace
+  useEffect(() => {
+    workspaceService.getPersona(workspaceId).then((persona) => {
+      setHasPersona(persona ? persona.content.length > 0 : false);
+    }).catch(() => setHasPersona(false));
+  }, [workspaceId]);
 
   useEffect(() => {
     // Fetch thread counts in parallel for modules with a backend ID.
@@ -107,6 +116,57 @@ export default function WorkspacePage() {
       >
         {MODULES.length} available
       </p>
+
+      {/* Brand persona setup card — shown when no persona exists yet */}
+      {hasPersona === false && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.18, ease: EASE }}
+          className="mb-5"
+        >
+          <Link
+            href={`/workspaces/${workspaceId}/brand-persona`}
+            className="flex items-center gap-3 px-4 py-3.5 rounded-[10px] transition-colors group"
+            style={{
+              background: 'rgba(200,50,27,0.04)',
+              border: '1px solid rgba(200,50,27,0.12)',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(200,50,27,0.07)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(200,50,27,0.04)'; }}
+          >
+            <span
+              className="w-8 h-8 rounded-[8px] flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(200,50,27,0.08)' }}
+            >
+              <Sparkles className="w-4 h-4" style={{ color: 'var(--v2-vermilion)' }} strokeWidth={1.75} />
+            </span>
+            <div className="flex-1 min-w-0">
+              <div style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.82rem', fontWeight: 600, color: 'var(--v2-paper-ink)', lineHeight: 1.3 }}>
+                Set up your brand persona
+              </div>
+              <div style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.72rem', color: 'var(--v2-paper-ink-2)', lineHeight: 1.3, marginTop: '0.125rem' }}>
+                Help your agents understand your brand voice and target audience
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 flex-shrink-0 transition-transform group-hover:translate-x-0.5" style={{ color: 'var(--v2-vermilion)' }} />
+          </Link>
+        </motion.div>
+      )}
+
+      {/* Persona exists indicator */}
+      {hasPersona === true && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mb-4 flex items-center gap-1.5"
+        >
+          <Check className="w-3.5 h-3.5" style={{ color: 'var(--v2-sage)' }} strokeWidth={2} />
+          <span className="v2-mono" style={{ fontSize: '0.68rem', color: 'var(--v2-paper-ink-2)' }}>
+            Brand persona configured
+          </span>
+        </motion.div>
+      )}
 
       {/* Module list — rows, not cards. Hairline separators. */}
       <div>
