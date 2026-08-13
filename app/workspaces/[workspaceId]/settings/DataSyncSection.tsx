@@ -26,7 +26,7 @@ import type {
     CreateGa4ConnectionReq,
 } from '@/lib/types/connection.types';
 import { FREQUENCY_OPTIONS, cronToFrequency, type SyncFrequency } from '@/lib/utils/cron';
-import { toast } from 'react-toastify';
+import { notify } from '@/lib/stores/notificationStore';
 
 /*
  * DataSyncSection — data-source connection management.
@@ -305,13 +305,13 @@ function ConnectedView({
         try {
             setSyncing(true);
             const result = await connectionService.triggerSync(workspaceId, sourceType);
-            toast.success(result.message);
+            notify(result.message, 'success');
             // Fetch sync states after triggering
             const states = await connectionService.getSyncStates(workspaceId, sourceType);
             setSyncStates(states);
             setShowSyncStates(true);
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Sync failed');
+            notify(err instanceof Error ? err.message : 'Sync failed', 'error');
         } finally {
             setSyncing(false);
         }
@@ -322,10 +322,10 @@ function ConnectedView({
         try {
             setDisconnecting(true);
             await connectionService.disconnect(workspaceId, sourceType);
-            toast.success(`${sourceType.toUpperCase()} disconnected`);
+            notify(`${sourceType.toUpperCase()} disconnected`, 'success');
             onChanged();
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Disconnect failed');
+            notify(err instanceof Error ? err.message : 'Disconnect failed', 'error');
         } finally {
             setDisconnecting(false);
         }
@@ -337,7 +337,7 @@ function ConnectedView({
             setSyncStates(states);
             setShowSyncStates(true);
         } catch {
-            toast.error('Failed to load sync state');
+            notify('Failed to load sync state', 'error');
         }
     };
 
@@ -483,7 +483,7 @@ function MagentoConnectForm({
 
     const handleConnect = async () => {
         if (!baseUrl || !storeId || !accessToken) {
-            toast.error('Base URL, Store ID, and Access Token are required');
+            notify('Base URL, Store ID, and Access Token are required', 'error');
             return;
         }
         try {
@@ -496,10 +496,10 @@ function MagentoConnectForm({
             };
             const conn = await connectionService.connectMagento(workspaceId, req);
             onConnect(conn); // optimistic — badge flips immediately
-            toast.success('Magento connected');
+            notify('Magento connected', 'success');
             onConnected(); // refetch in background to confirm
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Connection failed');
+            notify(err instanceof Error ? err.message : 'Connection failed', 'error');
         } finally {
             setConnecting(false);
         }
@@ -554,7 +554,7 @@ function GscConnectForm({
 
     const handleConnect = async () => {
         if (!siteUrl || !clientId || !clientSecret || !refreshToken) {
-            toast.error('All fields are required');
+            notify('All fields are required', 'error');
             return;
         }
         try {
@@ -565,10 +565,10 @@ function GscConnectForm({
                 schedule: { syncCron: cronExpr, syncTimezone: 'UTC' },
             });
             onConnect(conn); // optimistic — badge flips immediately
-            toast.success('Google Search Console connected');
+            notify('Google Search Console connected', 'success');
             onConnected(); // refetch in background to confirm
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Connection failed');
+            notify(err instanceof Error ? err.message : 'Connection failed', 'error');
         } finally {
             setConnecting(false);
         }
@@ -610,7 +610,7 @@ function GmcConnectForm({
 
     const handleConnect = async () => {
         if (!merchantId || !clientId || !clientSecret || !refreshToken) {
-            toast.error('All fields are required');
+            notify('All fields are required', 'error');
             return;
         }
         try {
@@ -621,10 +621,10 @@ function GmcConnectForm({
                 schedule: { syncCron: cronExpr, syncTimezone: 'UTC' },
             });
             onConnect(conn);
-            toast.success('Google Merchant Center connected');
+            notify('Google Merchant Center connected', 'success');
             onConnected();
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Connection failed');
+            notify(err instanceof Error ? err.message : 'Connection failed', 'error');
         } finally {
             setConnecting(false);
         }
@@ -664,7 +664,7 @@ function Ga4ConnectForm({
 
     const handleConnect = async () => {
         if (!propertyId || !clientId || !clientSecret || !refreshToken) {
-            toast.error('All fields are required');
+            notify('All fields are required', 'error');
             return;
         }
         try {
@@ -675,10 +675,10 @@ function Ga4ConnectForm({
                 schedule: { syncCron: cronExpr, syncTimezone: 'UTC' },
             });
             onConnect(conn);
-            toast.success('Google Analytics 4 connected');
+            notify('Google Analytics 4 connected', 'success');
             onConnected();
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Connection failed');
+            notify(err instanceof Error ? err.message : 'Connection failed', 'error');
         } finally {
             setConnecting(false);
         }

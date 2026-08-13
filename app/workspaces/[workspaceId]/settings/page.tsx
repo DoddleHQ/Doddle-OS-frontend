@@ -33,13 +33,14 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { useCurrentWorkspace, updateCachedWorkspace } from '@/lib/hooks/useCurrentWorkspace';
 import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 import { InfoTooltip } from '@/components/v2/dashboard/primitives';
+import { editProfile } from '@/lib/services/authService';
 import { DataSyncSection } from './DataSyncSection';
 import type {
     WorkspaceMember,
     InviteLink,
     WorkspaceRole,
 } from '@/lib/types/workspace.types';
-import { toast } from 'react-toastify';
+import { notify } from '@/lib/stores/notificationStore';
 
 /*
  * Settings — unified workspace + account view, v2 token system.
@@ -66,7 +67,15 @@ export default function SettingsPage() {
     const { logout } = useAuth();
     const user = useAuthStore((s) => s.user);
     const authStatus = useAuthStore((s) => s.status);
+    const setAuthState = useAuthStore((s) => s.setAuthState);
     const [activeTab, setActiveTab] = useState<SettingsTab>('general');
+    const [editUserName, setEditUserName] = useState('');
+    const [savingUserName, setSavingUserName] = useState(false);
+
+    // Sync editUserName when user data loads
+    useEffect(() => {
+        if (user) setEditUserName(user.name);
+    }, [user]);
 
     // Workspace — use the cached hook so we don't fire a concurrent fetch
     // that races with the auth bootstrap's getMe() refresh.
@@ -99,7 +108,7 @@ export default function SettingsPage() {
             const data = await memberService.listMembers(workspaceId);
             setMembers(data);
         } catch {
-            toast.error('Failed to load members');
+            notify('Failed to load members', 'error');
         } finally {
             setMembersLoading(false);
         }
@@ -111,7 +120,7 @@ export default function SettingsPage() {
             const data = await inviteLinkService.listInviteLinks(workspaceId);
             setInviteLinks(data);
         } catch {
-            toast.error('Failed to load invite links');
+            notify('Failed to load invite links', 'error');
         } finally {
             setInvitesLoading(false);
         }
@@ -143,11 +152,28 @@ export default function SettingsPage() {
             // Also refresh the workspace LIST so the icon rail tile (which
             // derives its initial + tooltip from the list) stays in sync.
             refreshWorkspaceList();
-            toast.success('Workspace name updated');
+            notify('Workspace name updated', 'success');
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Failed to update name');
+            notify(err instanceof Error ? err.message : 'Failed to update name', 'error');
         } finally {
             setSavingName(false);
+        }
+    };
+
+    // Save user profile name via PATCH /user/edit-profile
+    const handleSaveUserName = async () => {
+        try {
+            setSavingUserName(true);
+            await editProfile(editUserName);
+            // Update the auth store so UserMenu + everywhere else reflects it
+            if (user) {
+                setAuthState({ status: 'authenticated', user: { ...user, name: editUserName } });
+            }
+            notify('Name updated', 'success');
+        } catch (err) {
+            notify(err instanceof Error ? err.message : 'Failed to update name', 'error');
+        } finally {
+            setSavingUserName(false);
         }
     };
 
@@ -156,10 +182,10 @@ export default function SettingsPage() {
         try {
             await navigator.clipboard.writeText(inviteUrl);
             setCopiedToken(token);
-            toast.success('Invite link copied');
+            notify('Invite link copied', 'success');
             setTimeout(() => setCopiedToken(null), 2000);
         } catch {
-            toast.error('Failed to copy');
+            notify('Failed to copy', 'error');
         }
     };
 
@@ -172,7 +198,7 @@ export default function SettingsPage() {
                 expires_in: newInviteExpiresIn,
             });
             setInviteLinks((prev) => [...prev, link]);
-            toast.success('Invite link created');
+            notify('Invite link created', 'success');
         } catch (err) {
             if (err instanceof InviteLinkConflictError) {
                 // 409: an active link already exists for this role.
@@ -181,9 +207,9 @@ export default function SettingsPage() {
                 setInviteLinks((prev) =>
                     prev.some((l) => l.id === err.link.id) ? prev : [...prev, err.link],
                 );
-                toast.warning(`An active ${err.link.role} link already exists`);
+                notify(`An active ${err.link.role} link already exists`, 'warning');
             } else {
-                toast.error(err instanceof Error ? err.message : 'Failed to create invite link');
+                notify(err instanceof Error ? err.message : 'Failed to create invite link', 'error');
             }
         } finally {
             setCreatingInvite(false);
@@ -203,9 +229,9 @@ export default function SettingsPage() {
                 ),
             });
             setInviteLinks((prev) => prev.map((l) => (l.id === link.id ? newLink : l)));
-            toast.success('Invite link regenerated');
+            notify('Invite link regenerated', 'success');
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Failed to regenerate');
+            notify(err instanceof Error ? err.message : 'Failed to regenerate', 'error');
         }
     };
 
@@ -214,9 +240,9 @@ export default function SettingsPage() {
         try {
             await inviteLinkService.revokeInviteLink(workspaceId, linkId);
             setInviteLinks((prev) => prev.filter((l) => l.id !== linkId));
-            toast.success('Invite link revoked');
+            notify('Invite link revoked', 'success');
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Failed to revoke');
+            notify(err instanceof Error ? err.message : 'Failed to revoke', 'error');
         }
     };
 
@@ -226,9 +252,9 @@ export default function SettingsPage() {
                 role: newRole as 'editor' | 'viewer',
             });
             setMembers((prev) => prev.map((m) => (m.userId === userId ? updated : m)));
-            toast.success(`Role updated to ${newRole}`);
+            notify(`Role updated to ${newRole}`, 'success');
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Failed to update role');
+            notify(err instanceof Error ? err.message : 'Failed to update role', 'error');
         }
     };
 
@@ -237,9 +263,9 @@ export default function SettingsPage() {
         try {
             await memberService.removeMember(workspaceId, userId);
             setMembers((prev) => prev.filter((m) => m.userId !== userId));
-            toast.success(`${name} removed`);
+            notify(`${name} removed`, 'success');
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Failed to remove member');
+            notify(err instanceof Error ? err.message : 'Failed to remove member', 'error');
         }
     };
 
@@ -323,7 +349,43 @@ export default function SettingsPage() {
                     </div>
                 ) : authStatus === 'authenticated' && user ? (
                     <div className="space-y-3">
-                        <DetailRow icon={<UserIcon className="w-3.5 h-3.5" />} label="Name" value={user.name} />
+                        {/* Name — editable via PATCH /user/edit-profile */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <UserIcon className="w-3.5 h-3.5" style={{ color: 'var(--v2-paper-ink-2)' }} />
+                                <FieldLabel>Name</FieldLabel>
+                            </div>
+                            <div className="flex gap-2">
+                                <input
+                                    value={editUserName}
+                                    onChange={(e) => setEditUserName(e.target.value)}
+                                    placeholder="Enter your name"
+                                    className="flex-1 px-3 py-2 rounded-[6px] outline-none transition-colors"
+                                    style={{
+                                        fontFamily: 'var(--v2-font-sans)',
+                                        fontSize: '0.82rem',
+                                        color: 'var(--v2-paper-ink)',
+                                        background: 'rgba(255,255,255,0.4)',
+                                        border: '1px solid var(--v2-paper-rule)',
+                                    }}
+                                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--v2-vermilion)'; }}
+                                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--v2-paper-rule)'; }}
+                                />
+                                <button
+                                    onClick={handleSaveUserName}
+                                    disabled={savingUserName || editUserName === user.name || !editUserName.trim()}
+                                    className="px-3 py-2 rounded-[6px] flex items-center justify-center transition-opacity"
+                                    style={{
+                                        background: 'var(--v2-vermilion)',
+                                        color: 'var(--v2-vermilion-ink)',
+                                        opacity: savingUserName || editUserName === user.name || !editUserName.trim() ? 0.4 : 1,
+                                    }}
+                                    aria-label="Save name"
+                                >
+                                    {savingUserName ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                                </button>
+                            </div>
+                        </div>
                         <DetailRow icon={<Mail className="w-3.5 h-3.5" />} label="Email" value={user.email} mono />
                         <DetailRow
                             icon={user.emailVerified ? <ShieldCheck className="w-3.5 h-3.5" /> : <ShieldAlert className="w-3.5 h-3.5" />}

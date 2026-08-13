@@ -102,7 +102,7 @@ export default function SignupPage() {
 
               <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="space-y-4 mb-4">
                 <AuthInput id="name" label="Full name" value={name} onChange={(v) => { setName(v); setErrors((p) => ({ ...p, name: undefined })); }} placeholder="Your name" autoComplete="name" error={errors.name} />
-                <AuthInput id="email" label="Work email" type="email" value={email} onChange={(v) => { setEmail(v); setErrors((p) => ({ ...p, email: undefined })); }} placeholder="you@company.com" autoComplete="email" error={errors.email} />
+                <AuthInput id="email" label="Email" type="email" value={email} onChange={(v) => { setEmail(v); setErrors((p) => ({ ...p, email: undefined })); }} placeholder="you@company.com" autoComplete="email" error={errors.email} />
                 <AuthInput id="password" label="Password" type={showPassword ? 'text' : 'password'} value={password} onChange={(v) => { setPassword(v); setErrors((p) => ({ ...p, password: undefined })); }} placeholder="Create a password" autoComplete="new-password" error={errors.password}
                   trailing={<button type="button" onClick={() => setShowPassword((s) => !s)} className="p-1 hover:opacity-70 cursor-pointer" aria-label={showPassword ? 'Hide password' : 'Show password'} style={{ color: 'var(--v2-paper-ink-2)' }}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>} />
               </motion.div>
