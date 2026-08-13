@@ -166,6 +166,22 @@ export async function apiPatch<T = unknown>(url: string, body?: unknown): Promis
 }
 
 /**
+ * Convenience: JSON PUT
+ */
+export async function apiPut<T = unknown>(url: string, body?: unknown): Promise<T> {
+    const res = await apiFetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) {
+        const message = await parseErrorMessage(res);
+        throw new Error(message);
+    }
+    return res.json();
+}
+
+/**
  * Convenience: JSON DELETE
  */
 export async function apiDelete(url: string): Promise<void> {

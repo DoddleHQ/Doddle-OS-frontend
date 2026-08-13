@@ -20,7 +20,7 @@ import {
     ActiveInviteLinkExistsError,
     WorkspaceRole,
 } from '@/lib/types/workspace.types';
-import { apiGet, apiPost, apiPatch, apiDelete, apiFetch } from '@/lib/services/apiClient';
+import { apiGet, apiPost, apiPatch, apiDelete, apiPut, apiFetch } from '@/lib/services/apiClient';
 
 // ---------------------------------------------------------------------------
 // URL helper
@@ -113,6 +113,27 @@ export const workspaceService = {
      */
     async deleteWorkspace(workspaceId: string): Promise<void> {
         await apiDelete(workspacesUrl(workspaceId));
+    },
+
+    /**
+     * PUT /api/v1/workspaces/{workspaceId}/persona
+     * Create or replace the brand persona. Admin only.
+     */
+    async upsertPersona(workspaceId: string, content: string): Promise<void> {
+        await apiPut(workspacesUrl(workspaceId, 'persona'), { content });
+    },
+
+    /**
+     * GET /api/v1/workspaces/{workspaceId}/persona
+     * Get the brand persona. Any workspace member.
+     */
+    async getPersona(workspaceId: string): Promise<{ content: string } | null> {
+        try {
+            const raw = (await apiGet(workspacesUrl(workspaceId, 'persona'))) as Record<string, unknown>;
+            return { content: (raw.content as string) ?? '' };
+        } catch {
+            return null;
+        }
     },
 };
 

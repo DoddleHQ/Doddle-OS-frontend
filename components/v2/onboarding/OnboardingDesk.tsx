@@ -81,10 +81,14 @@ function extractWorkspaceMeta(
  * that comes alive when you engage.
  */
 
-export function OnboardingDesk() {
+export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
   const router = useRouter();
   const { createWorkspace } = useWorkspaces();
   const { refresh: refreshAuth } = useAuth();
+  // When workspaceId is provided, we're in "brand persona setup" mode inside
+  // an existing workspace — we save the persona via PUT instead of creating
+  // a new workspace.
+  const isWorkspaceScoped = !!workspaceId;
   const chatRef = useRef<HTMLDivElement>(null);
   const [started, setStarted] = useState(false);
   const [chatValue, setChatValue] = useState('');
@@ -158,45 +162,42 @@ export function OnboardingDesk() {
 
   // Create the workspace from the persona graph's extracted name + domain +
   // brand persona markdown, then navigate the user into it. Falls back
-  // gracefully if the graph didn't surface a name — the API allows unnamed
-  // workspaces (name is the only required field server-side; we send '').
+  // gracefully if the graph didn't surface a name.
   //
-  // NAVIGATION RACE FIX: onboarding conversations run for several minutes,
-  // so the access token is often stale by the time we navigate. The Next.js
-  // middleware checks the access_token cookie but CANNOT refresh it, so a
-  // stale cookie makes middleware bounce /workspaces/{id} → /login → /
-  // (the isAuthRoute guard sends an authenticated /login visit to home).
-  // We refresh the session client-side BEFORE navigating so the cookie the
-  // middleware reads is freshly rotated.
+  // WORKSPACE-SCOPED MODE: when workspaceId is provided, skip workspace
+  // creation and instead save the persona via PUT /workspaces/{id}/persona.
   const handleEnterOS = useCallback(async () => {
     if (isCreatingWorkspace) return;
     setWorkspaceError(null);
     setIsCreatingWorkspace(true);
     try {
-      const ws = await createWorkspace(
-        workspaceName || '',
-        domain || undefined,
-        personaMarkdown || undefined,
-      );
+      if (isWorkspaceScoped && workspaceId) {
+        // Brand persona setup mode — save persona to existing workspace
+        const { workspaceService } = await import('@/lib/services/workspaceService');
+        await workspaceService.upsertPersona(workspaceId, personaMarkdown || '');
+        router.replace(`/workspaces/${workspaceId}`);
+      } else {
+        // Workspace creation mode (legacy standalone)
+        const ws = await createWorkspace(
+          workspaceName || '',
+          domain || undefined,
+          personaMarkdown || undefined,
+        );
 
-      // Proactively rotate the access cookie so middleware's isAuthenticated()
-      // check passes on the very first request to the protected workspace route.
-      // Best-effort: if refresh fails, navigate anyway — middleware will handle
-      // the redirect to /login?next=... which preserves the destination.
-      try {
-        await refreshAuth();
-      } catch {
-        /* swallow — navigate regardless */
+        try {
+          await refreshAuth();
+        } catch {
+          /* swallow — navigate regardless */
+        }
+
+        router.replace(`/workspaces/${ws.workspaceId}`);
       }
-
-      // replace() so the back button doesn't return to the completed onboarding
-      router.replace(`/workspaces/${ws.workspaceId}`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create workspace';
+      const message = err instanceof Error ? err.message : 'Failed to save';
       setWorkspaceError(message);
       setIsCreatingWorkspace(false);
     }
-  }, [isCreatingWorkspace, createWorkspace, workspaceName, domain, personaMarkdown, refreshAuth, router]);
+  }, [isCreatingWorkspace, isWorkspaceScoped, workspaceId, createWorkspace, workspaceName, domain, personaMarkdown, refreshAuth, router]);
 
   // Auto-scroll
   useEffect(() => {
@@ -249,7 +250,7 @@ export function OnboardingDesk() {
                 className="v2-display text-[clamp(2rem,5vw,3.5rem)] leading-[1] mb-3"
                 style={{ color: 'var(--v2-paper-ink)' }}
               >
-                Build your brand persona.
+                {isWorkspaceScoped ? 'Set up your brand persona.' : 'Build your brand persona.'}
               </motion.h1>
 
               <motion.p
@@ -429,7 +430,7 @@ export function OnboardingDesk() {
                 Brand persona generated!
               </h2>
               <p className="text-[14px] mb-4" style={{ color: 'var(--v2-paper-ink-2)' }}>
-                Your workspace is ready.
+                {isWorkspaceScoped ? 'Ready to save to your workspace.' : 'Your workspace is ready.'}
               </p>
 
               {/* Detected workspace identity */}
@@ -472,7 +473,7 @@ export function OnboardingDesk() {
                     </>
                   ) : (
                     <>
-                      Enter the OS <ArrowRight className="w-4 h-4" />
+                      {isWorkspaceScoped ? 'Save & Continue' : 'Enter the OS'} <ArrowRight className="w-4 h-4" />
                     </>
                   )}
                 </motion.button>
