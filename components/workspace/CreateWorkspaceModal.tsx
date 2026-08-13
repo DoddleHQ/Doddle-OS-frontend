@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 import { Loader2, Rocket, Globe, Sparkles } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { notify } from '@/lib/stores/notificationStore';
 
 interface CreateWorkspaceModalProps {
     isOpen: boolean;
@@ -28,7 +28,7 @@ export function CreateWorkspaceModal({ isOpen, onClose }: CreateWorkspaceModalPr
         e.preventDefault();
 
         if (!name.trim()) {
-            toast.error('Please enter a workspace name');
+            notify('Please enter a workspace name', 'error');
             return;
         }
 
@@ -37,9 +37,9 @@ export function CreateWorkspaceModal({ isOpen, onClose }: CreateWorkspaceModalPr
             const workspace = await createWorkspace(name.trim(), websiteDomain.trim() || undefined);
             setCreatedWorkspaceId(workspace.workspaceId);
             setStep('success');
-            toast.success('Workspace created successfully!');
+            notify('Workspace created successfully!', 'success');
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Failed to create workspace');
+            notify(err instanceof Error ? err.message : 'Failed to create workspace', 'error');
         } finally {
             setCreating(false);
         }
