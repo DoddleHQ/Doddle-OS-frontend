@@ -17,7 +17,7 @@ import type { Workspace } from '@/lib/types/workspace.types';
 // ---------------------------------------------------------------------------
 
 type WorkspaceContextValue = {
-    /** All workspaces the authenticated org belongs to. */
+    /** All workspaces the authenticated user belongs to. */
     workspaces: Workspace[];
     /** Whether workspaces are currently being fetched. */
     isLoading: boolean;

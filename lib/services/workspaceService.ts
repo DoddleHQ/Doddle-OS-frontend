@@ -54,7 +54,7 @@ export class InviteLinkConflictError extends Error {
 export const workspaceService = {
     /**
      * POST /api/v1/workspaces
-     * Create a new workspace. The creating org automatically becomes admin.
+     * Create a new workspace. The creating user automatically becomes admin.
      */
     async createWorkspace(request: CreateWorkspaceRequest): Promise<Workspace> {
         const raw: Record<string, unknown> = await apiPost(workspacesUrl(), request);
@@ -63,7 +63,7 @@ export const workspaceService = {
 
     /**
      * GET /api/v1/workspaces?skip=0&limit=100
-     * List all workspaces the authenticated org belongs to.
+     * List all workspaces the authenticated user belongs to.
      */
     async listWorkspaces(skip = 0, limit = 100): Promise<PaginatedWorkspaces> {
         const params = new URLSearchParams({
@@ -255,31 +255,31 @@ export const memberService = {
     },
 
     /**
-     * PATCH /api/v1/workspaces/{workspaceId}/members/{orgId}
+     * PATCH /api/v1/workspaces/{workspaceId}/members/{userId}
      * Update a member's role.
      */
     async updateMemberRole(
         workspaceId: string,
-        orgId: string,
+        userId: string,
         request: UpdateMemberRoleRequest,
     ): Promise<WorkspaceMember> {
         const raw: Record<string, unknown> = await apiPatch(
-            workspacesUrl(workspaceId, 'members', orgId),
+            workspacesUrl(workspaceId, 'members', userId),
             request,
         );
         return toMember(raw);
     },
 
     /**
-     * DELETE /api/v1/workspaces/{workspaceId}/members/{orgId}
+     * DELETE /api/v1/workspaces/{workspaceId}/members/{userId}
      * Remove a member from the workspace.
      */
     async removeMember(
         workspaceId: string,
-        orgId: string,
+        userId: string,
     ): Promise<void> {
         await apiDelete(
-            workspacesUrl(workspaceId, 'members', orgId),
+            workspacesUrl(workspaceId, 'members', userId),
         );
     },
 };
@@ -314,8 +314,8 @@ function toInviteLink(raw: Record<string, unknown>): InviteLink {
 
 function toMember(raw: Record<string, unknown>): WorkspaceMember {
     return {
-        orgId: raw.org_id as string,
-        orgName: raw.org_name as string,
+        userId: raw.user_id as string,
+        name: raw.name as string,
         email: raw.email as string,
         role: raw.role as WorkspaceRole,
         joinedAt: raw.joined_at as string,

@@ -21,11 +21,11 @@ const PASSWORD_RULES = [
 type Status = 'idle' | 'loading' | 'success';
 
 export default function SignupPage() {
-  const [orgName, setOrgName] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ orgName?: string; email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
   const [status, setStatus] = useState<Status>('idle');
   const [apiError, setApiError] = useState('');
   const router = useRouter();
@@ -36,7 +36,7 @@ export default function SignupPage() {
 
   const validate = () => {
     const e: typeof errors = {};
-    if (!orgName.trim()) e.orgName = 'Organization name is required';
+    if (!name.trim()) e.name = 'Name is required';
     if (!email) e.email = 'Email is required';
     else if (!EMAIL_RE.test(email)) e.email = 'Enter a valid email address';
     if (!password) e.password = 'Password is required';
@@ -52,7 +52,7 @@ export default function SignupPage() {
     
     setStatus('loading');
     try {
-      await signup({ orgName, email, password });
+      await signup({ name, email, password });
       router.push(`/check-email?email=${encodeURIComponent(email)}`);
     } catch (err: unknown) {
       setStatus('idle');
@@ -101,7 +101,7 @@ export default function SignupPage() {
               )}
 
               <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="space-y-4 mb-4">
-                <AuthInput id="orgName" label="Organization name" value={orgName} onChange={(v) => { setOrgName(v); setErrors((p) => ({ ...p, orgName: undefined })); }} placeholder="Your Organization" autoComplete="organization" error={errors.orgName} />
+                <AuthInput id="name" label="Full name" value={name} onChange={(v) => { setName(v); setErrors((p) => ({ ...p, name: undefined })); }} placeholder="Your name" autoComplete="name" error={errors.name} />
                 <AuthInput id="email" label="Work email" type="email" value={email} onChange={(v) => { setEmail(v); setErrors((p) => ({ ...p, email: undefined })); }} placeholder="you@company.com" autoComplete="email" error={errors.email} />
                 <AuthInput id="password" label="Password" type={showPassword ? 'text' : 'password'} value={password} onChange={(v) => { setPassword(v); setErrors((p) => ({ ...p, password: undefined })); }} placeholder="Create a password" autoComplete="new-password" error={errors.password}
                   trailing={<button type="button" onClick={() => setShowPassword((s) => !s)} className="p-1 hover:opacity-70 cursor-pointer" aria-label={showPassword ? 'Hide password' : 'Show password'} style={{ color: 'var(--v2-paper-ink-2)' }}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>} />

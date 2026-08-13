@@ -48,7 +48,7 @@ import { toast } from 'react-toastify';
  * + text-muted-foreground / border-primary). Redesigned per impeccable Operate:
  * - Single scrollable view (no tabs) — all details visible together
  * - No cards for basic layout — sections grouped by proximity + hairlines
- * - Surfaces BOTH workspace data and the signed-in account/org info
+ * - Surfaces BOTH workspace data and the signed-in account/user info
  * - Hanken Grotesk + JetBrains Mono, vermilion accent reserved for state
  * - Every input has a label + helper text; immutable fields are visually distinct
  *
@@ -64,7 +64,7 @@ export default function SettingsPage() {
     const params = useParams();
     const workspaceId = params.workspaceId as string;
     const { logout } = useAuth();
-    const org = useAuthStore((s) => s.org);
+    const user = useAuthStore((s) => s.user);
     const authStatus = useAuthStore((s) => s.status);
     const [activeTab, setActiveTab] = useState<SettingsTab>('general');
 
@@ -220,24 +220,24 @@ export default function SettingsPage() {
         }
     };
 
-    const handleUpdateRole = async (orgId: string, newRole: WorkspaceRole) => {
+    const handleUpdateRole = async (userId: string, newRole: WorkspaceRole) => {
         try {
-            const updated = await memberService.updateMemberRole(workspaceId, orgId, {
+            const updated = await memberService.updateMemberRole(workspaceId, userId, {
                 role: newRole as 'editor' | 'viewer',
             });
-            setMembers((prev) => prev.map((m) => (m.orgId === orgId ? updated : m)));
+            setMembers((prev) => prev.map((m) => (m.userId === userId ? updated : m)));
             toast.success(`Role updated to ${newRole}`);
         } catch (err) {
             toast.error(err instanceof Error ? err.message : 'Failed to update role');
         }
     };
 
-    const handleRemoveMember = async (orgId: string, orgName: string) => {
-        if (!confirm(`Remove ${orgName} from this workspace?`)) return;
+    const handleRemoveMember = async (userId: string, name: string) => {
+        if (!confirm(`Remove ${name} from this workspace?`)) return;
         try {
-            await memberService.removeMember(workspaceId, orgId);
-            setMembers((prev) => prev.filter((m) => m.orgId !== orgId));
-            toast.success(`${orgName} removed`);
+            await memberService.removeMember(workspaceId, userId);
+            setMembers((prev) => prev.filter((m) => m.userId !== userId));
+            toast.success(`${name} removed`);
         } catch (err) {
             toast.error(err instanceof Error ? err.message : 'Failed to remove member');
         }
@@ -308,7 +308,7 @@ export default function SettingsPage() {
             {activeTab === 'general' && (
                 <>
             {/* ====================================================
-                SECTION 1: Account (the signed-in org/user)
+                SECTION 1: Account (the signed-in user)
             ==================================================== */}
             <Section title="Account">
                 {authStatus === 'loading' ? (
@@ -321,26 +321,26 @@ export default function SettingsPage() {
                             </div>
                         ))}
                     </div>
-                ) : authStatus === 'authenticated' && org ? (
+                ) : authStatus === 'authenticated' && user ? (
                     <div className="space-y-3">
-                        <DetailRow icon={<UserIcon className="w-3.5 h-3.5" />} label="Organization" value={org.orgName} />
-                        <DetailRow icon={<Mail className="w-3.5 h-3.5" />} label="Email" value={org.email} mono />
+                        <DetailRow icon={<UserIcon className="w-3.5 h-3.5" />} label="Name" value={user.name} />
+                        <DetailRow icon={<Mail className="w-3.5 h-3.5" />} label="Email" value={user.email} mono />
                         <DetailRow
-                            icon={org.emailVerified ? <ShieldCheck className="w-3.5 h-3.5" /> : <ShieldAlert className="w-3.5 h-3.5" />}
+                            icon={user.emailVerified ? <ShieldCheck className="w-3.5 h-3.5" /> : <ShieldAlert className="w-3.5 h-3.5" />}
                             label="Email verified"
-                            value={org.emailVerified ? 'Yes' : 'No'}
-                            valueColor={org.emailVerified ? 'var(--v2-sage)' : 'var(--v2-vermilion)'}
+                            value={user.emailVerified ? 'Yes' : 'No'}
+                            valueColor={user.emailVerified ? 'var(--v2-sage)' : 'var(--v2-vermilion)'}
                         />
                         <DetailRow
                             icon={<ShieldCheck className="w-3.5 h-3.5" />}
                             label="Status"
-                            value={org.isActive ? 'Active' : 'Inactive'}
-                            valueColor={org.isActive ? 'var(--v2-sage)' : 'var(--v2-vermilion)'}
+                            value={user.isActive ? 'Active' : 'Inactive'}
+                            valueColor={user.isActive ? 'var(--v2-sage)' : 'var(--v2-vermilion)'}
                         />
                         <DetailRow
                             icon={<Calendar className="w-3.5 h-3.5" />}
                             label="Joined"
-                            value={new Date(org.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                            value={new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                             mono
                         />
                     </div>
@@ -450,7 +450,7 @@ export default function SettingsPage() {
                     <div>
                         {members.map((member, i) => (
                             <div
-                                key={member.orgId}
+                                key={member.userId}
                                 className="flex items-center justify-between py-2.5"
                                 style={{ borderTop: i === 0 ? 'none' : '1px solid var(--v2-paper-rule)' }}
                             >
@@ -466,7 +466,7 @@ export default function SettingsPage() {
                                             fontWeight: 600,
                                         }}
                                     >
-                                        {member.orgName.charAt(0).toUpperCase()}
+                                        {member.name.charAt(0).toUpperCase()}
                                     </div>
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-1.5">
@@ -474,7 +474,7 @@ export default function SettingsPage() {
                                                 className="truncate"
                                                 style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.8rem', fontWeight: 500, color: 'var(--v2-paper-ink)' }}
                                             >
-                                                {member.orgName}
+                                                {member.name}
                                             </span>
                                             {member.role === 'admin' && (
                                                 <span className="flex items-center gap-0.5 v2-label text-[7px] px-1.5 py-0.5 rounded" style={{ color: 'var(--v2-vermilion)', border: '1px solid rgba(200,50,27,0.2)' }}>
@@ -498,7 +498,7 @@ export default function SettingsPage() {
                                         <>
                                             <select
                                                 value={member.role}
-                                                onChange={(e) => handleUpdateRole(member.orgId, e.target.value as WorkspaceRole)}
+                                                onChange={(e) => handleUpdateRole(member.userId, e.target.value as WorkspaceRole)}
                                                 className="px-2 py-1 rounded-[4px] outline-none"
                                                 style={{
                                                     fontFamily: 'var(--v2-font-sans)',
@@ -513,10 +513,10 @@ export default function SettingsPage() {
                                             </select>
                                             <InfoTooltip text="Editor: can modify content. Viewer: read-only access." />
                                             <button
-                                                onClick={() => handleRemoveMember(member.orgId, member.orgName)}
+                                                onClick={() => handleRemoveMember(member.userId, member.name)}
                                                 className="p-1 rounded-[4px]"
                                                 style={{ color: 'var(--v2-vermilion)', opacity: 0.6 }}
-                                                aria-label={`Remove ${member.orgName}`}
+                                                aria-label={`Remove ${member.name}`}
                                                 onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
                                                 onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.6'; }}
                                             >

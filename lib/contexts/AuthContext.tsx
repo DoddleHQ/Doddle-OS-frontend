@@ -14,7 +14,7 @@ import {
     refreshAccessToken,
     logout as apiLogout,
     DEFAULT_EXPIRES_IN,
-    type OrgResponse,
+    type UserResponse,
     type AuthResponse,
 } from '@/lib/services/authService';
 import { useAuthStore, type AuthStatus } from '@/lib/stores/authStore';
@@ -25,13 +25,13 @@ import { useAuthStore, type AuthStatus } from '@/lib/stores/authStore';
 
 /**
  * AuthContext now holds only the ACTIONS (refresh, logout, loginSuccess) and
- * runs the bootstrap effect. The reactive STATE (status, org, expiresIn) lives
+ * runs the bootstrap effect. The reactive STATE (status, user, expiresIn) lives
  * in the Zustand store so components can subscribe to exactly the field they
  * need without over-subscribing.
  *
  * For new code, prefer the selector API directly:
  *   const status = useAuthStore(s => s.status);
- *   const org    = useAuthStore(s => s.org);
+ *   const user   = useAuthStore(s => s.user);
  *
  * `useAuth()` is kept for components that need the actions (refresh / logout /
  * loginSuccess), and re-exports the reactive fields for backward compatibility.
@@ -48,7 +48,7 @@ const AuthActionsContext = createContext<AuthActions | null>(null);
 export function useAuth() {
     const actions = useContext(AuthActionsContext);
     const status = useAuthStore((s) => s.status);
-    const org = useAuthStore((s) => s.org);
+    const user = useAuthStore((s) => s.user);
     const expiresIn = useAuthStore((s) => s.expiresIn);
     const errorMessage = useAuthStore((s) => s.errorMessage);
 
@@ -58,7 +58,7 @@ export function useAuth() {
 
     return {
         status,
-        org,
+        user,
         expiresIn,
         errorMessage,
         ...actions,
@@ -121,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshTimerRef.current = setTimeout(async () => {
             try {
                 const authRes = await refreshAccessToken();
-                setAuthState({ status: 'authenticated', org: authRes.org, expiresIn: authRes.expiresIn });
+                setAuthState({ status: 'authenticated', user: authRes.user, expiresIn: authRes.expiresIn });
                 // Schedule the next refresh
                 scheduleRefresh(authRes.expiresIn);
             } catch {
@@ -148,7 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         try {
             const authRes = await refreshAccessToken();
-            setAuthState({ status: 'authenticated', org: authRes.org, expiresIn: authRes.expiresIn });
+            setAuthState({ status: 'authenticated', user: authRes.user, expiresIn: authRes.expiresIn });
             scheduleRefresh(authRes.expiresIn);
             return true;
         } catch {
@@ -174,9 +174,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         async function bootstrap() {
             try {
-                const org = await getMe();
+                const user = await getMe();
                 if (!cancelled) {
-                    setAuthState({ status: 'authenticated', org, expiresIn: DEFAULT_EXPIRES_IN });
+                    setAuthState({ status: 'authenticated', user, expiresIn: DEFAULT_EXPIRES_IN });
                     scheduleRefresh(DEFAULT_EXPIRES_IN);
                 }
             } catch {
@@ -207,7 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // -----------------------------------------------------------------------
     const loginSuccess = useCallback(
         (authRes: AuthResponse) => {
-            setAuthState({ status: 'authenticated', org: authRes.org, expiresIn: authRes.expiresIn });
+            setAuthState({ status: 'authenticated', user: authRes.user, expiresIn: authRes.expiresIn });
             scheduleRefresh(authRes.expiresIn);
         },
         [scheduleRefresh, setAuthState],
@@ -250,4 +250,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 // ---------------------------------------------------------------------------
 
 export { useAuthStore, type AuthStatus };
-export type { OrgResponse };
+export type { UserResponse };
