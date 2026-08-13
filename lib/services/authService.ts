@@ -15,9 +15,9 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8
 // Types — camelCase to match the backend API exactly
 // ---------------------------------------------------------------------------
 
-/** Org profile returned by login, force-login, refresh, and /me. */
-export type OrgResponse = {
-    orgName: string;
+/** User profile returned by login, force-login, refresh, and /me. */
+export type UserResponse = {
+    name: string;
     email: string;
     emailVerified: boolean;
     isActive: boolean;
@@ -28,7 +28,7 @@ export type OrgResponse = {
 export type AuthResponse = {
     tokenType: string;
     expiresIn: number;
-    org: OrgResponse;
+    user: UserResponse;
 };
 
 /** Simple message response (signup, verify-email, send-verification, etc.). */
@@ -38,7 +38,7 @@ export type MessageResponse = {
 
 /** Request body for POST /signup. */
 export type SignupRequest = {
-    orgName: string;
+    name: string;
     email: string;
     password: string;
 };
@@ -285,7 +285,7 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
  * Returns the currently authenticated organization profile, hydrated fresh
  * from PostgreSQL. Requires a valid access_token cookie.
  */
-export async function getMe(): Promise<OrgResponse> {
+export async function getMe(): Promise<UserResponse> {
     // Use apiClient's refresh-aware fetch so an expired access token is
     // automatically refreshed and retried. The old authFetch wrapper had no
     // 401-refresh logic, so getMe() would fail on expired tokens even though
@@ -447,4 +447,39 @@ export async function resetPassword(token: string, newPassword: string): Promise
     }
 
     return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// User profile management
+// ---------------------------------------------------------------------------
+
+/** Response from PATCH /user/edit-profile. */
+export type UserProfileResponse = {
+    name: string;
+    email: string;
+    updatedAt: string;
+};
+
+/**
+ * PATCH /api/v1/user/edit-profile
+ * Edit the current user's display name.
+ */
+export async function editProfile(name: string): Promise<UserProfileResponse> {
+    const { apiPatch } = await import('./apiClient');
+    const raw = await apiPatch(`${API_BASE_URL}/api/v1/user/edit-profile`, { name });
+    return raw as UserProfileResponse;
+}
+
+/**
+ * GET /api/v1/user/lookup?email=...
+ * Look up a user by email (used for workspace invite validation).
+ */
+export async function lookupUser(email: string): Promise<{ name: string; email: string } | null> {
+    try {
+        const { apiGet } = await import('./apiClient');
+        const raw = await apiGet(`${API_BASE_URL}/api/v1/user/lookup?email=${encodeURIComponent(email)}`);
+        return raw as { name: string; email: string };
+    } catch {
+        return null;
+    }
 }

@@ -26,7 +26,7 @@ export function UserMenu({ variant = 'light' }: { variant?: 'light' | 'dark' }) 
     const [open, setOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
-    const org = auth.status === 'authenticated' ? auth.org : undefined;
+    const user = auth.status === 'authenticated' ? auth.user : undefined;
     const isDark = variant === 'dark';
 
     // Colors resolved per register
@@ -65,9 +65,9 @@ export function UserMenu({ variant = 'light' }: { variant?: 'light' | 'dark' }) 
         };
     }, [open]);
 
-    // Initials from org name
-    const initials = org?.orgName
-        ? org.orgName
+    // Initials from user name
+    const initials = user?.name
+        ? user.name
               .split(/\s+/)
               .map((w: string) => w[0])
               .join('')
@@ -142,7 +142,7 @@ export function UserMenu({ variant = 'light' }: { variant?: 'light' | 'dark' }) 
                             <div className="px-4 py-6 flex items-center justify-center">
                                 <Loader2 className="h-4 w-4 animate-spin" style={{ color: c.muted }} />
                             </div>
-                        ) : auth.status === 'authenticated' && org ? (
+                        ) : auth.status === 'authenticated' && user ? (
                             <>
                                 {/* Identity */}
                                 <div className="px-4 py-3" style={{ borderBottom: `1px solid ${c.menuBorder}` }}>
@@ -156,13 +156,13 @@ export function UserMenu({ variant = 'light' }: { variant?: 'light' | 'dark' }) 
                                             lineHeight: 1.3,
                                         }}
                                     >
-                                        {org.orgName}
+                                        {user.name}
                                     </p>
                                     <p
                                         className="v2-mono truncate"
                                         style={{ fontSize: '0.68rem', color: c.emailText, marginTop: '0.125rem' }}
                                     >
-                                        {org.email}
+                                        {user.email}
                                     </p>
                                 </div>
 

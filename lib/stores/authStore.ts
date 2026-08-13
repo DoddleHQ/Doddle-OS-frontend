@@ -1,10 +1,10 @@
 'use client';
 
 import { create } from 'zustand';
-import type { OrgResponse } from '@/lib/services/authService';
+import type { UserResponse } from '@/lib/services/authService';
 
 /*
- * Auth store — selector-based global state for auth status + org identity.
+ * Auth store — selector-based global state for auth status + user identity.
  *
  * Replaces the AuthContext value subscription model. Context re-rendered
  * every consumer on any auth state change (including the ~12-min proactive
@@ -12,9 +12,9 @@ import type { OrgResponse } from '@/lib/services/authService';
  * exactly the field they need:
  *
  *   const status = useAuthStore(s => s.status);
- *   const org    = useAuthStore(s => s.org);
+ *   const user   = useAuthStore(s => s.user);
  *
- * WHAT LIVES HERE: auth status, org identity, and the actions that mutate
+ * WHAT LIVES HERE: auth status, user identity, and the actions that mutate
  * them (loginSuccess, setAuthState, clear).
  *
  * WHAT DOES NOT LIVE HERE: the proactive refresh timer, the bootstrap effect,
@@ -26,34 +26,34 @@ export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'erro
 
 interface AuthState {
     status: AuthStatus;
-    org: OrgResponse | null;
+    user: UserResponse | null;
     expiresIn: number;
     errorMessage?: string;
 
     /** Set after a successful login / force-login (called from AuthContext). */
-    loginSuccess: (org: OrgResponse, expiresIn: number) => void;
+    loginSuccess: (user: UserResponse, expiresIn: number) => void;
     /** Replace the full auth state (used by bootstrap + refresh). */
-    setAuthState: (state: { status: AuthStatus; org?: OrgResponse | null; expiresIn?: number; errorMessage?: string }) => void;
+    setAuthState: (state: { status: AuthStatus; user?: UserResponse | null; expiresIn?: number; errorMessage?: string }) => void;
     /** Reset to unauthenticated (called on logout / refresh failure). */
     clear: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
     status: 'loading',
-    org: null,
+    user: null,
     expiresIn: 0,
 
-    loginSuccess: (org, expiresIn) =>
-        set({ status: 'authenticated', org, expiresIn, errorMessage: undefined }),
+    loginSuccess: (user, expiresIn) =>
+        set({ status: 'authenticated', user, expiresIn, errorMessage: undefined }),
 
-    setAuthState: ({ status, org, expiresIn, errorMessage }) =>
+    setAuthState: ({ status, user, expiresIn, errorMessage }) =>
         set((prev) => ({
             status,
-            org: org !== undefined ? org : prev.org,
+            user: user !== undefined ? user : prev.user,
             expiresIn: expiresIn !== undefined ? expiresIn : prev.expiresIn,
             errorMessage,
         })),
 
     clear: () =>
-        set({ status: 'unauthenticated', org: null, expiresIn: 0, errorMessage: undefined }),
+        set({ status: 'unauthenticated', user: null, expiresIn: 0, errorMessage: undefined }),
 }));

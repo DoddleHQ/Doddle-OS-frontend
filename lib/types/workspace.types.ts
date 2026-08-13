@@ -32,9 +32,9 @@ export interface Workspace {
 // ---------------------------------------------------------------------------
 
 export interface WorkspaceMember {
-    /** Obfuscated UUID of the member's organization. */
-    orgId: string;
-    orgName: string;
+    /** Obfuscated UUID of the member's user. */
+    userId: string;
+    name: string;
     email: string;
     role: WorkspaceRole;
     joinedAt: string;
