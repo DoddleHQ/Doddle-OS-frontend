@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { TapeTicker } from './TapeTicker';
+import { Logo } from '@/components/v2/Logo';
 import { useEntryCta } from '@/lib/hooks/useEntryCta';
 
 gsap.registerPlugin(useGSAP);
@@ -68,7 +69,7 @@ export function HeroSpecimen() {
       <div className="px-6 md:px-10 pt-5">
         <div className="flex items-center justify-between">
           <span className="v2-label text-[11px]" style={{ color: 'var(--v2-paper-ink-2)' }}>
-            Doddle OS
+            <Logo variant="wordmark" theme="light" />
           </span>
           <span className="v2-mono text-[11px] hidden md:inline" style={{ color: 'var(--v2-paper-ink-2)' }}>
             autonomous agent orchestration

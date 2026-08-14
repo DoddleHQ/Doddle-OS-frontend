@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight, Send, Loader2 } from 'lucide-react';
 import { FlowingThreads } from '@/components/v2/FlowingThreads';
+import { Logo } from '@/components/v2/Logo';
 import { DeskCard, AgentTyping } from './DeskCard';
 import { V2HITLCard } from './V2HITLCard';
 import { V2ArtifactCard } from './V2ArtifactCard';
@@ -230,7 +231,7 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
         <header className="flex-shrink-0 px-6 md:px-10 pt-8 relative z-10">
           <div className="max-w-[720px] mx-auto">
             <Link href="/" className="v2-display text-[1.125rem]" style={{ color: 'var(--v2-paper-ink)' }}>
-              Doddle OS
+              <Logo variant="wordmark" theme="light" />
             </Link>
           </div>
         </header>
@@ -325,7 +326,7 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
       <header className="flex-shrink-0 px-6 md:px-10 pt-8 pb-2 relative z-10">
         <div className="max-w-[720px] mx-auto flex items-center justify-between">
           <Link href="/" className="v2-display text-[1.125rem]" style={{ color: 'var(--v2-paper-ink)' }}>
-            Doddle OS
+            <Logo variant="wordmark" theme="light" />
           </Link>
           <AnimatePresence>
             {isListening && (

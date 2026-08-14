@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import {
     Save,
@@ -63,6 +63,7 @@ type SettingsTab = 'general' | 'sync';
 
 export default function SettingsPage() {
     const params = useParams();
+    const router = useRouter();
     const workspaceId = params.workspaceId as string;
     const { logout } = useAuth();
     const user = useAuthStore((s) => s.user);
@@ -100,6 +101,11 @@ export default function SettingsPage() {
     const [newInviteExpiresIn, setNewInviteExpiresIn] = useState(15);
     const [creatingInvite, setCreatingInvite] = useState(false);
     const [copiedToken, setCopiedToken] = useState<string | null>(null);
+    const [deletingWorkspace, setDeletingWorkspace] = useState(false);
+
+    // Determine if current user is an admin by matching email against members
+    const currentUserMember = members.find((m) => m.email === user?.email);
+    const isAdmin = currentUserMember?.role === 'admin';
 
     // === Fetchers ===
     const fetchMembers = useCallback(async () => {
@@ -266,6 +272,22 @@ export default function SettingsPage() {
             notify(`${name} removed`, 'success');
         } catch (err) {
             notify(err instanceof Error ? err.message : 'Failed to remove member', 'error');
+        }
+    };
+
+    // Delete workspace (admin only)
+    const handleDeleteWorkspace = async () => {
+        if (!confirm(`Delete "${ws.name || 'this workspace'}"? This permanently removes all threads, artifacts, connections, and members. This cannot be undone.`)) return;
+        try {
+            setDeletingWorkspace(true);
+            await workspaceService.deleteWorkspace(workspaceId);
+            // Refresh the workspace list so the deleted workspace disappears
+            await refreshWorkspaceList();
+            notify('Workspace deleted', 'success');
+            router.replace('/workspaces');
+        } catch (err) {
+            notify(err instanceof Error ? err.message : 'Failed to delete workspace', 'error');
+            setDeletingWorkspace(false);
         }
     };
 
@@ -758,6 +780,34 @@ export default function SettingsPage() {
                     </div>
                 )}
             </Section>
+
+                {/* Danger zone — admin only */}
+                {isAdmin && (
+                    <Section title="Danger Zone">
+                        <div
+                            className="flex items-center justify-between py-2.5"
+                            style={{ borderTop: '1px solid rgba(200,50,27,0.15)' }}
+                        >
+                            <div>
+                                <div style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.8rem', fontWeight: 500, color: 'var(--v2-paper-ink)' }}>
+                                    Delete this workspace
+                                </div>
+                                <div style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.72rem', color: 'var(--v2-paper-ink-2)', marginTop: '0.125rem' }}>
+                                    Permanently removes all threads, artifacts, connections, and members.
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleDeleteWorkspace}
+                                disabled={deletingWorkspace}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] v2-label text-[9px] transition-opacity flex-shrink-0 ml-3"
+                                style={{ color: 'var(--v2-vermilion)', border: '1px solid rgba(200,50,27,0.2)', opacity: deletingWorkspace ? 0.5 : 1 }}
+                            >
+                                {deletingWorkspace ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                                {deletingWorkspace ? 'Deleting…' : 'Delete'}
+                            </button>
+                        </div>
+                    </Section>
+                )}
                 </>
             )}
 

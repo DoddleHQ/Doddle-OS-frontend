@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings, ChevronLeft, ChevronRight, Plus, Home } from 'lucide-react';
+import { Settings, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Logo } from '@/components/v2/Logo';
 import { UserMenu } from '@/components/layout/UserMenu';
 import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 import { WORKSPACE_MODULES as MODULES } from './modules';
 import { NavItem, StatusDot } from './primitives';
 import type { Workspace } from '@/lib/types/workspace.types';
 import { mockMissionControlData, type LiveActivity } from '@/data/missionControl';
+import { workspaceService } from '@/lib/services/workspaceService';
 
 /*
  * InstrumentShell — Operate-mode dashboard layout.
@@ -42,8 +44,22 @@ export function InstrumentShell({ workspaceId, workspace, children }: Instrument
   const [feedOpen, setFeedOpen] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { workspaces } = useWorkspaces();
+  const [needsPersona, setNeedsPersona] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const activeModule = MODULES.find((m) => pathname.includes(m.path)) || MODULES[0];
+  const isOnPersonaPage = pathname.includes('/brand-persona');
+
+  // Check if workspace has a brand persona — re-checks on route changes so
+  // the banner hides after the user saves a persona (from Brand Guardrails
+  // editor or the Brand Persona setup page) and navigates anywhere else.
+  useEffect(() => {
+    workspaceService.getPersona(workspaceId).then((persona) => {
+      setNeedsPersona(!persona || !persona.content || persona.content.trim().length === 0);
+    }).catch(() => setNeedsPersona(false));
+  }, [workspaceId, pathname]);
+
+  const showBanner = needsPersona && !bannerDismissed && !isOnPersonaPage;
 
   return (
     <div className="v2-scope flex h-screen overflow-hidden" style={{ background: 'var(--v2-paper-ground)' }}>
@@ -100,6 +116,51 @@ export function InstrumentShell({ workspaceId, workspace, children }: Instrument
             )}
           </div>
         </header>
+
+        {/* Setup banner — shown when brand persona is not configured */}
+        {showBanner && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2, ease: EASE }}
+            className="flex-shrink-0 overflow-hidden"
+          >
+            <Link
+              href={`/workspaces/${workspaceId}/brand-persona`}
+              className="flex items-center gap-2.5 px-5 py-2.5 transition-colors group"
+              style={{ background: 'rgba(200,50,27,0.05)', borderBottom: '1px solid var(--v2-paper-rule)' }}
+            >
+              <span
+                className="w-6 h-6 rounded-[6px] flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(200,50,27,0.08)' }}
+              >
+                <Settings className="w-3.5 h-3.5" style={{ color: 'var(--v2-vermilion)' }} strokeWidth={1.75} />
+              </span>
+              <span style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.78rem', color: 'var(--v2-paper-ink)', fontWeight: 500 }}>
+                Set up your brand persona
+              </span>
+              <span style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.68rem', color: 'var(--v2-paper-ink-2)' }}>
+                · Help your agents understand your brand
+              </span>
+              <span
+                className="ml-auto v2-label text-[8px] transition-transform group-hover:translate-x-0.5"
+                style={{ color: 'var(--v2-vermilion)' }}
+              >
+                Start →
+              </span>
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setBannerDismissed(true); }}
+                className="flex-shrink-0 ml-2 transition-opacity"
+                style={{ color: 'var(--v2-paper-ink-2)', opacity: 0.4 }}
+                aria-label="Dismiss"
+              >
+                ×
+              </button>
+            </Link>
+          </motion.div>
+        )}
+
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
 
@@ -244,7 +305,7 @@ function IconRail({ workspaceId, workspaces }: { workspaceId: string; workspaces
         title="Back to home"
         aria-label="Back to home"
       >
-        <Home className="w-4 h-4" strokeWidth={1.75} style={{ color: 'var(--v2-vermilion-lift)' }} />
+        <Logo variant="monogram" theme="dark" size={24} />
       </Link>
       <span className="w-7 h-px my-1" style={{ background: 'var(--v2-ink-rule)' }} />
       <div className="flex-1 flex flex-col gap-1.5 overflow-y-auto no-scrollbar">

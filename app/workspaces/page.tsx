@@ -8,6 +8,7 @@ import { ArrowRight, Loader2 } from 'lucide-react';
 import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 import { useAuthStore } from '@/lib/stores/authStore';
 import type { Workspace } from '@/lib/types/workspace.types';
+import { Logo } from '@/components/v2/Logo';
 
 /*
  * /workspaces — the workspace list page.
@@ -56,7 +57,7 @@ export default function WorkspacesPage() {
       <header className="px-6 md:px-10 pt-12 pb-8">
         <div className="max-w-[720px] mx-auto">
           <Link href="/" className="v2-display text-[1.25rem] block mb-2" style={{ color: 'var(--v2-paper-ink)' }}>
-            Doddle OS
+            <Logo variant="wordmark" theme="light" />
           </Link>
           <h1 className="v2-display text-[clamp(1.75rem,4vw,2.5rem)]" style={{ color: 'var(--v2-paper-ink)' }}>
             Your Workspaces
@@ -74,13 +75,13 @@ export default function WorkspacesPage() {
             <WorkspaceCard key={ws.workspaceId} ws={ws} index={i} />
           ))}
 
-          {/* Start new onboarding for another workspace */}
+          {/* Create another workspace */}
           <Link
             href="/onboarding"
             className="flex items-center gap-3 px-4 py-3.5 rounded-[10px] transition-colors mt-4 group"
             style={{ border: '1px dashed var(--v2-paper-rule-strong)', color: 'var(--v2-paper-ink-2)' }}
           >
-            <span className="v2-mono text-[13px]">Start new onboarding</span>
+            <span className="v2-mono text-[13px]">Create new workspace</span>
             <ArrowRight className="w-4 h-4 ml-auto transition-transform group-hover:translate-x-1" style={{ color: 'var(--v2-vermilion)' }} />
           </Link>
         </div>

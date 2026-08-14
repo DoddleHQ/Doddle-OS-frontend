@@ -784,11 +784,27 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                     // Common patterns: {feedback: "..."}, {value: "..."}, {response: "..."}, {message: "..."}
                     const textValue = obj.feedback || obj.value || obj.response || obj.message || obj.text;
                     if (typeof textValue === 'string' && textValue) return textValue;
+                    // Handle value being an array (multi-selection sends string[])
+                    if (Array.isArray(textValue)) {
+                        return textValue.map(item => {
+                            if (typeof item === 'string') return item;
+                            if (typeof item === 'object' && item !== null) {
+                                const io = item as Record<string, any>;
+                                return io.url || io.value || io.label || io.page_name || io.text || io.name || String(item);
+                            }
+                            return String(item);
+                        }).join(', ');
+                    }
                     // {approved: true/false} pattern
                     if ('approved' in obj) return obj.approved ? 'Approved ✓' : 'Rejected ✗';
                     // Fallback: join all string values
                     const strings = Object.values(obj).filter(v => typeof v === 'string' && v);
                     if (strings.length > 0) return (strings as string[]).join(', ');
+                    // Last fallback: join array values (e.g., {value: [...], selected: [...]})
+                    const arrays = Object.values(obj).filter(v => Array.isArray(v) && v.length > 0);
+                    if (arrays.length > 0) {
+                        return (arrays[0] as unknown[]).map(String).join(', ');
+                    }
                 }
                 return String(response);
             })();
