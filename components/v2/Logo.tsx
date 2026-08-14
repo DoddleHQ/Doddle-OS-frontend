@@ -31,12 +31,12 @@ export function Logo({
         ? theme === 'dark' ? '/logo-monogram-white.png' : '/logo-monogram.png'
         : theme === 'dark' ? '/logo-wordmark-white.png' : '/logo-wordmark.png';
 
-    // Default sizes
+    // Default sizes — wordmark is ~3:1 aspect ratio
     const width = size ?? (variant === 'monogram' ? 32 : 120);
-    const height = size ?? (variant === 'monogram' ? 32 : 22);
+    const height = size ?? (variant === 'monogram' ? 32 : 40);
 
-    // For wordmark, maintain aspect ratio if only width is specified
-    const actualHeight = variant === 'wordmark' && size ? Math.round(size * 0.187) : height;
+    // For wordmark, maintain aspect ratio (~0.33 height/width)
+    const actualHeight = variant === 'wordmark' && size ? Math.round(size * 0.33) : height;
     const actualWidth = variant === 'wordmark' && !size ? 120 : width;
 
     return (

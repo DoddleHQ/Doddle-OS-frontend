@@ -468,7 +468,7 @@ export default function SettingsPage() {
                                     background: 'rgba(255,255,255,0.4)',
                                     border: '1px solid var(--v2-paper-rule)',
                                 }}
-                                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--v2-vermilion);'; e.currentTarget.style.boxShadow = '0 0 0 2px rgba(200,50,27,0.12)'; }}
+                                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--v2-vermilion)'; e.currentTarget.style.boxShadow = '0 0 0 2px rgba(200,50,27,0.12)'; }}
                                 onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--v2-paper-rule)'; e.currentTarget.style.boxShadow = 'none'; }}
                             />
                             <button

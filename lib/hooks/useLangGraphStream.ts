@@ -795,6 +795,10 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                             return String(item);
                         }).join(', ');
                     }
+                    // {confirmed: true/false} pattern (V2HITLCard confirmations)
+                    if ('confirmed' in obj && typeof obj.confirmed === 'boolean') {
+                        return obj.confirmed ? 'Confirmed ✓' : 'Declined ✗';
+                    }
                     // {approved: true/false} pattern
                     if ('approved' in obj) return obj.approved ? 'Approved ✓' : 'Rejected ✗';
                     // Fallback: join all string values
