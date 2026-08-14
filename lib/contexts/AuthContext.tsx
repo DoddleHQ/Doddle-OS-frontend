@@ -231,9 +231,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // best-effort
         }
         clearAuth();
-        if (!DISABLE_AUTH_REDIRECT) {
-            router.replace('/login');
-        }
+        // Always redirect to login on explicit logout — this is a user action,
+        // not a background auth failure, so DISABLE_AUTH_REDIRECT doesn't apply.
+        router.replace('/login');
     }, [clearRefreshTimer, router, clearAuth]);
 
     const actions: AuthActions = { refresh, logout, loginSuccess };

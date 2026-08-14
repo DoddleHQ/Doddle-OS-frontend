@@ -9,6 +9,7 @@ import { FlowingThreads } from '@/components/v2/FlowingThreads';
 import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { normalizeDomain } from '@/lib/utils/domain';
+import { Logo } from '@/components/v2/Logo';
 
 const EASE = [0.4, 0, 0.2, 1] as const;
 
@@ -72,7 +73,7 @@ export function WorkspaceCreate() {
       <header className="flex-shrink-0 px-6 md:px-10 pt-8 relative z-10">
         <div className="max-w-[480px] mx-auto">
           <Link href="/" className="v2-display text-[1.125rem]" style={{ color: 'var(--v2-paper-ink)' }}>
-            Doddle OS
+            <Logo variant="wordmark" theme="light" />
           </Link>
         </div>
       </header>

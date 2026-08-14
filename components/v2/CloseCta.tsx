@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { useEntryCta } from '@/lib/hooks/useEntryCta';
+import { Logo } from '@/components/v2/Logo';
 
 /*
  * CloseCta — paper register, the close.
@@ -69,7 +70,7 @@ export function CloseCta() {
           transition={{ duration: 0.8 }}
         >
           <span className="v2-mono text-[11px]" style={{ color: 'var(--v2-paper-ink-2)' }}>
-            Doddle OS
+            <Logo variant="wordmark" theme="light" />
           </span>
           <span className="v2-label text-[10px]" style={{ color: 'var(--v2-paper-ink-2)' }}>
             autonomous agent orchestration

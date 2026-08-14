@@ -49,10 +49,15 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
     // Send both 'value' and 'selected' keys — different backend graphs check
     // different keys (content_architect niche selection checks 'selected',
     // other graphs use extract_user_response which checks 'value').
+    // Also include the option LABELS for chat display (the hook reads
+    // selectedLabel/selectedLabels to render the user's choice).
+    const selectedLabels = options
+      .filter(opt => selected.includes(opt.id))
+      .map(opt => opt.label);
     if (isMulti) {
-      onRespond({ value: selected, selected });
+      onRespond({ value: selected, selected, selectedLabels });
     } else {
-      onRespond({ value: selected[0], selected: selected[0] });
+      onRespond({ value: selected[0], selected: selected[0], selectedLabel: selectedLabels[0] });
     }
   };
 

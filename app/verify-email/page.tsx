@@ -97,11 +97,20 @@ function VerifyEmailContent() {
                 <motion.div className="w-14 h-14 mx-auto mb-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(200,50,27,0.08)' }} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
                     {status === 'expired' ? <AlertTriangle className="w-7 h-7" style={{ color: 'var(--v2-vermilion)' }} strokeWidth={1.5} /> : <X className="w-7 h-7" style={{ color: 'var(--v2-vermilion)' }} strokeWidth={1.5} />}
                 </motion.div>
-                <h2 className="v2-display text-[1.75rem] mb-2" style={{ color: 'var(--v2-paper-ink)' }}>{status === 'expired' ? 'Link expired' : 'Invalid link'}</h2>
-                <p className="text-[14px] mb-7" style={{ color: 'var(--v2-paper-ink-2)' }}>{status === 'expired' ? 'This verification link has expired.' : 'This verification link is invalid.'} Please request a new one.</p>
+                <h2 className="v2-display text-[1.75rem] mb-2" style={{ color: 'var(--v2-paper-ink)' }}>
+                    {status === 'expired' ? 'Link expired or already used' : 'Invalid link'}
+                </h2>
+                <p className="text-[14px] mb-2" style={{ color: 'var(--v2-paper-ink-2)' }}>
+                    {status === 'expired'
+                        ? 'Verification links are single-use and expire after 24 hours.'
+                        : 'This verification link is invalid.'}
+                </p>
+                <p className="text-[13px] mb-7" style={{ color: 'var(--v2-paper-ink-2)' }}>
+                    If you already clicked this link, your email may be verified — try logging in.
+                </p>
                 <div className="space-y-3">
-                    <Link href="/signup" className="w-full flex items-center justify-center gap-2 px-6 py-3.5 v2-label text-[11px] rounded-[10px]" style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)', boxShadow: '0 4px 14px rgba(200,50,27,0.2)' }}><Mail className="w-4 h-4" /> Sign up again</Link>
-                    <Link href="/login" className="w-full flex items-center justify-center gap-2 px-6 py-3.5 v2-label text-[11px] rounded-[10px] border" style={{ borderColor: 'var(--v2-paper-rule-strong)', color: 'var(--v2-paper-ink)' }}><ArrowLeft className="w-4 h-4" /> Back to login</Link>
+                    <Link href="/login" className="w-full flex items-center justify-center gap-2 px-6 py-3.5 v2-label text-[11px] rounded-[10px]" style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)', boxShadow: '0 4px 14px rgba(200,50,27,0.2)' }}><ArrowRight className="w-4 h-4" /> Go to login</Link>
+                    <Link href="/signup" className="w-full flex items-center justify-center gap-2 px-6 py-3.5 v2-label text-[11px] rounded-[10px] border" style={{ borderColor: 'var(--v2-paper-rule-strong)', color: 'var(--v2-paper-ink)' }}><Mail className="w-4 h-4" /> Sign up again</Link>
                 </div>
             </motion.div>
         );
