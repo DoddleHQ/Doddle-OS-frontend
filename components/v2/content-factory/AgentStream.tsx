@@ -1,7 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Check, Loader2, Globe } from 'lucide-react';
@@ -13,7 +12,6 @@ import { ChatMessage, TypingIndicator } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { StreamArtifact } from './StreamArtifact';
 import { V2HITLCard } from '@/components/v2/onboarding/V2HITLCard';
-import { notify } from '@/lib/stores/notificationStore';
 import type { ChatMessage as ChatMessageType } from '@/lib/types/graph-events.types';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -23,7 +21,7 @@ const EASE = [0.16, 1, 0.3, 1] as const;
  *
  * Replaces the 3 duplicated v1 `new/page.tsx` files with one parameterized
  * component. Takes an AgentConfig (graphId, inputBuilder, etc.) and renders:
- * - Welcome state (before first message): agent title + URL input + example chips
+ * - Welcome state: agent title + "Start Analysis" button (only trigger)
  * - Streaming state: messages, artifacts, HITL cards, typing indicator
  * - Completion state: success banner + back-to-list link
  *
@@ -32,10 +30,11 @@ const EASE = [0.16, 1, 0.3, 1] as const;
  */
 
 export function AgentStream({ config, workspaceId }: { config: AgentConfig; workspaceId: string }) {
-    const router = useRouter();
-    const params = useParams();
     const chatRef = useRef<HTMLDivElement>(null);
     const threadCreatedRef = useRef(false);
+    // DB thread ID (differs from the LangGraph thread ID) — used for artifact
+    // persistence so the detail page can find them
+    const [dbThreadId, setDbThreadId] = useState<string | null>(null);
 
     const { workspace } = useCurrentWorkspace(workspaceId);
     const workspaceDomain = workspace?.websiteDomain ?? '';
@@ -78,6 +77,10 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
                 description: `Started via ${config.name}`,
             }).then((dbThread) => {
                 if (dbThread) {
+                    // Store the DB thread ID — artifacts must be saved under
+                    // this ID (not the LangGraph ID) so the detail page can
+                    // find them
+                    setDbThreadId(dbThread.id);
                     const newUrl = `/workspaces/${workspaceId}/modules/content-factory/v2/${config.slug}/${dbThread.id}`;
                     window.history.replaceState(null, '', newUrl);
                 }
@@ -85,23 +88,25 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
         }
     }, [streamState.threadId, config.moduleId, config.slug, config.name, workspaceId, isRunning, createThreadFromStream]);
 
-    // Save artifacts as they arrive — tracks which have been queued so none
-    // are skipped when multiple arrive in quick succession (same as v1)
+    // Save artifacts as they arrive — uses the DB thread ID (not LangGraph)
+    // and tracks queued IDs so none are skipped when multiple arrive together
     const savedArtifactIdsRef = useRef<Set<string>>(new Set());
     useEffect(() => {
-        if (!streamState.threadId || artifacts.length === 0) return;
-        // Save every artifact that hasn't been queued yet
+        if (!dbThreadId || artifacts.length === 0) return;
         for (const artifact of artifacts) {
             if (savedArtifactIdsRef.current.has(artifact.artifactId)) continue;
             savedArtifactIdsRef.current.add(artifact.artifactId);
-            saveArtifact(workspaceId, config.moduleId, streamState.threadId, artifact).catch(() => {});
+            saveArtifact(workspaceId, config.moduleId, dbThreadId, artifact).catch(() => {});
         }
-    }, [artifacts, streamState.threadId, config.moduleId, workspaceId, saveArtifact]);
+    }, [artifacts, dbThreadId, config.moduleId, workspaceId, saveArtifact]);
 
-    // Reset the threadCreated guard when a new stream starts
+    // Reset guards when a new stream starts — clears the artifact dedup set
+    // and the thread-created flag so retry streams work correctly
     useEffect(() => {
         if (!isRunning && !isComplete) {
             threadCreatedRef.current = false;
+            savedArtifactIdsRef.current.clear();
+            setDbThreadId(null);
         }
     }, [isRunning, isComplete]);
 
@@ -235,8 +240,21 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
                     {/* Messages */}
                     {messages.map((msg) => {
                         if (msg.type === 'hitl') {
-                            if (msg.id === lastHitlId) return null; // rendered below
-                            return null; // past HITLs handled inline
+                            // The currently-pending HITL renders as the live
+                            // interactive card below — skip it here. Past
+                            // (answered) HITLs render as static question text
+                            // so the transcript stays coherent.
+                            if (msg.id === lastHitlId) return null;
+                            const hitlData = msg.metadata?.data as { message?: string; prompt?: string } | undefined;
+                            const questionText = hitlData?.message || hitlData?.prompt || msg.content || '';
+                            return (
+                                <ChatMessage
+                                    key={msg.id}
+                                    message={{ ...msg, type: 'agent', content: questionText } as ChatMessageType}
+                                    agentName={config.name}
+                                    agentInitials={config.initials}
+                                />
+                            );
                         }
                         if (msg.type === 'artifact') {
                             const artifact = artifacts.find(a => a.artifactId === msg.metadata?.artifactId);

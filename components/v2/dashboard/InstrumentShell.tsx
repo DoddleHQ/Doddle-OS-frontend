@@ -47,7 +47,11 @@ export function InstrumentShell({ workspaceId, workspace, children }: Instrument
   const [needsPersona, setNeedsPersona] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
-  const activeModule = MODULES.find((m) => pathname.includes(m.path)) || MODULES[0];
+  const activeModule = pathname.includes('/settings')
+    ? { name: 'Settings' }
+    : pathname.includes('/brand-persona')
+      ? { name: 'Brand Persona' }
+      : MODULES.find((m) => pathname.includes(m.path)) || MODULES[0];
   const isOnPersonaPage = pathname.includes('/brand-persona');
 
   // Check if workspace has a brand persona — re-checks on route changes so
