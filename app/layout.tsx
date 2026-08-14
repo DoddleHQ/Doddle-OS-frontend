@@ -34,7 +34,9 @@ export const metadata: Metadata = {
   title: "Doddle OS",
   description: "An operating system for autonomous marketing agents. Deploy a fleet of specialized agents. Watch them hand the work to each other. Resolve their conflicts. Approve what ships.",
   icons: {
-    icon: '/logo-monogram.png',
+    icon: [
+      { url: '/logo-monogram.png', type: 'image/png' },
+    ],
     shortcut: '/logo-monogram.png',
   },
 };

@@ -1,7 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-
 /*
  * Logo — Doddle OS brand logo component.
  *
@@ -12,11 +10,16 @@ import Image from 'next/image';
  * Theme:
  * - 'light': colored/dark logo for light backgrounds (paper register)
  * - 'dark': white logo for dark backgrounds (ink register)
+ *
+ * Uses a plain <img> (not next/image) — logo files are small static assets
+ * (6-14KB) that don't benefit from the optimizer, and the /_next/image
+ * optimizer can fail in standalone production builds.
  */
 
 interface LogoProps {
     variant?: 'monogram' | 'wordmark';
     theme?: 'light' | 'dark';
+    /** Width in px (height auto-computed from aspect ratio) */
     size?: number;
     className?: string;
 }
@@ -31,22 +34,19 @@ export function Logo({
         ? theme === 'dark' ? '/logo-monogram-white.png' : '/logo-monogram.png'
         : theme === 'dark' ? '/logo-wordmark-white.png' : '/logo-wordmark.png';
 
-    // Default sizes — wordmark is ~3:1 aspect ratio
+    // Wordmark is ~3:1; monogram is 1:1
     const width = size ?? (variant === 'monogram' ? 32 : 120);
-    const height = size ?? (variant === 'monogram' ? 32 : 40);
-
-    // For wordmark, maintain aspect ratio (~0.33 height/width)
-    const actualHeight = variant === 'wordmark' && size ? Math.round(size * 0.33) : height;
-    const actualWidth = variant === 'wordmark' && !size ? 120 : width;
+    const height = variant === 'wordmark' ? Math.round(width / 3) : width;
 
     return (
-        <Image
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
             src={src}
             alt="Doddle OS"
-            width={actualWidth}
-            height={actualHeight}
+            width={width}
+            height={height}
             className={className}
-            priority
+            style={{ height: 'auto' }}
         />
     );
 }
