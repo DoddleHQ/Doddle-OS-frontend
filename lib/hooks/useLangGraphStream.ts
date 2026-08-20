@@ -736,6 +736,15 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
             return;
         }
 
+        // Stale-card guard: if the pending interrupt has moved on (e.g. the
+        // thread advanced out-of-band), an old card's response must NOT
+        // answer the new interrupt. The requestId must match what is
+        // currently pending.
+        if (state.pendingHITL && state.pendingHITL.requestId !== requestId) {
+            console.warn('[respondToHITL] Ignoring stale HITL response for', requestId, '— currently pending:', state.pendingHITL.requestId);
+            return;
+        }
+
         try {
             debugLog('[respondToHITL] Resuming workflow:', {
                 threadId: currentThreadId,
@@ -946,7 +955,7 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
 
             onError?.(new Error(errorMessage));
         }
-    }, [state.threadId, graphId, addMessage, handleGraphEvent, checkForInterrupts, onError]);
+    }, [state.threadId, state.pendingHITL, graphId, addMessage, handleGraphEvent, checkForInterrupts, onError]);
 
     // Reset state
     const reset = useCallback(() => {

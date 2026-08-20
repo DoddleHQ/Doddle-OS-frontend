@@ -47,7 +47,14 @@ export function WorkspaceCreate() {
       const ws = await createWorkspace(name.trim(), domain);
 
       // Refresh auth so middleware sees a fresh cookie
-      try { await refreshAuth(); } catch { /* navigate regardless */ }
+      // refreshAuth can hang (never resolves) — race it with a timeout so
+      // the user always lands in the new workspace instead of a stuck spinner.
+      try {
+        await Promise.race([
+          refreshAuth(),
+          new Promise((resolve) => setTimeout(resolve, 3000)),
+        ]);
+      } catch { /* navigate regardless */ }
 
       router.replace(`/workspaces/${ws.workspaceId}`);
     } catch (err) {

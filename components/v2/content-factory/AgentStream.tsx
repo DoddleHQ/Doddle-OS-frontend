@@ -11,6 +11,7 @@ import type { AgentConfig } from './agents';
 import { ChatMessage, TypingIndicator } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { StreamArtifact } from './StreamArtifact';
+import { MagentoGate } from './MagentoGate';
 import { V2HITLCard } from '@/components/v2/onboarding/V2HITLCard';
 import type { ChatMessage as ChatMessageType } from '@/lib/types/graph-events.types';
 
@@ -39,7 +40,7 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
     const { workspace } = useCurrentWorkspace(workspaceId);
     const workspaceDomain = workspace?.websiteDomain ?? '';
 
-    const { createThreadFromStream, saveArtifact } = useThread();
+    const { createThreadFromStream, saveArtifact, updateThread } = useThread();
 
     const {
         state: streamState,
@@ -100,6 +101,19 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
         }
     }, [artifacts, dbThreadId, config.moduleId, workspaceId, saveArtifact]);
 
+    // Mark the DB thread complete when the run finishes — without this the
+    // thread list shows a permanent "running" status/pulse.
+    const completionMarkedRef = useRef(false);
+    useEffect(() => {
+        if (isComplete && dbThreadId && !completionMarkedRef.current) {
+            completionMarkedRef.current = true;
+            updateThread(workspaceId, config.moduleId, dbThreadId, { status: 'complete' }).catch(() => {});
+        }
+        if (!isRunning && !isComplete) {
+            completionMarkedRef.current = false;
+        }
+    }, [isComplete, isRunning, dbThreadId, workspaceId, config.moduleId, updateThread]);
+
     // Reset guards when a new stream starts — clears the artifact dedup set
     // and the thread-created flag so retry streams work correctly
     useEffect(() => {
@@ -120,6 +134,15 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
         const input = config.inputBuilder(effectiveUrl, undefined, workspaceId);
         startStream(input);
     }, [addMessage, config, startStream, workspaceId, workspaceDomain, showWelcome]);
+
+    // Welcome-screen start button — the only trigger for the first run.
+    // Agents with a startMessage (e.g. Mia, who works from the catalog
+    // instead of a domain) use it verbatim.
+    const handleStart = useCallback(() => {
+        const content = config.startMessage ?? (workspaceDomain ? `Analyze ${workspaceDomain}` : 'Start');
+        addMessage({ type: 'user', content, sender: 'You' });
+        startStream(config.inputBuilder(workspaceDomain, undefined, workspaceId));
+    }, [addMessage, config, startStream, workspaceDomain, workspaceId]);
 
     const handleHITLRespond = useCallback((response: unknown) => {
         if (streamState.pendingHITL) {
@@ -196,8 +219,15 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
                             <p style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.85rem', color: 'var(--v2-paper-ink-2)', maxWidth: '400px', marginBottom: '2rem', lineHeight: 1.55 }}>
                                 {config.greeting}
                             </p>
-                            {/* Workspace domain — auto-detected, no URL input needed */}
-                            {workspaceDomain ? (
+                            {/* Pre-flight context — catalog agents (Mia) gate on the
+                                Magento connection; the rest show the workspace domain */}
+                            {config.connectionSource === 'magento' ? (
+                                <MagentoGate
+                                    workspaceId={workspaceId}
+                                    startLabel={config.startLabel ?? 'Start Writing'}
+                                    onStart={handleStart}
+                                />
+                            ) : workspaceDomain ? (
                                 <div className="flex flex-col items-center gap-3">
                                     <div
                                         className="flex items-center gap-2 px-4 py-2 rounded-[8px]"
@@ -209,7 +239,7 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
                                         </span>
                                     </div>
                                     <button
-                                        onClick={() => handleSend(workspaceDomain)}
+                                        onClick={handleStart}
                                         className="v2-mono px-6 py-2 rounded-[8px] transition-colors"
                                         style={{
                                             fontSize: '0.72rem',
@@ -220,7 +250,7 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
                                             cursor: 'pointer',
                                         }}
                                     >
-                                        Start Analysis
+                                        {config.startLabel ?? 'Start Analysis'}
                                     </button>
                                 </div>
                             ) : (
