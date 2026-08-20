@@ -1,4 +1,4 @@
-export type ModuleId = 'business-audit' | 'content-factory' | 'content-architect' | 'magento-content-writer' | 'interactive-website-architect' | 'seo-cluster' | 'social-growth' | 'saas-launch-ops' | 'analytics-action' | 'google-analyst' | 'merchant-analyst' | 'brand-persona';
+export type ModuleId = 'business-audit' | 'content-factory' | 'content-architect' | 'magento-content-writer' | 'magento-content' | 'interactive-website-architect' | 'seo-cluster' | 'social-growth' | 'saas-launch-ops' | 'analytics-action' | 'google-analyst' | 'merchant-analyst' | 'brand-persona';
 
 export type ThreadStatus = 'running' | 'complete' | 'error';
 

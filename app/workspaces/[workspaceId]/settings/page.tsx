@@ -73,6 +73,13 @@ export default function SettingsPage() {
     const [editUserName, setEditUserName] = useState('');
     const [savingUserName, setSavingUserName] = useState(false);
 
+    // Deep-link support — /settings?tab=sync opens straight to Data Sync
+    // (read from window.location to avoid the useSearchParams Suspense bail-out)
+    useEffect(() => {
+        const tab = new URLSearchParams(window.location.search).get('tab');
+        if (tab === 'sync' || tab === 'general') setActiveTab(tab);
+    }, []);
+
     // Sync editUserName when user data loads
     useEffect(() => {
         if (user) setEditUserName(user.name);
