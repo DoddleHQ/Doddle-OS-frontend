@@ -76,10 +76,10 @@ export const AGENTS: Record<string, AgentConfig> = {
         moduleId: 'magento-content',
         name: 'Mia',
         role: 'Magento Content Lead',
-        subtitle: 'Reads your synced Magento catalog from the datalake and writes product, category, collection, and brand page content — you review, then push to your store',
+        subtitle: 'Name the pages you want from your Magento catalog — she writes them and runs automated quality checks on every one',
         icon: Store,
         initials: 'M',
-        greeting: "Hi, I'm Mia. I'll read your Magento catalog from the datalake and draft content for your product, category, collection, and brand pages.",
+        greeting: "Hi, I'm Mia. Name the product, category, collection, or brand pages you want — I'll write them and run automated quality checks on each one before handing them over.",
         workingStatus: 'Reading your Magento catalog…',
         inputBuilder: (_url, _extras, workspaceId) => ({
             workspace_id: workspaceId ?? '',
