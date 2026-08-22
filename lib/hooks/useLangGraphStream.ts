@@ -451,6 +451,7 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                 metadata: {
                     eventId: event.id,
                     stepId: event.stepId,
+                    level: event.payload.level,
                 },
             });
         }

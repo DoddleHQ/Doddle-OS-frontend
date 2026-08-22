@@ -11,6 +11,8 @@ import type { AgentConfig } from './agents';
 import { ChatMessage, TypingIndicator } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { StreamArtifact } from './StreamArtifact';
+import { getRunContext, getCompletionSummary } from './runContext';
+import { supersededArtifactIds } from './artifactMarkdown';
 import { MagentoGate } from './MagentoGate';
 import { V2HITLCard } from '@/components/v2/onboarding/V2HITLCard';
 import type { ChatMessage as ChatMessageType } from '@/lib/types/graph-events.types';
@@ -53,16 +55,23 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
         error,
         messages,
         artifacts,
+        completeEvent,
+        progress,
         clearError,
     } = useLangGraphStream({
         graphId: config.graphId,
         workspaceId,
     });
 
-    // Auto-scroll to bottom on new content
+    // Auto-scroll to bottom on new content — but only when the user is
+    // already near the bottom, so reviewing earlier messages during a long
+    // run isn't constantly yanked back down.
     useEffect(() => {
-        if (chatRef.current) {
-            chatRef.current.scrollTo({ top: chatRef.current.scrollHeight, behavior: 'smooth' });
+        const el = chatRef.current;
+        if (!el) return;
+        const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+        if (distanceFromBottom < 240) {
+            el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
         }
     }, [messages, artifacts, isRunning]);
 
@@ -156,6 +165,16 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
         return streamState.pendingHITL ? hitlMsgs[hitlMsgs.length - 1]?.id : null;
     })();
 
+    // Run context — structured progress events win (graph-agnostic); the
+    // per-graph message-pattern table in ./runContext is the fallback for
+    // graphs that don't emit progress. Empty for agents with neither.
+    const runContext = getRunContext(config.graphId, progress, messages);
+    const completionSummary = getCompletionSummary(completeEvent);
+
+    // Revised pages re-emit their content artifact — show only the newest
+    // version of each page title (older versions stay persisted as history).
+    const supersededArtifacts = supersededArtifactIds(artifacts);
+
     return (
         <div className="flex flex-col h-full">
             {/* Top bar: back link + status */}
@@ -181,13 +200,17 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
                 {isRunning && (
                     <div className="flex items-center gap-1.5">
                         <Loader2 className="w-3 h-3 animate-spin" style={{ color: 'var(--v2-vermilion)' }} />
-                        <span className="v2-mono" style={{ fontSize: '0.62rem', color: 'var(--v2-paper-ink-2)' }}>{config.workingStatus}</span>
+                        <span className="v2-mono" style={{ fontSize: '0.62rem', color: 'var(--v2-paper-ink-2)' }}>
+                            {config.workingStatus}{runContext ? ` · ${runContext}` : ''}
+                        </span>
                     </div>
                 )}
                 {isComplete && (
                     <div className="flex items-center gap-1.5">
                         <Check className="w-3.5 h-3.5" style={{ color: 'var(--v2-sage)' }} />
-                        <span className="v2-mono" style={{ fontSize: '0.62rem', color: 'var(--v2-sage)' }}>complete</span>
+                        <span className="v2-mono" style={{ fontSize: '0.62rem', color: 'var(--v2-sage)' }}>
+                            complete{completionSummary ? ` · ${completionSummary}` : ''}
+                        </span>
                     </div>
                 )}
             </div>
@@ -288,6 +311,7 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
                         }
                         if (msg.type === 'artifact') {
                             const artifact = artifacts.find(a => a.artifactId === msg.metadata?.artifactId);
+                            if (artifact && supersededArtifacts.has(artifact.artifactId)) return null;
                             if (artifact) return <StreamArtifact key={msg.id} artifact={artifact} />;
                             return null;
                         }
@@ -323,6 +347,11 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
                             <p style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.85rem', color: 'var(--v2-paper-ink)', fontWeight: 500, marginBottom: '0.75rem' }}>
                                 Done!
                             </p>
+                            {completionSummary && (
+                                <p className="v2-mono" style={{ fontSize: '0.68rem', color: 'var(--v2-paper-ink-2)', marginBottom: '0.75rem' }}>
+                                    {completionSummary}
+                                </p>
+                            )}
                             <Link
                                 href={`/workspaces/${workspaceId}/modules/content-factory/v2/${config.slug}`}
                                 className="inline-flex items-center gap-2 px-4 py-2 v2-label text-[10px] rounded-[8px]"
