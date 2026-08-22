@@ -8,6 +8,7 @@ import { ArrowLeft, Trash2, Loader2 } from 'lucide-react';
 import { getAgent } from '@/components/v2/content-factory/agents';
 import { useThread } from '@/lib/contexts/ThreadContext';
 import { StreamArtifact } from '@/components/v2/content-factory/StreamArtifact';
+import { detectArtifactKind, kindToArtifactType, supersededArtifactIds } from '@/components/v2/content-factory/artifactMarkdown';
 import { notify } from '@/lib/stores/notificationStore';
 import type { ArtifactPayload } from '@/lib/types/graph-events.types';
 
@@ -117,16 +118,26 @@ export default function ThreadDetail() {
                 </p>
             ) : (
                 <div className="space-y-4">
-                    {currentArtifacts.map((artifact) => {
-                        // Map AuditArtifact (DB shape) → ArtifactPayload (component shape)
-                        const payload: ArtifactPayload = {
-                            artifactId: String(artifact.id),
-                            artifactType: 'report',
-                            title: artifact.pageName || 'Artifact',
-                            content: artifact.content || artifact.data,
-                        };
-                        return <StreamArtifact key={artifact.id} artifact={payload} />;
-                    })}
+                    {(() => {
+                        // Reconstruct ArtifactPayloads, derive a truthful type
+                        // from the content shape, and show only the newest
+                        // version of each page title (QC revisions re-emit
+                        // content artifacts under the same title — older
+                        // versions stay persisted as history).
+                        const payloads = currentArtifacts.map((artifact) => {
+                            const base: ArtifactPayload = {
+                                artifactId: String(artifact.id),
+                                artifactType: 'report',
+                                title: artifact.pageName || 'Artifact',
+                                content: artifact.content || artifact.data,
+                            };
+                            return { ...base, artifactType: kindToArtifactType(detectArtifactKind(base)) };
+                        });
+                        const superseded = supersededArtifactIds(payloads);
+                        return payloads
+                            .filter((p) => !superseded.has(p.artifactId))
+                            .map((payload) => <StreamArtifact key={payload.artifactId} artifact={payload} />);
+                    })()}
                 </div>
             )}
         </div>

@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { Copy, Check, Download, FileText } from 'lucide-react';
 import type { ArtifactPayload } from '@/lib/types/graph-events.types';
 import { extractArtifactMarkdown } from '@/components/content-factory/chat/artifacts/artifactContentUtils';
+import { renderArtifactMarkdown } from './artifactMarkdown';
 import { V2Markdown } from '@/components/v2/onboarding/V2Markdown';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -16,52 +17,14 @@ const EASE = [0.16, 1, 0.3, 1] as const;
  * tables, link lists, blueprints). Uses v2 tokens: paper-register card with
  * vermilion header accent, copy + download actions.
  *
- * Reuses the existing extractArtifactMarkdown utility (shared with v1).
+ * Content → markdown resolution lives in ./artifactMarkdown (pure, testable,
+ * shared with the thread detail page).
  */
 
 export function StreamArtifact({ artifact }: { artifact: ArtifactPayload }) {
     const [copied, setCopied] = useState(false);
 
-    const markdown = (() => {
-        const extracted = extractArtifactMarkdown(artifact);
-        if (extracted && extracted.trim() !== '{}' && extracted.trim() !== '') return extracted;
-
-        // Fallback: try common content paths
-        const content = typeof artifact.content === 'string'
-            ? (() => { try { return JSON.parse(artifact.content); } catch { return null; } })()
-            : artifact.content;
-
-        if (content && typeof content === 'object') {
-            if (typeof content.reportContent === 'string') return content.reportContent;
-            if (content.personaData?.reportContent) return content.personaData.reportContent;
-            // Page-content artifacts ({contentText, metadata}) — render the
-            // SEO fields + description instead of raw JSON
-            const meta = content.metadata as Record<string, string> | undefined;
-            if (meta && (meta.meta_title || meta.description)) {
-                const lines: string[] = [];
-                const fieldLabels: Array<[string, string]> = [
-                    ['meta_title', 'Meta title'],
-                    ['meta_description', 'Meta description'],
-                    ['meta_keyword', 'Meta keywords'],
-                    ['og_title', 'OG title'],
-                    ['og_description', 'OG description'],
-                    ['short_description', 'Short description'],
-                    ['url_key', 'URL key'],
-                ];
-                for (const [key, label] of fieldLabels) {
-                    if (meta[key]) lines.push(`**${label}:** ${meta[key]}`);
-                }
-                const desc = meta.description || (typeof content.contentText === 'string' ? content.contentText : '');
-                if (desc) lines.push(`**Description:**\n\n${desc}`);
-                if (lines.length > 0) return lines.join('\n\n');
-            }
-            if (typeof content.contentText === 'string' && content.contentText.trim()) {
-                return content.contentText;
-            }
-        }
-
-        return typeof artifact.content === 'string' ? artifact.content : '';
-    })();
+    const markdown = renderArtifactMarkdown(artifact, extractArtifactMarkdown);
 
     const handleCopy = () => {
         if (markdown) {
