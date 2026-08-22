@@ -14,6 +14,7 @@ import type { Workspace } from '@/lib/types/workspace.types';
 import { type LiveActivity } from '@/data/missionControl';
 import { threadService } from '@/lib/services/threadService';
 import type { AuditThread, ModuleId } from '@/lib/types/thread.types';
+import { AGENT_LIST } from '@/components/v2/content-factory/agents';
 import { workspaceService } from '@/lib/services/workspaceService';
 
 /*
@@ -352,15 +353,22 @@ function IconRail({ workspaceId, workspaces }: { workspaceId: string; workspaces
 }
 
 /* === Feed panel (real recent threads, no mock data) === */
+
+// Modules whose recent threads feed the activity panel: the base modules plus
+// every v2 agent's module (registry-driven — new agents appear automatically).
+const FEED_MODULE_IDS: ModuleId[] = [
+  'content-factory', 'seo-cluster', 'social-growth', 'business-audit', 'analytics-action',
+  ...AGENT_LIST.map((a) => a.moduleId),
+];
+
 function FeedPanel({ workspaceId, onClose }: { workspaceId: string; onClose: () => void }) {
   const [activities, setActivities] = useState<LiveActivity[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    const moduleIds: ModuleId[] = ['content-factory', 'seo-cluster', 'social-growth', 'business-audit', 'analytics-action'];
     Promise.all(
-      moduleIds.map((m) =>
+      FEED_MODULE_IDS.map((m) =>
         threadService.listThreads(workspaceId, { moduleId: m, limit: 5 }).catch(() => [] as AuditThread[]),
       ),
     )
@@ -370,14 +378,21 @@ function FeedPanel({ workspaceId, onClose }: { workspaceId: string; onClose: () 
           .flat()
           .sort((a, b) => (b.updatedAt || b.createdAt).localeCompare(a.updatedAt || a.createdAt))
           .slice(0, 10)
-          .map((t): LiveActivity => ({
-            id: t.id,
-            type: t.status === 'complete' ? 'resolution' : 'system',
-            timestamp: t.updatedAt || t.createdAt,
-            agent: { name: t.moduleId, role: t.status, avatar: t.moduleId.slice(0, 1).toUpperCase() },
-            content: t.title || 'Untitled thread',
-            meta: { domain: t.moduleId },
-          }));
+          .map((t): LiveActivity => {
+            const agentCfg = AGENT_LIST.find((a) => a.moduleId === t.moduleId);
+            return {
+              id: t.id,
+              type: t.status === 'complete' ? 'resolution' : 'system',
+              timestamp: t.updatedAt || t.createdAt,
+              agent: {
+                name: agentCfg?.name ?? t.moduleId,
+                role: agentCfg?.role ?? t.status,
+                avatar: agentCfg?.initials ?? t.moduleId.slice(0, 1).toUpperCase(),
+              },
+              content: t.title || 'Untitled thread',
+              meta: { domain: t.moduleId },
+            };
+          });
         setActivities(threads);
         setLoaded(true);
       });

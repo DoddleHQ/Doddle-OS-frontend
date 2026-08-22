@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { motion } from 'motion/react';
 import type { ChatMessage as ChatMessageType } from '@/lib/types/graph-events.types';
 import { V2Markdown } from '@/components/v2/onboarding/V2Markdown';
@@ -13,13 +14,18 @@ import { V2Markdown } from '@/components/v2/onboarding/V2Markdown';
  * - system: centered pill, mono text
  * - step: hairline-separated status line
  *
+ * Performance: memoized because long QC-heavy runs mount dozens of messages —
+ * without memo every new message re-rendered the entire transcript. System/step
+ * chips are the highest-frequency element (QC chatter) and render without
+ * framer-motion wrappers; motion stays on the low-frequency agent/user bubbles.
+ *
  * Operate mode: single sans, accent reserved for the agent label + user bubble,
  * border OR shadow (never both), 150ms entry.
  */
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-export function ChatMessage({ message, agentName, agentInitials }: { message: ChatMessageType; agentName?: string; agentInitials?: string }) {
+export const ChatMessage = memo(function ChatMessage({ message, agentName, agentInitials }: { message: ChatMessageType; agentName?: string; agentInitials?: string }) {
     if (message.type === 'user') {
         return (
             <motion.div
@@ -45,24 +51,23 @@ export function ChatMessage({ message, agentName, agentInitials }: { message: Ch
     }
 
     if (message.type === 'system' || message.type === 'step') {
+        // Warnings (QC failures, fallbacks) get a vermilion tint so trouble
+        // reads at a glance; info stays a quiet paper pill. No motion wrapper
+        // — these are the highest-frequency messages in QC-heavy runs.
+        const isWarning = (message.metadata as { level?: string } | undefined)?.level === 'warning';
         return (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.15 }}
-                className="flex justify-center my-2"
-            >
+            <div className="flex justify-center my-2">
                 <span
                     className="v2-mono px-3 py-1 rounded-full"
                     style={{
                         fontSize: '0.68rem',
-                        color: 'var(--v2-paper-ink-2)',
-                        border: '1px solid var(--v2-paper-rule)',
+                        color: isWarning ? 'var(--v2-vermilion)' : 'var(--v2-paper-ink-2)',
+                        border: `1px solid ${isWarning ? 'rgba(200,50,27,0.35)' : 'var(--v2-paper-rule)'}`,
                     }}
                 >
                     {message.content}
                 </span>
-            </motion.div>
+            </div>
         );
     }
 
@@ -113,7 +118,7 @@ export function ChatMessage({ message, agentName, agentInitials }: { message: Ch
     }
 
     return null;
-}
+});
 
 /*
  * TypingIndicator — ambient pulse shown while the agent is working.
