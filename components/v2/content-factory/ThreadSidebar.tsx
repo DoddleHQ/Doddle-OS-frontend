@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronRight, ChevronDown, ChevronLeft, Plus, Hash, Trash2 } from 'lucide-react';
+import { ChevronRight, ChevronDown, ChevronLeft, Plus, Hash, Trash2, Loader2 } from 'lucide-react';
 import { useThread } from '@/lib/contexts/ThreadContext';
+import { useRunRegistry, isRunLive, liveRunUrl, type RunSnapshot } from '@/lib/runs/runRegistry';
 import { notify } from '@/lib/stores/notificationStore';
 import type { AgentConfig } from './agents';
 import type { AuditThread } from '@/lib/types/thread.types';
@@ -142,6 +144,9 @@ export function ThreadSidebar({
                 </div>
             </div>
 
+            {/* Live registry runs — streams that survive navigation */}
+            <LiveRunSection agentSlug={agent.slug} workspaceId={workspaceId} />
+
             {/* Thread list */}
             <nav className="flex-1 overflow-y-auto px-2 pb-3 space-y-0.5">
                 {isLoading ? (
@@ -184,6 +189,67 @@ export function ThreadSidebar({
         </motion.aside>
             )}
         </AnimatePresence>
+    );
+}
+
+/* === Live registry runs — switch between in-flight agent runs === */
+function LiveRunSection({ agentSlug, workspaceId }: { agentSlug: string; workspaceId: string }) {
+    const router = useRouter();
+    const order = useRunRegistry((s) => s.order);
+    const runs = useRunRegistry((s) => s.runs);
+
+    const live = order
+        .map((runId) => runs[runId])
+        .filter((r): r is RunSnapshot => Boolean(r) && r!.agentSlug === agentSlug && isRunLive(r!.status))
+        .slice(0, 6);
+
+    if (live.length === 0) return null;
+
+    return (
+        <div className="px-2 pb-2 pt-1" style={{ borderBottom: '1px solid var(--v2-paper-rule)' }}>
+            <div className="flex items-center gap-1.5 px-1 pb-1.5 pt-0.5">
+                <Loader2 className="w-2.5 h-2.5 animate-spin" style={{ color: 'var(--v2-vermilion)' }} />
+                <span className="v2-mono" style={{ fontSize: '0.6rem', color: 'var(--v2-paper-ink-2)', letterSpacing: '0.04em' }}>
+                    RUNNING NOW · {live.length}
+                </span>
+            </div>
+            <div className="space-y-0.5">
+                {live.map((run) => {
+                    const needsInput = run.status === 'hitl_pending';
+                    const label = run.progress?.message || (needsInput ? 'Needs your input' : 'Working…');
+                    return (
+                        <div
+                            key={run.runId}
+                            className="flex items-center gap-1.5 px-2 py-1.5 rounded-[6px] cursor-pointer transition-colors"
+                            style={{ background: needsInput ? 'rgba(200,50,27,0.06)' : 'transparent' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = needsInput ? 'rgba(200,50,27,0.06)' : 'transparent'; }}
+                            onClick={() => router.push(liveRunUrl(workspaceId, agentSlug, run.runId))}
+                        >
+                            <span
+                                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                style={{
+                                    background: needsInput ? 'var(--v2-vermilion)' : 'var(--v2-sage)',
+                                    animation: 'v2-metric-breath 1.4s ease-in-out infinite',
+                                }}
+                            />
+                            <span
+                                className="flex-1 truncate"
+                                style={{
+                                    fontFamily: 'var(--v2-font-sans)',
+                                    fontSize: '0.72rem',
+                                    color: needsInput ? 'var(--v2-vermilion)' : 'var(--v2-paper-ink)',
+                                    fontWeight: needsInput ? 600 : 400,
+                                    lineHeight: 1.3,
+                                }}
+                            >
+                                {label}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
     );
 }
 
