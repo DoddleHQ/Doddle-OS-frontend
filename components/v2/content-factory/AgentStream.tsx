@@ -1,16 +1,26 @@
 'use client';
 
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useCallback, useState, useMemo } from 'react';
+
+const EMPTY_MESSAGES: never[] = [];
+const EMPTY_ARTIFACTS: never[] = [];
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Check, Loader2, Globe } from 'lucide-react';
-import { useLangGraphStream } from '@/lib/hooks/useLangGraphStream';
-import { useThread } from '@/lib/contexts/ThreadContext';
 import { useCurrentWorkspace } from '@/lib/hooks/useCurrentWorkspace';
+import {
+    useRunRegistry,
+    getRunActions,
+    liveRunUrl,
+    type RunSnapshot,
+} from '@/lib/runs/runRegistry';
 import type { AgentConfig } from './agents';
 import { ChatMessage, TypingIndicator } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { StreamArtifact } from './StreamArtifact';
+import { getRunContext, getCompletionSummary } from './runContext';
+import { supersededArtifactIds } from './artifactMarkdown';
+import { MagentoGate } from './MagentoGate';
 import { V2HITLCard } from '@/components/v2/onboarding/V2HITLCard';
 import type { ChatMessage as ChatMessageType } from '@/lib/types/graph-events.types';
 
@@ -19,119 +29,128 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 /*
  * AgentStream — v2 shared streaming chat page for content factory agents.
  *
- * Replaces the 3 duplicated v1 `new/page.tsx` files with one parameterized
- * component. Takes an AgentConfig (graphId, inputBuilder, etc.) and renders:
- * - Welcome state: agent title + "Start Analysis" button (only trigger)
- * - Streaming state: messages, artifacts, HITL cards, typing indicator
- * - Completion state: success banner + back-to-list link
+ * Multi-run capable: the run's stream, messages, artifacts, HITL state and
+ * persistence all live in the RunRegistry (headless RunContainer at the
+ * layout level). This component is a VIEW over one run snapshot —
+ * navigating away no longer cancels the run, and several agents can run
+ * concurrently, switched via the sidebar or the /live/{runId} URL.
  *
- * Uses the existing useLangGraphStream hook (proven, no SDK migration risk)
- * + ThreadContext for persistence.
+ * Without a runId prop it renders the welcome state; starting a run
+ * creates a registry entry and rewrites the URL to the run's live route.
  */
 
-export function AgentStream({ config, workspaceId }: { config: AgentConfig; workspaceId: string }) {
+export function AgentStream({ config, workspaceId, runId: runIdProp }: {
+    config: AgentConfig;
+    workspaceId: string;
+    runId?: string;
+}) {
     const chatRef = useRef<HTMLDivElement>(null);
-    const threadCreatedRef = useRef(false);
-    // DB thread ID (differs from the LangGraph thread ID) — used for artifact
-    // persistence so the detail page can find them
-    const [dbThreadId, setDbThreadId] = useState<string | null>(null);
+    const [activeRunId, setActiveRunId] = useState<string | null>(runIdProp ?? null);
 
     const { workspace } = useCurrentWorkspace(workspaceId);
     const workspaceDomain = workspace?.websiteDomain ?? '';
 
-    const { createThreadFromStream, saveArtifact } = useThread();
+    const run: RunSnapshot | undefined = useRunRegistry((s) => (activeRunId ? s.runs[activeRunId] : undefined));
+    const createRun = useRunRegistry((s) => s.createRun);
 
-    const {
-        state: streamState,
-        startStream,
-        addMessage,
-        respondToHITL,
-        isRunning,
-        isHITLPending,
-        isComplete,
-        error,
-        messages,
-        artifacts,
-        clearError,
-    } = useLangGraphStream({
-        graphId: config.graphId,
-        workspaceId,
-    });
+    // Snapshot-derived view state (null when no run is active)
+    const isRunning = !!run && (run.status === 'running' || run.status === 'connecting' || run.status === 'hitl_pending');
+    const isHITLPending = run?.status === 'hitl_pending';
+    const isComplete = run?.status === 'complete';
+    const messages = useMemo(() => run?.messages ?? EMPTY_MESSAGES, [run]);
+    const artifacts = useMemo(() => run?.artifacts ?? EMPTY_ARTIFACTS, [run]);
+    const error = run?.error ?? null;
+    const progress = run?.progress ?? null;
+    const completeEvent = run?.completeEvent ?? null;
 
-    // Auto-scroll to bottom on new content
+    // Auto-scroll to bottom on new content — but only when the user is
+    // already near the bottom, so reviewing earlier messages during a long
+    // run isn't constantly yanked back down.
     useEffect(() => {
-        if (chatRef.current) {
-            chatRef.current.scrollTo({ top: chatRef.current.scrollHeight, behavior: 'smooth' });
+        const el = chatRef.current;
+        if (!el) return;
+        const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+        if (distanceFromBottom < 240) {
+            el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
         }
     }, [messages, artifacts, isRunning]);
 
-    // Create a DB thread once we have a LangGraph thread ID
-    useEffect(() => {
-        if (streamState.threadId && !threadCreatedRef.current && isRunning) {
-            threadCreatedRef.current = true;
-            createThreadFromStream({
-                workspaceId,
-                threadId: streamState.threadId,
-                moduleId: config.moduleId,
-                title: `${config.name} — ${new Date().toLocaleDateString()}`,
-                description: `Started via ${config.name}`,
-            }).then((dbThread) => {
-                if (dbThread) {
-                    // Store the DB thread ID — artifacts must be saved under
-                    // this ID (not the LangGraph ID) so the detail page can
-                    // find them
-                    setDbThreadId(dbThread.id);
-                    const newUrl = `/workspaces/${workspaceId}/modules/content-factory/v2/${config.slug}/${dbThread.id}`;
-                    window.history.replaceState(null, '', newUrl);
-                }
-            }).catch(() => { /* non-fatal */ });
-        }
-    }, [streamState.threadId, config.moduleId, config.slug, config.name, workspaceId, isRunning, createThreadFromStream]);
+    const showHITL = isHITLPending && !!run?.pendingHITL;
+    const showWelcome = !activeRunId;
 
-    // Save artifacts as they arrive — uses the DB thread ID (not LangGraph)
-    // and tracks queued IDs so none are skipped when multiple arrive together
-    const savedArtifactIdsRef = useRef<Set<string>>(new Set());
-    useEffect(() => {
-        if (!dbThreadId || artifacts.length === 0) return;
-        for (const artifact of artifacts) {
-            if (savedArtifactIdsRef.current.has(artifact.artifactId)) continue;
-            savedArtifactIdsRef.current.add(artifact.artifactId);
-            saveArtifact(workspaceId, config.moduleId, dbThreadId, artifact).catch(() => {});
+    // Start a run: create the registry entry (the layout-level container
+    // picks it up, starts the stream, owns persistence) and rewrite the
+    // URL so back/refresh point at the live view.
+    const beginRun = useCallback((input: Record<string, unknown>, openingMessage?: { type: 'user'; content: string; sender: string }) => {
+        const runId = createRun({
+            agentSlug: config.slug,
+            graphId: config.graphId,
+            moduleId: config.moduleId,
+            agentName: config.name,
+            agentInitials: config.initials,
+            workspaceId,
+            input,
+            openingMessage,
+        });
+        setActiveRunId(runId);
+        if (typeof window !== 'undefined') {
+            window.history.replaceState(null, '', liveRunUrl(workspaceId, config.slug, runId));
         }
-    }, [artifacts, dbThreadId, config.moduleId, workspaceId, saveArtifact]);
-
-    // Reset guards when a new stream starts — clears the artifact dedup set
-    // and the thread-created flag so retry streams work correctly
-    useEffect(() => {
-        if (!isRunning && !isComplete) {
-            threadCreatedRef.current = false;
-            savedArtifactIdsRef.current.clear();
-            setDbThreadId(null);
-        }
-    }, [isRunning, isComplete]);
-
-    const showHITL = isHITLPending && !!streamState.pendingHITL;
-    const showWelcome = !isRunning && !isComplete && messages.length === 0;
+        return runId;
+    }, [createRun, config, workspaceId]);
 
     const handleSend = useCallback((message: string) => {
         // Auto-use workspace domain on the first message — the user doesn't need to type a URL
         const effectiveUrl = showWelcome && workspaceDomain ? workspaceDomain : message;
-        addMessage({ type: 'user', content: showWelcome && workspaceDomain ? `Analyze ${workspaceDomain}` : message, sender: 'You' });
-        const input = config.inputBuilder(effectiveUrl, undefined, workspaceId);
-        startStream(input);
-    }, [addMessage, config, startStream, workspaceId, workspaceDomain, showWelcome]);
+        const userText = showWelcome && workspaceDomain ? `Analyze ${workspaceDomain}` : message;
+        if (activeRunId) {
+            const actions = getRunActions(activeRunId);
+            actions?.addMessage({ type: 'user', content: userText, sender: 'You' });
+            actions?.start(config.inputBuilder(effectiveUrl, undefined, workspaceId));
+            return;
+        }
+        beginRun(
+            config.inputBuilder(effectiveUrl, undefined, workspaceId),
+            { type: 'user', content: userText, sender: 'You' },
+        );
+    }, [activeRunId, beginRun, config, showWelcome, workspaceDomain, workspaceId]);
+
+    // Welcome-screen start button — the only trigger for the first run.
+    // Agents with a startMessage (e.g. Mia, who works from the catalog
+    // instead of a domain) use it verbatim.
+    const handleStart = useCallback(() => {
+        const content = config.startMessage ?? (workspaceDomain ? `Analyze ${workspaceDomain}` : 'Start');
+        beginRun(
+            config.inputBuilder(workspaceDomain, undefined, workspaceId),
+            { type: 'user', content, sender: 'You' },
+        );
+    }, [beginRun, config, workspaceDomain, workspaceId]);
 
     const handleHITLRespond = useCallback((response: unknown) => {
-        if (streamState.pendingHITL) {
-            respondToHITL(streamState.pendingHITL.requestId, response);
+        if (activeRunId && run?.pendingHITL) {
+            getRunActions(activeRunId)?.respond(run.pendingHITL.requestId, response);
         }
-    }, [streamState.pendingHITL, respondToHITL]);
+    }, [activeRunId, run?.pendingHITL]);
+
+    const clearError = useCallback(() => {
+        if (activeRunId) getRunActions(activeRunId)?.clearError();
+    }, [activeRunId]);
 
     // Deduplicate messages — the hook sometimes adds duplicate step messages
     const lastHitlId = (() => {
         const hitlMsgs = messages.filter(m => m.type === 'hitl');
-        return streamState.pendingHITL ? hitlMsgs[hitlMsgs.length - 1]?.id : null;
+        return run?.pendingHITL ? hitlMsgs[hitlMsgs.length - 1]?.id : null;
     })();
+
+    // Run context — structured progress events win (graph-agnostic); the
+    // per-graph message-pattern table in ./runContext is the fallback for
+    // graphs that don't emit progress. Empty for agents with neither.
+    const runContext = getRunContext(config.graphId, progress, messages);
+    const completionSummary = getCompletionSummary(completeEvent);
+
+    // Revised pages re-emit their content artifact — show only the newest
+    // version of each page title (older versions stay persisted as history).
+    const supersededArtifacts = supersededArtifactIds(artifacts);
 
     return (
         <div className="flex flex-col h-full">
@@ -158,13 +177,17 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
                 {isRunning && (
                     <div className="flex items-center gap-1.5">
                         <Loader2 className="w-3 h-3 animate-spin" style={{ color: 'var(--v2-vermilion)' }} />
-                        <span className="v2-mono" style={{ fontSize: '0.62rem', color: 'var(--v2-paper-ink-2)' }}>{config.workingStatus}</span>
+                        <span className="v2-mono" style={{ fontSize: '0.62rem', color: 'var(--v2-paper-ink-2)' }}>
+                            {config.workingStatus}{runContext ? ` · ${runContext}` : ''}
+                        </span>
                     </div>
                 )}
                 {isComplete && (
                     <div className="flex items-center gap-1.5">
                         <Check className="w-3.5 h-3.5" style={{ color: 'var(--v2-sage)' }} />
-                        <span className="v2-mono" style={{ fontSize: '0.62rem', color: 'var(--v2-sage)' }}>complete</span>
+                        <span className="v2-mono" style={{ fontSize: '0.62rem', color: 'var(--v2-sage)' }}>
+                            complete{completionSummary ? ` · ${completionSummary}` : ''}
+                        </span>
                     </div>
                 )}
             </div>
@@ -196,8 +219,15 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
                             <p style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.85rem', color: 'var(--v2-paper-ink-2)', maxWidth: '400px', marginBottom: '2rem', lineHeight: 1.55 }}>
                                 {config.greeting}
                             </p>
-                            {/* Workspace domain — auto-detected, no URL input needed */}
-                            {workspaceDomain ? (
+                            {/* Pre-flight context — catalog agents (Mia) gate on the
+                                Magento connection; the rest show the workspace domain */}
+                            {config.connectionSource === 'magento' ? (
+                                <MagentoGate
+                                    workspaceId={workspaceId}
+                                    startLabel={config.startLabel ?? 'Start Writing'}
+                                    onStart={handleStart}
+                                />
+                            ) : workspaceDomain ? (
                                 <div className="flex flex-col items-center gap-3">
                                     <div
                                         className="flex items-center gap-2 px-4 py-2 rounded-[8px]"
@@ -209,7 +239,7 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
                                         </span>
                                     </div>
                                     <button
-                                        onClick={() => handleSend(workspaceDomain)}
+                                        onClick={handleStart}
                                         className="v2-mono px-6 py-2 rounded-[8px] transition-colors"
                                         style={{
                                             fontSize: '0.72rem',
@@ -220,7 +250,7 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
                                             cursor: 'pointer',
                                         }}
                                     >
-                                        Start Analysis
+                                        {config.startLabel ?? 'Start Analysis'}
                                     </button>
                                 </div>
                             ) : (
@@ -258,6 +288,7 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
                         }
                         if (msg.type === 'artifact') {
                             const artifact = artifacts.find(a => a.artifactId === msg.metadata?.artifactId);
+                            if (artifact && supersededArtifacts.has(artifact.artifactId)) return null;
                             if (artifact) return <StreamArtifact key={msg.id} artifact={artifact} />;
                             return null;
                         }
@@ -266,7 +297,7 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
 
                     {/* HITL card */}
                     {showHITL && (
-                        <V2HITLCard request={streamState.pendingHITL!} onRespond={handleHITLRespond} />
+                        <V2HITLCard request={run!.pendingHITL!} onRespond={handleHITLRespond} />
                     )}
 
                     {/* Typing indicator */}
@@ -293,6 +324,11 @@ export function AgentStream({ config, workspaceId }: { config: AgentConfig; work
                             <p style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.85rem', color: 'var(--v2-paper-ink)', fontWeight: 500, marginBottom: '0.75rem' }}>
                                 Done!
                             </p>
+                            {completionSummary && (
+                                <p className="v2-mono" style={{ fontSize: '0.68rem', color: 'var(--v2-paper-ink-2)', marginBottom: '0.75rem' }}>
+                                    {completionSummary}
+                                </p>
+                            )}
                             <Link
                                 href={`/workspaces/${workspaceId}/modules/content-factory/v2/${config.slug}`}
                                 className="inline-flex items-center gap-2 px-4 py-2 v2-label text-[10px] rounded-[8px]"

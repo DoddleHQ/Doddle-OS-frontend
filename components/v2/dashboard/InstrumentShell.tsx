@@ -11,7 +11,10 @@ import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 import { WORKSPACE_MODULES as MODULES } from './modules';
 import { NavItem, StatusDot } from './primitives';
 import type { Workspace } from '@/lib/types/workspace.types';
-import { mockMissionControlData, type LiveActivity } from '@/data/missionControl';
+import { type LiveActivity } from '@/data/missionControl';
+import { threadService } from '@/lib/services/threadService';
+import type { AuditThread, ModuleId } from '@/lib/types/thread.types';
+import { AGENT_LIST } from '@/components/v2/content-factory/agents';
 import { workspaceService } from '@/lib/services/workspaceService';
 
 /*
@@ -169,7 +172,7 @@ export function InstrumentShell({ workspaceId, workspace, children }: Instrument
       </div>
 
       {/* === ZONE 4: LIVE FEED === */}
-      <FeedWrapper open={feedOpen} onClose={() => setFeedOpen(false)} />
+      <FeedWrapper workspaceId={workspaceId} open={feedOpen} onClose={() => setFeedOpen(false)} />
 
       {/* === MOBILE DRAWER === */}
       <AnimatePresence>
@@ -349,9 +352,52 @@ function IconRail({ workspaceId, workspaces }: { workspaceId: string; workspaces
   );
 }
 
-/* === Feed panel (wired to mock liveActivity data) === */
-function FeedPanel({ onClose }: { onClose: () => void }) {
-  const activities = mockMissionControlData.liveActivity as LiveActivity[];
+/* === Feed panel (real recent threads, no mock data) === */
+
+// Modules whose recent threads feed the activity panel: the base modules plus
+// every v2 agent's module (registry-driven — new agents appear automatically).
+const FEED_MODULE_IDS: ModuleId[] = [
+  'content-factory', 'seo-cluster', 'social-growth', 'business-audit', 'analytics-action',
+  ...AGENT_LIST.map((a) => a.moduleId),
+];
+
+function FeedPanel({ workspaceId, onClose }: { workspaceId: string; onClose: () => void }) {
+  const [activities, setActivities] = useState<LiveActivity[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(
+      FEED_MODULE_IDS.map((m) =>
+        threadService.listThreads(workspaceId, { moduleId: m, limit: 5 }).catch(() => [] as AuditThread[]),
+      ),
+    )
+      .then((perModule) => {
+        if (cancelled) return;
+        const threads = perModule
+          .flat()
+          .sort((a, b) => (b.updatedAt || b.createdAt).localeCompare(a.updatedAt || a.createdAt))
+          .slice(0, 10)
+          .map((t): LiveActivity => {
+            const agentCfg = AGENT_LIST.find((a) => a.moduleId === t.moduleId);
+            return {
+              id: t.id,
+              type: t.status === 'complete' ? 'resolution' : 'system',
+              timestamp: t.updatedAt || t.createdAt,
+              agent: {
+                name: agentCfg?.name ?? t.moduleId,
+                role: agentCfg?.role ?? t.status,
+                avatar: agentCfg?.initials ?? t.moduleId.slice(0, 1).toUpperCase(),
+              },
+              content: t.title || 'Untitled thread',
+              meta: { domain: t.moduleId },
+            };
+          });
+        setActivities(threads);
+        setLoaded(true);
+      });
+    return () => { cancelled = true; };
+  }, [workspaceId]);
 
   return (
     <div className="w-[288px] flex flex-col h-full">
@@ -385,6 +431,11 @@ function FeedPanel({ onClose }: { onClose: () => void }) {
 
       {/* Activity entries — denser, spacing not borders between items */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3.5">
+        {loaded && activities.length === 0 && (
+          <p className="v2-mono" style={{ fontSize: '0.68rem', color: 'var(--v2-ink-text-2)' }}>
+            No activity yet — run an agent to see it here.
+          </p>
+        )}
         {activities.map((act) => {
           const isResolution = act.type === 'resolution';
           const isSystem = act.type === 'system';
@@ -519,7 +570,7 @@ function MobileNavContent({
 }
 
 /* === Feed wrapper — lg breakpoint visibility === */
-function FeedWrapper({ open, onClose }: { open: boolean; onClose: () => void }) {
+function FeedWrapper({ workspaceId, open, onClose }: { workspaceId: string; open: boolean; onClose: () => void }) {
   const [isLg, setIsLg] = useState(false);
 
   useEffect(() => {
@@ -543,7 +594,7 @@ function FeedWrapper({ open, onClose }: { open: boolean; onClose: () => void }) 
           className="flex-shrink-0 overflow-hidden"
           style={{ background: 'var(--v2-ink-ground)' }}
         >
-          <FeedPanel onClose={onClose} />
+          <FeedPanel workspaceId={workspaceId} onClose={onClose} />
         </motion.aside>
       )}
     </AnimatePresence>

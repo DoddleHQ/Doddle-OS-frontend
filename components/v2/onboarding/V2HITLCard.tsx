@@ -61,6 +61,16 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
     }
   };
 
+  // Single-select: choosing an option submits immediately — no extra
+  // Confirm click needed (multi-select still requires explicit confirm).
+  const handleSinglePick = (optionId: string) => {
+    if (isDisabled) return;
+    setSelected([optionId]);
+    setSubmitted(true);
+    const label = options.find(opt => opt.id === optionId)?.label;
+    onRespond({ value: optionId, selected: optionId, selectedLabel: label });
+  };
+
   const handleText = () => {
     setSubmitted(true);
     onRespond({ feedback: textValue });
@@ -101,7 +111,7 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
           </div>
         )}
 
-        {/* === SELECTION (single) === */}
+        {/* === SELECTION (single — pick submits immediately) === */}
         {type === 'selection' && options.length > 0 && (
           <div className="space-y-1.5">
             {options.map((opt) => {
@@ -113,13 +123,10 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
                   desc={opt.description}
                   selected={isSelected}
                   disabled={isDisabled}
-                  onClick={() => !isDisabled && setSelected([opt.id])}
+                  onClick={() => handleSinglePick(opt.id)}
                 />
               );
             })}
-            <V2Button onClick={() => handleSelection(false)} disabled={isDisabled || selected.length === 0} variant="primary" className="mt-2">
-              Confirm
-            </V2Button>
           </div>
         )}
 

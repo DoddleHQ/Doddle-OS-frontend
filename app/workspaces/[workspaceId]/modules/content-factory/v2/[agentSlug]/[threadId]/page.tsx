@@ -8,7 +8,9 @@ import { ArrowLeft, Trash2, Loader2 } from 'lucide-react';
 import { getAgent } from '@/components/v2/content-factory/agents';
 import { useThread } from '@/lib/contexts/ThreadContext';
 import { StreamArtifact } from '@/components/v2/content-factory/StreamArtifact';
+import { detectArtifactKind, kindToArtifactType, supersededArtifactIds } from '@/components/v2/content-factory/artifactMarkdown';
 import { notify } from '@/lib/stores/notificationStore';
+import { useRunRegistry, isRunLive } from '@/lib/runs/runRegistry';
 import type { ArtifactPayload } from '@/lib/types/graph-events.types';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -28,6 +30,19 @@ export default function ThreadDetail() {
 
     const { currentThread, currentArtifacts, isLoading, error, fetchThread, fetchArtifacts, deleteThread } = useThread();
     const [deleting, setDeleting] = useState(false);
+
+    // Live-run takeover: if this DB thread's LangGraph thread is running in
+    // the registry, the live view replaces the static detail page.
+    const liveRun = useRunRegistry((s) => {
+        const langId = currentThread?.langId;
+        if (!langId) return undefined;
+        return Object.values(s.runs).find((r) => r.threadId === langId && isRunLive(r.status));
+    });
+    useEffect(() => {
+        if (liveRun) {
+            router.replace(`/workspaces/${workspaceId}/modules/content-factory/v2/${agentSlug}/live/${liveRun.runId}`);
+        }
+    }, [liveRun, router, workspaceId, agentSlug]);
 
     useEffect(() => {
         if (agent) {
@@ -117,16 +132,26 @@ export default function ThreadDetail() {
                 </p>
             ) : (
                 <div className="space-y-4">
-                    {currentArtifacts.map((artifact) => {
-                        // Map AuditArtifact (DB shape) → ArtifactPayload (component shape)
-                        const payload: ArtifactPayload = {
-                            artifactId: String(artifact.id),
-                            artifactType: 'report',
-                            title: artifact.pageName || 'Artifact',
-                            content: artifact.content || artifact.data,
-                        };
-                        return <StreamArtifact key={artifact.id} artifact={payload} />;
-                    })}
+                    {(() => {
+                        // Reconstruct ArtifactPayloads, derive a truthful type
+                        // from the content shape, and show only the newest
+                        // version of each page title (QC revisions re-emit
+                        // content artifacts under the same title — older
+                        // versions stay persisted as history).
+                        const payloads = currentArtifacts.map((artifact) => {
+                            const base: ArtifactPayload = {
+                                artifactId: String(artifact.id),
+                                artifactType: 'report',
+                                title: artifact.pageName || 'Artifact',
+                                content: artifact.content || artifact.data,
+                            };
+                            return { ...base, artifactType: kindToArtifactType(detectArtifactKind(base)) };
+                        });
+                        const superseded = supersededArtifactIds(payloads);
+                        return payloads
+                            .filter((p) => !superseded.has(p.artifactId))
+                            .map((payload) => <StreamArtifact key={payload.artifactId} artifact={payload} />);
+                    })()}
                 </div>
             )}
         </div>

@@ -48,6 +48,7 @@ function toThread(raw: RawThread): AuditThread {
         id: raw.id || raw.threadId || '',
         workspaceId: raw.workspaceId,
         moduleId: raw.moduleId as ModuleId,
+        langId: raw.langId ?? null,
         title: raw.title,
         description: raw.description,
         status: raw.status as ThreadStatus,

@@ -1,4 +1,4 @@
-import { FileText, ShoppingBag, Globe } from 'lucide-react';
+import { FileText, Globe, Store } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ModuleId } from '@/lib/types/thread.types';
 
@@ -38,6 +38,15 @@ export interface AgentConfig {
     inputBuilder: (url: string, extras?: Record<string, unknown>, workspaceId?: string) => Record<string, unknown>;
     /** Placeholder text for the URL input */
     inputPlaceholder: string;
+    /**
+     * Data-source connection this agent requires. When set, the welcome
+     * screen checks the connection and gates the start button on it.
+     */
+    connectionSource?: 'magento';
+    /** Start button label (default "Start Analysis") */
+    startLabel?: string;
+    /** User message posted when the start button is clicked (default "Analyze {domain}") */
+    startMessage?: string;
 }
 
 export const AGENTS: Record<string, AgentConfig> = {
@@ -58,22 +67,27 @@ export const AGENTS: Record<string, AgentConfig> = {
         }),
         inputPlaceholder: 'Workspace domain is used automatically…',
     },
-    'magento-content-writer': {
-        slug: 'magento-content-writer',
-        graphId: 'magento_content_writer',
-        moduleId: 'magento-content-writer',
-        name: 'Maya',
-        role: 'Product Copy Writer',
-        subtitle: 'Connects to your Magento store, pulls product catalogs, and writes compelling descriptions for every item',
-        icon: ShoppingBag,
+    // 'magento-content-writer' (Maya, v1) retired from the v2 roster —
+    // replaced by 'magento-content' (Mia, datalake-driven). The v1 launch
+    // page still exists for old threads.
+    'magento-content': {
+        slug: 'magento-content',
+        graphId: 'magento_content',
+        moduleId: 'magento-content',
+        name: 'Mia',
+        role: 'Magento Content Lead',
+        subtitle: 'Name the pages you want from your Magento catalog — she writes them and runs automated quality checks on every one',
+        icon: Store,
         initials: 'M',
-        greeting: "Hi, I'm Maya. I'll pull your product catalog and write compelling descriptions for every item.",
-        workingStatus: 'Reading your product catalog…',
-        inputPlaceholder: 'Workspace domain is used automatically…',
-        inputBuilder: (url, extras) => ({
-            website_url: url,
-            access_token: extras?.access_token,
+        greeting: "Hi, I'm Mia. Name the product, category, collection, or brand pages you want — I'll write them and run automated quality checks on each one before handing them over.",
+        workingStatus: 'Reading your Magento catalog…',
+        inputBuilder: (_url, _extras, workspaceId) => ({
+            workspace_id: workspaceId ?? '',
         }),
+        inputPlaceholder: 'Your connected Magento store is used automatically…',
+        connectionSource: 'magento',
+        startLabel: 'Start Writing',
+        startMessage: 'Read my Magento catalog and start writing',
     },
     'interactive-website-architect': {
         slug: 'interactive-website-architect',

@@ -1,4 +1,4 @@
-export type ModuleId = 'business-audit' | 'content-factory' | 'content-architect' | 'magento-content-writer' | 'interactive-website-architect' | 'seo-cluster' | 'social-growth' | 'saas-launch-ops' | 'analytics-action' | 'google-analyst' | 'merchant-analyst' | 'brand-persona';
+export type ModuleId = 'business-audit' | 'content-factory' | 'content-architect' | 'magento-content-writer' | 'magento-content' | 'interactive-website-architect' | 'seo-cluster' | 'social-growth' | 'saas-launch-ops' | 'analytics-action' | 'google-analyst' | 'merchant-analyst' | 'brand-persona';
 
 export type ThreadStatus = 'running' | 'complete' | 'error';
 
@@ -6,6 +6,8 @@ export interface AuditThread {
     id: string;
     workspaceId: string;
     moduleId: ModuleId;
+    /** LangGraph thread id (DB lang_id) — links a DB thread to its live run. */
+    langId?: string | null;
     title: string;
     description: string;
     status: ThreadStatus;

@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { Copy, Check, Download, FileText } from 'lucide-react';
 import type { ArtifactPayload } from '@/lib/types/graph-events.types';
 import { extractArtifactMarkdown } from '@/components/content-factory/chat/artifacts/artifactContentUtils';
+import { renderArtifactMarkdown } from './artifactMarkdown';
 import { V2Markdown } from '@/components/v2/onboarding/V2Markdown';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -16,28 +17,14 @@ const EASE = [0.16, 1, 0.3, 1] as const;
  * tables, link lists, blueprints). Uses v2 tokens: paper-register card with
  * vermilion header accent, copy + download actions.
  *
- * Reuses the existing extractArtifactMarkdown utility (shared with v1).
+ * Content → markdown resolution lives in ./artifactMarkdown (pure, testable,
+ * shared with the thread detail page).
  */
 
 export function StreamArtifact({ artifact }: { artifact: ArtifactPayload }) {
     const [copied, setCopied] = useState(false);
 
-    const markdown = (() => {
-        const extracted = extractArtifactMarkdown(artifact);
-        if (extracted && extracted.trim() !== '{}' && extracted.trim() !== '') return extracted;
-
-        // Fallback: try common content paths
-        const content = typeof artifact.content === 'string'
-            ? (() => { try { return JSON.parse(artifact.content); } catch { return null; } })()
-            : artifact.content;
-
-        if (content && typeof content === 'object') {
-            if (typeof content.reportContent === 'string') return content.reportContent;
-            if (content.personaData?.reportContent) return content.personaData.reportContent;
-        }
-
-        return typeof artifact.content === 'string' ? artifact.content : '';
-    })();
+    const markdown = renderArtifactMarkdown(artifact, extractArtifactMarkdown);
 
     const handleCopy = () => {
         if (markdown) {
