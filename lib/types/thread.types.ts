@@ -6,6 +6,8 @@ export interface AuditThread {
     id: string;
     workspaceId: string;
     moduleId: ModuleId;
+    /** LangGraph thread id (DB lang_id) — links a DB thread to its live run. */
+    langId?: string | null;
     title: string;
     description: string;
     status: ThreadStatus;

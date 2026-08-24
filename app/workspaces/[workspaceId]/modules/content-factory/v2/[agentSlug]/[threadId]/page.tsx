@@ -10,6 +10,7 @@ import { useThread } from '@/lib/contexts/ThreadContext';
 import { StreamArtifact } from '@/components/v2/content-factory/StreamArtifact';
 import { detectArtifactKind, kindToArtifactType, supersededArtifactIds } from '@/components/v2/content-factory/artifactMarkdown';
 import { notify } from '@/lib/stores/notificationStore';
+import { useRunRegistry, isRunLive } from '@/lib/runs/runRegistry';
 import type { ArtifactPayload } from '@/lib/types/graph-events.types';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -29,6 +30,19 @@ export default function ThreadDetail() {
 
     const { currentThread, currentArtifacts, isLoading, error, fetchThread, fetchArtifacts, deleteThread } = useThread();
     const [deleting, setDeleting] = useState(false);
+
+    // Live-run takeover: if this DB thread's LangGraph thread is running in
+    // the registry, the live view replaces the static detail page.
+    const liveRun = useRunRegistry((s) => {
+        const langId = currentThread?.langId;
+        if (!langId) return undefined;
+        return Object.values(s.runs).find((r) => r.threadId === langId && isRunLive(r.status));
+    });
+    useEffect(() => {
+        if (liveRun) {
+            router.replace(`/workspaces/${workspaceId}/modules/content-factory/v2/${agentSlug}/live/${liveRun.runId}`);
+        }
+    }, [liveRun, router, workspaceId, agentSlug]);
 
     useEffect(() => {
         if (agent) {
