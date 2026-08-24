@@ -116,6 +116,14 @@ export function ThreadSidebar({
             <div
                 className="flex items-center justify-between px-3 pt-3 pb-1.5 flex-shrink-0"
             >
+                <Link
+                    href={`/workspaces/${workspaceId}/modules/content-factory/v2`}
+                    className="v2-label transition-colors"
+                    style={{ fontSize: '0.58rem', color: 'var(--v2-paper-ink-2)', letterSpacing: '0.1em' }}
+                    title="All agents"
+                >
+                    ← ALL AGENTS
+                </Link>
                 <span
                     className="v2-label"
                     style={{ fontSize: '0.58rem', color: 'var(--v2-paper-ink-2)', letterSpacing: '0.1em' }}
