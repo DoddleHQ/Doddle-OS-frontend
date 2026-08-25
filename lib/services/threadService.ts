@@ -30,7 +30,9 @@ interface RawThread {
 }
 
 interface RawArtifact {
-    id: number;
+    /** The API returns the obfuscated `artifactId`; the numeric `id` is legacy. */
+    id?: number;
+    artifactId?: string;
     threadId: string;
     moduleId: string;
     data: Record<string, unknown>;
@@ -61,7 +63,7 @@ function toThread(raw: RawThread): AuditThread {
 
 function toArtifact(raw: RawArtifact): AuditArtifact {
     return {
-        id: raw.id,
+        id: raw.artifactId ?? raw.id ?? 0,
         threadId: raw.threadId,
         moduleId: raw.moduleId as ModuleId,
         data: raw.data,

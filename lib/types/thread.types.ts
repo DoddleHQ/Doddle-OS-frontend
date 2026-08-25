@@ -18,7 +18,8 @@ export interface AuditThread {
 }
 
 export interface AuditArtifact {
-    id: number;
+    /** Obfuscated artifactId string (current API) or legacy numeric id. */
+    id: number | string;
     threadId: string;
     moduleId: ModuleId;
     data: Record<string, unknown>;
