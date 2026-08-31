@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useOS } from '@/lib/demo/osStore';
 import { DemoIcon } from '@/lib/demo/icons';
+import { BrandMark } from './primitives';
 
 export const DEMO_ROUTES = [
   { path: '/demo', label: 'dashboard', icon: 'layout-dashboard' },
@@ -13,16 +14,6 @@ export const DEMO_ROUTES = [
   { path: '/demo/agency-hub', label: 'agency_hub', icon: 'building-2' },
   { path: '/demo/settings', label: 'platform_settings', icon: 'settings' },
 ] as const;
-
-/** Roundel: porcelain ring, scarlet bar — the network's mark. */
-function Roundel() {
-  return (
-    <span className="relative w-12 h-12 rounded-full flex items-center justify-center" aria-hidden="true">
-      <span className="absolute inset-0 rounded-full border-[3px] border-[var(--ink)]" />
-      <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-[7px] bg-[var(--line-scarlet)]" />
-    </span>
-  );
-}
 
 export function Dock() {
   const pathname = usePathname();
@@ -35,7 +26,7 @@ export function Dock() {
     <div className="agency-panel w-[88px] border-r agency-border p-4 flex flex-col items-center justify-between shrink-0 z-40 relative">
       <div className="flex flex-col items-center gap-6 w-full">
         <Link href="/demo" title="Doddle OS" className="hover:opacity-85 transition-opacity mt-1">
-          <Roundel />
+          <BrandMark className="w-12 h-12" />
         </Link>
 
         <div className="space-y-2.5 mt-3 w-full">

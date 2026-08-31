@@ -6,7 +6,7 @@ import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { useOS } from '@/lib/demo/osStore';
 import { startRun } from '@/lib/demo/engine';
 import { DEFAULT_RUN_PROMPT, OPERATOR } from '@/lib/demo/data';
-import { greeting } from '../primitives';
+import { BrandMark, greeting } from '../primitives';
 
 function ActionRow({ ink, title, copy, live, onClick, href, delay }: {
   ink: string;
@@ -67,7 +67,7 @@ export function CommandDesk() {
   return (
     <section className="w-full lg:w-[400px] lg:border-r agency-border shrink-0 flex flex-col justify-center px-8 md:px-10 py-10 lg:py-8 overflow-y-auto">
       <div className="rise">
-        <div className="w-12 h-12 rounded-full bg-[var(--line-scarlet)] text-white flex items-center justify-center font-bold text-xl mb-5">D</div>
+        <BrandMark className="w-12 h-12 mb-5" />
         <h1 className="text-[2rem] leading-[1.08] font-bold tracking-tight text-[var(--ink)]">
           {greeting()},<br />{OPERATOR.name.replace(' F.', '')}.
         </h1>
