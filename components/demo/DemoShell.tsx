@@ -47,10 +47,10 @@ export function DemoShell({ children }: { children: React.ReactNode }) {
   }, [router, setOverlay, closeTopOverlay]);
 
   return (
-    <div className="demo-scope daypass h-screen w-screen relative flex items-center justify-center p-0 md:p-4">
+    <div className="demo-scope daypass h-screen w-screen relative flex flex-col overflow-hidden">
       {/* base-map linework beneath the board */}
       <div className="base-map absolute inset-0 pointer-events-none" aria-hidden="true" />
-      <div className="agency-window w-full h-full max-w-[1680px] flex overflow-hidden relative z-10">
+      <div className="flex-1 flex overflow-hidden relative z-10">
         <Dock />
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
           {children}
