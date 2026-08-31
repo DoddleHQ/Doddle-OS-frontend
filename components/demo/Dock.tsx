@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useOS } from '@/lib/demo/osStore';
 import { DemoIcon } from '@/lib/demo/icons';
 import { BrandMark } from './primitives';
@@ -39,12 +39,14 @@ export function Dock() {
             type="button"
             onClick={toggleDock}
             aria-label={dockOpen ? 'Collapse dock' : 'Expand dock'}
-            title={dockOpen ? 'collapse' : 'expand'}
-            className={`dock-icon flex items-center justify-center ${dockOpen ? 'w-9 h-9 rounded-[8px]' : 'w-6 h-8 rounded-[6px]'}`}
+            className={`dock-icon group relative flex items-center justify-center border border-[var(--hairline)] hover:border-[var(--hairline-strong)] transition-colors ${dockOpen ? 'w-[34px] h-[34px] rounded-[8px]' : 'w-7 h-7 rounded-[7px]'}`}
           >
             {dockOpen
-              ? <ChevronsLeft className="w-4 h-4" />
-              : <ChevronsRight className="w-3.5 h-3.5" />}
+              ? <PanelLeftClose className="w-[18px] h-[18px]" />
+              : <PanelLeftOpen className="w-4 h-4" />}
+            <span className="absolute left-12 agency-panel agency-border border text-[10px] text-[var(--ink)] font-mono px-2 py-1 rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+              {dockOpen ? 'collapse' : 'expand'}
+            </span>
           </button>
         </div>
 
