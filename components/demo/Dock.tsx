@@ -49,16 +49,6 @@ export function Dock() {
           ))}
         </div>
       </div>
-
-      {/* run state rests at the foot of the rail */}
-      <div className="flex flex-col items-center gap-2 pb-1">
-        <span className="w-8 h-px bg-[var(--hairline)]" aria-hidden="true" />
-        <span
-          className="w-2 h-2 rounded-full"
-          style={{ background: runActive ? 'var(--line-scarlet)' : 'var(--hairline-strong)', animation: runActive ? 'trainPulse 1.6s ease-out infinite' : undefined }}
-          title={runActive ? 'run_active' : 'no active run'}
-        />
-      </div>
     </div>
   );
 }
