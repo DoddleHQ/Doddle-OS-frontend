@@ -49,6 +49,7 @@ const makeThreads = (): Record<string, ThreadState> => {
 
 interface OSState {
   theme: 'light' | 'dark';
+  dockOpen: boolean;
   triageOpen: boolean;
   vaultOpen: boolean;
   paletteOpen: boolean;
@@ -64,6 +65,8 @@ interface OSState {
   vault: VaultRun[];
   toasts: Toast[];
 
+  initDock: () => void;
+  toggleDock: () => void;
   setOverlay: (key: 'triageOpen' | 'vaultOpen' | 'paletteOpen' | 'userMenuOpen', open?: boolean) => void;
   closeTopOverlay: () => boolean;
 
@@ -84,6 +87,7 @@ let toastSeq = 0;
 
 export const useOS = create<OSState>((set, get) => ({
   theme: 'light',
+  dockOpen: false,
   triageOpen: false,
   vaultOpen: false,
   paletteOpen: false,
@@ -98,6 +102,25 @@ export const useOS = create<OSState>((set, get) => ({
   triage: TRIAGE_SEED,
   vault: VAULT_SEED,
   toasts: [],
+
+  initDock: () => {
+    if (typeof window === 'undefined') return;
+    try {
+      set({ dockOpen: localStorage.getItem('doddle-dock') === 'open' });
+    } catch {
+      /* private mode — keep collapsed */
+    }
+  },
+
+  toggleDock: () => {
+    const open = !get().dockOpen;
+    set({ dockOpen: open });
+    try {
+      localStorage.setItem('doddle-dock', open ? 'open' : 'closed');
+    } catch {
+      /* ignore */
+    }
+  },
 
   setOverlay: (key, open) => set({ [key]: open ?? !get()[key] } as Partial<OSState>),
 

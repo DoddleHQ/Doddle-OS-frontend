@@ -11,10 +11,15 @@ import { ToastStack } from './overlays/ToastStack';
 
 export function DemoShell({ children }: { children: React.ReactNode }) {
   const setOverlay = useOS((s) => s.setOverlay);
+  const initDock = useOS((s) => s.initDock);
   const closeTopOverlay = useOS((s) => s.closeTopOverlay);
   const router = useRouter();
   const gPressed = useRef(false);
   const gTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    initDock();
+  }, [initDock]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
