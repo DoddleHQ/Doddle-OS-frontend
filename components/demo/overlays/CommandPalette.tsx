@@ -25,7 +25,6 @@ function buildCommands(navigate: (path: string) => void): Cmd[] {
     { icon: 'settings', label: 'go: platform_settings', run: () => navigate('/demo/settings') },
     { icon: 'inbox', label: 'action: open_triage()', run: () => useOS.getState().setOverlay('triageOpen', true) },
     { icon: 'folder-archive', label: 'action: open_artifact_vault()', run: () => useOS.getState().setOverlay('vaultOpen', true) },
-    { icon: 'moon', label: 'action: toggle_theme()', run: () => useOS.getState().toggleTheme() },
     { icon: 'play', label: 'action: run_demo_swarm()', run: () => { void startRun(DEFAULT_RUN_PROMPT); } },
   ];
   const s = useOS.getState();

@@ -64,8 +64,6 @@ interface OSState {
   vault: VaultRun[];
   toasts: Toast[];
 
-  initTheme: () => void;
-  toggleTheme: () => void;
   setOverlay: (key: 'triageOpen' | 'vaultOpen' | 'paletteOpen' | 'userMenuOpen', open?: boolean) => void;
   closeTopOverlay: () => boolean;
 
@@ -100,31 +98,6 @@ export const useOS = create<OSState>((set, get) => ({
   triage: TRIAGE_SEED,
   vault: VAULT_SEED,
   toasts: [],
-
-  initTheme: () => {
-    if (typeof window === 'undefined') return;
-    let stored: string | null = null;
-    try {
-      stored = localStorage.getItem('doddle-theme');
-    } catch {
-      /* private mode — keep light */
-    }
-    const dark =
-      stored === 'dark' ||
-      (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    set({ theme: dark ? 'dark' : 'light' });
-  },
-
-  toggleTheme: () => {
-    const dark = get().theme === 'dark';
-    try {
-      localStorage.setItem('doddle-theme', dark ? 'light' : 'dark');
-    } catch {
-      /* ignore */
-    }
-    set({ theme: dark ? 'light' : 'dark' });
-    get().pushToast(dark ? 'light_mode enabled' : 'dark_mode enabled');
-  },
 
   setOverlay: (key, open) => set({ [key]: open ?? !get()[key] } as Partial<OSState>),
 
