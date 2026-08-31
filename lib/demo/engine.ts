@@ -43,6 +43,14 @@ function requestWriteScope(): Promise<boolean> {
     // Live gates announce themselves; addTriage toasts only for breakers.
     useOS.setState({ triage: [item, ...s.triage] });
     s.pushToast('@Sec_Sentinel needs your approval', 'warn');
+    useOS.getState().pushFeed({
+      kind: 'gate',
+      id: `f-gate-${Date.now()}`,
+      triageId: item.id,
+      text: `Grant @Data_Wrangler write scope on gsc_local_audits? Escalation raised mid-stream during buffer commit.`,
+      preview: `GRANT INSERT, SELECT ON gsc_local_audits TO 'wrangler_rw';`,
+      ts: new Date().toLocaleTimeString([], { hour12: false }),
+    });
   });
 }
 
@@ -133,6 +141,15 @@ export async function startRun(prompt: string) {
   killRequested.clear();
   s.beginRun(prompt);
   s.pushToast('Swarm spawned — 3 threads decomposed by @Dod_Orchestrator', 'info');
+  const ts = () => new Date().toLocaleTimeString([], { hour12: false });
+  useOS.getState().pushFeed({
+    kind: 'system',
+    id: `f-sys-${Date.now()}`,
+    text: 'Pipeline decomposed into 3 parallel threads. Human approval gate armed before DB writes.',
+    ts: ts(),
+  });
+  useOS.getState().pushFeed({ kind: 'threads', id: `f-threads-${Date.now()}`, ts: ts() });
+  useOS.getState().setActiveThread('infra');
 
   const infraRun = runInfra();
   const secRun = runSec();
@@ -148,6 +165,29 @@ export async function startRun(prompt: string) {
     bad.length ? 'Run finished with issues' : 'Swarm run completed',
     bad.length ? 'error' : 'success',
   );
+  useOS.getState().pushFeed({
+    kind: 'summary',
+    id: `f-sum-${Date.now()}`,
+    ok: bad.length === 0,
+    text: bad.length === 0
+      ? 'All threads finished. Select a thread block to review artifacts.'
+      : `${bad.length} thread(s) did not finish (${bad.map((t) => t.title).join(', ')}). State frozen — see triage_queue.`,
+    ts: new Date().toLocaleTimeString([], { hour12: false }),
+  });
+}
+
+/** Operator controls (armed-confirm handled by the UI). */
+export function abortRun() {
+  if (!useOS.getState().runActive) return;
+  engine.abortAll = true;
+  useOS.getState().pushToast('SIGKILL sent to all threads', 'error');
+}
+
+export function killThread(id: string) {
+  const t = useOS.getState().threads[id];
+  if (!t || t.status !== 'running') return;
+  killRequested.add(id);
+  useOS.getState().pushToast(`Kill signal sent to ${t.title}`, 'warn');
 }
 
 export const DEMO_ARTIFACT = SQL_ARTIFACT;

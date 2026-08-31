@@ -67,3 +67,13 @@ CREATE TABLE IF NOT EXISTS gsc_local_audits (
 ];
 
 export const SQL_ARTIFACT = VAULT_SEED[0].artifact;
+
+/** Workflow templates shown in Graphs. */
+export const GRAPH_TEMPLATES = [
+  {
+    id: 'gsc-mcp',
+    tag: 'engineering',
+    title: 'GSC MCP Pipeline',
+    desc: 'Evaluates DB schema, secures multi-tenant hashes, extracts analytics.',
+  },
+];
