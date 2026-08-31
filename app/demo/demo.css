@@ -220,6 +220,8 @@
     box-shadow: 0 0 0 3px rgba(59, 107, 255, 0.14);
 }
 .demo-scope.daypass .search-pill:focus-within { box-shadow: 0 0 0 3px rgba(36, 71, 216, 0.12); }
+/* the pill owns the focus state; the raw input inside never draws its own ring */
+.demo-scope .search-pill input:focus-visible { outline: none; }
 
 /* ===== dock ===== */
 .demo-scope .dock-icon {
