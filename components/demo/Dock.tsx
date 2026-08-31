@@ -27,12 +27,26 @@ export function Dock() {
 
   return (
     <div
-      className={`agency-panel border-r agency-border py-4 flex flex-col items-center shrink-0 z-40 relative transition-[width] duration-200 ${dockOpen ? 'w-[208px] items-stretch px-3' : 'w-[72px] px-2'}`}
+      className={`agency-panel border-r agency-border py-4 flex flex-col items-center shrink-0 z-40 relative transition-[width] duration-200 ${dockOpen ? 'w-[208px] items-stretch px-3' : 'w-[76px] px-2'}`}
     >
       <div className={`flex flex-col ${dockOpen ? 'items-stretch gap-6' : 'items-center gap-6'} w-full`}>
-        <Link href="/demo" title="Doddle OS" className={`hover:opacity-85 transition-opacity ${dockOpen ? 'self-center mt-1' : 'mt-1'}`}>
-          <BrandMark className="w-11 h-11" />
-        </Link>
+        {/* header row: logo + collapse control side by side in both states */}
+        <div className={`flex items-center mt-1 ${dockOpen ? 'justify-between' : 'justify-between w-full'}`}>
+          <Link href="/demo" title="Doddle OS" className="hover:opacity-85 transition-opacity">
+            <BrandMark className={dockOpen ? 'w-10 h-10' : 'w-9 h-9'} />
+          </Link>
+          <button
+            type="button"
+            onClick={toggleDock}
+            aria-label={dockOpen ? 'Collapse dock' : 'Expand dock'}
+            title={dockOpen ? 'collapse' : 'expand'}
+            className={`dock-icon flex items-center justify-center ${dockOpen ? 'w-9 h-9 rounded-[8px]' : 'w-6 h-8 rounded-[6px]'}`}
+          >
+            {dockOpen
+              ? <ChevronsLeft className="w-4 h-4" />
+              : <ChevronsRight className="w-3.5 h-3.5" />}
+          </button>
+        </div>
 
         <nav className={`flex flex-col ${dockOpen ? 'space-y-1' : 'space-y-2.5'} mt-2 w-full`}>
           {DEMO_ROUTES.map((route, i) => (
@@ -64,16 +78,6 @@ export function Dock() {
           ))}
         </nav>
       </div>
-
-      <button
-        type="button"
-        onClick={toggleDock}
-        aria-label={dockOpen ? 'Collapse dock' : 'Expand dock'}
-        title={dockOpen ? 'collapse' : 'expand'}
-        className={`dock-icon mt-auto flex items-center justify-center h-10 shrink-0 ${dockOpen ? 'self-stretch rounded-[8px]' : 'w-full rounded-[10px]'}`}
-      >
-        {dockOpen ? <ChevronsLeft className="w-4 h-4" /> : <ChevronsRight className="w-4 h-4" />}
-      </button>
     </div>
   );
 }
