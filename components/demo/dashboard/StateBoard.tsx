@@ -25,7 +25,7 @@ export function StateBoard() {
         : 'status: operational | context_locked';
 
   return (
-    <section className="flex-1 flex flex-col min-w-0 px-8 md:px-10 py-8 overflow-hidden">
+    <section className="flex-1 flex flex-col min-w-0 px-8 md:px-10 py-8 lg:overflow-hidden">
       <header className="flex justify-between items-end mb-6 shrink-0 rise d1">
         <div>
           <h2 className="text-xl font-bold tracking-tight flex items-center gap-2.5">
@@ -72,7 +72,7 @@ export function StateBoard() {
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col gap-5 min-h-0 rise d2">
+      <div className="flex flex-col gap-5 lg:flex-1 lg:min-h-0 rise d2">
         <RunningProcesses />
         <PowerAgentsPanel />
       </div>

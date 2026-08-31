@@ -25,7 +25,7 @@ export function RunningProcesses() {
   const pct = list.length ? Math.round(list.reduce((a, t) => a + t.progress, 0) / list.length) : 0;
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 plate overflow-hidden">
+    <div className="flex flex-col lg:flex-1 lg:min-h-0 plate lg:overflow-hidden">
       <div className="px-5 py-3.5 border-b agency-border flex items-center justify-between shrink-0">
         <h3 className="text-xs font-semibold flex items-center gap-2.5 font-mono tracking-wide">
           <Terminal className="w-4 h-4" style={{ color: 'var(--line-cobalt)' }} /> running_processes
@@ -34,7 +34,7 @@ export function RunningProcesses() {
           launchpad →
         </Link>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="lg:flex-1 lg:overflow-y-auto">
         <Link href="/demo/launchpad" className="dense-row">
           <span className="w-[34%] flex flex-col">
             <span className="text-xs font-bold truncate">GSC MCP Pipeline</span>

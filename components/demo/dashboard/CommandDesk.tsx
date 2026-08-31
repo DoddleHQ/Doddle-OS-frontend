@@ -65,7 +65,7 @@ export function CommandDesk() {
   };
 
   return (
-    <section className="w-full lg:w-[400px] lg:border-r agency-border shrink-0 flex flex-col justify-center px-8 md:px-10 py-10 lg:py-8 overflow-y-auto">
+    <section className="w-full lg:w-[400px] lg:border-r agency-border shrink-0 flex flex-col justify-start lg:justify-center px-8 md:px-10 py-10 lg:py-8 lg:overflow-y-auto">
       <div className="rise">
         <BrandMark className="w-12 h-12 mb-5" />
         <h1 className="text-[2rem] leading-[1.08] font-bold tracking-tight text-[var(--ink)]">
