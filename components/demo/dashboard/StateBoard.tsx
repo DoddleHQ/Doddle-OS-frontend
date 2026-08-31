@@ -1,6 +1,6 @@
 'use client';
 
-import { Activity, Cpu, Inbox } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { useOS } from '@/lib/demo/osStore';
 import { RunningProcesses } from './RunningProcesses';
 import { PowerAgentsPanel } from './PowerAgentsPanel';
@@ -35,35 +35,38 @@ export function StateBoard() {
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--line-green)] animate-pulse" /> {statusLine}
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="plate flex items-stretch divide-x divide-[var(--hairline)]">
           <button
             type="button"
-            className="plate px-3.5 py-2 flex items-center gap-3 relative group"
+            className="flex items-center gap-3 pl-4 pr-5 py-2.5 relative group"
             onClick={() => setOverlay('triageOpen')}
           >
-            <span className="w-7 h-7 rounded-[5px] flex items-center justify-center" style={{ border: '1px solid var(--line-scarlet)' }}>
-              <Inbox className="w-3.5 h-3.5" style={{ color: 'var(--line-scarlet)' }} />
-            </span>
-            <span className="text-left">
-              <span className="block text-[9px] font-mono text-[var(--ink-faint)]">triage_queue</span>
-              <span className="block text-[15px] font-bold leading-none mt-0.5 tnum">
+            <span className="line-dot" style={{ ['--dot' as string]: 'var(--line-scarlet)' }} aria-hidden="true" />
+            <span className="flex flex-col items-start leading-none">
+              <span className="text-[9px] font-mono text-[var(--ink-faint)]">triage_queue</span>
+              <span className="text-[16px] font-bold leading-none mt-1.5 tnum transition-colors group-hover:text-[var(--ink)]">
                 {triageCount} <span className="text-[9px] font-bold ml-0.5" style={{ color: 'var(--line-scarlet)' }}>REQ</span>
               </span>
             </span>
             {triageCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+              <span className="absolute top-2 right-2 flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ background: 'var(--line-scarlet)' }} />
                 <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--line-scarlet)' }} />
               </span>
             )}
           </button>
-          <div className="plate px-3.5 py-2 flex items-center gap-3 cursor-default">
-            <span className="w-7 h-7 rounded-[5px] flex items-center justify-center" style={{ border: '1px solid var(--line-cobalt)' }}>
-              <Cpu className="w-3.5 h-3.5" style={{ color: 'var(--line-cobalt)' }} />
-            </span>
-            <span className="text-left">
-              <span className="block text-[9px] font-mono text-[var(--ink-faint)]">active_swarms</span>
-              <span className="block text-[15px] font-bold leading-none mt-0.5 tnum">{runActive ? 1 : 0}</span>
+          <div className="flex items-center gap-3 px-5 py-2.5 cursor-default">
+            <span
+              className="line-dot"
+              style={{
+                ['--dot' as string]: 'var(--line-cobalt)',
+                animation: runActive ? 'trainPulse 1.6s ease-out infinite' : undefined,
+              }}
+              aria-hidden="true"
+            />
+            <span className="flex flex-col items-start leading-none">
+              <span className="text-[9px] font-mono text-[var(--ink-faint)]">active_swarms</span>
+              <span className="text-[16px] font-bold leading-none mt-1.5 tnum">{runActive ? 1 : 0}</span>
             </span>
           </div>
         </div>
