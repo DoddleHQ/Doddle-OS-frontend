@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useOS } from '@/lib/demo/osStore';
 import { DemoIcon } from '@/lib/demo/icons';
 import { BrandMark } from './primitives';
@@ -42,8 +42,8 @@ export function Dock() {
             className={`dock-icon group relative flex items-center justify-center border border-[var(--hairline)] hover:border-[var(--hairline-strong)] transition-colors ${dockOpen ? 'w-[34px] h-[34px] rounded-[8px]' : 'w-7 h-7 rounded-[7px]'}`}
           >
             {dockOpen
-              ? <PanelLeftClose className="w-[18px] h-[18px]" />
-              : <PanelLeftOpen className="w-4 h-4" />}
+              ? <ChevronLeft className="w-5 h-5" />
+              : <ChevronRight className="w-4 h-4" />}
             <span className="absolute left-12 agency-panel agency-border border text-[10px] text-[var(--ink)] font-mono px-2 py-1 rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
               {dockOpen ? 'collapse' : 'expand'}
             </span>
