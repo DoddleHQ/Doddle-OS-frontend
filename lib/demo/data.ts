@@ -4,7 +4,7 @@ import type { Agent, ThreadState, TriageItem, VaultRun } from './types';
 export const PRICE_PER_TOK = 4e-6;
 
 export const OPERATOR = {
-  name: 'Alex F.',
+  name: 'Vivek',
   role: 'Forward Deployed Engineer',
   context: 'Acme_SaaS_Context',
 };

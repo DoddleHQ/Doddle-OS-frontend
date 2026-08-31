@@ -65,3 +65,11 @@ export interface Toast {
   msg: string;
   type: ToastType;
 }
+
+/** Mission-control feed entries (launchpad). */
+export type FeedEntry =
+  | { kind: 'user'; id: string; text: string; ts: string }
+  | { kind: 'system'; id: string; text: string; ts: string }
+  | { kind: 'threads'; id: string; ts: string }
+  | { kind: 'gate'; id: string; triageId: string; text: string; preview: string; ts: string }
+  | { kind: 'summary'; id: string; ok: boolean; text: string; ts: string };

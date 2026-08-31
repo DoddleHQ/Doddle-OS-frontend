@@ -6,6 +6,7 @@ import {
   VAULT_SEED,
 } from './data';
 import type {
+  FeedEntry,
   LogType,
   ThreadState,
   ThreadStatus,
@@ -60,6 +61,8 @@ interface OSState {
   lastPrompt: string;
   lastRunHadFailure: boolean;
   threads: Record<string, ThreadState>;
+  feed: FeedEntry[];
+  activeThreadId: string | null;
 
   triage: TriageItem[];
   vault: VaultRun[];
@@ -79,6 +82,8 @@ interface OSState {
   beginRun: (prompt: string) => void;
   endRun: (hadFailure: boolean) => void;
   setThreadStatus: (id: string, status: ThreadStatus) => void;
+  setActiveThread: (id: string | null) => void;
+  pushFeed: (entry: FeedEntry) => void;
   pushThreadLog: (id: string, msg: string, type?: LogType) => void;
   archiveRun: () => void;
 }
@@ -98,6 +103,8 @@ export const useOS = create<OSState>((set, get) => ({
   lastPrompt: '',
   lastRunHadFailure: false,
   threads: makeThreads(),
+  feed: [],
+  activeThreadId: null,
 
   triage: TRIAGE_SEED,
   vault: VAULT_SEED,
@@ -169,6 +176,13 @@ export const useOS = create<OSState>((set, get) => ({
       lastPrompt: prompt,
       lastRunHadFailure: false,
       threads: makeThreads(),
+      feed: [{
+        kind: 'user',
+        id: `f-user-${Date.now()}`,
+        text: prompt,
+        ts: clock(),
+      }],
+      activeThreadId: null,
     });
   },
 
@@ -189,6 +203,10 @@ export const useOS = create<OSState>((set, get) => ({
       },
     });
   },
+
+  setActiveThread: (id) => set({ activeThreadId: id }),
+
+  pushFeed: (entry) => set({ feed: [...get().feed, entry] }),
 
   pushThreadLog: (id, msg, type = 'info') => {
     const s = get();

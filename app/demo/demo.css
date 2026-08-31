@@ -401,3 +401,76 @@
     .demo-scope .rise, .demo-scope .slide-in, .demo-scope .fade-in { animation: none; opacity: 1; }
     .demo-scope .side-panel { transition: none; }
 }
+
+/* ===== launchpad: thread blocks, feed, timeline ===== */
+.demo-scope .thread-block {
+    background: var(--net-panel);
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    padding: 0.65rem 0.75rem;
+    cursor: pointer;
+    transition: border-color 0.16s, background-color 0.16s;
+    width: 100%;
+    text-align: left;
+    color: var(--ink);
+}
+.demo-scope .thread-block:hover { border-color: var(--hairline-strong); background: var(--net-panel-2); }
+.demo-scope .thread-block.is-running { border-color: color-mix(in srgb, var(--line-cobalt) 45%, transparent); background: color-mix(in srgb, var(--line-cobalt) 5%, transparent); }
+.demo-scope .thread-block.is-done { border-color: color-mix(in srgb, var(--line-green) 40%, transparent); }
+.demo-scope .thread-block.is-failed { border-color: color-mix(in srgb, var(--line-scarlet) 45%, transparent); }
+.demo-scope .thread-block.is-aborted { border-color: color-mix(in srgb, var(--line-amber) 45%, transparent); }
+.demo-scope .thread-block.is-active { border-color: var(--hairline-strong); box-shadow: inset 0 0 0 1px var(--hairline-strong); }
+
+/* feed bubbles */
+.demo-scope .feed-row { display: flex; gap: 0.85rem; animation: netSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+.demo-scope .feed-avatar {
+    width: 30px; height: 30px; border-radius: 8px; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid var(--hairline-strong);
+}
+.demo-scope .feed-bubble {
+    background: var(--net-panel);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    padding: 0.7rem 0.9rem;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+/* terminal copy affordance */
+.demo-scope .term-copy {
+    position: absolute; top: 0.45rem; right: 0.45rem;
+    color: var(--ink-dim);
+    background: var(--net-panel);
+    border: 1px solid var(--hairline);
+    border-radius: 5px;
+    padding: 0.25rem;
+    line-height: 0;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+    z-index: 5;
+    cursor: pointer;
+}
+.demo-scope .term-wrap:hover .term-copy { opacity: 1; }
+.demo-scope .term-copy:hover { color: var(--line-cobalt); border-color: var(--hairline-strong); }
+
+/* hub tabs (agency hub / settings) */
+.demo-scope .hub-tab {
+    border-radius: 7px;
+    border: 1px solid transparent;
+    color: var(--ink-dim);
+    font-family: var(--font-fragment), 'Fragment Mono', ui-monospace, monospace;
+    transition: all 0.15s;
+    text-align: left;
+}
+.demo-scope .hub-tab:hover { color: var(--ink); background: var(--net-panel-2); }
+.demo-scope .hub-tab.active {
+    color: var(--ink);
+    background: var(--net-panel-2);
+    border-color: var(--hairline);
+    box-shadow: inset 2px 0 0 var(--line-cobalt);
+}
+
+/* timeline (gantt) */
+.demo-scope .tl-live { animation: netPulseOp 1.1s ease-in-out infinite; }
+@keyframes netPulseOp { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
