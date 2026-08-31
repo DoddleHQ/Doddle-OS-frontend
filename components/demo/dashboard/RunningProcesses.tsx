@@ -45,8 +45,8 @@ export function RunningProcesses() {
             <ProgressBar pct={started ? pct : 0} status={started ? status : 'idle'} />
             <span className="text-[10px] font-mono text-[var(--ink-dim)] tnum">{started ? `${pct}%` : '0%'}</span>
           </span>
-          <span className="w-[16%] flex justify-end -space-x-1">
-            <span className="z-10"><AgentChip agentId="sec" ink="var(--line-amber)" /></span>
+          <span className="w-[16%] flex justify-end gap-1">
+            <AgentChip agentId="sec" ink="var(--line-amber)" />
             <AgentChip agentId="data" ink="var(--line-green)" />
           </span>
         </Link>
@@ -60,7 +60,7 @@ export function RunningProcesses() {
             <ProgressBar pct={NIGHTLY_AUDIT_ROW.progress} status={NIGHTLY_AUDIT_ROW.status} />
             <span className="text-[10px] font-mono text-[var(--ink-dim)] tnum">{NIGHTLY_AUDIT_ROW.progress}%</span>
           </span>
-          <span className="w-[16%] flex justify-end -space-x-1">
+          <span className="w-[16%] flex justify-end gap-1">
             <AgentChip agentId={NIGHTLY_AUDIT_ROW.agentId} ink="var(--line-cobalt)" />
           </span>
         </div>
