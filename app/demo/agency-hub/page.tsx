@@ -18,9 +18,14 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]['items'][number]['id'];
 
-function Toggle({ checked, disabled }: { checked: boolean; disabled?: boolean }) {
+function Toggle({ checked, disabled, onChange }: { checked: boolean; disabled?: boolean; onChange?: () => void }) {
   return (
-    <span
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={onChange}
       className="relative inline-block w-9 h-5 rounded-[4px] transition-colors shrink-0"
       style={{
         background: checked ? 'var(--line-cobalt)' : 'var(--hairline-strong)',
@@ -32,7 +37,7 @@ function Toggle({ checked, disabled }: { checked: boolean; disabled?: boolean })
         className="absolute top-[2px] w-4 h-4 rounded-[2px] bg-white transition-transform"
         style={{ left: '2px', transform: checked ? 'translateX(16px)' : 'none' }}
       />
-    </span>
+    </button>
   );
 }
 
@@ -141,21 +146,26 @@ function BillingTab() {
 }
 
 function GuardrailsTab() {
+  const [tierStates, setTierStates] = useState([true, true, true]);
   const tiers = [
-    { name: 'Tier 1: Autonomous Retry', desc: 'Orchestrator feeds error logs back to the agent with a debug prompt. Max 2 attempts before escalation.', ink: 'var(--line-green)', checked: true, locked: false },
-    { name: 'Tier 2: Swarm Reroute', desc: 'Orchestrator reassigns the failed sub-task to a diagnostic specialist.', ink: 'var(--line-amber)', checked: true, locked: false },
-    { name: 'Tier 3: Circuit Breaker & Triage Push', desc: 'Freeze swarm state and push to Human Triage Center.', ink: 'var(--line-scarlet)', checked: true, locked: true },
+    { name: 'Tier 1: Autonomous Retry', desc: 'Orchestrator feeds error logs back to the agent with a debug prompt. Max 2 attempts before escalation.', ink: 'var(--line-green)', locked: false },
+    { name: 'Tier 2: Swarm Reroute', desc: 'Orchestrator reassigns the failed sub-task to a diagnostic specialist.', ink: 'var(--line-amber)', locked: false },
+    { name: 'Tier 3: Circuit Breaker & Triage Push', desc: 'Freeze swarm state and push to Human Triage Center.', ink: 'var(--line-scarlet)', locked: true },
   ];
   return (
     <div className="max-w-3xl slide-in">
       <h3 className="text-lg font-bold mb-2 font-mono">workspace_guardrails</h3>
       <p className="text-xs text-[var(--ink-dim)] mb-6">Define how the Orchestrator handles failures before routing to the Triage Center.</p>
       <div className="space-y-4">
-        {tiers.map((tier) => (
+        {tiers.map((tier, i) => (
           <div key={tier.name} className="agency-card p-5 !cursor-default" style={{ borderColor: `color-mix(in srgb, ${tier.ink} 30%, transparent)` }}>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-sm font-bold font-mono">{tier.name}</h4>
-              <Toggle checked={tier.checked} disabled={tier.locked} />
+              <Toggle
+                checked={tierStates[i] ?? true}
+                disabled={tier.locked}
+                onChange={() => setTierStates((prev) => prev.map((v, j) => (j === i ? !v : v)))}
+              />
             </div>
             <p className="text-xs text-[var(--ink-dim)]">
               {tier.desc} {tier.locked && <span style={{ color: 'var(--line-scarlet)' }}>(Mandatory)</span>}
