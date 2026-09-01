@@ -1,18 +1,16 @@
 'use client';
 
-import { useOS } from '@/lib/demo/osStore';
 import type { SwarmStatus } from '@/lib/demo/osStore';
 import type { ThreadStatus } from '@/lib/demo/types';
 
-/** The production Doddle OS monogram, theme-aware (white on midnight). */
+/** The Doddle OS logo (public/Doddle_Logo.jpeg). */
 export function BrandMark({ className }: { className?: string }) {
-  const theme = useOS((s) => s.theme);
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={theme === 'dark' ? '/logo-monogram-white.png' : '/logo-monogram.png'}
+      src="/Doddle_Logo.jpeg"
       alt="Doddle OS"
-      className={className}
+      className={`object-contain ${className ?? ''}`}
       draggable={false}
     />
   );
