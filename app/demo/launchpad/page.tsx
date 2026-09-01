@@ -374,10 +374,113 @@ function ExecutionCanvas() {
   );
 }
 
+/** Q4 campaign: static approval workflow feed (from the reference's triage seed). */
+function Q4Feed() {
+  const triage = useOS((s) => s.triage);
+  const resolveTriage = useOS((s) => s.resolveTriage);
+  const q4Item = triage.find((t) => t.id === 'seed-q4-assets');
+  const resolved = !q4Item;
+
+  return (
+    <div className="flex-1 overflow-y-auto p-5 space-y-5">
+      <div className="feed-row">
+        <span className="feed-avatar"><span className="text-[11px] font-bold font-mono">V</span></span>
+        <div className="flex-1 min-w-0">
+          <p className="flex justify-between items-baseline mb-1">
+            <span className="text-xs font-bold font-mono">Vivek</span>
+            <span className="text-[9px] font-mono text-[var(--ink-faint)] tnum">09:14</span>
+          </p>
+          <div className="feed-bubble font-mono">Draft the Q4 campaign landing page — hero, features, pricing sections.</div>
+        </div>
+      </div>
+
+      <div className="feed-row">
+        <span className="feed-avatar" style={{ borderColor: 'var(--line-scarlet)' }}>
+          <DemoIcon name="pen-tool" className="w-3.5 h-3.5" />
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="flex justify-between items-baseline mb-1">
+            <span className="text-xs font-bold font-mono">@glob_Writer</span>
+            <span className="text-[9px] font-mono text-[var(--ink-faint)] tnum">09:22</span>
+          </p>
+          <div className="feed-bubble mb-2">Draft complete. Landing page ready for review — awaiting approval to initiate Vercel deployment.</div>
+          {resolved ? (
+            <div className="feed-bubble text-[11px] font-mono" style={{ color: 'var(--line-green)' }}>
+              ✓ approved by operator — deployment queued
+            </div>
+          ) : (
+            <div className="feed-bubble">
+              <span className="inline-block mb-2 text-[10px] font-bold font-mono px-2 py-0.5 rounded-[3px] border" style={{ color: 'var(--line-amber)', borderColor: 'color-mix(in srgb, var(--line-amber) 45%, transparent)', background: 'color-mix(in srgb, var(--line-amber) 10%, transparent)' }}>
+                APPROVAL_REQ
+              </span>
+              <div className="flex gap-2 mt-3">
+                <button
+                  type="button"
+                  className="flex-1 py-1.5 rounded-[3px] text-xs font-bold font-mono text-white hover:brightness-110"
+                  style={{ background: 'var(--line-amber)' }}
+                  onClick={() => resolveTriage('seed-q4-assets', 'approved')}
+                >
+                  approve()
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 py-1.5 rounded-[3px] text-xs font-bold font-mono hover:brightness-110"
+                  style={{ border: '1px solid color-mix(in srgb, var(--line-scarlet) 45%, transparent)', color: 'var(--line-scarlet)' }}
+                  onClick={() => resolveTriage('seed-q4-assets', 'rejected')}
+                >
+                  reject()
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Q4 campaign canvas: the landing page artifact. */
+function Q4Canvas() {
+  return (
+    <div className="absolute inset-0 flex flex-col slide-in">
+      <div className="h-14 px-5 md:px-7 border-b agency-border flex items-center justify-between shrink-0">
+        <span className="flex items-center gap-3">
+          <span className="w-8 h-8 rounded-[6px] flex items-center justify-center" style={{ border: '1.5px solid var(--line-scarlet)' }}>
+            <DemoIcon name="pen-tool" className="w-4 h-4" />
+          </span>
+          <span>
+            <span className="block text-sm font-bold font-mono">q4_landing_page</span>
+            <span className="block text-[10px] text-[var(--ink-dim)] font-mono mt-0.5">@glob_Writer</span>
+          </span>
+        </span>
+        <SwarmBadge status="completed" />
+      </div>
+      <div className="flex-1 p-6 md:p-8 overflow-y-auto flex flex-col gap-6">
+        <div className="rounded-[10px] p-4 border border-dashed" style={{ borderColor: 'var(--hairline-strong)' }}>
+          <p className="label-rule mb-2">objective</p>
+          <p className="text-xs leading-relaxed font-mono">&gt; Draft the Q4 campaign landing page for Vercel deployment.</p>
+        </div>
+        <div className="flex flex-col flex-1 min-h-[220px]">
+          <p className="label-rule mb-2" style={{ color: 'var(--line-green)' }}>generated_artifact.html</p>
+          <div className="term-wrap relative flex-1 flex">
+            <pre className="terminal-container flex-1 text-[11px] leading-relaxed"><code>{`<section class="hero">
+  <h1>Ship agents, not chores.</h1>
+  <p>Doddle OS — Q4 campaign landing</p>
+  <button data-deploy="vercel">Request demo</button>
+</section>`}</code></pre>
+            <CopyButton text={'<section class="hero">...'} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DemoLaunchpadPage() {
   const runActive = useOS((s) => s.runActive);
   const runStartedAt = useOS((s) => s.runStartedAt);
   const threads = useOS((s) => s.threads);
+  const [campaign, setCampaign] = useState<'gsc-mcp' | 'q4-assets'>('gsc-mcp');
   const [cmd, setCmd] = useState('');
   const [armed, setArmed] = useState(false);
   const armTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -426,23 +529,31 @@ export default function DemoLaunchpadPage() {
             <p className="label-rule">active_campaigns</p>
           </div>
           <div className="flex lg:flex-col gap-2 p-3 overflow-x-auto">
-            <div className="thread-block is-active min-w-[170px] lg:min-w-0">
+            <button
+              type="button"
+              onClick={() => setCampaign('gsc-mcp')}
+              className={`thread-block min-w-[170px] lg:min-w-0 ${campaign === 'gsc-mcp' ? 'is-active' : ''}`}
+            >
               <span className="flex items-center gap-2">
-                <Hash className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--line-scarlet)' }} />
+                <Hash className="w-3.5 h-3.5 shrink-0" style={{ color: campaign === 'gsc-mcp' ? 'var(--line-scarlet)' : 'var(--ink-faint)' }} />
                 <span className="text-xs font-bold font-mono">gsc-mcp</span>
               </span>
               <p className="text-[10px] font-mono mt-1.5 flex items-center gap-1.5" style={{ color: runActive ? 'var(--line-cobalt)' : 'var(--ink-faint)' }}>
                 <span className={`w-1.5 h-1.5 rounded-full ${runActive ? 'bg-current animate-pulse' : 'border border-current'}`} />
                 {runActive ? 'running' : 'idle'}
               </p>
-            </div>
-            <div className="thread-block min-w-[170px] lg:min-w-0 opacity-70">
+            </button>
+            <button
+              type="button"
+              onClick={() => setCampaign('q4-assets')}
+              className={`thread-block min-w-[170px] lg:min-w-0 ${campaign === 'q4-assets' ? 'is-active' : ''} opacity-80`}
+            >
               <span className="flex items-center gap-2">
-                <Hash className="w-3.5 h-3.5 shrink-0 text-[var(--ink-faint)]" />
+                <Hash className="w-3.5 h-3.5 shrink-0" style={{ color: campaign === 'q4-assets' ? 'var(--line-amber)' : 'var(--ink-faint)' }} />
                 <span className="text-xs font-bold font-mono">q4-assets</span>
               </span>
               <p className="text-[10px] font-mono mt-1.5" style={{ color: 'var(--line-amber)' }}>approval_req</p>
-            </div>
+            </button>
           </div>
         </aside>
 
@@ -450,7 +561,7 @@ export default function DemoLaunchpadPage() {
         <section className="lg:w-[420px] shrink-0 border-b lg:border-b-0 lg:border-r agency-border flex flex-col min-h-[380px] lg:min-h-0 relative z-20">
           <div className="h-14 px-5 border-b agency-border flex items-center justify-between shrink-0">
             <div>
-              <h2 className="text-sm font-bold font-mono"># gsc-mcp-integration</h2>
+              <h2 className="text-sm font-bold font-mono"># {campaign === 'gsc-mcp' ? 'gsc-mcp-integration' : 'q4-assets'}</h2>
               <p className="text-[9px] text-[var(--ink-faint)] font-mono mt-0.5">mission_control_feed</p>
             </div>
             <div className="flex items-center gap-3">
@@ -473,8 +584,9 @@ export default function DemoLaunchpadPage() {
             </div>
           </div>
 
-          <MissionFeed />
+          {campaign === 'gsc-mcp' ? <MissionFeed /> : <Q4Feed />}
 
+          {campaign === 'gsc-mcp' && (
           <div className="p-3.5 border-t agency-border shrink-0">
             <div className="cli-input-wrapper">
               <span className="font-mono text-xs mb-0.5" style={{ color: 'var(--line-green)' }}>&gt;</span>
@@ -498,11 +610,12 @@ export default function DemoLaunchpadPage() {
               </button>
             </div>
           </div>
+          )}
         </section>
 
         {/* execution canvas */}
         <section className="flex-1 relative min-h-[420px] lg:min-h-0 overflow-hidden">
-          <ExecutionCanvas />
+          {campaign === 'gsc-mcp' ? <ExecutionCanvas /> : <Q4Canvas />}
         </section>
       </div>
     </div>
