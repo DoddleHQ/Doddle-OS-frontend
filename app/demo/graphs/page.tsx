@@ -27,20 +27,32 @@ export default function DemoGraphsPage() {
       <div className="flex-1 overflow-y-auto p-8 md:p-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl rise">
           {GRAPH_TEMPLATES.map((tpl) => (
-            <div key={tpl.id} className="agency-card p-6 flex flex-col justify-between">
+            <div
+              key={tpl.id}
+              className={`agency-card p-6 flex flex-col justify-between ${tpl.featured ? '' : '!bg-transparent'}`}
+              style={tpl.featured ? { borderColor: `color-mix(in srgb, ${tpl.ink} 35%, transparent)` } : undefined}
+            >
               <div>
                 <span
                   className="inline-block mb-4 text-[9px] font-mono px-2 py-1 rounded-[3px] border"
-                  style={{ color: 'var(--line-cobalt)', borderColor: 'color-mix(in srgb, var(--line-cobalt) 35%, transparent)', background: 'color-mix(in srgb, var(--line-cobalt) 8%, transparent)' }}
+                  style={{
+                    color: tpl.ink,
+                    borderColor: `color-mix(in srgb, ${tpl.ink} 35%, transparent)`,
+                    background: `color-mix(in srgb, ${tpl.ink} 8%, transparent)`,
+                  }}
                 >
                   tag: {tpl.tag}
                 </span>
                 <h3 className="text-base font-bold mb-2">{tpl.title}</h3>
                 <p className="text-xs text-[var(--ink-dim)] mb-6 leading-relaxed">
-                  Spawns <span className="font-mono" style={{ color: 'var(--line-green)' }}>#gsc-mcp-integration</span>. {tpl.desc}
+                  Spawns <span className="font-mono" style={{ color: 'var(--line-green)' }}>#{tpl.id}</span>. {tpl.desc}
                 </p>
               </div>
-              <button type="button" className="btn-primary w-full !py-2.5" onClick={run}>
+              <button
+                type="button"
+                className={tpl.featured ? 'btn-primary w-full !py-2.5' : 'btn-outline w-full !py-2.5'}
+                onClick={run}
+              >
                 <Terminal className="w-3 h-3" /> doddle run
               </button>
             </div>

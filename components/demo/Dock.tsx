@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useOS } from '@/lib/demo/osStore';
+import { OPERATOR } from '@/lib/demo/data';
 import { DemoIcon } from '@/lib/demo/icons';
 import { BrandMark } from './primitives';
 
@@ -80,6 +81,17 @@ export function Dock() {
           ))}
         </nav>
       </div>
+
+      {/* operator avatar at the rail's foot */}
+      <Link
+        href="/demo/settings"
+        title={OPERATOR.name}
+        className={`shrink-0 rounded-full border border-[var(--hairline)] hover:border-[var(--hairline-strong)] overflow-hidden transition-colors ${dockOpen ? 'w-9 h-9' : 'w-9 h-9'}`}
+      >
+        <span className="w-full h-full flex items-center justify-center text-[11px] font-bold font-mono bg-[var(--net-panel-2)]">
+          {OPERATOR.name.split(' ')[0][0]}
+        </span>
+      </Link>
     </div>
   );
 }

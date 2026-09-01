@@ -436,6 +436,13 @@ export default function DemoLaunchpadPage() {
                 {runActive ? 'running' : 'idle'}
               </p>
             </div>
+            <div className="thread-block min-w-[170px] lg:min-w-0 opacity-70">
+              <span className="flex items-center gap-2">
+                <Hash className="w-3.5 h-3.5 shrink-0 text-[var(--ink-faint)]" />
+                <span className="text-xs font-bold font-mono">q4-assets</span>
+              </span>
+              <p className="text-[10px] font-mono mt-1.5" style={{ color: 'var(--line-amber)' }}>approval_req</p>
+            </div>
           </div>
         </aside>
 

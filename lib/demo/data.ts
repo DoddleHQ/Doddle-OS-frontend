@@ -75,5 +75,30 @@ export const GRAPH_TEMPLATES = [
     tag: 'engineering',
     title: 'GSC MCP Pipeline',
     desc: 'Evaluates DB schema, secures multi-tenant hashes, extracts analytics.',
+    ink: 'var(--line-cobalt)',
+    featured: true,
   },
+  {
+    id: 'seo-impl',
+    tag: 'marketing',
+    title: 'SEO Implementation',
+    desc: 'Scrapes competitor metadata, updates meta tags via headless browser, and generates content briefs.',
+    ink: 'var(--line-amber)',
+    featured: false,
+  },
+  {
+    id: 'gtm-strategy',
+    tag: 'growth',
+    title: 'GTM Strategy',
+    desc: 'Analyzes target demographics, formulates positioning, and drafts multi-channel launch cadence.',
+    ink: 'var(--line-green)',
+    featured: false,
+  },
+];
+
+/** Additional dashboard rows from the reference (static demo state). */
+export const EXTRA_PROCESSES = [
+  { title: 'Q4 Marketing Assets', id: 'q4-marketing', status: 'halted' as const, progress: 100, agentId: 'writer', badge: 'approval_req' },
+  { title: 'Competitor SEO Scrape', id: 'seo-intel', status: 'idle' as const, progress: 0, agentId: null, badge: 'queued' },
+  { title: 'Social Content Gen', id: 'social-weekly', status: 'completed' as const, progress: 100, agentId: 'writer', badge: 'completed' },
 ];
