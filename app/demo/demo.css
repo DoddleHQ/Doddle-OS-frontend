@@ -83,8 +83,7 @@
     font-family: var(--font-archivo), 'Archivo', sans-serif;
     font-size: 10px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.12em;
     color: var(--ink-dim);
     display: inline-flex;
     align-items: center;
