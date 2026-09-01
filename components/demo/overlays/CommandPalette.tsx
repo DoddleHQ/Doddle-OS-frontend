@@ -92,7 +92,7 @@ export function CommandPalette() {
       style={{ background: 'rgba(6, 11, 26, 0.6)', backdropFilter: 'blur(2px)' }}
       onClick={(e) => { if (e.target === e.currentTarget) setOverlay('paletteOpen', false); }}
     >
-      <div className="agency-window w-full max-w-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div className="plate w-full max-w-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-3 px-4 border-b agency-border">
           <Command className="w-4 h-4 text-[var(--ink-dim)]" />
           <input
