@@ -119,8 +119,24 @@ export async function POST(req: NextRequest) {
 
   const stream = new ReadableStream({
     async start(controller) {
-      const push = (part: unknown) =>
-        controller.enqueue(encoder.encode(sse(part)));
+      // Enqueues throw once the client connection is gone (proxy cut,
+      // navigation) — route every write through a guard so the loop exits
+      // cleanly instead of throwing inside the stream.
+      let alive = true;
+      const safeEnqueue = (chunk: string) => {
+        if (!alive) return;
+        try {
+          controller.enqueue(encoder.encode(chunk));
+        } catch {
+          alive = false;
+        }
+      };
+      const push = (part: unknown) => safeEnqueue(sse(part));
+      // SSE comment — ignored by every stream parser, but keeps bytes
+      // flowing through reverse proxies so their idle read-timeout doesn't
+      // kill the connection during silent phases (model thinking, long
+      // tool calls like Lighthouse).
+      const ping = () => safeEnqueue(': ping\n\n');
 
       const toolNames = new Map<string, string>(); // toolCallId -> name
       let step = 0;
@@ -218,9 +234,23 @@ export async function POST(req: NextRequest) {
       const reader = upstream.body!.getReader();
       let buffer = '';
       let mode = '';
+      const HEARTBEAT_MS = 15_000;
+      let pending = reader.read();
       try {
         for (;;) {
-          const { done, value } = await reader.read();
+          const won = await Promise.race([
+            pending,
+            new Promise<'beat'>((r) =>
+              setTimeout(() => r('beat'), HEARTBEAT_MS),
+            ),
+          ]);
+          if (won === 'beat') {
+            ping();
+            if (!alive) break;
+            continue;
+          }
+          pending = reader.read();
+          const { done, value } = won;
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
           let nl: number;
@@ -254,7 +284,12 @@ export async function POST(req: NextRequest) {
         push({ type: 'error', errorText: String(err) });
       } finally {
         push({ type: 'finish' });
-        controller.close();
+        if (!alive) reader.cancel().catch(() => {});
+        try {
+          controller.close();
+        } catch {
+          /* already closed */
+        }
       }
     },
   });
@@ -263,6 +298,9 @@ export async function POST(req: NextRequest) {
     headers: {
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
+      // Tell nginx (and compatible proxies) not to buffer this response —
+      // buffering turns token streaming into multi-second bursts.
+      'X-Accel-Buffering': 'no',
       'x-langgraph-thread-id': threadId,
       'x-vercel-ai-ui-message-stream': 'v1',
     },

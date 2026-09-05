@@ -88,8 +88,19 @@ export async function GET(
 
   const stream = new ReadableStream({
     async start(controller) {
-      const push = (part: unknown) =>
-        controller.enqueue(encoder.encode(sse(part)));
+      // Same guards as the chat route: heartbeat through proxy idle
+      // timeouts, guarded enqueues for a gone client.
+      let alive = true;
+      const safeEnqueue = (chunk: string) => {
+        if (!alive) return;
+        try {
+          controller.enqueue(encoder.encode(chunk));
+        } catch {
+          alive = false;
+        }
+      };
+      const push = (part: unknown) => safeEnqueue(sse(part));
+      const ping = () => safeEnqueue(': ping\n\n');
 
       let step = 0;
       let stepOpen = false;
@@ -135,9 +146,23 @@ export async function GET(
       const reader = upstream.body!.getReader();
       let buffer = '';
       let mode = '';
+      const HEARTBEAT_MS = 15_000;
+      let pending = reader.read();
       try {
         for (;;) {
-          const { done, value } = await reader.read();
+          const won = await Promise.race([
+            pending,
+            new Promise<'beat'>((r) =>
+              setTimeout(() => r('beat'), HEARTBEAT_MS),
+            ),
+          ]);
+          if (won === 'beat') {
+            ping();
+            if (!alive) break;
+            continue;
+          }
+          pending = reader.read();
+          const { done, value } = won;
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
           let nl: number;
@@ -167,7 +192,12 @@ export async function GET(
         push({ type: 'error', errorText: String(err) });
       } finally {
         push({ type: 'finish' });
-        controller.close();
+        if (!alive) reader.cancel().catch(() => {});
+        try {
+          controller.close();
+        } catch {
+          /* already closed */
+        }
       }
     },
   });
@@ -176,6 +206,7 @@ export async function GET(
     headers: {
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
+      'X-Accel-Buffering': 'no',
       'x-vercel-ai-ui-message-stream': 'v1',
     },
   });
