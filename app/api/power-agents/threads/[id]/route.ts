@@ -81,6 +81,11 @@ export async function GET(
 ) {
   const { id } = await params;
   const res = await fetch(`${getLangGraphApiUrl()}/threads/${id}/state`);
+  if (res.status === 404) {
+    // thread is gone (deleted elsewhere) — say so distinctly so the
+    // frontend can drop the stale chip instead of showing a server error
+    return NextResponse.json({ error: 'thread not found' }, { status: 404 });
+  }
   if (!res.ok) {
     return NextResponse.json(
       { error: `thread state failed: ${res.status}` },
@@ -120,6 +125,9 @@ export async function PATCH(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ metadata: { title: body.title } }),
   });
+  if (res.status === 404) {
+    return NextResponse.json({ error: 'thread not found' }, { status: 404 });
+  }
   if (!res.ok) {
     return NextResponse.json(
       { error: `thread rename failed: ${res.status}` },
@@ -137,6 +145,10 @@ export async function DELETE(
   const res = await fetch(`${getLangGraphApiUrl()}/threads/${id}`, {
     method: 'DELETE',
   });
+  if (res.status === 404) {
+    // already gone — treat as success so client cleanup proceeds
+    return NextResponse.json({ ok: true });
+  }
   if (!res.ok) {
     return NextResponse.json(
       { error: `thread delete failed: ${res.status}` },

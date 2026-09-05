@@ -104,6 +104,16 @@ export async function POST(req: NextRequest) {
     }),
   });
 
+  if (upstream.status === 404) {
+    // the thread was deleted (another tab, backend cleanup) — tell the
+    // client distinctly instead of a generic bad gateway
+    return new Response(
+      JSON.stringify({
+        error: 'session no longer exists — start a new session',
+      }),
+      { status: 404 },
+    );
+  }
   if (!upstream.ok || !upstream.body) {
     const errText = await upstream.text().catch(() => '');
     return new Response(

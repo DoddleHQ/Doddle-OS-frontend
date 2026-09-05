@@ -354,6 +354,12 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
 
     try {
       const res = await fetch(`/api/power-agents/threads/${id}`);
+      if (res.status === 404) {
+        // session was deleted out from under this tab (another tab,
+        // backend cleanup) — drop the stale chip
+        setSessions((s) => s.filter((c) => c.id !== id));
+        return;
+      }
       if (!res.ok) return;
       const t = (await res.json()) as {
         messages: Array<Record<string, unknown>>;
@@ -463,7 +469,7 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
     if (busy) stop(); // kill active stream before deleting
     try {
       const res = await fetch(`/api/power-agents/threads/${id}`, { method: 'DELETE' });
-      if (!res.ok) return;
+      if (!res.ok && res.status !== 404) return; // 404 = already gone, proceed
     } catch { return; }
     setSessions((s) => s.filter((c) => c.id !== id));
     if (id === activeThread) {
