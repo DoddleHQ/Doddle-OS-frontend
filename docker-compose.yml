@@ -12,10 +12,15 @@ services:
       - NODE_ENV=production
       - HOSTNAME=0.0.0.0
       - PORT=3000
+      # Server-side LangGraph base URL — the agents backend container on the
+      # shared doddle-os-network (created by the doddle-os-agents compose
+      # stack, which names it `doddle-os-network`).
+      - LANGGRAPH_API_URL=http://langgraph-api:8000
     env_file:
       - .env
     networks:
       - app-network
+      - doddle-os-agents
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 30s
@@ -26,3 +31,8 @@ services:
 networks:
   app-network:
     driver: bridge
+  doddle-os-agents:
+    # The agents backend stack's bridge network (fixed name declared in the
+    # doddle-os-agents docker-compose.yml). Bring the backend stack up first.
+    external: true
+    name: doddle-os-network
