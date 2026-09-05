@@ -361,7 +361,6 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
       };
       setActiveThread(id);
       activeThreadRef.current = id;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setMessages(t.messages as any);
 
       // if this thread has an active run, join its live stream
@@ -438,7 +437,6 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
                 if (next[i].role === 'assistant') {
                   const msg = { ...next[i] };
                   msg.parts = (msg.parts ?? []).map(
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (p: any) =>
                       p.type === 'text' ? { ...p, state: 'done' } : p,
                   );
