@@ -568,6 +568,16 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
     await sendMessage({ text });
   }
 
+  // sending clears the text but the onChange auto-grow leaves a stale inline
+  // height — collapse back to the resting single-line style whenever the
+  // composer is empty
+  const taskInputRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (!task && taskInputRef.current) {
+      taskInputRef.current.style.height = 'auto';
+    }
+  }, [task]);
+
   return (
     <>
       <section className="w-full lg:w-[420px] xl:w-[460px] shrink-0 border-b lg:border-b-0 lg:border-r agency-border flex flex-col min-h-[50vh] lg:min-h-0 relative z-20">
@@ -892,6 +902,7 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
           <div className="cli-input-wrapper">
             <span className="font-mono text-xs mb-0.5" style={{ color: 'var(--line-green)' }}>&gt;</span>
             <textarea
+              ref={taskInputRef}
               rows={1}
               value={task}
               placeholder="Assign solo task..."
