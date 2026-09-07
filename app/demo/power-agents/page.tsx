@@ -488,6 +488,15 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
 
   const busy = status === 'submitted' || status === 'streaming';
 
+  // avatar+dots working row: shows whenever the turn is busy and nothing is
+  // visibly streaming — before the first assistant row, and mid-turn during
+  // model thinking or collapsed tool runs. Active text (cursor) and visible
+  // tool spinners suppress it.
+  const lastMsg = messages[messages.length - 1];
+  const showWorkingRow =
+    busy &&
+    !(lastMsg?.role === 'assistant' && (lastMsg.parts ?? []).some(isPartActive));
+
   const lastAssistantText = useMemo(() => {
     const last = [...messages].reverse().find((m) => m.role === 'assistant');
     return last?.parts?.map((p) => (p.type === 'text' ? p.text : '')).join('') ?? '';
@@ -662,7 +671,7 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3 sm:space-y-3.5">
-          {messages.map((m, mi) =>
+          {messages.map((m) =>
             m.role === 'user' ? (
               <div key={m.id} className="feed-row flex-row-reverse">
                 <span className="feed-avatar">
@@ -846,38 +855,14 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
                       );
                     });
                   })()}
-                  {/* working indicator — while the turn is busy but nothing
-                      is visibly streaming (model thinking between steps,
-                      tools collapsed), show dots inside the existing row so
-                      the agent avatar stays singular */}
-                  {busy &&
-                    mi === messages.length - 1 &&
-                    !(m.parts ?? []).some(isPartActive) && (
-                      <span
-                        className="feed-bubble font-mono flex items-center gap-1.5 !py-2 w-fit"
-                        style={{
-                          borderColor: `color-mix(in srgb, ${meta.ink} 25%, transparent)`,
-                        }}
-                      >
-                        {[0, 1, 2].map((i) => (
-                          <span
-                            key={i}
-                            className="typing-dot w-1.5 h-1.5 rounded-full"
-                            style={{ background: meta.ink }}
-                          />
-                        ))}
-                      </span>
-                    )}
                 </div>
               </div>
             ),
           )}
 
-          {/* typing dots only until the turn's first assistant row appears —
-              after that the message row owns the avatar. Hiding on "has
-              text" instead rendered TWO agent icons for tool-first replies
-              (read_file runs before any text streams). */}
-          {busy && messages[messages.length - 1]?.role !== 'assistant' && (
+          {/* working row — agent avatar + typing dots; one rule for both
+              pre-first-part and mid-turn thinking gaps */}
+          {showWorkingRow && (
             <div className="feed-row">
               <span className="feed-avatar" style={{ borderColor: meta.ink }}>
                 <DemoIcon name={meta.icon} className="w-3.5 h-3.5" />
