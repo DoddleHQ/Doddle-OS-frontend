@@ -834,7 +834,11 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
             ),
           )}
 
-          {busy && !lastAssistantText && (
+          {/* typing dots only until the turn's first assistant row appears —
+              after that the message row owns the avatar. Hiding on "has
+              text" instead rendered TWO agent icons for tool-first replies
+              (read_file runs before any text streams). */}
+          {busy && messages[messages.length - 1]?.role !== 'assistant' && (
             <div className="feed-row">
               <span className="feed-avatar" style={{ borderColor: meta.ink }}>
                 <DemoIcon name={meta.icon} className="w-3.5 h-3.5" />
