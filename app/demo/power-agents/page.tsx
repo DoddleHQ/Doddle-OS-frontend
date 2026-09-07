@@ -981,7 +981,9 @@ export default function DemoPowerAgentsPage() {
 
   return (
     <div className="absolute inset-0 flex flex-col z-20 fade-in">
-      <div className="flex flex-col flex-1 min-h-0 mx-auto w-full max-w-[1600px]">
+      {/* full-bleed on desktop — the execution canvas (flex-1) absorbs the
+          extra width; the sidebar and feed keep their fixed sizes */}
+      <div className="flex flex-col flex-1 min-h-0 w-full">
       <header className="flex justify-between items-end px-4 sm:px-8 md:px-10 py-3 sm:py-5 shrink-0 border-b agency-border">
         <div className="min-w-0">
           <h1 className="text-lg sm:text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2 sm:gap-3">
