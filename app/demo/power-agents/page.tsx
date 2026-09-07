@@ -859,7 +859,7 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
                   })()}
                 </div>
               </div>
-            ),
+            ) : null,
           )}
 
           {/* working row — agent avatar + typing dots; one rule for both
