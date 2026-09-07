@@ -683,7 +683,9 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : (m.parts ?? []).some(
+                (p) => p.type === 'text' || p.type.startsWith('tool-'),
+              ) ? (
               <div key={m.id} className="feed-row">
                 <span className="feed-avatar" style={{ borderColor: meta.ink }}>
                   <DemoIcon name={meta.icon} className="w-3.5 h-3.5" />
