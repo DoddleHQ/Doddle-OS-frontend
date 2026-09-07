@@ -602,7 +602,7 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
         </div>
 
         {/* sessions strip: switch context / new / delete (per-agent threads) */}
-        <div className="flex-wrap sm:flex-nowrap flex items-center gap-1.5 px-3 sm:px-4 py-2 border-b agency-border overflow-x-auto sm:overflow-visible shrink-0">
+        <div className="flex-wrap sm:flex-nowrap flex items-center gap-1.5 px-3 sm:px-4 py-2 border-b agency-border overflow-x-auto shrink-0">
           <button
             type="button"
             onClick={newSession}
