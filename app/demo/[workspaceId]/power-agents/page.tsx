@@ -1,3 +1,4 @@
+import { useParams } from 'next/navigation';
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -959,6 +960,9 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
 // ── page shell (unchanged layout; roster is live) ──────────────────────
 
 export default function DemoPowerAgentsPage() {
+  const params = useParams();
+  const workspaceId = params.workspaceId as string;
+
   const [agents, setAgents] = useState<LiveAgent[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
   const [loadError, setLoadError] = useState<string>('');

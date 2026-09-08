@@ -3,17 +3,24 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useOS } from '@/lib/demo/osStore';
-import { Dock, DEMO_ROUTES } from './Dock';
+import { Dock } from './Dock';
 import { TriagePanel } from './overlays/TriagePanel';
 import { VaultPanel } from './overlays/VaultPanel';
 import { CommandPalette } from './overlays/CommandPalette';
 import { ToastStack } from './overlays/ToastStack';
+import { buildDemoRoutes } from './routes';
 
-export function DemoShell({ children }: { children: React.ReactNode }) {
+interface DemoShellProps {
+  children: React.ReactNode;
+  workspaceId: string;
+}
+
+export function DemoShell({ children, workspaceId }: DemoShellProps) {
   const setOverlay = useOS((s) => s.setOverlay);
   const initDock = useOS((s) => s.initDock);
   const closeTopOverlay = useOS((s) => s.closeTopOverlay);
   const router = useRouter();
+  const routes = buildDemoRoutes(workspaceId);
   const gPressed = useRef(false);
   const gTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -42,28 +49,28 @@ export function DemoShell({ children }: { children: React.ReactNode }) {
         return;
       }
       if (gPressed.current && /^[1-6]$/.test(e.key)) {
-        const route = DEMO_ROUTES[Number(e.key) - 1];
+        const route = routes[Number(e.key) - 1];
         if (route) router.push(route.path);
         gPressed.current = false;
       }
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [router, setOverlay, closeTopOverlay]);
+  }, [router, setOverlay, closeTopOverlay, routes]);
 
   return (
     <div className="demo-scope daypass h-screen w-screen relative flex flex-col overflow-hidden">
       {/* base-map linework beneath the board */}
       <div className="base-map absolute inset-0 pointer-events-none" aria-hidden="true" />
       <div className="flex-1 flex overflow-hidden relative z-10">
-        <Dock />
+        <Dock workspaceId={workspaceId} />
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
           {children}
           <TriagePanel />
           <VaultPanel />
         </div>
       </div>
-      <CommandPalette />
+      <CommandPalette workspaceId={workspaceId} />
       <ToastStack />
     </div>
   );

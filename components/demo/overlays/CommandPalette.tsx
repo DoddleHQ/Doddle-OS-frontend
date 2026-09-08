@@ -15,14 +15,15 @@ interface Cmd {
   run: () => void;
 }
 
-function buildCommands(navigate: (path: string) => void): Cmd[] {
+function buildCommands(navigate: (path: string) => void, workspaceId: string): Cmd[] {
+  const base = `/demo/${workspaceId}`;
   const routes: Cmd[] = [
-    { icon: 'layout-dashboard', label: 'go: dashboard', run: () => navigate('/demo') },
-    { icon: 'terminal', label: 'go: launchpad', run: () => navigate('/demo/launchpad') },
-    { icon: 'zap', label: 'go: power_agents', run: () => navigate('/demo/power-agents') },
-    { icon: 'folder-tree', label: 'go: graphs', run: () => navigate('/demo/graphs') },
-    { icon: 'building-2', label: 'go: agency_hub', run: () => navigate('/demo/agency-hub') },
-    { icon: 'settings', label: 'go: platform_settings', run: () => navigate('/demo/settings') },
+    { icon: 'layout-dashboard', label: 'go: dashboard', run: () => navigate(base) },
+    { icon: 'terminal', label: 'go: launchpad', run: () => navigate(`${base}/launchpad`) },
+    { icon: 'zap', label: 'go: power_agents', run: () => navigate(`${base}/power-agents`) },
+    { icon: 'folder-tree', label: 'go: graphs', run: () => navigate(`${base}/graphs`) },
+    { icon: 'building-2', label: 'go: agency_hub', run: () => navigate(`${base}/agency-hub`) },
+    { icon: 'settings', label: 'go: platform_settings', run: () => navigate(`${base}/settings`) },
     { icon: 'inbox', label: 'action: open_triage()', run: () => useOS.getState().setOverlay('triageOpen', true) },
     { icon: 'folder-archive', label: 'action: open_artifact_vault()', run: () => useOS.getState().setOverlay('vaultOpen', true) },
     { icon: 'play', label: 'action: run_demo_swarm()', run: () => { void startRun(DEFAULT_RUN_PROMPT); } },
@@ -33,14 +34,18 @@ function buildCommands(navigate: (path: string) => void): Cmd[] {
       routes.push({
         icon: 'route',
         label: `thread: ${t.title} · ${t.status}`,
-        run: () => navigate('/demo/launchpad'),
+        run: () => navigate(`/demo/${workspaceId}/launchpad`),
       });
     }
   }
   return routes;
 }
 
-export function CommandPalette() {
+interface CommandPaletteProps {
+  workspaceId: string;
+}
+
+export function CommandPalette({ workspaceId }: CommandPaletteProps) {
   const open = useOS((s) => s.paletteOpen);
   const setOverlay = useOS((s) => s.setOverlay);
   const runStartedAt = useOS((s) => s.runStartedAt);
@@ -52,11 +57,11 @@ export function CommandPalette() {
   const navigate = (path: string) => router.push(path);
 
   const items = useMemo(() => {
-    const all = buildCommands(navigate);
+    const all = buildCommands(navigate, workspaceId);
     const q = query.trim().toLowerCase();
     return q ? all.filter((c) => c.label.toLowerCase().includes(q)) : all;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, runStartedAt, threads]);
+  }, [query, runStartedAt, threads, workspaceId]);
 
   useEffect(() => {
     if (open) {

@@ -23,6 +23,7 @@ These were agreed upon before any code was changed. Every decision below must re
 #### 1.1 Remove `/demo` from PUBLIC_PATHS in middleware.ts
 
 **Date:** 2026-09-08
+**Status:** Already done in a previous session.
 **What:** Removed `/demo` from the `PUBLIC_PATHS` array in `middleware.ts`.
 **Why:** The demo was added to `PUBLIC_PATHS` so it could be viewed without logging in during the design exploration phase. Now that we're migrating it to be the main setup, it needs the same auth guard as every other protected route.
 **How:** Single-line removal from the array. The middleware's existing logic handles the rest — unauthenticated requests to `/demo/*` will redirect to `/login?next={path}`.

@@ -1,8 +1,9 @@
+import { useParams } from 'next/navigation';
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { Building2, Check, CreditCard, Layers, Plug, ShieldAlert, Users, X } from 'lucide-react';
-import { OPERATOR } from '@/lib/demo/data';
 
 const TABS = [
   { group: 'Organization', items: [
@@ -72,6 +73,7 @@ function WorkspacesTab() {
 }
 
 function UsersTab() {
+  const { user } = useAuth();
   return (
     <div className="max-w-4xl slide-in">
       <div className="flex justify-between items-center mb-6">
@@ -82,11 +84,11 @@ function UsersTab() {
         <div className="dense-row !cursor-default">
           <span className="flex items-center gap-3">
             <span className="w-8 h-8 rounded-[6px] border border-[var(--hairline)] flex items-center justify-center text-[11px] font-bold font-mono">
-              {OPERATOR.name.split(' ')[0][0]}
+              {(user?.name || 'Operator').split(' ')[0][0]}
             </span>
             <span className="flex flex-col">
-              <span className="text-xs font-bold font-mono">{OPERATOR.name}</span>
-              <span className="text-[10px] text-[var(--ink-dim)]">{OPERATOR.role}</span>
+              <span className="text-xs font-bold font-mono">{(user?.name || 'Operator')}</span>
+              <span className="text-[10px] text-[var(--ink-dim)]">{(user?.name || 'Operator')}</span>
             </span>
           </span>
           <span className="ml-auto text-[10px] font-mono" style={{ color: 'var(--line-cobalt)' }}>root</span>
@@ -216,6 +218,10 @@ function IntegrationsTab() {
 }
 
 export default function DemoAgencyHubPage() {
+  const params = useParams();
+  const workspaceId = params.workspaceId as string;
+  const { user } = useAuth();
+
   const [tab, setTab] = useState<TabId>('workspaces');
 
   return (

@@ -3,28 +3,30 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { useOS } from '@/lib/demo/osStore';
-import { OPERATOR } from '@/lib/demo/data';
 import { DemoIcon } from '@/lib/demo/icons';
 import { BrandMark } from './primitives';
+import { buildDemoRoutes } from './routes';
 
-export const DEMO_ROUTES = [
-  { path: '/demo', label: 'dashboard', icon: 'layout-dashboard' },
-  { path: '/demo/launchpad', label: 'launchpad', icon: 'terminal' },
-  { path: '/demo/power-agents', label: 'power_agents', icon: 'zap' },
-  { path: '/demo/graphs', label: 'graphs', icon: 'folder-tree' },
-  { path: '/demo/agency-hub', label: 'agency_hub', icon: 'building-2' },
-  { path: '/demo/settings', label: 'platform_settings', icon: 'settings' },
-] as const;
+interface DockProps {
+  workspaceId: string;
+}
 
-export function Dock() {
+export function Dock({ workspaceId }: DockProps) {
   const pathname = usePathname();
   const runActive = useOS((s) => s.runActive);
   const dockOpen = useOS((s) => s.dockOpen);
   const toggleDock = useOS((s) => s.toggleDock);
+  const { user } = useAuth();
+  const routes = buildDemoRoutes(workspaceId);
+  const basePath = `/demo/${workspaceId}`;
 
   const isActive = (path: string) =>
-    path === '/demo' ? pathname === '/demo' : pathname.startsWith(path);
+    path === basePath ? pathname === basePath : pathname.startsWith(path);
+
+  const userName = user?.name || 'Operator';
+  const userInitial = userName.trim().split(' ')[0]?.[0]?.toUpperCase() ?? '?';
 
   return (
     <div
@@ -33,7 +35,7 @@ export function Dock() {
       <div className={`flex flex-col ${dockOpen ? 'items-stretch gap-6' : 'items-center gap-6'} w-full`}>
         {/* header row: logo + collapse control side by side in both states */}
         <div className={`flex items-center mt-1 ${dockOpen ? 'justify-between' : 'justify-between w-full'}`}>
-          <Link href="/demo" title="Doddle OS" className="hover:opacity-85 transition-opacity">
+          <Link href={basePath} title="Doddle OS" className="hover:opacity-85 transition-opacity">
             <BrandMark className={dockOpen ? 'w-10 h-10' : 'w-9 h-9'} />
           </Link>
           <button
@@ -52,7 +54,7 @@ export function Dock() {
         </div>
 
         <nav className={`flex flex-col ${dockOpen ? 'space-y-1' : 'space-y-2.5'} mt-2 w-full`}>
-          {DEMO_ROUTES.map((route, i) => (
+          {routes.map((route, i) => (
             <div key={route.path} className="contents">
               {i === 3 && (
                 <div className={`h-px bg-[var(--hairline)] my-2.5 mx-auto ${dockOpen ? 'w-full' : 'w-8'}`} aria-hidden="true" />
@@ -68,7 +70,7 @@ export function Dock() {
                     {route.label}
                   </span>
                 )}
-                {route.path === '/demo/launchpad' && runActive && (
+                {route.label === 'launchpad' && runActive && (
                   <span className={`absolute bg-[var(--line-scarlet)] animate-pulse ${dockOpen ? 'top-1/2 -translate-y-1/2 right-3 w-1.5 h-1.5 rounded-full' : 'top-2 right-2 w-2 h-2 rounded-full'}`} />
                 )}
                 {!dockOpen && (
@@ -84,12 +86,12 @@ export function Dock() {
 
       {/* operator avatar at the rail's foot */}
       <Link
-        href="/demo/settings"
-        title={OPERATOR.name}
-        className={`shrink-0 rounded-full border border-[var(--hairline)] hover:border-[var(--hairline-strong)] overflow-hidden transition-colors ${dockOpen ? 'w-9 h-9' : 'w-9 h-9'}`}
+        href={`${basePath}/settings`}
+        title={userName}
+        className="shrink-0 rounded-full border border-[var(--hairline)] hover:border-[var(--hairline-strong)] overflow-hidden transition-colors w-9 h-9"
       >
         <span className="w-full h-full flex items-center justify-center text-[11px] font-bold font-mono bg-[var(--net-panel-2)]">
-          {OPERATOR.name.split(' ')[0][0]}
+          {userInitial}
         </span>
       </Link>
     </div>

@@ -2,9 +2,16 @@
 
 import { Activity } from 'lucide-react';
 import { useOS } from '@/lib/demo/osStore';
+import { useCurrentWorkspace } from '@/lib/hooks/useCurrentWorkspace';
+
+interface TelemetryHeaderProps {
+  workspaceId: string;
+}
 
 /** System Telemetry header with the triage_queue / active_swarms instrument strip. */
-export function TelemetryHeader() {
+export function TelemetryHeader({ workspaceId }: TelemetryHeaderProps) {
+  const { workspace } = useCurrentWorkspace(workspaceId);
+  const workspaceName = workspace?.name || 'Workspace';
   const runActive = useOS((s) => s.runActive);
   const runStartedAt = useOS((s) => s.runStartedAt);
   const lastRunHadFailure = useOS((s) => s.lastRunHadFailure);
@@ -12,12 +19,12 @@ export function TelemetryHeader() {
   const setOverlay = useOS((s) => s.setOverlay);
 
   const statusLine = runActive
-    ? 'status: executing | swarm_live'
+    ? `${workspaceName} | status: executing`
     : lastRunHadFailure
-      ? 'status: halted | triage_required'
+      ? `${workspaceName} | status: halted`
       : runStartedAt
-        ? 'status: operational | run_archived'
-        : 'status: operational | context_locked';
+        ? `${workspaceName} | status: operational`
+        : `${workspaceName} | status: operational | context_locked`;
 
   return (
     <header className="flex justify-between items-end mb-7 shrink-0 border-b agency-border pb-5 rise d1">

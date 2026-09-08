@@ -1,10 +1,12 @@
+import { useParams } from 'next/navigation';
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { Bot, Hash, Play, RotateCcw, Terminal, TerminalSquare, XOctagon } from 'lucide-react';
 import { runCost, useOS } from '@/lib/demo/osStore';
 import { abortRun, killThread, startRun } from '@/lib/demo/engine';
-import { AGENTS, DEFAULT_RUN_PROMPT, OPERATOR, SQL_ARTIFACT } from '@/lib/demo/data';
+import { AGENTS, DEFAULT_RUN_PROMPT, SQL_ARTIFACT } from '@/lib/demo/data';
 import { DemoIcon } from '@/lib/demo/icons';
 import { ProgressBar, SwarmBadge } from '@/components/demo/primitives';
 import type { FeedEntry, LogEntry, ThreadState } from '@/lib/demo/types';
@@ -111,16 +113,17 @@ function GateBubble({ entry }: { entry: Extract<FeedEntry, { kind: 'gate' }> }) 
 }
 
 function FeedEntryView({ entry }: { entry: FeedEntry }) {
+  const { user: authUser } = useAuth();
   const threads = useOS((s) => s.threads);
   const activeThreadId = useOS((s) => s.activeThreadId);
 
   if (entry.kind === 'user') {
     return (
       <div className="feed-row">
-        <FeedAvatar><span className="text-[11px] font-bold font-mono">{OPERATOR.name.split(' ')[0][0]}</span></FeedAvatar>
+        <FeedAvatar><span className="text-[11px] font-bold font-mono">{(authUser?.name || 'Operator').split(' ')[0][0]}</span></FeedAvatar>
         <div className="flex-1 min-w-0">
           <p className="flex justify-between items-baseline mb-1">
-            <span className="text-xs font-bold font-mono">{OPERATOR.name}</span>
+            <span className="text-xs font-bold font-mono">{(authUser?.name || 'Operator')}</span>
             <span className="text-[9px] font-mono text-[var(--ink-faint)] tnum">{entry.ts}</span>
           </p>
           <div className="feed-bubble font-mono">{entry.text}</div>
@@ -477,6 +480,10 @@ function Q4Canvas() {
 }
 
 export default function DemoLaunchpadPage() {
+  const params = useParams();
+  const workspaceId = params.workspaceId as string;
+  const { user } = useAuth();
+
   const runActive = useOS((s) => s.runActive);
   const runStartedAt = useOS((s) => s.runStartedAt);
   const threads = useOS((s) => s.threads);

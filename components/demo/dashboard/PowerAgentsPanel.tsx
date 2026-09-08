@@ -6,7 +6,7 @@ import { useOS } from '@/lib/demo/osStore';
 import { AGENTS } from '@/lib/demo/data';
 import { DemoIcon } from '@/lib/demo/icons';
 
-export function PowerAgentsPanel() {
+export function PowerAgentsPanel({ workspaceId }: { workspaceId: string }) {
   const dataLive = useOS((s) => s.threads.data?.status === 'running');
   const data = AGENTS.data;
   const writer = AGENTS.writer;
@@ -17,7 +17,7 @@ export function PowerAgentsPanel() {
         <h3 className="text-xs font-semibold flex items-center gap-2.5 font-mono tracking-wide">
           <Zap className="w-4 h-4" style={{ color: 'var(--line-green)' }} /> active_power_agents
         </h3>
-        <Link href="/demo/power-agents" className="text-[11px] font-mono text-[var(--ink-dim)] hover:text-[var(--ink)] transition-colors">
+        <Link href={`/demo/${workspaceId}/power-agents`} className="text-[11px] font-mono text-[var(--ink-dim)] hover:text-[var(--ink)] transition-colors">
           open() →
         </Link>
       </div>
@@ -28,7 +28,7 @@ export function PowerAgentsPanel() {
           return (
             <Link
               key={agent.id}
-              href="/demo/power-agents"
+              href={`/demo/${workspaceId}/power-agents`}
               className="flex items-center gap-3 p-2.5 hover:bg-[var(--net-panel-2)] rounded-[6px] border border-transparent transition-colors"
             >
               <span className="w-8 h-8 rounded-[6px] flex items-center justify-center shrink-0" style={{ border: `1.5px solid ${ink}` }}>

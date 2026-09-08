@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { Activity, ArrowRight, Bot, FolderArchive, Layers } from 'lucide-react';
 import { useOS } from '@/lib/demo/osStore';
 import { startRun } from '@/lib/demo/engine';
-import { DEFAULT_RUN_PROMPT, OPERATOR } from '@/lib/demo/data';
+import { DEFAULT_RUN_PROMPT } from '@/lib/demo/data';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { BrandMark, greeting } from '../primitives';
 
 function QuickCard({ icon, ink, title, copy, liveDot, onClick, href }: {
@@ -40,7 +41,9 @@ function QuickCard({ icon, ink, title, copy, liveDot, onClick, href }: {
   );
 }
 
-export function WelcomeHero() {
+export function WelcomeHero({ workspaceId }: { workspaceId: string }) {
+  const { user } = useAuth();
+  const displayName = user?.name || 'Operator';
   const runActive = useOS((s) => s.runActive);
   const runStartedAt = useOS((s) => s.runStartedAt);
   const lastRunHadFailure = useOS((s) => s.lastRunHadFailure);
@@ -70,20 +73,20 @@ export function WelcomeHero() {
     <div className="w-full flex flex-col items-center justify-center mb-10 mt-2 text-center rise">
       <BrandMark className="w-12 h-12 mb-4" />
       <h2 className="text-3xl font-bold tracking-tight mb-2.5 text-[var(--ink)]">
-        {greeting()}, {OPERATOR.name.split(' ')[0]}.
+        {greeting()}, {displayName.split(' ')[0]}.
       </h2>
       <p className="text-[var(--ink-dim)] text-[13px] mb-8">What are we executing today?</p>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full max-w-4xl mb-8">
         <QuickCard
-          href="/demo/graphs"
+          href={`/demo/${workspaceId}/graphs`}
           icon={<Layers className="w-4 h-4" style={{ color: 'var(--line-cobalt)' }} />}
           ink="var(--line-cobalt)"
           title="Campaign Swarm"
           copy="Spawn a multi-agent blueprint for complex workflows."
         />
         <QuickCard
-          href="/demo/power-agents"
+          href={`/demo/${workspaceId}/power-agents`}
           icon={<Bot className="w-4 h-4" style={{ color: 'var(--line-green)' }} />}
           ink="var(--line-green)"
           title="Direct Agent"

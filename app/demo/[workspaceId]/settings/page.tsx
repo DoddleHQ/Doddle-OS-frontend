@@ -1,8 +1,9 @@
+import { useParams } from 'next/navigation';
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { Activity, CreditCard, Plug, Settings, ShieldAlert, User } from 'lucide-react';
-import { OPERATOR } from '@/lib/demo/data';
 import { useOS } from '@/lib/demo/osStore';
 
 const TABS = [
@@ -18,9 +19,13 @@ const TABS = [
 type TabId = (typeof TABS)[number]['items'][number]['id'];
 
 export default function DemoSettingsPage() {
+  const params = useParams();
+  const workspaceId = params.workspaceId as string;
+  const { user } = useAuth();
+
   const [tab, setTab] = useState<TabId>('profile');
-  const [name, setName] = useState(OPERATOR.name);
-  const [role, setRole] = useState(OPERATOR.role);
+  const [name, setName] = useState((user?.name || 'Operator'));
+  const [role, setRole] = useState((user?.name || 'Operator'));
   const [expertise, setExpertise] = useState('Enterprise Architecture, ClickHouse optimization, Multi-tenant DB design.');
   const pushToast = useOS((s) => s.pushToast);
 

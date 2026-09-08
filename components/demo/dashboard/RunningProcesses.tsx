@@ -24,7 +24,7 @@ function AgentChip({ agentId }: { agentId: string }) {
   );
 }
 
-export function RunningProcesses() {
+export function RunningProcesses({ workspaceId }: { workspaceId: string }) {
   const threads = useOS((s) => s.threads);
   const list = Object.values(threads);
   const status = aggregateStatus(list);
@@ -37,13 +37,13 @@ export function RunningProcesses() {
         <h3 className="text-xs font-semibold flex items-center gap-2.5 font-mono tracking-wide">
           <Terminal className="w-4 h-4" style={{ color: 'var(--line-cobalt)' }} /> running_processes
         </h3>
-        <Link href="/demo/graphs" className="btn-outline !py-1 !px-2.5 !text-[10px]">
+        <Link href={`/demo/${workspaceId}/graphs`} className="btn-outline !py-1 !px-2.5 !text-[10px]">
           doddle new swarm
         </Link>
       </div>
       <div className="lg:flex-1 lg:overflow-y-auto">
         {/* live GSC pipeline (engine-driven) */}
-        <Link href="/demo/launchpad" className="dense-row">
+        <Link href={`/demo/${workspaceId}/launchpad`} className="dense-row">
           <span className="w-[34%] flex flex-col">
             <span className="text-xs font-bold truncate">GSC MCP Pipeline</span>
             <span className="text-[10px] text-[var(--ink-faint)] font-mono mt-1 truncate">id: gsc-mcp-integration</span>

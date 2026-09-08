@@ -1,3 +1,4 @@
+import { useParams } from 'next/navigation';
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -6,6 +7,9 @@ import { GRAPH_TEMPLATES, DEFAULT_RUN_PROMPT } from '@/lib/demo/data';
 import { startRun } from '@/lib/demo/engine';
 
 export default function DemoGraphsPage() {
+  const params = useParams();
+  const workspaceId = params.workspaceId as string;
+
   const router = useRouter();
 
   const run = () => {

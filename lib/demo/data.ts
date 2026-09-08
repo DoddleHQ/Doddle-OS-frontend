@@ -3,11 +3,6 @@ import type { Agent, ThreadState, TriageItem, VaultRun } from './types';
 /** Price per token for the simulated cost meter (matches the HTML sample). */
 export const PRICE_PER_TOK = 4e-6;
 
-export const OPERATOR = {
-  name: 'Vivek',
-  role: 'Forward Deployed Engineer',
-  context: 'Acme_SaaS_Context',
-};
 
 export const AGENTS: Record<string, Agent> = {
   orchestrator: { id: 'orchestrator', handle: '@Dod_Orchestrator', role: 'Orchestrator', icon: 'bot' },
