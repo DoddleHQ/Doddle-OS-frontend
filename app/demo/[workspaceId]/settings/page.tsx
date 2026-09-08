@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Activity, Copy, CreditCard, Link2, Plug, Plus, RefreshCw, Settings, ShieldAlert, Trash2, User, Users } from 'lucide-react';
+import { Activity, Copy, CreditCard, Database, Link2, Plug, Plus, RefreshCw, Settings, ShieldAlert, Trash2, User, Users } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCurrentWorkspace, invalidateWorkspace } from '@/lib/hooks/useCurrentWorkspace';
 import { workspaceService, inviteLinkService, memberService, InviteLinkConflictError } from '@/lib/services/workspaceService';
 import { editProfile } from '@/lib/services/authService';
 import { notify } from '@/lib/stores/notificationStore';
 import { useOS } from '@/lib/demo/osStore';
+import { DataSyncSection } from '@/components/demo/settings/DataSyncSection';
 import type { WorkspaceMember, InviteLink } from '@/lib/types/workspace.types';
 
 const TABS = [
@@ -25,7 +26,10 @@ const TABS = [
     { id: 'guardrails', label: 'guardrails', icon: ShieldAlert },
     { id: 'analytics', label: 'analytics', icon: Activity },
   ] },
-  { group: 'System & Core', items: [{ id: 'integrations', label: 'integrations', icon: Plug }] },
+  { group: 'System & Core', items: [
+    { id: 'data_sync', label: 'data_sync', icon: Database },
+    { id: 'integrations', label: 'integrations', icon: Plug },
+  ] },
 ] as const;
 
 type TabId = (typeof TABS)[number]['items'][number]['id'];
@@ -517,6 +521,8 @@ export default function DemoSettingsPage() {
               </div>
             </div>
           )}
+
+          {tab === 'data_sync' && <DataSyncSection workspaceId={workspaceId} />}
 
           {tab === 'integrations' && (
             <div className="max-w-4xl slide-in">

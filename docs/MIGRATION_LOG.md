@@ -97,9 +97,25 @@ These were agreed upon before any code was changed. Every decision below must re
 
 ---
 
-### Phase 3 — Data Sync Connections (planned, not yet started)
+### Phase 3 — Data Sync Connections
 
-*To be logged when implemented.*
+#### 3.1 Data sync tab with real connection management
+
+**Date:** 2026-09-08
+**What:** Added a `data_sync` tab to the demo settings page with real credential forms, sync scheduling, and per-entity health monitoring for all 4 data sources.
+**Why:** The Magento connection gate (`MagentoGate`) checks `connectionService.listConnections` before letting Mia start. The demo needs the same connection management UI so operators can actually set up and manage their data sources.
+**How:**
+- Created `components/demo/settings/DataSyncSection.tsx` — a self-contained component with a `SourcePanel` per data source
+- **4 sources** organized into 2 groups: E-commerce (Magento) and Google (Search Console, Merchant Center, Analytics 4)
+- **Each panel has 3 states**: not connected (show `connect()` button + credential form), connected (show health + schedule + sync/disconnect), checking (loading)
+- **Connect form**: source-specific fields (Magento: base_url/store_id/access_token; GSC: site_url/client_id/client_secret/refresh_token; etc.), frequency selector (manual/hourly/6h/12h/daily), calls the appropriate `connectMagento/connectGsc/connectGmc/connectGa4` service method
+- **Sync health**: per-entity rows showing record counts, last sync status (success/failed/running), consecutive failure count with warning badge
+- **Schedule management**: dropdown to change sync frequency; calls the appropriate `updateMagento/updateGsc/updateGmc/updateGa4` with the new cron
+- **Manual sync trigger**: `sync` button calls `triggerSync`, shows toast with enqueued job count, refreshes health after 2s
+- **Disconnect**: confirm dialog + `connectionService.disconnect`
+- Uses `FREQUENCY_OPTIONS` and `cronToFrequency` from `lib/utils/cron.ts` — the same production cron utility
+**Impact:** The demo now has full data-source connection management. The Magento gate can work because operators can connect their store from the demo settings.
+**Services used:** `connectionService.listConnections/connectMagento/connectGsc/connectGmc/connectGa4/updateMagento/updateGsc/updateGmc/updateGa4/disconnect/triggerSync/getSyncStates`
 
 ---
 
