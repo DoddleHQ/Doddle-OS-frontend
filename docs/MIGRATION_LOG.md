@@ -119,6 +119,51 @@ These were agreed upon before any code was changed. Every decision below must re
 
 ---
 
-### Phase 4 — Brand Persona (planned, not yet started)
+### Phase 4 — Brand Persona
 
-*To be logged when implemented.*
+#### 4.1 Brand persona editor + dashboard status indicator
+
+**Date:** 2026-09-08
+**What:** Added a `brand_persona` tab to settings with a full markdown editor (edit/preview toggle), and a persona status call-out on the dashboard.
+**Why:** The brand persona feeds agent prompts — it defines the tone, terminology, and style guidelines agents use when writing content. Without it configured, agents produce generic copy. The dashboard banner prompts operators to set it up.
+**How:**
+- **Settings `brand_persona` tab** (replaced the static `guardrails` tab):
+  - Fetches the persona via `workspaceService.getPersona` (GET `…/persona`)
+  - Full markdown editor with edit/preview toggle, 18-row textarea
+  - Shows `configured` / `not_set` status chip
+  - Warning banner when not configured
+  - Save via `workspaceService.upsertPersona` (PUT `…/persona`)
+  - Unsaved-changes indicator ("unsaved" label, save button disabled when clean)
+  - Static circuit-breaker guardrail card retained below the editor
+  - Placeholder template pre-filled when no persona exists (voice/tone, style guidelines, terminology, SEO notes)
+- **Dashboard persona status**:
+  - Amber call-out with `configure()` link when no persona is set
+  - Green `brand_persona: configured` check when it exists
+  - Checked on mount via `workspaceService.getPersona`, non-blocking (null while loading = hidden)
+**Impact:** Agents can now access the brand persona for personalized output. The dashboard nudges operators to configure it if they haven't.
+**Services used:** `workspaceService.getPersona`, `workspaceService.upsertPersona`
+
+---
+
+## Migration Summary
+
+| Phase | What was migrated | Commit |
+|---|---|---|
+| 1 | Auth guard + workspace-scoped routes + real user data | `74fb671` |
+| 2 | Settings: account, workspace, members, invite links | `7e9592c` |
+| 3 | Data sync: Magento, GSC, GMC, GA4 connections | `01fdb1d` |
+| 4 | Brand persona editor + dashboard status | *this commit* |
+
+### What was NOT migrated (by design)
+- **Production's `useLangGraphStream` SSE hook** — the demo's AI layer uses the Vercel AI SDK
+- **Production's `ThreadContext` / `threadService` DB persistence** — threads live in LangGraph only
+- **Production's `RunRegistry` / `RunContainer`** — the demo has its own engine
+- **Production's `InstrumentShell`** — the demo has its own dock-based design system
+
+### Demo innovations preserved (no production equivalent)
+- Command palette (⌘K)
+- Triage panel (HITL approvals + circuit breaker)
+- Artifact vault (run history browser)
+- Keyboard navigation (`g` + number)
+- Per-thread stdout terminal in Launchpad
+- Collapsible dock with inline labels

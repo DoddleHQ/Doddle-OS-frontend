@@ -10,6 +10,7 @@ import { editProfile } from '@/lib/services/authService';
 import { notify } from '@/lib/stores/notificationStore';
 import { useOS } from '@/lib/demo/osStore';
 import { DataSyncSection } from '@/components/demo/settings/DataSyncSection';
+import { BrandPersonaEditor } from '@/components/demo/settings/BrandPersonaEditor';
 import type { WorkspaceMember, InviteLink } from '@/lib/types/workspace.types';
 
 const TABS = [
@@ -23,7 +24,7 @@ const TABS = [
   ] },
   { group: 'Organization', items: [
     { id: 'billing', label: 'billing', icon: CreditCard },
-    { id: 'guardrails', label: 'guardrails', icon: ShieldAlert },
+    { id: 'brand_persona', label: 'brand_persona', icon: ShieldAlert },
     { id: 'analytics', label: 'analytics', icon: Activity },
   ] },
   { group: 'System & Core', items: [
@@ -490,15 +491,7 @@ export default function DemoSettingsPage() {
             </div>
           )}
 
-          {tab === 'guardrails' && (
-            <div className="max-w-3xl slide-in">
-              <h3 className="text-lg font-bold mb-6 font-mono">agentic_guardrails()</h3>
-              <div className="agency-card p-5 !cursor-default" style={{ borderColor: 'color-mix(in srgb, var(--line-scarlet) 30%, transparent)' }}>
-                <h4 className="text-sm font-bold font-mono mb-2">Circuit Breaker</h4>
-                <p className="text-xs text-[var(--ink-dim)]">Freeze swarm state on critical error and push to triage_queue. <span style={{ color: 'var(--line-scarlet)' }}>(Mandatory)</span></p>
-              </div>
-            </div>
-          )}
+          {tab === 'brand_persona' && <BrandPersonaEditor workspaceId={workspaceId} />}
 
           {tab === 'analytics' && (
             <div className="max-w-4xl slide-in">
