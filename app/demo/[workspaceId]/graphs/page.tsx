@@ -1,5 +1,5 @@
-import { useParams } from 'next/navigation';
 'use client';
+import { useParams } from 'next/navigation';
 
 import { useRouter } from 'next/navigation';
 import { FolderTree, Terminal } from 'lucide-react';
