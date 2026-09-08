@@ -2,7 +2,8 @@ node_modules
 .next
 
 # Documentation and planning folders (internal use)
-docs/
+docs/*
+!docs/MIGRATION_LOG.md
 plans/
 
 # Environment files with secrets
