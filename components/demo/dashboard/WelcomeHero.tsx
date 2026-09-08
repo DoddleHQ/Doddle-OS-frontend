@@ -79,14 +79,14 @@ export function WelcomeHero({ workspaceId }: { workspaceId: string }) {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full max-w-4xl mb-8">
         <QuickCard
-          href={`/demo/${workspaceId}/graphs`}
+          href={`/workspaces/${workspaceId}/graphs`}
           icon={<Layers className="w-4 h-4" style={{ color: 'var(--line-cobalt)' }} />}
           ink="var(--line-cobalt)"
           title="Campaign Swarm"
           copy="Spawn a multi-agent blueprint for complex workflows."
         />
         <QuickCard
-          href={`/demo/${workspaceId}/power-agents`}
+          href={`/workspaces/${workspaceId}/power-agents`}
           icon={<Bot className="w-4 h-4" style={{ color: 'var(--line-green)' }} />}
           ink="var(--line-green)"
           title="Direct Agent"

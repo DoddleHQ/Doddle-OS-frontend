@@ -16,7 +16,7 @@ interface Cmd {
 }
 
 function buildCommands(navigate: (path: string) => void, workspaceId: string): Cmd[] {
-  const base = `/demo/${workspaceId}`;
+  const base = `/workspaces/${workspaceId}`;
   const routes: Cmd[] = [
     { icon: 'layout-dashboard', label: 'go: dashboard', run: () => navigate(base) },
     { icon: 'terminal', label: 'go: launchpad', run: () => navigate(`${base}/launchpad`) },
@@ -34,7 +34,7 @@ function buildCommands(navigate: (path: string) => void, workspaceId: string): C
       routes.push({
         icon: 'route',
         label: `thread: ${t.title} · ${t.status}`,
-        run: () => navigate(`/demo/${workspaceId}/launchpad`),
+        run: () => navigate(`/workspaces/${workspaceId}/launchpad`),
       });
     }
   }

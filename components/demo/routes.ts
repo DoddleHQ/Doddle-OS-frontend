@@ -1,7 +1,11 @@
 /**
- * Demo route definitions, workspace-scoped.
+ * Workspace route definitions for the demo OS interface.
  * Built dynamically from a workspaceId so every navigation surface
  * (dock, palette, keyboard shortcuts) shares the same path builder.
+ *
+ * The demo interface IS the workspace interface now — these paths
+ * live under /workspaces/{id}/* alongside the legacy module routes
+ * (modules/*, mission-control, brand-persona) which remain accessible.
  */
 
 export interface DemoRoute {
@@ -12,11 +16,11 @@ export interface DemoRoute {
 
 export function buildDemoRoutes(workspaceId: string): DemoRoute[] {
   return [
-    { path: `/demo/${workspaceId}`, label: 'dashboard', icon: 'layout-dashboard' },
-    { path: `/demo/${workspaceId}/launchpad`, label: 'launchpad', icon: 'terminal' },
-    { path: `/demo/${workspaceId}/power-agents`, label: 'power_agents', icon: 'zap' },
-    { path: `/demo/${workspaceId}/graphs`, label: 'graphs', icon: 'folder-tree' },
-    { path: `/demo/${workspaceId}/agency-hub`, label: 'agency_hub', icon: 'building-2' },
-    { path: `/demo/${workspaceId}/settings`, label: 'platform_settings', icon: 'settings' },
+    { path: `/workspaces/${workspaceId}`, label: 'dashboard', icon: 'layout-dashboard' },
+    { path: `/workspaces/${workspaceId}/launchpad`, label: 'launchpad', icon: 'terminal' },
+    { path: `/workspaces/${workspaceId}/power-agents`, label: 'power_agents', icon: 'zap' },
+    { path: `/workspaces/${workspaceId}/graphs`, label: 'graphs', icon: 'folder-tree' },
+    { path: `/workspaces/${workspaceId}/agency-hub`, label: 'agency_hub', icon: 'building-2' },
+    { path: `/workspaces/${workspaceId}/settings`, label: 'platform_settings', icon: 'settings' },
   ];
 }

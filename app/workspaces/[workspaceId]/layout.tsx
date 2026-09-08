@@ -1,38 +1,36 @@
-'use client';
+import type { Metadata } from 'next';
+import { Archivo, Fragment_Mono } from 'next/font/google';
+import './demo.css';
+import { DemoShell } from '@/components/demo/DemoShell';
 
-import { useParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-import { InstrumentShell } from '@/components/v2/dashboard/InstrumentShell';
-import { useCurrentWorkspace } from '@/lib/hooks/useCurrentWorkspace';
+const archivo = Archivo({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-archivo',
+  weight: ['400', '500', '600', '700', '800'],
+});
 
-/*
- * Workspace layout — 3-zone instrument panel shell.
- *
- * Zone 1 (ink rail): workspace switcher + module icons
- * Zone 2 (paper): top bar + scrollable page content
- * Zone 3 (ink feed): collapsible live activity
- *
- * Familiar pro layout executed at Specimen Terminal craft. Uses
- * useCurrentWorkspace so the workspace detail is cached and shared with the
- * settings page instead of fetched twice.
- */
+const fragmentMono = Fragment_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-fragment',
+  weight: '400',
+});
 
-export default function WorkspaceLayout({ children }: { children: React.ReactNode }) {
-  const params = useParams();
-  const workspaceId = params.workspaceId as string;
-  const { workspace, isLoading } = useCurrentWorkspace(workspaceId);
+export const metadata: Metadata = {
+  title: 'Doddle OS',
+  description: 'Agentic execution engine for marketing operators.',
+};
 
-  if (isLoading) {
-    return (
-      <div className="v2-scope min-h-screen flex items-center justify-center" style={{ background: 'var(--v2-paper-ground)' }}>
-        <Loader2 className="w-7 h-7 animate-spin" style={{ color: 'var(--v2-vermilion)' }} />
-      </div>
-    );
-  }
+interface DemoWorkspaceLayoutProps {
+  children: React.ReactNode;
+  params: { workspaceId: string };
+}
 
+export default function DemoWorkspaceLayout({ children, params }: DemoWorkspaceLayoutProps) {
   return (
-    <InstrumentShell workspaceId={workspaceId} workspace={workspace}>
-      {children}
-    </InstrumentShell>
+    <div className={`${archivo.variable} ${fragmentMono.variable}`}>
+      <DemoShell workspaceId={params.workspaceId}>{children}</DemoShell>
+    </div>
   );
 }

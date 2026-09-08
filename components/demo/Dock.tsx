@@ -20,7 +20,7 @@ export function Dock({ workspaceId }: DockProps) {
   const toggleDock = useOS((s) => s.toggleDock);
   const { user } = useAuth();
   const routes = buildDemoRoutes(workspaceId);
-  const basePath = `/demo/${workspaceId}`;
+  const basePath = `/workspaces/${workspaceId}`;
 
   const isActive = (path: string) =>
     path === basePath ? pathname === basePath : pathname.startsWith(path);

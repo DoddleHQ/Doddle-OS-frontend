@@ -1,932 +1,540 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { motion } from 'motion/react';
-import {
-    Save,
-    AlertCircle,
-    Loader2,
-    Copy,
-    Check,
-    RefreshCw,
-    Trash2,
-    Plus,
-    Crown,
-    Edit3,
-    Eye,
-    Mail,
-    Calendar,
-    Globe,
-    User as UserIcon,
-    ShieldCheck,
-    ShieldAlert,
-} from 'lucide-react';
-import {
-    workspaceService,
-    inviteLinkService,
-    memberService,
-    InviteLinkConflictError,
-} from '@/lib/services/workspaceService';
+import { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { Activity, Copy, CreditCard, Database, Link2, Plug, Plus, RefreshCw, Settings, ShieldAlert, Trash2, User, Users } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { useAuthStore } from '@/lib/stores/authStore';
-import { useCurrentWorkspace, updateCachedWorkspace } from '@/lib/hooks/useCurrentWorkspace';
-import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
-import { InfoTooltip } from '@/components/v2/dashboard/primitives';
+import { useCurrentWorkspace, invalidateWorkspace } from '@/lib/hooks/useCurrentWorkspace';
+import { workspaceService, inviteLinkService, memberService, InviteLinkConflictError } from '@/lib/services/workspaceService';
 import { editProfile } from '@/lib/services/authService';
-import { DataSyncSection } from './DataSyncSection';
-import type {
-    WorkspaceMember,
-    InviteLink,
-    WorkspaceRole,
-} from '@/lib/types/workspace.types';
 import { notify } from '@/lib/stores/notificationStore';
+import { useOS } from '@/lib/demo/osStore';
+import { DataSyncSection } from '@/components/demo/settings/DataSyncSection';
+import { BrandPersonaEditor } from '@/components/demo/settings/BrandPersonaEditor';
+import type { WorkspaceMember, InviteLink } from '@/lib/types/workspace.types';
 
-/*
- * Settings — unified workspace + account view, v2 token system.
- *
- * Previously a tabbed page using the legacy v1 UI (Card, Button, Badge, Input
- * + text-muted-foreground / border-primary). Redesigned per impeccable Operate:
- * - Single scrollable view (no tabs) — all details visible together
- * - No cards for basic layout — sections grouped by proximity + hairlines
- * - Surfaces BOTH workspace data and the signed-in account/user info
- * - Hanken Grotesk + JetBrains Mono, vermilion accent reserved for state
- * - Every input has a label + helper text; immutable fields are visually distinct
- *
- * API integration for inline edits is stubbed (save handler wired for name;
- * other fields will be wired as endpoints land).
- */
+const TABS = [
+  { group: 'Personal', items: [
+    { id: 'profile', label: 'profile', icon: User },
+    { id: 'workspace', label: 'workspace', icon: Settings },
+  ] },
+  { group: 'Team', items: [
+    { id: 'members', label: 'members', icon: Users },
+    { id: 'invites', label: 'invite_links', icon: Link2 },
+  ] },
+  { group: 'Organization', items: [
+    { id: 'billing', label: 'billing', icon: CreditCard },
+    { id: 'brand_persona', label: 'brand_persona', icon: ShieldAlert },
+    { id: 'analytics', label: 'analytics', icon: Activity },
+  ] },
+  { group: 'System & Core', items: [
+    { id: 'data_sync', label: 'data_sync', icon: Database },
+    { id: 'integrations', label: 'integrations', icon: Plug },
+  ] },
+] as const;
 
-const EASE = [0.16, 1, 0.3, 1] as const;
+type TabId = (typeof TABS)[number]['items'][number]['id'];
 
-type SettingsTab = 'general' | 'sync';
+const field = 'w-full bg-transparent border border-[var(--hairline)] focus:border-[var(--hairline-strong)] outline-none rounded-[5px] px-3 py-2 text-xs font-mono text-[var(--ink)] transition-colors';
 
-export default function SettingsPage() {
-    const params = useParams();
-    const router = useRouter();
-    const workspaceId = params.workspaceId as string;
-    const { logout } = useAuth();
-    const user = useAuthStore((s) => s.user);
-    const authStatus = useAuthStore((s) => s.status);
-    const setAuthState = useAuthStore((s) => s.setAuthState);
-    const [activeTab, setActiveTab] = useState<SettingsTab>('general');
-    const [editUserName, setEditUserName] = useState('');
-    const [savingUserName, setSavingUserName] = useState(false);
+// ---------------------------------------------------------------------------
+// Profile tab — real account data, editable via PATCH /user/edit-profile
+// ---------------------------------------------------------------------------
+function ProfileTab() {
+  const { user } = useAuth();
+  const [name, setName] = useState(user?.name || '');
+  const [saving, setSaving] = useState(false);
+  const [expertise, setExpertise] = useState('');
 
-    // Deep-link support — /settings?tab=sync opens straight to Data Sync
-    // (read from window.location to avoid the useSearchParams Suspense bail-out)
-    useEffect(() => {
-        const tab = new URLSearchParams(window.location.search).get('tab');
-        if (tab === 'sync' || tab === 'general') setActiveTab(tab);
-    }, []);
-
-    // Sync editUserName when user data loads
-    useEffect(() => {
-        if (user) setEditUserName(user.name);
-    }, [user]);
-
-    // Workspace — use the cached hook so we don't fire a concurrent fetch
-    // that races with the auth bootstrap's getMe() refresh.
-    const { workspace, isLoading: loading } = useCurrentWorkspace(workspaceId);
-    // List context refresh — called after a name change so the icon rail
-    // (which reads the list) updates alongside the detail cache.
-    const { refresh: refreshWorkspaceList } = useWorkspaces();
-
-    // Edit name
-    const [editName, setEditName] = useState('');
-    const [savingName, setSavingName] = useState(false);
-
-    // Members
-    const [members, setMembers] = useState<WorkspaceMember[]>([]);
-    const [membersLoading, setMembersLoading] = useState(false);
-
-    // Invite links
-    const [inviteLinks, setInviteLinks] = useState<InviteLink[]>([]);
-    const [invitesLoading, setInvitesLoading] = useState(false);
-    const [newInviteRole, setNewInviteRole] = useState<'editor' | 'viewer'>('viewer');
-    const [newInviteMaxUses, setNewInviteMaxUses] = useState(10);
-    const [newInviteExpiresIn, setNewInviteExpiresIn] = useState(15);
-    const [creatingInvite, setCreatingInvite] = useState(false);
-    const [copiedToken, setCopiedToken] = useState<string | null>(null);
-    const [deletingWorkspace, setDeletingWorkspace] = useState(false);
-
-    // Determine if current user is an admin by matching email against members
-    const currentUserMember = members.find((m) => m.email === user?.email);
-    const isAdmin = currentUserMember?.role === 'admin';
-
-    // === Fetchers ===
-    const fetchMembers = useCallback(async () => {
-        try {
-            setMembersLoading(true);
-            const data = await memberService.listMembers(workspaceId);
-            setMembers(data);
-        } catch {
-            notify('Failed to load members', 'error');
-        } finally {
-            setMembersLoading(false);
-        }
-    }, [workspaceId]);
-
-    const fetchInviteLinks = useCallback(async () => {
-        try {
-            setInvitesLoading(true);
-            const data = await inviteLinkService.listInviteLinks(workspaceId);
-            setInviteLinks(data);
-        } catch {
-            notify('Failed to load invite links', 'error');
-        } finally {
-            setInvitesLoading(false);
-        }
-    }, [workspaceId]);
-
-    // Sync editName when workspace loads from the cache
-    useEffect(() => {
-        if (workspace) setEditName(workspace.name || '');
-    }, [workspace]);
-
-    // Fetch members + invites on mount
-    useEffect(() => {
-        fetchMembers();
-        fetchInviteLinks();
-    }, [fetchMembers, fetchInviteLinks]);
-
-    // === Actions ===
-    const handleSaveName = async () => {
-        try {
-            setSavingName(true);
-            await workspaceService.updateWorkspace(workspaceId, {
-                name: editName || null,
-            });
-            // Propagate the new name to every surface that reads the workspace
-            // (sidebar nav, icon rail tile, layout header) via the cache pub/sub.
-            if (workspace) {
-                updateCachedWorkspace({ ...workspace, name: editName || null, updatedAt: new Date().toISOString() });
-            }
-            // Also refresh the workspace LIST so the icon rail tile (which
-            // derives its initial + tooltip from the list) stays in sync.
-            refreshWorkspaceList();
-            notify('Workspace name updated', 'success');
-        } catch (err) {
-            notify(err instanceof Error ? err.message : 'Failed to update name', 'error');
-        } finally {
-            setSavingName(false);
-        }
-    };
-
-    // Save user profile name via PATCH /user/edit-profile
-    const handleSaveUserName = async () => {
-        try {
-            setSavingUserName(true);
-            await editProfile(editUserName);
-            // Update the auth store so UserMenu + everywhere else reflects it
-            if (user) {
-                setAuthState({ status: 'authenticated', user: { ...user, name: editUserName } });
-            }
-            notify('Name updated', 'success');
-        } catch (err) {
-            notify(err instanceof Error ? err.message : 'Failed to update name', 'error');
-        } finally {
-            setSavingUserName(false);
-        }
-    };
-
-    const copyToken = async (token: string) => {
-        const inviteUrl = `${window.location.origin}/accept-invite?token=${token}`;
-        try {
-            await navigator.clipboard.writeText(inviteUrl);
-            setCopiedToken(token);
-            notify('Invite link copied', 'success');
-            setTimeout(() => setCopiedToken(null), 2000);
-        } catch {
-            notify('Failed to copy', 'error');
-        }
-    };
-
-    const handleCreateInvite = async () => {
-        try {
-            setCreatingInvite(true);
-            const link = await inviteLinkService.createInviteLink(workspaceId, {
-                role: newInviteRole,
-                max_uses: newInviteMaxUses,
-                expires_in: newInviteExpiresIn,
-            });
-            setInviteLinks((prev) => [...prev, link]);
-            notify('Invite link created', 'success');
-        } catch (err) {
-            if (err instanceof InviteLinkConflictError) {
-                // 409: an active link already exists for this role.
-                // The backend returns it — surface it in the list so the user
-                // can copy/regenerate/revoke without a refetch.
-                setInviteLinks((prev) =>
-                    prev.some((l) => l.id === err.link.id) ? prev : [...prev, err.link],
-                );
-                notify(`An active ${err.link.role} link already exists`, 'warning');
-            } else {
-                notify(err instanceof Error ? err.message : 'Failed to create invite link', 'error');
-            }
-        } finally {
-            setCreatingInvite(false);
-        }
-    };
-
-    const handleRegenerateInvite = async (link: InviteLink) => {
-        try {
-            // The regenerate endpoint replaces the link for a given ROLE — pass
-            // the link's own role + config, not the create-form's current state.
-            const newLink = await inviteLinkService.regenerateInviteLink(workspaceId, {
-                role: link.role as 'editor' | 'viewer',
-                max_uses: link.maxUses,
-                expires_in: Math.max(
-                    1,
-                    Math.ceil((new Date(link.expiresAt).getTime() - new Date(link.createdAt).getTime()) / 86_400_000),
-                ),
-            });
-            setInviteLinks((prev) => prev.map((l) => (l.id === link.id ? newLink : l)));
-            notify('Invite link regenerated', 'success');
-        } catch (err) {
-            notify(err instanceof Error ? err.message : 'Failed to regenerate', 'error');
-        }
-    };
-
-    const handleRevokeInvite = async (linkId: string) => {
-        if (!confirm('Revoke this invite link?')) return;
-        try {
-            await inviteLinkService.revokeInviteLink(workspaceId, linkId);
-            setInviteLinks((prev) => prev.filter((l) => l.id !== linkId));
-            notify('Invite link revoked', 'success');
-        } catch (err) {
-            notify(err instanceof Error ? err.message : 'Failed to revoke', 'error');
-        }
-    };
-
-    const handleUpdateRole = async (userId: string, newRole: WorkspaceRole) => {
-        try {
-            const updated = await memberService.updateMemberRole(workspaceId, userId, {
-                role: newRole as 'editor' | 'viewer',
-            });
-            setMembers((prev) => prev.map((m) => (m.userId === userId ? updated : m)));
-            notify(`Role updated to ${newRole}`, 'success');
-        } catch (err) {
-            notify(err instanceof Error ? err.message : 'Failed to update role', 'error');
-        }
-    };
-
-    const handleRemoveMember = async (userId: string, name: string) => {
-        if (!confirm(`Remove ${name} from this workspace?`)) return;
-        try {
-            await memberService.removeMember(workspaceId, userId);
-            setMembers((prev) => prev.filter((m) => m.userId !== userId));
-            notify(`${name} removed`, 'success');
-        } catch (err) {
-            notify(err instanceof Error ? err.message : 'Failed to remove member', 'error');
-        }
-    };
-
-    // Delete workspace (admin only)
-    const handleDeleteWorkspace = async () => {
-        if (!confirm(`Delete "${ws.name || 'this workspace'}"? This permanently removes all threads, artifacts, connections, and members. This cannot be undone.`)) return;
-        try {
-            setDeletingWorkspace(true);
-            await workspaceService.deleteWorkspace(workspaceId);
-            // Refresh the workspace list so the deleted workspace disappears
-            await refreshWorkspaceList();
-            notify('Workspace deleted', 'success');
-            router.replace('/workspaces');
-        } catch (err) {
-            notify(err instanceof Error ? err.message : 'Failed to delete workspace', 'error');
-            setDeletingWorkspace(false);
-        }
-    };
-
-    // === Loading ===
-    if (loading) {
-        return (
-            <div className="p-6 max-w-[640px] mx-auto space-y-6">
-                <div className="h-8 rounded" style={{ background: 'var(--v2-paper-rule)', opacity: 0.5, animation: 'v2-metric-breath 1.4s ease-in-out infinite' }} />
-                <div className="h-32 rounded" style={{ background: 'var(--v2-paper-rule)', opacity: 0.5, animation: 'v2-metric-breath 1.4s ease-in-out infinite' }} />
-                <div className="h-32 rounded" style={{ background: 'var(--v2-paper-rule)', opacity: 0.5, animation: 'v2-metric-breath 1.4s ease-in-out infinite' }} />
-            </div>
-        );
+  const save = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      await editProfile(name.trim());
+      notify('Profile updated', 'success');
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Failed to update profile', 'error');
+    } finally {
+      setSaving(false);
     }
+  };
 
-    if (!loading && !workspace) {
-        return (
-            <div className="p-6 max-w-[640px] mx-auto">
-                <div className="flex flex-col items-center py-16 text-center">
-                    <AlertCircle className="w-8 h-8 mb-3" style={{ color: 'var(--v2-vermilion)' }} />
-                    <p style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.9rem', color: 'var(--v2-paper-ink)', fontWeight: 500, marginBottom: '0.25rem' }}>
-                        Failed to load settings
-                    </p>
-                    <p className="v2-mono" style={{ fontSize: '0.72rem', color: 'var(--v2-paper-ink-2)', marginBottom: '1rem' }}>
-                        Workspace could not be loaded
-                    </p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="px-4 py-2 rounded-[8px] v2-label text-[10px]"
-                        style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)' }}
-                    >
-                        Retry
-                    </button>
-                </div>
-            </div>
-        );
-    }
+  return (
+    <div className="max-w-2xl slide-in">
+      <h3 className="text-lg font-bold mb-6 font-mono">config_profile()</h3>
 
-    // After both guards, workspace is loaded
-    const ws = workspace!;
-
-    return (
-        <div className="p-6 max-w-[640px] mx-auto">
-            {/* Page title */}
-            <motion.h1
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.18, ease: EASE }}
-                style={{
-                    fontFamily: 'var(--v2-font-sans)',
-                    fontSize: '1.15rem',
-                    fontWeight: 600,
-                    color: 'var(--v2-paper-ink)',
-                    letterSpacing: '-0.01em',
-                    marginBottom: '1.5rem',
-                }}
-            >
-                Settings
-            </motion.h1>
-
-            {/* Tab navigation */}
-            <div className="flex gap-1 mb-6">
-                <TabButton active={activeTab === 'general'} onClick={() => setActiveTab('general')} label="General" />
-                <TabButton active={activeTab === 'sync'} onClick={() => setActiveTab('sync')} label="Data Sync" />
-            </div>
-
-            {activeTab === 'general' && (
-                <>
-            {/* ====================================================
-                SECTION 1: Account (the signed-in user)
-            ==================================================== */}
-            <Section title="Account">
-                {authStatus === 'loading' ? (
-                    // Loading skeleton
-                    <div className="space-y-2.5">
-                        {[...Array(4)].map((_, i) => (
-                            <div key={i} className="flex items-center justify-between">
-                                <div className="h-3 rounded" style={{ width: '40%', background: 'var(--v2-paper-rule)', opacity: 0.5, animation: 'v2-metric-breath 1.4s ease-in-out infinite' }} />
-                                <div className="h-3 rounded" style={{ width: '30%', background: 'var(--v2-paper-rule)', opacity: 0.5, animation: 'v2-metric-breath 1.4s ease-in-out infinite' }} />
-                            </div>
-                        ))}
-                    </div>
-                ) : authStatus === 'authenticated' && user ? (
-                    <div className="space-y-3">
-                        {/* Name — editable via PATCH /user/edit-profile */}
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <UserIcon className="w-3.5 h-3.5" style={{ color: 'var(--v2-paper-ink-2)' }} />
-                                <FieldLabel>Name</FieldLabel>
-                            </div>
-                            <div className="flex gap-2">
-                                <input
-                                    value={editUserName}
-                                    onChange={(e) => setEditUserName(e.target.value)}
-                                    placeholder="Enter your name"
-                                    className="flex-1 px-3 py-2 rounded-[6px] outline-none transition-colors"
-                                    style={{
-                                        fontFamily: 'var(--v2-font-sans)',
-                                        fontSize: '0.82rem',
-                                        color: 'var(--v2-paper-ink)',
-                                        background: 'rgba(255,255,255,0.4)',
-                                        border: '1px solid var(--v2-paper-rule)',
-                                    }}
-                                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--v2-vermilion)'; }}
-                                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--v2-paper-rule)'; }}
-                                />
-                                <button
-                                    onClick={handleSaveUserName}
-                                    disabled={savingUserName || editUserName === user.name || !editUserName.trim()}
-                                    className="px-3 py-2 rounded-[6px] flex items-center justify-center transition-opacity"
-                                    style={{
-                                        background: 'var(--v2-vermilion)',
-                                        color: 'var(--v2-vermilion-ink)',
-                                        opacity: savingUserName || editUserName === user.name || !editUserName.trim() ? 0.4 : 1,
-                                    }}
-                                    aria-label="Save name"
-                                >
-                                    {savingUserName ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                                </button>
-                            </div>
-                        </div>
-                        <DetailRow icon={<Mail className="w-3.5 h-3.5" />} label="Email" value={user.email} mono />
-                        <DetailRow
-                            icon={user.emailVerified ? <ShieldCheck className="w-3.5 h-3.5" /> : <ShieldAlert className="w-3.5 h-3.5" />}
-                            label="Email verified"
-                            value={user.emailVerified ? 'Yes' : 'No'}
-                            valueColor={user.emailVerified ? 'var(--v2-sage)' : 'var(--v2-vermilion)'}
-                        />
-                        <DetailRow
-                            icon={<ShieldCheck className="w-3.5 h-3.5" />}
-                            label="Status"
-                            value={user.isActive ? 'Active' : 'Inactive'}
-                            valueColor={user.isActive ? 'var(--v2-sage)' : 'var(--v2-vermilion)'}
-                        />
-                        <DetailRow
-                            icon={<Calendar className="w-3.5 h-3.5" />}
-                            label="Joined"
-                            value={new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                            mono
-                        />
-                    </div>
-                ) : (
-                    <p className="v2-mono" style={{ fontSize: '0.72rem', color: 'var(--v2-paper-ink-2)' }}>
-                        Sign in to view account details
-                    </p>
-                )}
-                {/* Sign out */}
-                <div className="mt-4 pt-3" style={{ borderTop: '1px solid var(--v2-paper-rule)' }}>
-                    <button
-                        onClick={() => logout()}
-                        className="v2-label text-[10px] px-3 py-1.5 rounded-[6px] transition-colors"
-                        style={{ color: 'var(--v2-vermilion)', border: '1px solid rgba(200,50,27,0.2)' }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(200,50,27,0.06)'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                    >
-                        Sign out
-                    </button>
-                </div>
-            </Section>
-
-            {/* ====================================================
-                SECTION 2: Workspace details
-            ==================================================== */}
-            <Section title="Workspace">
-                <div className="space-y-4">
-                    {/* Workspace name — editable */}
-                    <div>
-                        <FieldLabel>Name</FieldLabel>
-                        <div className="flex gap-2">
-                            <input
-                                value={editName}
-                                onChange={(e) => setEditName(e.target.value)}
-                                placeholder="Enter workspace name"
-                                className="flex-1 px-3 py-2 rounded-[6px] outline-none transition-colors"
-                                style={{
-                                    fontFamily: 'var(--v2-font-sans)',
-                                    fontSize: '0.82rem',
-                                    color: 'var(--v2-paper-ink)',
-                                    background: 'rgba(255,255,255,0.4)',
-                                    border: '1px solid var(--v2-paper-rule)',
-                                }}
-                                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--v2-vermilion)'; e.currentTarget.style.boxShadow = '0 0 0 2px rgba(200,50,27,0.12)'; }}
-                                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--v2-paper-rule)'; e.currentTarget.style.boxShadow = 'none'; }}
-                            />
-                            <button
-                                onClick={handleSaveName}
-                                disabled={savingName || editName === ws.name}
-                                className="px-3 py-2 rounded-[6px] flex items-center justify-center transition-opacity"
-                                style={{
-                                    background: 'var(--v2-vermilion)',
-                                    color: 'var(--v2-vermilion-ink)',
-                                    opacity: savingName || editName === ws.name ? 0.4 : 1,
-                                }}
-                                aria-label="Save name"
-                            >
-                                {savingName ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Immutable fields */}
-                    <DetailRow icon={<Globe className="w-3.5 h-3.5" />} label="Domain" value={ws.websiteDomain || 'Not set'} mono />
-                    <DetailRow
-                        icon={<Calendar className="w-3.5 h-3.5" />}
-                        label="Created"
-                        value={new Date(ws.createdAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
-                        mono
-                    />
-                    {ws.updatedAt && (
-                        <DetailRow
-                            icon={<RefreshCw className="w-3.5 h-3.5" />}
-                            label="Updated"
-                            value={new Date(ws.updatedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
-                            mono
-                        />
-                    )}
-                </div>
-            </Section>
-
-            {/* ====================================================
-                SECTION 3: Members
-            ==================================================== */}
-            <Section
-                title="Members"
-                action={
-                    <button
-                        onClick={fetchMembers}
-                        className="p-1 rounded-[4px]"
-                        style={{ color: 'var(--v2-paper-ink-2)' }}
-                        aria-label="Refresh members"
-                    >
-                        <RefreshCw className={`w-3.5 h-3.5 ${membersLoading ? 'animate-spin' : ''}`} />
-                    </button>
-                }
-            >
-                {membersLoading ? (
-                    <div className="flex justify-center py-6">
-                        <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--v2-paper-ink-2)' }} />
-                    </div>
-                ) : members.length === 0 ? (
-                    <p className="v2-mono py-4" style={{ fontSize: '0.72rem', color: 'var(--v2-paper-ink-2)' }}>
-                        No members. Create an invite link below to add collaborators.
-                    </p>
-                ) : (
-                    <div>
-                        {members.map((member, i) => (
-                            <div
-                                key={member.userId}
-                                className="flex items-center justify-between py-2.5"
-                                style={{ borderTop: i === 0 ? 'none' : '1px solid var(--v2-paper-rule)' }}
-                            >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                    <div
-                                        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-                                        style={{
-                                            background: 'rgba(200,50,27,0.06)',
-                                            border: '1px solid rgba(200,50,27,0.12)',
-                                            color: 'var(--v2-vermilion)',
-                                            fontFamily: 'var(--v2-font-sans)',
-                                            fontSize: '0.65rem',
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        {member.name.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div className="min-w-0">
-                                        <div className="flex items-center gap-1.5">
-                                            <span
-                                                className="truncate"
-                                                style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.8rem', fontWeight: 500, color: 'var(--v2-paper-ink)' }}
-                                            >
-                                                {member.name}
-                                            </span>
-                                            {member.role === 'admin' && (
-                                                <span className="flex items-center gap-0.5 v2-label text-[7px] px-1.5 py-0.5 rounded" style={{ color: 'var(--v2-vermilion)', border: '1px solid rgba(200,50,27,0.2)' }}>
-                                                    <Crown className="w-2.5 h-2.5" /> Owner
-                                                </span>
-                                            )}
-                                        </div>
-                                        <span className="v2-mono truncate block" style={{ fontSize: '0.68rem', color: 'var(--v2-paper-ink-2)' }}>
-                                            {member.email}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-1.5 flex-shrink-0">
-                                    {member.role === 'admin' ? (
-                                        <span className="flex items-center gap-1 v2-label text-[8px]" style={{ color: 'var(--v2-paper-ink-2)' }}>
-                                            Admin
-                                            <InfoTooltip text="Admins have full control over the workspace, members, and settings." />
-                                        </span>
-                                    ) : (
-                                        <>
-                                            <select
-                                                value={member.role}
-                                                onChange={(e) => handleUpdateRole(member.userId, e.target.value as WorkspaceRole)}
-                                                className="px-2 py-1 rounded-[4px] outline-none"
-                                                style={{
-                                                    fontFamily: 'var(--v2-font-sans)',
-                                                    fontSize: '0.72rem',
-                                                    color: 'var(--v2-paper-ink)',
-                                                    background: 'rgba(255,255,255,0.4)',
-                                                    border: '1px solid var(--v2-paper-rule)',
-                                                }}
-                                            >
-                                                <option value="editor">Editor</option>
-                                                <option value="viewer">Viewer</option>
-                                            </select>
-                                            <InfoTooltip text="Editor: can modify content. Viewer: read-only access." />
-                                            <button
-                                                onClick={() => handleRemoveMember(member.userId, member.name)}
-                                                className="p-1 rounded-[4px]"
-                                                style={{ color: 'var(--v2-vermilion)', opacity: 0.6 }}
-                                                aria-label={`Remove ${member.name}`}
-                                                onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
-                                                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.6'; }}
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </Section>
-
-            {/* ====================================================
-                SECTION 4: Invite links
-            ==================================================== */}
-            <Section
-                title="Invite Links"
-                action={
-                    <button
-                        onClick={fetchInviteLinks}
-                        className="p-1 rounded-[4px]"
-                        style={{ color: 'var(--v2-paper-ink-2)' }}
-                        aria-label="Refresh invite links"
-                    >
-                        <RefreshCw className={`w-3.5 h-3.5 ${invitesLoading ? 'animate-spin' : ''}`} />
-                    </button>
-                }
-            >
-                {/* Create new link */}
-                <div className="space-y-3 mb-4">
-                    <div className="grid grid-cols-3 gap-2">
-                        <div>
-                            <div className="flex items-center gap-1 mb-1">
-                                <label style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.7rem', fontWeight: 500, color: 'var(--v2-paper-ink-2)' }}>
-                                    Role
-                                </label>
-                                <InfoTooltip text="Viewer: read-only access. Editor: can modify content." />
-                            </div>
-                            <select
-                                value={newInviteRole}
-                                onChange={(e) => setNewInviteRole(e.target.value as 'editor' | 'viewer')}
-                                className="w-full px-2 py-1.5 rounded-[6px] outline-none"
-                                style={{
-                                    fontFamily: 'var(--v2-font-sans)',
-                                    fontSize: '0.75rem',
-                                    color: 'var(--v2-paper-ink)',
-                                    background: 'rgba(255,255,255,0.4)',
-                                    border: '1px solid var(--v2-paper-rule)',
-                                }}
-                            >
-                                <option value="viewer">Viewer</option>
-                                <option value="editor">Editor</option>
-                            </select>
-                        </div>
-                        <div>
-                            <FieldLabel>Max uses (1–10)</FieldLabel>
-                            <input
-                                type="number"
-                                value={newInviteMaxUses}
-                                onChange={(e) => {
-                                    const v = parseInt(e.target.value) || 1;
-                                    setNewInviteMaxUses(Math.min(Math.max(v, 1), 10));
-                                }}
-                                min={1}
-                                max={10}
-                                className="w-full px-2 py-1.5 rounded-[6px] outline-none"
-                                style={{
-                                    fontFamily: 'var(--v2-font-mono)',
-                                    fontSize: '0.75rem',
-                                    color: 'var(--v2-paper-ink)',
-                                    background: 'rgba(255,255,255,0.4)',
-                                    border: '1px solid var(--v2-paper-rule)',
-                                }}
-                            />
-                        </div>
-                        <div>
-                            <FieldLabel>Expires (days)</FieldLabel>
-                            <input
-                                type="number"
-                                value={newInviteExpiresIn}
-                                onChange={(e) => setNewInviteExpiresIn(parseInt(e.target.value) || 1)}
-                                min={1}
-                                max={90}
-                                className="w-full px-2 py-1.5 rounded-[6px] outline-none"
-                                style={{
-                                    fontFamily: 'var(--v2-font-mono)',
-                                    fontSize: '0.75rem',
-                                    color: 'var(--v2-paper-ink)',
-                                    background: 'rgba(255,255,255,0.4)',
-                                    border: '1px solid var(--v2-paper-rule)',
-                                }}
-                            />
-                        </div>
-                    </div>
-                    <button
-                        onClick={handleCreateInvite}
-                        disabled={creatingInvite}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] v2-label text-[10px] transition-opacity"
-                        style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)', opacity: creatingInvite ? 0.5 : 1 }}
-                    >
-                        {creatingInvite ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
-                        Generate link
-                    </button>
-                </div>
-
-                {/* Active links */}
-                {invitesLoading ? (
-                    <div className="flex justify-center py-4">
-                        <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--v2-paper-ink-2)' }} />
-                    </div>
-                ) : inviteLinks.length === 0 ? (
-                    <p className="v2-mono py-3" style={{ fontSize: '0.72rem', color: 'var(--v2-paper-ink-2)' }}>
-                        No active invite links.
-                    </p>
-                ) : (
-                    <div>
-                        {inviteLinks.map((link, i) => (
-                            <div
-                                key={link.id}
-                                className="py-3"
-                                style={{ borderTop: i === 0 ? '1px solid var(--v2-paper-rule)' : '1px solid var(--v2-paper-rule)' }}
-                            >
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="flex items-center gap-1 v2-label text-[8px] px-1.5 py-0.5 rounded" style={{ color: 'var(--v2-paper-ink)', border: '1px solid var(--v2-paper-rule)' }}>
-                                            {link.role === 'editor' ? <Edit3 className="w-2.5 h-2.5" /> : <Eye className="w-2.5 h-2.5" />}
-                                            {link.role}
-                                        </span>
-                                        <span className="v2-mono tabular-nums" style={{ fontSize: '0.68rem', color: 'var(--v2-paper-ink-2)' }}>
-                                            {link.currentUses}/{link.maxUses} uses
-                                        </span>
-                                        <span className="v2-mono" style={{ fontSize: '0.68rem', color: 'var(--v2-paper-ink-2)' }}>
-                                            · expires {new Date(link.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <code
-                                        className="flex-1 v2-mono px-2.5 py-1.5 rounded-[4px] overflow-x-auto"
-                                        style={{ fontSize: '0.65rem', color: 'var(--v2-paper-ink-2)', background: 'rgba(0,0,0,0.03)' }}
-                                    >
-                                        {window.location.origin}/accept-invite?token={link.token}
-                                    </code>
-                                    <button
-                                        onClick={() => copyToken(link.token)}
-                                        className="p-1.5 rounded-[4px]"
-                                        style={{ color: copiedToken === link.token ? 'var(--v2-sage)' : 'var(--v2-paper-ink-2)' }}
-                                        aria-label="Copy invite link"
-                                    >
-                                        {copiedToken === link.token ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                                    </button>
-                                </div>
-                                <div className="flex items-center gap-3 mt-2">
-                                    <button
-                                        onClick={() => handleRegenerateInvite(link)}
-                                        className="v2-label text-[8px] transition-colors"
-                                        style={{ color: 'var(--v2-paper-ink-2)' }}
-                                        onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--v2-paper-ink)'; }}
-                                        onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--v2-paper-ink-2)'; }}
-                                    >
-                                        Regenerate
-                                    </button>
-                                    <button
-                                        onClick={() => handleRevokeInvite(link.id)}
-                                        className="v2-label text-[8px] transition-colors"
-                                        style={{ color: 'var(--v2-vermilion)', opacity: 0.7 }}
-                                        onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
-                                        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7'; }}
-                                    >
-                                        Revoke
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </Section>
-
-                {/* Danger zone — admin only */}
-                {isAdmin && (
-                    <Section title="Danger Zone">
-                        <div
-                            className="flex items-center justify-between py-2.5"
-                            style={{ borderTop: '1px solid rgba(200,50,27,0.15)' }}
-                        >
-                            <div>
-                                <div style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.8rem', fontWeight: 500, color: 'var(--v2-paper-ink)' }}>
-                                    Delete this workspace
-                                </div>
-                                <div style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.72rem', color: 'var(--v2-paper-ink-2)', marginTop: '0.125rem' }}>
-                                    Permanently removes all threads, artifacts, connections, and members.
-                                </div>
-                            </div>
-                            <button
-                                onClick={handleDeleteWorkspace}
-                                disabled={deletingWorkspace}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] v2-label text-[9px] transition-opacity flex-shrink-0 ml-3"
-                                style={{ color: 'var(--v2-vermilion)', border: '1px solid rgba(200,50,27,0.2)', opacity: deletingWorkspace ? 0.5 : 1 }}
-                            >
-                                {deletingWorkspace ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-                                {deletingWorkspace ? 'Deleting…' : 'Delete'}
-                            </button>
-                        </div>
-                    </Section>
-                )}
-                </>
-            )}
-
-            {/* ====================================================
-                DATA SYNC TAB
-            ==================================================== */}
-            {activeTab === 'sync' && (
-                <DataSyncSection workspaceId={workspaceId} />
-            )}
+      <div className="agency-card p-6 mb-6 flex flex-col sm:flex-row gap-6 items-start !cursor-default">
+        <span className="w-20 h-20 rounded-[10px] border border-[var(--hairline-strong)] flex items-center justify-center text-2xl font-bold font-mono shrink-0">
+          {(user?.name || '?').trim().split(' ')[0]?.[0]?.toUpperCase()}
+        </span>
+        <div className="flex-1 w-full space-y-4">
+          <div>
+            <label htmlFor="display-name" className="block text-[10px] font-mono text-[var(--ink-dim)] mb-1.5">Display Name</label>
+            <input id="display-name" type="text" value={name} onChange={(e) => setName(e.target.value)} className={field} />
+          </div>
+          <div>
+            <label className="block text-[10px] font-mono text-[var(--ink-dim)] mb-1.5">Email</label>
+            <input type="text" value={user?.email || ''} readOnly className={`${field} opacity-60 cursor-not-allowed`} />
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button type="button" className="btn-primary !py-2 !px-4" onClick={save} disabled={saving || name === user?.name}>
+              {saving ? 'Saving…' : 'Update Profile'}
+            </button>
+          </div>
         </div>
-    );
-}
+      </div>
 
-/* === Tab button === */
-function TabButton({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
-    return (
-        <button
-            onClick={onClick}
-            className="px-3 py-1.5 rounded-[8px] transition-colors"
-            style={{
-                fontFamily: 'var(--v2-font-sans)',
-                fontSize: '0.78rem',
-                fontWeight: active ? 600 : 400,
-                color: active ? 'var(--v2-paper-ink)' : 'var(--v2-paper-ink-2)',
-                background: active ? 'rgba(200,50,27,0.06)' : 'transparent',
-            }}
-            onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; }}
-            onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent'; }}
-        >
-            {label}
-        </button>
-    );
-}
-
-/* === Shared layout primitives (local to this page) === */
-
-function Section({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
-    return (
-        <motion.section
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.18, ease: EASE }}
-            className="mb-8"
-        >
-            <div className="flex items-center justify-between mb-3">
-                <h2
-                    style={{
-                        fontFamily: 'var(--v2-font-sans)',
-                        fontSize: '0.7rem',
-                        fontWeight: 600,
-                        color: 'var(--v2-paper-ink-2)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                    }}
-                >
-                    {title}
-                </h2>
-                {action}
-            </div>
-            {children}
-        </motion.section>
-    );
-}
-
-function FieldLabel({ children }: { children: React.ReactNode }) {
-    return (
-        <label
-            className="block mb-1"
-            style={{
-                fontFamily: 'var(--v2-font-sans)',
-                fontSize: '0.7rem',
-                fontWeight: 500,
-                color: 'var(--v2-paper-ink-2)',
-            }}
-        >
-            {children}
+      <div className="agency-card p-6 !cursor-default">
+        <label htmlFor="expertise" className="block text-[10px] font-bold text-[var(--ink-dim)] uppercase tracking-wider mb-2 font-mono">
+          Contextual Expertise <span className="normal-case font-normal">(agents defer to you here)</span>
         </label>
-    );
+        <textarea
+          id="expertise"
+          rows={3}
+          value={expertise}
+          onChange={(e) => setExpertise(e.target.value)}
+          placeholder="e.g. Enterprise Architecture, ClickHouse optimization, Multi-tenant DB design…"
+          className={`${field} resize-none`}
+        />
+        <p className="text-[10px] font-mono text-[var(--ink-faint)] mt-2">
+          Expertise is stored as part of the workspace brand persona (edit in guardrails).
+        </p>
+      </div>
+    </div>
+  );
 }
 
-function DetailRow({
-    icon,
-    label,
-    value,
-    mono = false,
-    valueColor,
-}: {
-    icon: React.ReactNode;
-    label: string;
-    value: string;
-    mono?: boolean;
-    valueColor?: string;
-}) {
-    return (
-        <div className="flex items-center justify-between py-1.5">
-            <div className="flex items-center gap-2">
-                <span style={{ color: 'var(--v2-paper-ink-2)' }}>{icon}</span>
-                <span style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.78rem', color: 'var(--v2-paper-ink-2)' }}>
-                    {label}
-                </span>
-            </div>
-            <span
-                className="truncate ml-3 text-right"
-                style={{
-                    fontFamily: mono ? 'var(--v2-font-mono)' : 'var(--v2-font-sans)',
-                    fontSize: mono ? '0.72rem' : '0.78rem',
-                    color: valueColor || 'var(--v2-paper-ink)',
-                    maxWidth: '60%',
-                }}
-            >
-                {value}
-              </span>
+// ---------------------------------------------------------------------------
+// Workspace tab — real workspace data, editable name, immutable domain
+// ---------------------------------------------------------------------------
+function WorkspaceTab({ workspaceId }: { workspaceId: string }) {
+  const { workspace } = useCurrentWorkspace(workspaceId);
+  const [name, setName] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (workspace?.name) setName(workspace.name);
+  }, [workspace?.name]);
+
+  const save = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      await workspaceService.updateWorkspace(workspaceId, { name: name.trim() });
+      invalidateWorkspace(workspaceId);
+      notify('Workspace updated', 'success');
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Failed to update workspace', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl slide-in">
+      <h3 className="text-lg font-bold mb-6 font-mono">workspace_config()</h3>
+
+      <div className="agency-card p-6 mb-6 !cursor-default space-y-4">
+        <div>
+          <label htmlFor="ws-name" className="block text-[10px] font-mono text-[var(--ink-dim)] mb-1.5">Workspace Name</label>
+          <div className="flex gap-2">
+            <input id="ws-name" type="text" value={name} onChange={(e) => setName(e.target.value)} className={field} />
+            <button type="button" className="btn-primary !py-2 !px-4 shrink-0" onClick={save} disabled={saving || name === workspace?.name}>
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          </div>
         </div>
-    );
+        <div>
+          <label className="block text-[10px] font-mono text-[var(--ink-dim)] mb-1.5">Website Domain <span className="text-[var(--ink-faint)]">(immutable)</span></label>
+          <input
+            type="text"
+            value={workspace?.websiteDomain || ''}
+            readOnly
+            className={`${field} opacity-60 cursor-not-allowed`}
+            style={{ borderStyle: 'dashed' }}
+          />
+        </div>
+        {workspace?.createdAt && (
+          <p className="text-[10px] font-mono text-[var(--ink-faint)]">
+            created: {new Date(workspace.createdAt).toLocaleDateString()}
+          </p>
+        )}
+      </div>
+
+      <div className="agency-card p-6 !cursor-default" style={{ borderColor: 'color-mix(in srgb, var(--line-scarlet) 25%, transparent)' }}>
+        <h4 className="text-sm font-bold font-mono mb-2" style={{ color: 'var(--line-scarlet)' }}>danger_zone()</h4>
+        <p className="text-xs text-[var(--ink-dim)] mb-4">Delete this workspace and all associated data. This cannot be undone.</p>
+        <button
+          type="button"
+          className="btn-outline !py-2 !px-4"
+          style={{ borderColor: 'color-mix(in srgb, var(--line-scarlet) 45%, transparent)', color: 'var(--line-scarlet)' }}
+          onClick={() => {
+            if (!confirm(`Delete "${workspace?.name}"? All data will be removed. This cannot be undone.`)) return;
+            workspaceService.deleteWorkspace(workspaceId)
+              .then(() => { notify('Workspace deleted', 'success'); window.location.href = '/workspaces'; })
+              .catch((err) => notify(err instanceof Error ? err.message : 'Failed to delete workspace', 'error'));
+          }}
+        >
+          <Trash2 className="w-3 h-3" /> Delete Workspace
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Members tab — real member list with role management
+// ---------------------------------------------------------------------------
+function MembersTab({ workspaceId }: { workspaceId: string }) {
+  const { user } = useAuth();
+  const [members, setMembers] = useState<WorkspaceMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const list = await memberService.listMembers(workspaceId);
+      setMembers(list);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load members');
+    } finally {
+      setLoading(false);
+    }
+  }, [workspaceId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const changeRole = async (userId: string, role: 'editor' | 'viewer') => {
+    try {
+      await memberService.updateMemberRole(workspaceId, userId, { role });
+      await load();
+      notify('Role updated', 'success');
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Failed to update role', 'error');
+    }
+  };
+
+  const removeMember = async (userId: string, name: string) => {
+    if (!confirm(`Remove ${name} from this workspace?`)) return;
+    try {
+      await memberService.removeMember(workspaceId, userId);
+      await load();
+      notify('Member removed', 'success');
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Failed to remove member', 'error');
+    }
+  };
+
+  const isAdmin = (m: WorkspaceMember) => m.role === 'admin';
+  const isMe = (m: WorkspaceMember) => m.email === user?.email;
+
+  return (
+    <div className="max-w-2xl slide-in">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-lg font-bold font-mono">user_management()</h3>
+        <button type="button" onClick={load} className="text-[var(--ink-dim)] hover:text-[var(--ink)] transition-colors" title="Refresh">
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
+
+      {loading && members.length === 0 ? (
+        <div className="agency-card p-6 !cursor-default">
+          <div className="skeleton h-4 rounded mb-3" style={{ width: '40%' }} />
+          <div className="skeleton h-4 rounded" style={{ width: '60%' }} />
+        </div>
+      ) : error ? (
+        <div className="agency-card p-6 !cursor-default">
+          <p className="text-xs font-mono" style={{ color: 'var(--line-scarlet)' }}>{error}</p>
+          <button type="button" className="btn-outline mt-3 !py-1.5 !px-3" onClick={load}>Retry</button>
+        </div>
+      ) : (
+        <div className="plate overflow-hidden">
+          {members.map((m) => (
+            <div key={m.userId} className="dense-row !cursor-default">
+              <span className="flex items-center gap-3 min-w-0 flex-1">
+                <span className="w-8 h-8 rounded-[6px] border border-[var(--hairline)] flex items-center justify-center text-[11px] font-bold font-mono shrink-0">
+                  {m.name.trim().split(' ')[0]?.[0]?.toUpperCase()}
+                </span>
+                <span className="flex flex-col min-w-0">
+                  <span className="text-xs font-bold font-mono truncate">
+                    {m.name} {isMe(m) && <span className="text-[var(--ink-faint)] font-normal">(you)</span>}
+                  </span>
+                  <span className="text-[10px] text-[var(--ink-dim)] truncate">{m.email}</span>
+                </span>
+              </span>
+              <span className="flex items-center gap-2 shrink-0">
+                {isAdmin(m) ? (
+                  <span className="service-chip" style={{ ['--chip' as string]: 'var(--line-cobalt)' }}>admin</span>
+                ) : isMe(m) ? (
+                  <span className="service-chip" style={{ ['--chip' as string]: 'var(--ink-faint)' }}>{m.role}</span>
+                ) : (
+                  <>
+                    <select
+                      value={m.role}
+                      onChange={(e) => changeRole(m.userId, e.target.value as 'editor' | 'viewer')}
+                      className="bg-transparent border border-[var(--hairline)] rounded-[4px] text-[10px] font-mono px-1.5 py-0.5 text-[var(--ink)] outline-none cursor-pointer"
+                    >
+                      <option value="editor">editor</option>
+                      <option value="viewer">viewer</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => removeMember(m.userId, m.name)}
+                      className="text-[var(--ink-faint)] hover:text-[var(--line-scarlet)] transition-colors p-1"
+                      title="Remove member"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </>
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Invite links tab — create, copy, regenerate, revoke
+// ---------------------------------------------------------------------------
+function InvitesTab({ workspaceId }: { workspaceId: string }) {
+  const [links, setLinks] = useState<InviteLink[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const list = await inviteLinkService.listInviteLinks(workspaceId);
+      setLinks(list);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load invite links');
+    } finally {
+      setLoading(false);
+    }
+  }, [workspaceId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const createLink = async (role: 'editor' | 'viewer') => {
+    setCreating(true);
+    try {
+      await inviteLinkService.createInviteLink(workspaceId, { role });
+      await load();
+      notify(`Invite link created (${role})`, 'success');
+    } catch (err) {
+      if (err instanceof InviteLinkConflictError) {
+        notify('An active link already exists for this role', 'info');
+      } else {
+        notify(err instanceof Error ? err.message : 'Failed to create link', 'error');
+      }
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const copyLink = (link: InviteLink) => {
+    const url = `${window.location.origin}/accept-invite?token=${link.token}`;
+    navigator.clipboard?.writeText(url).then(() => notify('Invite URL copied', 'success'));
+  };
+
+  const revokeLink = async (linkId: string) => {
+    if (!confirm('Revoke this invite link? It will stop working immediately.')) return;
+    try {
+      await inviteLinkService.revokeInviteLink(workspaceId, linkId);
+      await load();
+      notify('Link revoked', 'success');
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Failed to revoke', 'error');
+    }
+  };
+
+  const regenerate = async (link: InviteLink) => {
+    try {
+      await inviteLinkService.regenerateInviteLink(workspaceId, { role: link.role as 'editor' | 'viewer' });
+      await load();
+      notify('Link regenerated', 'success');
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Failed to regenerate', 'error');
+    }
+  };
+
+  const activeLinks = links.filter((l) => !l.isExpired && new Date(l.expiresAt) > new Date());
+  const expiredLinks = links.filter((l) => l.isExpired || new Date(l.expiresAt) <= new Date());
+
+  return (
+    <div className="max-w-2xl slide-in">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-lg font-bold font-mono">invite_links()</h3>
+        <div className="flex gap-2">
+          <button type="button" className="btn-outline !py-1.5 !px-3 !text-[10px]" onClick={() => createLink('editor')} disabled={creating}>
+            <Plus className="w-3 h-3" /> editor link
+          </button>
+          <button type="button" className="btn-outline !py-1.5 !px-3 !text-[10px]" onClick={() => createLink('viewer')} disabled={creating}>
+            <Plus className="w-3 h-3" /> viewer link
+          </button>
+        </div>
+      </div>
+
+      {loading && links.length === 0 ? (
+        <div className="agency-card p-6 !cursor-default">
+          <div className="skeleton h-4 rounded" style={{ width: '50%' }} />
+        </div>
+      ) : error ? (
+        <div className="agency-card p-6 !cursor-default">
+          <p className="text-xs font-mono" style={{ color: 'var(--line-scarlet)' }}>{error}</p>
+        </div>
+      ) : activeLinks.length === 0 ? (
+        <div className="agency-card p-6 !cursor-default text-center">
+          <Link2 className="w-8 h-8 mx-auto mb-3 opacity-30" />
+          <p className="text-xs font-mono text-[var(--ink-faint)]">no_active_links()</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {activeLinks.map((link) => (
+            <div key={link.id} className="agency-card p-4 !cursor-default">
+              <div className="flex items-center justify-between mb-2">
+                <span className="service-chip" style={{ ['--chip' as string]: link.role === 'admin' ? 'var(--line-cobalt)' : 'var(--line-green)' }}>
+                  {link.role}
+                </span>
+                <span className="text-[10px] font-mono text-[var(--ink-faint)] tnum">
+                  {link.currentUses}/{link.maxUses} used · expires {new Date(link.expiresAt).toLocaleDateString()}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 text-[10px] font-mono text-[var(--ink-dim)] truncate border border-[var(--hairline)] rounded-[4px] px-2 py-1.5 bg-[var(--net-tunnel)] text-[var(--terminal-text)]">
+                  /accept-invite?token={link.token}
+                </code>
+                <button type="button" onClick={() => copyLink(link)} className="dock-icon w-7 h-7 flex items-center justify-center border border-[var(--hairline)] rounded-[5px]" title="Copy invite URL">
+                  <Copy className="w-3 h-3" />
+                </button>
+                <button type="button" onClick={() => regenerate(link)} className="dock-icon w-7 h-7 flex items-center justify-center border border-[var(--hairline)] rounded-[5px]" title="Regenerate">
+                  <RefreshCw className="w-3 h-3" />
+                </button>
+                <button type="button" onClick={() => revokeLink(link.id)} className="dock-icon w-7 h-7 flex items-center justify-center border border-[var(--hairline)] rounded-[5px] hover:text-[var(--line-scarlet)]" title="Revoke">
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main page — tabs + static demo tabs (billing, guardrails, analytics, integrations)
+// ---------------------------------------------------------------------------
+export default function DemoSettingsPage() {
+  const params = useParams();
+  const workspaceId = params.workspaceId as string;
+
+  const [tab, setTab] = useState<TabId>('profile');
+
+  return (
+    <div className="absolute inset-0 flex flex-col z-20 fade-in">
+      <header className="flex justify-between items-end px-8 md:px-10 py-5 shrink-0 border-b agency-border">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
+            <Settings className="w-6 h-6 md:w-7 md:h-7" /> Platform Settings
+          </h1>
+          <p className="text-[11px] text-[var(--ink-dim)] font-mono mt-2">Manage your account, workspace, team, and preferences.</p>
+        </div>
+      </header>
+
+      <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-y-auto md:overflow-hidden">
+        <aside className="md:w-64 shrink-0 border-b md:border-b-0 md:border-r agency-border agency-panel p-4">
+          <div className="flex md:flex-col gap-1 overflow-x-auto">
+            {TABS.map((group) => (
+              <div key={group.group} className="flex md:flex-col gap-1 md:mt-5 first:md:mt-1">
+                <p className="hidden md:block text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono mb-1.5 px-3">{group.group}</p>
+                {group.items.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setTab(item.id)}
+                    className={`hub-tab flex items-center gap-3 px-3 py-2 text-xs whitespace-nowrap ${tab === item.id ? 'active' : ''}`}
+                  >
+                    <item.icon className="w-4 h-4 shrink-0" /> {item.label}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        </aside>
+
+        <div className="flex-1 md:overflow-y-auto p-8 md:p-10">
+          {tab === 'profile' && <ProfileTab />}
+          {tab === 'workspace' && <WorkspaceTab workspaceId={workspaceId} />}
+          {tab === 'members' && <MembersTab workspaceId={workspaceId} />}
+          {tab === 'invites' && <InvitesTab workspaceId={workspaceId} />}
+
+          {tab === 'billing' && (
+            <div className="max-w-4xl slide-in">
+              <h3 className="text-lg font-bold mb-2 font-mono">billing_info()</h3>
+              <p className="text-xs text-[var(--ink-dim)] mb-6">Managed in the Agency Hub.</p>
+              <div className="agency-card p-6 !cursor-default max-w-sm relative">
+                <span className="absolute top-0 right-0 text-[9px] font-bold font-mono px-2 py-1 text-white rounded-bl-[8px]" style={{ background: 'var(--line-cobalt)' }}>ACTIVE</span>
+                <h4 className="text-sm font-bold font-mono" style={{ color: 'var(--line-cobalt)' }}>Agency Pro</h4>
+                <div className="my-4">
+                  <span className="text-2xl font-bold font-mono tnum">$499</span>
+                  <span className="text-xs font-mono ml-1 text-[var(--ink-dim)]">/mo</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab === 'brand_persona' && <BrandPersonaEditor workspaceId={workspaceId} />}
+
+          {tab === 'analytics' && (
+            <div className="max-w-4xl slide-in">
+              <h3 className="text-lg font-bold mb-6 font-mono">swarm_analytics()</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+                <div className="agency-card p-5 !cursor-default">
+                  <p className="label-rule mb-2">total_tasks_executed</p>
+                  <p className="text-2xl font-bold tnum" style={{ color: 'var(--line-cobalt)' }}>1,248</p>
+                  <p className="text-[10px] font-bold mt-1" style={{ color: 'var(--line-green)' }}>↑ 12% this week</p>
+                </div>
+                <div className="agency-card p-5 !cursor-default">
+                  <p className="label-rule mb-2">hitl_intervention_rate</p>
+                  <p className="text-2xl font-bold tnum" style={{ color: 'var(--line-amber)' }}>8.4%</p>
+                  <p className="text-[10px] font-bold mt-1" style={{ color: 'var(--line-green)' }}>↓ 2.1%</p>
+                </div>
+                <div className="agency-card p-5 !cursor-default">
+                  <p className="label-rule mb-2">compute_tokens_mtd</p>
+                  <p className="text-2xl font-bold tnum">4.2M</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab === 'data_sync' && <DataSyncSection workspaceId={workspaceId} />}
+
+          {tab === 'integrations' && (
+            <div className="max-w-4xl slide-in">
+              <h3 className="text-lg font-bold mb-6 font-mono">integrations_mcp()</h3>
+              <div className="agency-card p-5 flex items-center justify-between max-w-md !cursor-default">
+                <div className="flex items-center gap-4">
+                  <span className="w-10 h-10 rounded-[6px] border border-[var(--hairline-strong)] flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55v-2.15c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.75 2.69 1.25 3.34.95.1-.74.4-1.25.72-1.53-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.05.78 2.13v3.16c0 .3.2.66.8.55A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+                  </span>
+                  <div>
+                    <h4 className="text-sm font-bold font-mono">GitHub</h4>
+                    <p className="text-[11px] font-mono mt-0.5" style={{ color: 'var(--line-green)' }}>status: connected</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
