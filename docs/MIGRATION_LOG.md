@@ -77,9 +77,23 @@ These were agreed upon before any code was changed. Every decision below must re
 
 ---
 
-### Phase 2 — Settings + Team (planned, not yet started)
+### Phase 2 — Settings + Team
 
-*To be logged when implemented.*
+#### 2.1 Real settings page with account, workspace, members, and invites
+
+**Date:** 2026-09-08
+**What:** Rebuilt the demo settings page with 7 tabs wired to real backend services.
+**Why:** The demo settings had only local mock forms. Now it uses the production service layer for real CRUD operations.
+**How:**
+- **Profile tab**: editable display name via `editProfile` (PATCH `/user/edit-profile`), read-only email, contextual expertise textarea (informational, stored in persona)
+- **Workspace tab**: editable workspace name via `workspaceService.updateWorkspace`, immutable domain (visually distinct with dashed border), creation date, danger zone with delete workspace (confirm + `deleteWorkspace` + redirect)
+- **Members tab**: real member list via `memberService.listMembers`, role dropdown (editor/viewer) via `updateMemberRole`, remove member via `removeMember`, admin badge, "(you)" indicator, loading skeleton, error retry
+- **Invite links tab**: create editor/viewer links via `inviteLinkService.createInviteLink`, copy invite URL to clipboard, regenerate, revoke; handles `InviteLinkConflictError` (409) gracefully; shows usage count and expiry
+- **Billing/Guardrails/Analytics/Integrations tabs**: kept as static demo content (no backend for these yet)
+**Impact:** The settings page now performs real API calls. Users can manage their account, workspace, team, and invites from the demo interface.
+**Audit check:** Login → visit `/demo/{workspaceId}/settings` → edit profile name → check it persisted. Add a member via invite link → verify they appear in the members list.
+
+**Services used:** `authService.editProfile`, `workspaceService.updateWorkspace/deleteWorkspace`, `memberService.listMembers/updateMemberRole/removeMember`, `inviteLinkService.createInviteLink/listInviteLinks/regenerateInviteLink/revokeInviteLink`, `useCurrentWorkspace` + `invalidateWorkspace` for cache invalidation, `notify` for toasts.
 
 ---
 
