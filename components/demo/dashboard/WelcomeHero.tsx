@@ -253,6 +253,101 @@ function ActivityFeed({ threads, workspaceId }: { threads: AuditThread[]; worksp
 }
 
 // ---------------------------------------------------------------------------
+// Agent Directory — browse and launch agents
+// ---------------------------------------------------------------------------
+function AgentDirectory({ workspaceId, magentoConnected }: { workspaceId: string; magentoConnected: boolean }) {
+  const inks: Record<string, string> = {
+    'content-architect': 'var(--line-cobalt)',
+    'magento-content': 'var(--line-green)',
+    'interactive-website-architect': 'var(--line-amber)',
+  };
+
+  return (
+    <div className="plate overflow-hidden">
+      <div className="px-5 py-3.5 border-b agency-border">
+        <h3 className="text-xs font-semibold flex items-center gap-2 font-mono tracking-wide">
+          <Users className="w-4 h-4" style={{ color: 'var(--line-cobalt)' }} /> Agents
+        </h3>
+      </div>
+      <div className="p-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+        {AGENT_LIST.map((agent) => {
+          const ink = inks[agent.slug] ?? 'var(--line-cobalt)';
+          const gated = agent.connectionSource === 'magento' && !magentoConnected;
+          return (
+            <Link
+              key={agent.slug}
+              href={`/workspaces/${workspaceId}/modules/content-factory/v2/${agent.slug}`}
+              className="agency-card p-4 text-left flex flex-col gap-3"
+            >
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="w-9 h-9 rounded-[8px] flex items-center justify-center shrink-0 text-[13px] font-bold font-mono"
+                  style={{ border: `1.5px solid ${ink}`, color: ink }}
+                >
+                  {agent.initials}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold truncate">{agent.name}</p>
+                  <p className="text-[10px] text-[var(--ink-faint)] truncate">{agent.role}</p>
+                </div>
+              </div>
+              <p className="text-[11px] text-[var(--ink-dim)] leading-relaxed line-clamp-2">{agent.subtitle}</p>
+              {gated && (
+                <span className="text-[10px] font-mono flex items-center gap-1.5" style={{ color: 'var(--line-amber)' }}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-current" /> Requires Magento
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Team Section
+// ---------------------------------------------------------------------------
+function TeamSection({ workspaceId }: { workspaceId: string }) {
+  const [members, setMembers] = useState<{ name: string; email: string; role: string }[]>([]);
+
+  useEffect(() => {
+    import('@/lib/services/workspaceService').then(({ memberService }) => {
+      memberService.listMembers(workspaceId).then(setMembers).catch(() => setMembers([]));
+    });
+  }, [workspaceId]);
+
+  return (
+    <div className="plate overflow-hidden">
+      <div className="px-5 py-3.5 border-b agency-border flex items-center justify-between">
+        <h3 className="text-xs font-semibold font-mono tracking-wide">Team</h3>
+        <Link href={`/workspaces/${workspaceId}/settings`} className="text-[11px] font-mono text-[var(--ink-dim)] hover:text-[var(--ink)]">
+          Manage
+        </Link>
+      </div>
+      {members.length === 0 ? (
+        <div className="dense-row !cursor-default">
+          <span className="flex-1 text-xs text-[var(--ink-faint)]">Just you</span>
+        </div>
+      ) : (
+        members.slice(0, 4).map((m) => (
+          <div key={m.email} className="dense-row !cursor-default">
+            <span className="w-7 h-7 rounded-full border border-[var(--hairline)] flex items-center justify-center text-[10px] font-bold font-mono shrink-0">
+              {m.name.trim().split(' ')[0]?.[0]?.toUpperCase()}
+            </span>
+            <span className="flex-1 min-w-0 flex flex-col">
+              <span className="text-xs font-semibold truncate">{m.name}</span>
+              <span className="text-[10px] text-[var(--ink-faint)] truncate">{m.email}</span>
+            </span>
+            <span className="text-[9px] font-mono text-[var(--ink-faint)] shrink-0">{m.role}</span>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main Dashboard
 // ---------------------------------------------------------------------------
 export function WelcomeHero({ workspaceId }: { workspaceId: string }) {
@@ -277,7 +372,7 @@ export function WelcomeHero({ workspaceId }: { workspaceId: string }) {
       {/* Quick Start */}
       <QuickStart workspaceId={workspaceId} />
 
-      {/* Main content: left (approvals + artifacts) | right (activity) */}
+      {/* Main content: left (approvals + artifacts + agents) | right (activity) */}
       <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
         <div className="flex-1 flex flex-col min-w-0">
           {!data.hasPersona && (
@@ -296,10 +391,12 @@ export function WelcomeHero({ workspaceId }: { workspaceId: string }) {
           )}
           <PendingApprovals threads={data.threads} workspaceId={workspaceId} />
           <RecentArtifacts artifacts={data.artifacts} workspaceId={workspaceId} />
+          <AgentDirectory workspaceId={workspaceId} magentoConnected={data.connections.some((c) => c.sourceType === 'magento' && c.isActive)} />
         </div>
 
-        <div className="lg:w-[320px] shrink-0">
+        <div className="lg:w-[320px] shrink-0 flex flex-col gap-4">
           <ActivityFeed threads={data.threads} workspaceId={workspaceId} />
+          <TeamSection workspaceId={workspaceId} />
         </div>
       </div>
     </div>
