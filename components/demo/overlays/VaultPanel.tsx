@@ -27,7 +27,7 @@ function VaultCard({ run }: { run: { id: string; ts: string; prompt: string; res
       </div>
       <p className="text-xs leading-relaxed mb-3">{run.prompt}</p>
       <button type="button" className="btn-outline !py-1 !px-2 !rounded-[3px]" onClick={() => setOpen((v) => !v)}>
-        inspect_artifact()
+        Inspect Artifact
       </button>
       {open && (
         <pre className="terminal-container mt-3 text-[10px]"><code>{run.artifact}</code></pre>

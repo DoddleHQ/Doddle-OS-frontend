@@ -75,7 +75,7 @@ function TriageCard({ item }: { item: TriageItem }) {
               style={{ background: 'var(--line-green)' }}
               onClick={() => resolveAndClose('restarted')}
             >
-              restart_thread()
+              Restart Thread
             </button>
           </>
         )}
