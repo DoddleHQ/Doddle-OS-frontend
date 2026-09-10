@@ -13,7 +13,7 @@ const agentInks: Record<string, string> = {
   'interactive-website-architect': 'var(--line-amber)',
 };
 
-/** Real agent roster + data source status */
+/** Agent roster + data source status */
 export function PowerAgentsPanel({ workspaceId }: { workspaceId: string }) {
   const [connections, setConnections] = useState<DataSourceConnection[]>([]);
 
@@ -34,7 +34,7 @@ export function PowerAgentsPanel({ workspaceId }: { workspaceId: string }) {
             <Zap className="w-4 h-4" style={{ color: 'var(--line-green)' }} /> Agents
           </h3>
           <Link
-            href={`/workspaces/${workspaceId}/modules/content-factory`}
+            href={`/workspaces/${workspaceId}/power-agents`}
             className="text-[11px] font-mono text-[var(--ink-dim)] hover:text-[var(--ink)] transition-colors"
           >
             Open
