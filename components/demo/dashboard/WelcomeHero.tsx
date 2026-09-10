@@ -265,29 +265,25 @@ function AgentDirectory({ workspaceId }: { workspaceId: string; magentoConnected
   const agents = usePowerAgents();
   const audit = agents.filter((a) => !a.isContent);
   const content = agents.filter((a) => a.isContent);
-  const ink = (isContent: boolean) => isContent ? 'var(--line-amber)' : 'var(--line-green)';
 
-  const renderCard = (agent: LiveAgent) => (
-    <Link
-      key={agent.id}
-      href={`/workspaces/${workspaceId}/power-agents`}
-      className="agency-card p-3 md:p-4 text-left flex flex-col gap-2"
-    >
-      <div className="flex items-center gap-2 md:gap-2.5">
-        <span
-          className="w-7 h-7 md:w-8 md:h-8 rounded-[6px] md:rounded-[8px] flex items-center justify-center shrink-0"
-          style={{ border: `1.5px solid ${ink(agent.isContent)}`, color: ink(agent.isContent) }}
-        >
-          <DemoIcon name={agent.icon} className="w-3.5 h-3.5" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-[11px] md:text-[12px] font-semibold font-mono truncate">@{agent.name.replace(/\s/g, '_')}</p>
-          <p className="text-[9px] md:text-[10px] text-[var(--ink-faint)] truncate">{agent.role}</p>
-        </div>
-      </div>
-      <p className="text-[10px] md:text-[11px] text-[var(--ink-dim)] leading-relaxed line-clamp-2">{agent.desc}</p>
-    </Link>
-  );
+  const suites = [
+    {
+      label: 'SEO Audit Suite',
+      count: audit.length,
+      ink: 'var(--line-green)',
+      icon: 'activity',
+      desc: 'Performance, crawlability, site structure, on-page, content quality',
+      preview: audit.slice(0, 3).map((a) => `@${a.name.replace(/\s/g, '_')}`).join('  '),
+    },
+    {
+      label: 'Content Suite',
+      count: content.length,
+      ink: 'var(--line-amber)',
+      icon: 'pen-tool',
+      desc: 'Homepage, brand, product, category, collection, custom pages',
+      preview: content.slice(0, 3).map((a) => `@${a.name.replace(/\s/g, '_')}`).join('  '),
+    },
+  ];
 
   return (
     <div className="plate overflow-hidden">
@@ -299,24 +295,39 @@ function AgentDirectory({ workspaceId }: { workspaceId: string; magentoConnected
           href={`/workspaces/${workspaceId}/power-agents`}
           className="text-[11px] font-mono text-[var(--ink-dim)] hover:text-[var(--ink)] transition-colors"
         >
-          Open
+          View All
         </Link>
       </div>
-      <div className="p-2 md:p-3 space-y-2 md:space-y-3">
-        {audit.length > 0 && (
-          <div>
-            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono mb-1.5 md:mb-2 px-1">SEO Audit Suite</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">{audit.map(renderCard)}</div>
-          </div>
-        )}
-        {content.length > 0 && (
-          <div>
-            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono mb-1.5 md:mb-2 px-1">Content Suite</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">{content.map(renderCard)}</div>
-          </div>
-        )}
+      <div className="p-3 md:p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {suites.map((suite) => (
+          <Link
+            key={suite.label}
+            href={`/workspaces/${workspaceId}/power-agents`}
+            className="agency-card p-4 flex flex-col gap-2"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0"
+                  style={{ border: `1.5px solid ${suite.ink}`, color: suite.ink }}
+                >
+                  <DemoIcon name={suite.icon} className="w-4 h-4" />
+                </span>
+                <div>
+                  <p className="text-[13px] font-semibold">{suite.label}</p>
+                  <p className="text-[10px] font-mono" style={{ color: suite.ink }}>{suite.count} agents</p>
+                </div>
+              </div>
+              <ArrowRight className="w-3.5 h-3.5 text-[var(--ink-faint)]" />
+            </div>
+            <p className="text-[11px] text-[var(--ink-dim)] leading-relaxed">{suite.desc}</p>
+            {suite.preview && (
+              <p className="text-[9px] font-mono text-[var(--ink-faint)] truncate">{suite.preview} …</p>
+            )}
+          </Link>
+        ))}
         {agents.length === 0 && (
-          <div className="dense-row !cursor-default">
+          <div className="col-span-full dense-row !cursor-default">
             <span className="flex-1 text-xs text-[var(--ink-faint)]">Loading agents…</span>
           </div>
         )}
