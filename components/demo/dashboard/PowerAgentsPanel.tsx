@@ -1,19 +1,26 @@
 'use client';
 
 import Link from 'next/link';
-import { Zap } from 'lucide-react';
-import { AGENT_LIST } from '@/components/v2/content-factory/agents';
 import { connectionService } from '@/lib/services/connectionService';
 import { useEffect, useState } from 'react';
 import type { DataSourceConnection } from '@/lib/types/connection.types';
+import { DemoIcon } from '@/lib/demo/icons';
+import { WORKSPACE_MODULES } from '@/components/v2/dashboard/modules';
 
-const agentInks: Record<string, string> = {
-  'content-architect': 'var(--line-cobalt)',
-  'magento-content': 'var(--line-green)',
-  'interactive-website-architect': 'var(--line-amber)',
+const moduleIconMap: Record<string, string> = {
+  'Mission Control': 'layout-dashboard',
+  'SEO Cluster': 'search',
+  'Content Factory': 'file-text',
+  'Social Growth': 'share-2',
+  'SaaS Launch Ops': 'rocket',
+  'Business Audit': 'bar-chart-3',
+  'Analytics Action': 'pie-chart',
+  'Ads Execution': 'megaphone',
+  'Email Nurture': 'mail',
+  'Brand Guardrails': 'shield-alert',
 };
 
-/** Agent roster + data source status */
+/** Module list + data source status */
 export function PowerAgentsPanel({ workspaceId }: { workspaceId: string }) {
   const [connections, setConnections] = useState<DataSourceConnection[]>([]);
 
@@ -29,45 +36,26 @@ export function PowerAgentsPanel({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="plate overflow-hidden">
-        <div className="px-5 py-3.5 border-b agency-border flex items-center justify-between shrink-0">
-          <h3 className="text-xs font-semibold flex items-center gap-2.5 font-mono tracking-wide">
-            <Zap className="w-4 h-4" style={{ color: 'var(--line-green)' }} /> Agents
-          </h3>
-          <Link
-            href={`/workspaces/${workspaceId}/power-agents`}
-            className="text-[11px] font-mono text-[var(--ink-dim)] hover:text-[var(--ink)] transition-colors"
-          >
-            Open
-          </Link>
+        <div className="px-5 py-3.5 border-b agency-border shrink-0">
+          <h3 className="text-xs font-semibold font-mono tracking-wide">Modules</h3>
         </div>
-        <div className="p-2.5 space-y-1.5">
-          {AGENT_LIST.map((agent) => {
-            const ink = agentInks[agent.slug] ?? 'var(--line-cobalt)';
-            const gated = agent.connectionSource === 'magento' && !magentoConnected;
-            return (
-              <Link
-                key={agent.slug}
-                href={`/workspaces/${workspaceId}/modules/content-factory/v2/${agent.slug}`}
-                className="flex items-center gap-3 p-2.5 hover:bg-[var(--net-panel-2)] rounded-[6px] transition-colors"
-              >
-                <span
-                  className="w-8 h-8 rounded-[6px] flex items-center justify-center shrink-0 text-[11px] font-bold font-mono"
-                  style={{ border: `1.5px solid ${ink}`, color: ink }}
-                >
-                  {agent.initials}
-                </span>
-                <span className="flex-1 min-w-0">
-                  <span className="block text-xs font-semibold font-mono truncate">
-                    {agent.name} · {agent.role}
-                  </span>
-                  <span className="block text-[10px] text-[var(--ink-faint)] truncate">
-                    {gated ? 'Requires Magento connection' : agent.workingStatus}
-                  </span>
-                </span>
-                {gated && <span className="w-2 h-2 rounded-full bg-[var(--line-amber)] shrink-0" title="Connection required" />}
-              </Link>
-            );
-          })}
+        <div className="p-2 space-y-0.5">
+          {WORKSPACE_MODULES.map((mod) => (
+            <Link
+              key={mod.path}
+              href={`/workspaces/${workspaceId}/${mod.path}`}
+              className="flex items-center gap-3 p-2.5 hover:bg-[var(--net-panel-2)] rounded-[6px] transition-colors"
+            >
+              <DemoIcon
+                name={moduleIconMap[mod.name] ?? 'file-text'}
+                className="w-4 h-4 shrink-0"
+              />
+              <span className="flex-1 min-w-0">
+                <span className="block text-xs font-semibold truncate">{mod.name}</span>
+                <span className="block text-[10px] text-[var(--ink-faint)] truncate">{mod.desc}</span>
+              </span>
+            </Link>
+          ))}
         </div>
       </div>
 
