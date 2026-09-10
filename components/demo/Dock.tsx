@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 import { useOS } from '@/lib/demo/osStore';
 import { DemoIcon } from '@/lib/demo/icons';
 import { BrandMark } from './primitives';
@@ -19,6 +20,7 @@ export function Dock({ workspaceId }: DockProps) {
   const dockOpen = useOS((s) => s.dockOpen);
   const toggleDock = useOS((s) => s.toggleDock);
   const { user } = useAuth();
+  const { workspaces } = useWorkspaces();
   const routes = buildDemoRoutes(workspaceId);
   const basePath = `/workspaces/${workspaceId}`;
 
@@ -32,7 +34,7 @@ export function Dock({ workspaceId }: DockProps) {
     <div
       className={`agency-panel border-r agency-border py-4 flex flex-col items-center shrink-0 z-40 relative transition-[width] duration-200 ${dockOpen ? 'w-[208px] items-stretch px-3' : 'w-[76px] px-2'}`}
     >
-      <div className={`flex flex-col ${dockOpen ? 'items-stretch gap-6' : 'items-center gap-6'} w-full`}>
+      <div className={`flex flex-col ${dockOpen ? 'items-stretch gap-4' : 'items-center gap-4'} w-full`}>
         {/* header row: logo + collapse control side by side in both states */}
         <div className={`flex items-center mt-1 ${dockOpen ? 'justify-between' : 'justify-between w-full'}`}>
           <Link href={basePath} title="Doddle OS" className="hover:opacity-85 transition-opacity">
@@ -53,7 +55,66 @@ export function Dock({ workspaceId }: DockProps) {
           </button>
         </div>
 
-        <nav className={`flex flex-col ${dockOpen ? 'space-y-1' : 'space-y-2.5'} mt-2 w-full`}>
+        {/* workspace switcher: tiles for each workspace + create new */}
+        <div className={`flex flex-col ${dockOpen ? 'gap-1' : 'gap-1.5'} w-full`}>
+          {dockOpen && (
+            <p className="label-rule !gap-2 !text-[9px] !mb-0 px-1">workspaces</p>
+          )}
+          <div className={`flex ${dockOpen ? 'flex-col gap-1' : 'flex-col gap-1'} w-full`}>
+            {workspaces.slice(0, 6).map((ws) => {
+              const active = ws.workspaceId === workspaceId;
+              const initial = (ws.name || '?').trim().split(' ')[0]?.[0]?.toUpperCase() ?? '?';
+              return (
+                <Link
+                  key={ws.workspaceId}
+                  href={`/workspaces/${ws.workspaceId}`}
+                  title={ws.name || 'Workspace'}
+                  className={`relative group flex items-center ${dockOpen ? 'gap-2.5 h-9 px-2 rounded-[8px]' : 'w-full h-9 justify-center rounded-[10px]'} transition-all ${active ? 'bg-[var(--accent-soft)] border border-[var(--hairline-strong)] shadow-[inset_2px_0_0_var(--line-cobalt)]' : 'hover:bg-[var(--net-panel-2)] border border-transparent'}`}
+                >
+                  <span
+                    className={`flex items-center justify-center shrink-0 font-bold font-mono text-[11px] rounded-[6px] transition-colors ${dockOpen ? 'w-6 h-6' : 'w-7 h-7'} ${active ? 'text-white' : 'text-[var(--ink-dim)] border border-[var(--hairline)]'}`}
+                    style={active ? { background: 'var(--line-cobalt)' } : undefined}
+                  >
+                    {initial}
+                  </span>
+                  {dockOpen && (
+                    <span className={`text-[11px] font-mono truncate ${active ? 'text-[var(--ink)] font-semibold' : 'text-[var(--ink-dim)]'}`}>
+                      {ws.name || 'Workspace'}
+                    </span>
+                  )}
+                  {!dockOpen && (
+                    <span className="absolute left-16 agency-panel agency-border border text-[10px] text-[var(--ink)] font-mono px-2 py-1 rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                      {ws.name || 'Workspace'}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+            {/* create new workspace */}
+            <Link
+              href="/onboarding"
+              title="New workspace"
+              className={`relative group flex items-center ${dockOpen ? 'gap-2.5 h-9 px-2 rounded-[8px]' : 'w-full h-9 justify-center rounded-[10px]'} border border-dashed border-[var(--hairline-strong)] hover:border-[var(--line-cobalt)] hover:bg-[var(--accent-soft)] transition-all`}
+            >
+              <Plus className="w-4 h-4 text-[var(--ink-faint)] group-hover:text-[var(--line-cobalt)] transition-colors shrink-0" />
+              {dockOpen && (
+                <span className="text-[11px] font-mono text-[var(--ink-faint)] group-hover:text-[var(--line-cobalt)] transition-colors">
+                  new_workspace()
+                </span>
+              )}
+              {!dockOpen && (
+                <span className="absolute left-16 agency-panel agency-border border text-[10px] text-[var(--ink)] font-mono px-2 py-1 rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                  new workspace
+                </span>
+              )}
+            </Link>
+          </div>
+        </div>
+
+        {/* divider between workspaces and nav */}
+        <div className={`h-px bg-[var(--hairline)] mx-auto ${dockOpen ? 'w-full' : 'w-8'}`} aria-hidden="true" />
+
+        <nav className={`flex flex-col ${dockOpen ? 'space-y-1' : 'space-y-2.5'} w-full`}>
           {routes.map((route, i) => (
             <div key={route.path} className="contents">
               {i === 3 && (
