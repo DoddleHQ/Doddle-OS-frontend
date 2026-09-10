@@ -32,7 +32,7 @@ export function RunningProcesses({ workspaceId }: { workspaceId: string }) {
   const pct = list.length ? Math.round(list.reduce((a, t) => a + t.progress, 0) / list.length) : 0;
 
   return (
-    <div className="flex flex-col lg:flex-1 lg:min-h-0 plate lg:overflow-hidden">
+    <div className="flex flex-col lg:flex-[2.5] plate">
       <div className="px-5 py-3.5 border-b agency-border flex items-center justify-between shrink-0">
         <h3 className="text-xs font-semibold flex items-center gap-2.5 font-mono tracking-wide">
           <Terminal className="w-4 h-4" style={{ color: 'var(--line-cobalt)' }} /> running_processes
@@ -41,7 +41,7 @@ export function RunningProcesses({ workspaceId }: { workspaceId: string }) {
           doddle new swarm
         </Link>
       </div>
-      <div className="lg:flex-1 lg:overflow-y-auto">
+      <div>
         {/* live GSC pipeline (engine-driven) */}
         <Link href={`/workspaces/${workspaceId}/launchpad`} className="dense-row">
           <span className="w-[34%] flex flex-col">

@@ -50,7 +50,7 @@ export default function DemoDashboardPage() {
 
       <WelcomeHero workspaceId={workspaceId} />
       <TelemetryHeader workspaceId={workspaceId} />
-      <div className="flex-1 flex flex-col lg:flex-row gap-6 max-w-[1500px] w-full pb-6 min-h-0">
+      <div className="flex flex-col lg:flex-row gap-6 max-w-[1500px] w-full pb-6">
         <RunningProcesses workspaceId={workspaceId} />
         <PowerAgentsPanel workspaceId={workspaceId} />
       </div>
