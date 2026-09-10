@@ -74,7 +74,7 @@ export function Dock({ workspaceId }: DockProps) {
             >
               {currentInitial}
             </span>
-            <span className="flex-1 min-w-0">
+            <span className="flex-1 min-w-0 text-center">
               <span className="block text-[13px] font-semibold truncate leading-tight">{currentName}</span>
               {currentDomain && (
                 <span className="block text-[10px] font-mono text-[var(--ink-faint)] truncate mt-0.5">{currentDomain}</span>
