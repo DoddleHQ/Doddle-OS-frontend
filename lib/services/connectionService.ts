@@ -50,7 +50,7 @@ function connectionsUrl(workspaceId: string, ...segments: string[]): string {
 function toMagentoCredentials(raw: Record<string, unknown>): MagentoCredentialsResponse {
     return {
         baseUrl: raw.base_url as string,
-        storeId: raw.store_id as string,
+        environment: (raw.environment as string | null) ?? null,
         storeCode: raw.store_code as string,
         loadMode: raw.load_mode as SyncLoadMode,
         pageSize: raw.page_size as number,
@@ -97,7 +97,7 @@ function toConnection(raw: Record<string, unknown>): DataSourceConnection {
         isActive: raw.is_active as boolean,
         createdAt: raw.created_at as string,
         updatedAt: (raw.updated_at as string | null) ?? null,
-        magento: raw.magento ? toMagentoCredentials(raw.magento as Record<string, unknown>) : null,
+        magento: raw.magento_credentials ? toMagentoCredentials(raw.magento_credentials as Record<string, unknown>) : null,
         gsc: raw.gsc ? toGscCredentials(raw.gsc as Record<string, unknown>) : null,
         gmc: raw.gmc ? toGmcCredentials(raw.gmc as Record<string, unknown>) : null,
         ga4: raw.ga4 ? toGa4Credentials(raw.ga4 as Record<string, unknown>) : null,
@@ -178,7 +178,6 @@ export const connectionService = {
         const body: Record<string, unknown> = {
             credentials: {
                 base_url: req.credentials.baseUrl,
-                store_id: req.credentials.storeId,
                 access_token: req.credentials.accessToken,
             },
         };

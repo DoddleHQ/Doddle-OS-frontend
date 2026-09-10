@@ -32,7 +32,6 @@ const SOURCES: SourceConfig[] = [
     icon: <Database className="w-4 h-4" />,
     fields: [
       { name: 'baseUrl', label: 'Base URL', placeholder: 'https://your-store.com', required: true },
-      { name: 'storeId', label: 'Store ID', placeholder: '1', required: true },
       { name: 'accessToken', label: 'Access Token', type: 'password', placeholder: '••••••••', required: true, secret: true },
     ],
   },
@@ -43,30 +42,6 @@ const SOURCES: SourceConfig[] = [
     icon: <Globe className="w-4 h-4" />,
     fields: [
       { name: 'siteUrl', label: 'Site URL', placeholder: 'https://your-site.com', required: true },
-      { name: 'clientId', label: 'Client ID', placeholder: '••••.apps.googleusercontent.com', required: true },
-      { name: 'clientSecret', label: 'Client Secret', type: 'password', placeholder: '••••••••', required: true, secret: true },
-      { name: 'refreshToken', label: 'Refresh Token', type: 'password', placeholder: '••••••••', required: true, secret: true },
-    ],
-  },
-  {
-    type: 'gmc',
-    label: 'Merchant Center',
-    group: 'Google',
-    icon: <Globe className="w-4 h-4" />,
-    fields: [
-      { name: 'merchantId', label: 'Merchant ID', placeholder: '123456789', required: true },
-      { name: 'clientId', label: 'Client ID', placeholder: '••••.apps.googleusercontent.com', required: true },
-      { name: 'clientSecret', label: 'Client Secret', type: 'password', placeholder: '••••••••', required: true, secret: true },
-      { name: 'refreshToken', label: 'Refresh Token', type: 'password', placeholder: '••••••••', required: true, secret: true },
-    ],
-  },
-  {
-    type: 'ga4',
-    label: 'Analytics 4',
-    group: 'Google',
-    icon: <Globe className="w-4 h-4" />,
-    fields: [
-      { name: 'propertyId', label: 'Property ID', placeholder: '123456789', required: true },
       { name: 'clientId', label: 'Client ID', placeholder: '••••.apps.googleusercontent.com', required: true },
       { name: 'clientSecret', label: 'Client Secret', type: 'password', placeholder: '••••••••', required: true, secret: true },
       { name: 'refreshToken', label: 'Refresh Token', type: 'password', placeholder: '••••••••', required: true, secret: true },
@@ -167,10 +142,6 @@ function SourcePanel({ workspaceId, config }: { workspaceId: string; config: Sou
         });
       } else if (config.type === 'gsc') {
         await connectionService.connectGsc(workspaceId, { credentials: credentials as never, schedule });
-      } else if (config.type === 'gmc') {
-        await connectionService.connectGmc(workspaceId, { credentials: credentials as never, schedule });
-      } else if (config.type === 'ga4') {
-        await connectionService.connectGa4(workspaceId, { credentials: credentials as never, schedule });
       }
 
       notify(`${config.label} connected`, 'success');
@@ -273,10 +244,6 @@ function SourcePanel({ workspaceId, config }: { workspaceId: string; config: Sou
                   await connectionService.updateMagento(workspaceId, { schedule: { syncCron: opt?.cron ?? null } });
                 } else if (config.type === 'gsc') {
                   await connectionService.updateGsc(workspaceId, { schedule: { syncCron: opt?.cron ?? null } });
-                } else if (config.type === 'gmc') {
-                  await connectionService.updateGmc(workspaceId, { schedule: { syncCron: opt?.cron ?? null } });
-                } else if (config.type === 'ga4') {
-                  await connectionService.updateGa4(workspaceId, { schedule: { syncCron: opt?.cron ?? null } });
                 }
                 notify('Schedule updated', 'success');
               } catch (err) {

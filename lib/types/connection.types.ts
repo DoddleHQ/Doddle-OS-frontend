@@ -22,7 +22,6 @@ export type EntityType = string; // backend enum; kept loose for forward-compat
 
 export interface MagentoCredentialsReq {
     baseUrl: string;
-    storeId: string;
     /** Write-only — never echoed back. */
     accessToken: string;
 }
@@ -145,7 +144,7 @@ export interface TriggerSyncReq {
 
 export interface MagentoCredentialsResponse {
     baseUrl: string;
-    storeId: string;
+    environment: string | null;
     storeCode: string;
     loadMode: SyncLoadMode;
     pageSize: number;

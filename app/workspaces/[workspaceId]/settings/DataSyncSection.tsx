@@ -347,7 +347,7 @@ function ConnectedView({
             {sourceType === 'magento' && connection.magento && (
                 <>
                     <DetailRow label="Base URL" value={connection.magento.baseUrl} mono />
-                    <DetailRow label="Store ID" value={connection.magento.storeId} mono />
+                    <DetailRow label="Environment" value={connection.magento.environment || 'production'} mono />
                     <DetailRow label="Store code" value={connection.magento.storeCode} mono />
                     <DetailRow label="Load mode" value={connection.magento.loadMode} />
                     <DetailRow label="Page size" value={String(connection.magento.pageSize)} mono />
@@ -474,7 +474,7 @@ function MagentoConnectForm({
     onConnect: (conn: DataSourceConnection) => void;
 }) {
     const [baseUrl, setBaseUrl] = useState('');
-    const [storeId, setStoreId] = useState('');
+    
     const [accessToken, setAccessToken] = useState('');
     const [storeCode, setStoreCode] = useState('all');
     const [loadMode, setLoadMode] = useState<'full' | 'incremental'>('incremental');
@@ -482,7 +482,7 @@ function MagentoConnectForm({
     const [connecting, setConnecting] = useState(false);
 
     const handleConnect = async () => {
-        if (!baseUrl || !storeId || !accessToken) {
+        if (!baseUrl || !accessToken) {
             notify('Base URL, Store ID, and Access Token are required', 'error');
             return;
         }
@@ -490,7 +490,7 @@ function MagentoConnectForm({
             setConnecting(true);
             const cronExpr = FREQUENCY_OPTIONS.find((f) => f.value === frequency)?.cron ?? null;
             const req: CreateMagentoConnectionReq = {
-                credentials: { baseUrl, storeId, accessToken },
+                credentials: { baseUrl, accessToken },
                 pullSettings: { storeCode, loadMode },
                 schedule: { syncCron: cronExpr, syncTimezone: 'UTC' },
             };
@@ -511,7 +511,6 @@ function MagentoConnectForm({
             connecting={connecting}
             fields={[
                 { label: 'Base URL', value: baseUrl, onChange: setBaseUrl, placeholder: 'https://your-store.com', mono: true },
-                { label: 'Store ID', value: storeId, onChange: setStoreId, placeholder: 'tenant-slug', mono: true },
                 { label: 'Access Token', value: accessToken, onChange: setAccessToken, placeholder: 'Magento integration token', type: 'password', mono: true },
             ]}
             extraFields={
