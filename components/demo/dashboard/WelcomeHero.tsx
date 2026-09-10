@@ -253,53 +253,50 @@ function ActivityFeed({ threads, workspaceId }: { threads: AuditThread[]; worksp
 }
 
 // ---------------------------------------------------------------------------
-// Agent Directory — browse and launch agents
+// Power Agents — solo chat agents from the Power Agents page
 // ---------------------------------------------------------------------------
-function AgentDirectory({ workspaceId, magentoConnected }: { workspaceId: string; magentoConnected: boolean }) {
-  const inks: Record<string, string> = {
-    'content-architect': 'var(--line-cobalt)',
-    'magento-content': 'var(--line-green)',
-    'interactive-website-architect': 'var(--line-amber)',
-  };
+const POWER_AGENTS = [
+  { id: 'data', handle: '@Data_Wrangler', role: 'ETL Specialist', desc: 'Extracts, transforms, and loads data from connected sources into your warehouse', ink: 'var(--line-green)' },
+  { id: 'writer', handle: '@glob_Writer', role: 'Marketing Copywriter', desc: 'Writes landing pages, product descriptions, and campaign copy in your brand voice', ink: 'var(--line-amber)' },
+  { id: 'infra', handle: '@Infra_Titan', role: 'Infrastructure Engineer', desc: 'Manages database schemas, benchmarks performance, and handles deployments', ink: 'var(--line-cobalt)' },
+];
 
+function AgentDirectory({ workspaceId }: { workspaceId: string; magentoConnected: boolean }) {
   return (
     <div className="plate overflow-hidden">
-      <div className="px-5 py-3.5 border-b agency-border">
+      <div className="px-5 py-3.5 border-b agency-border flex items-center justify-between">
         <h3 className="text-xs font-semibold flex items-center gap-2 font-mono tracking-wide">
-          <Users className="w-4 h-4" style={{ color: 'var(--line-cobalt)' }} /> Agents
+          <Users className="w-4 h-4" style={{ color: 'var(--line-cobalt)' }} /> Power Agents
         </h3>
+        <Link
+          href={`/workspaces/${workspaceId}/power-agents`}
+          className="text-[11px] font-mono text-[var(--ink-dim)] hover:text-[var(--ink)] transition-colors"
+        >
+          Open
+        </Link>
       </div>
       <div className="p-3 grid grid-cols-1 md:grid-cols-3 gap-3">
-        {AGENT_LIST.map((agent) => {
-          const ink = inks[agent.slug] ?? 'var(--line-cobalt)';
-          const gated = agent.connectionSource === 'magento' && !magentoConnected;
-          return (
-            <Link
-              key={agent.slug}
-              href={`/workspaces/${workspaceId}/modules/content-factory/v2/${agent.slug}`}
-              className="agency-card p-4 text-left flex flex-col gap-3"
-            >
-              <div className="flex items-center gap-2.5">
-                <span
-                  className="w-9 h-9 rounded-[8px] flex items-center justify-center shrink-0 text-[13px] font-bold font-mono"
-                  style={{ border: `1.5px solid ${ink}`, color: ink }}
-                >
-                  {agent.initials}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[13px] font-semibold truncate">{agent.name}</p>
-                  <p className="text-[10px] text-[var(--ink-faint)] truncate">{agent.role}</p>
-                </div>
+        {POWER_AGENTS.map((agent) => (
+          <Link
+            key={agent.id}
+            href={`/workspaces/${workspaceId}/power-agents`}
+            className="agency-card p-4 text-left flex flex-col gap-3"
+          >
+            <div className="flex items-center gap-2.5">
+              <span
+                className="w-9 h-9 rounded-[8px] flex items-center justify-center shrink-0 text-[13px] font-bold font-mono"
+                style={{ border: `1.5px solid ${agent.ink}`, color: agent.ink }}
+              >
+                {agent.handle.replace('@', '')[0]}
+              </span>
+              <div className="min-w-0">
+                <p className="text-[13px] font-semibold font-mono truncate">{agent.handle}</p>
+                <p className="text-[10px] text-[var(--ink-faint)] truncate">{agent.role}</p>
               </div>
-              <p className="text-[11px] text-[var(--ink-dim)] leading-relaxed line-clamp-2">{agent.subtitle}</p>
-              {gated && (
-                <span className="text-[10px] font-mono flex items-center gap-1.5" style={{ color: 'var(--line-amber)' }}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-current" /> Requires Magento
-                </span>
-              )}
-            </Link>
-          );
-        })}
+            </div>
+            <p className="text-[11px] text-[var(--ink-dim)] leading-relaxed line-clamp-2">{agent.desc}</p>
+          </Link>
+        ))}
       </div>
     </div>
   );
