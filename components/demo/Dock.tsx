@@ -169,7 +169,7 @@ export function Dock({ workspaceId }: DockProps) {
 
       {/* ── nav: grouped into Execution / Management ── */}
       {dockOpen ? (
-        <div className="flex-1 flex flex-col gap-4 min-h-0 overflow-y-auto">
+        <div className="flex-1 flex flex-col gap-4 min-h-0 overflow-y-auto overflow-x-hidden">
           {/* execution group */}
           <div>
             <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono px-2 mb-1.5">execution</p>
@@ -192,7 +192,7 @@ export function Dock({ workspaceId }: DockProps) {
         </div>
       ) : (
         /* collapsed nav */
-        <div className="flex-1 flex flex-col gap-2.5 w-full min-h-0 overflow-y-auto">
+        <div className="flex-1 flex flex-col gap-2.5 w-full min-h-0 overflow-y-auto overflow-x-hidden">
           {routes.map((route, i) => (
             <div key={route.path} className="contents">
               {i === 3 && <div className="h-px bg-[var(--hairline)] my-1 mx-auto w-8" aria-hidden="true" />}

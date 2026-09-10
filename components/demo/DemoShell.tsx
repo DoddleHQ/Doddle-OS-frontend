@@ -59,7 +59,7 @@ export function DemoShell({ children, workspaceId }: DemoShellProps) {
   }, [router, setOverlay, closeTopOverlay, routes]);
 
   return (
-    <div className="demo-scope daypass h-screen w-screen relative flex flex-col overflow-hidden">
+    <div className="demo-scope daypass h-screen w-screen relative flex flex-col overflow-x-hidden overflow-y-hidden">
       {/* base-map linework beneath the board */}
       <div className="base-map absolute inset-0 pointer-events-none" aria-hidden="true" />
       <div className="flex-1 flex overflow-hidden relative z-10">
