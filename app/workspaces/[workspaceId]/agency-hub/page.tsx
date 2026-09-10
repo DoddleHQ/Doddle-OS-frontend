@@ -1,8 +1,10 @@
 'use client';
-import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 import { Building2, Check, CreditCard, Layers, Plug, ShieldAlert, Users, X } from 'lucide-react';
 
 const TABS = [
@@ -42,58 +44,118 @@ function Toggle({ checked, disabled, onChange }: { checked: boolean; disabled?: 
   );
 }
 
-function WorkspacesTab() {
+function WorkspacesTab({ workspaceId }: { workspaceId: string }) {
+  const { workspaces } = useWorkspaces();
+  const router = useRouter();
+
   return (
     <div className="max-w-4xl slide-in">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-lg font-bold font-mono">Workspaces</h3>
-        <button type="button" className="btn-outline">New Workspace</button>
+        <Link href="/onboarding" className="btn-outline">New Workspace</Link>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="agency-card p-5 !cursor-default" style={{ borderColor: 'color-mix(in srgb, var(--line-cobalt) 40%, transparent)' }}>
-          <div className="flex justify-between items-start mb-2">
-            <span className="w-10 h-10 rounded-[6px] flex items-center justify-center text-sm font-bold font-mono" style={{ background: 'var(--net-tunnel)', color: 'var(--ink)' }}>AC</span>
-            <span className="text-[10px] font-mono" style={{ color: 'var(--line-cobalt)' }}>Active</span>
-          </div>
-          <h4 className="text-sm font-bold font-mono">Acme SaaS</h4>
-          <p className="text-xs text-[var(--ink-dim)] mt-1 mb-3">Enterprise Data &amp; Marketing</p>
-          <p className="text-[10px] font-mono text-[var(--ink-faint)] pt-3 border-t agency-border">Isolated Compute Harness (Node-A4)</p>
+      {workspaces.length === 0 ? (
+        <div className="plate p-6 text-center">
+          <p className="text-xs text-[var(--ink-faint)]">No workspaces found</p>
         </div>
-        <div className="agency-card p-5 !cursor-default !bg-transparent">
-          <div className="flex justify-between items-start mb-2">
-            <span className="w-10 h-10 rounded-[6px] border border-[var(--hairline-strong)] flex items-center justify-center text-sm font-bold font-mono text-[var(--ink-dim)]">DI</span>
-          </div>
-          <h4 className="text-sm font-bold font-mono">Doddle Internal</h4>
-          <p className="text-xs text-[var(--ink-dim)] mt-1 mb-3">Platform Development</p>
-          <button type="button" className="btn-outline w-full !py-1.5 !text-[10px]">Switch</button>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {workspaces.map((ws) => {
+            const isActive = ws.workspaceId === workspaceId;
+            const initial = (ws.name || '?').trim().split(' ')[0]?.[0]?.toUpperCase() ?? '?';
+            return (
+              <div
+                key={ws.workspaceId}
+                className="agency-card p-5 !cursor-default"
+                style={isActive ? { borderColor: 'color-mix(in srgb, var(--line-cobalt) 40%, transparent)' } : undefined}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <span
+                    className={`w-10 h-10 rounded-[6px] flex items-center justify-center text-sm font-bold font-mono ${isActive ? '' : 'border border-[var(--hairline-strong)] text-[var(--ink-dim)]'}`}
+                    style={isActive ? { background: 'var(--line-cobalt)', color: '#fff' } : undefined}
+                  >
+                    {initial}
+                  </span>
+                  {isActive && (
+                    <span className="text-[10px] font-mono" style={{ color: 'var(--line-cobalt)' }}>Current</span>
+                  )}
+                </div>
+                <h4 className="text-sm font-bold font-mono">{ws.name || 'Untitled'}</h4>
+                <p className="text-xs text-[var(--ink-dim)] mt-1 mb-3">{ws.websiteDomain || 'No domain set'}</p>
+                {isActive ? (
+                  <p className="text-[10px] font-mono text-[var(--ink-faint)] pt-3 border-t agency-border">
+                    You are here
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-outline w-full !py-1.5 !text-[10px]"
+                    onClick={() => router.push(`/workspaces/${ws.workspaceId}`)}
+                  >
+                    Switch
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
-function UsersTab() {
+function UsersTab({ workspaceId }: { workspaceId: string }) {
   const { user } = useAuth();
+  const [members, setMembers] = useState<{ userId: string; name: string; email: string; role: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    import('@/lib/services/workspaceService').then(({ memberService }) => {
+      memberService.listMembers(workspaceId)
+        .then(setMembers)
+        .catch(() => setMembers([]))
+        .finally(() => setLoading(false));
+    });
+  }, [workspaceId]);
+
   return (
     <div className="max-w-4xl slide-in">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-lg font-bold font-mono">User Management</h3>
-        <button type="button" className="btn-outline">Invite Member</button>
+        <Link href={`/workspaces/${workspaceId}/settings`} className="btn-outline">Invite Member</Link>
       </div>
-      <div className="plate overflow-hidden">
-        <div className="dense-row !cursor-default">
-          <span className="flex items-center gap-3">
-            <span className="w-8 h-8 rounded-[6px] border border-[var(--hairline)] flex items-center justify-center text-[11px] font-bold font-mono">
-              {(user?.name || 'Operator').split(' ')[0][0]}
-            </span>
-            <span className="flex flex-col">
-              <span className="text-xs font-bold font-mono">{(user?.name || 'Operator')}</span>
-              <span className="text-[10px] text-[var(--ink-dim)]">{(user?.name || 'Operator')}</span>
-            </span>
-          </span>
-          <span className="ml-auto text-[10px] font-mono" style={{ color: 'var(--line-cobalt)' }}>root</span>
+      {loading ? (
+        <div className="plate p-6">
+          <div className="skeleton h-4 rounded mb-3" style={{ width: '40%' }} />
+          <div className="skeleton h-4 rounded" style={{ width: '60%' }} />
         </div>
-      </div>
+      ) : members.length === 0 ? (
+        <div className="plate p-6 text-center">
+          <p className="text-xs text-[var(--ink-faint)]">No members found</p>
+        </div>
+      ) : (
+        <div className="plate overflow-hidden">
+          {members.map((m) => (
+            <div key={m.userId} className="dense-row !cursor-default">
+              <span className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-[6px] border border-[var(--hairline)] flex items-center justify-center text-[11px] font-bold font-mono">
+                  {m.name.trim().split(' ')[0]?.[0]?.toUpperCase()}
+                </span>
+                <span className="flex flex-col">
+                  <span className="text-xs font-bold font-mono">
+                    {m.name}
+                    {m.email === user?.email && <span className="text-[var(--ink-faint)] font-normal ml-1.5">(you)</span>}
+                  </span>
+                  <span className="text-[10px] text-[var(--ink-dim)]">{m.email}</span>
+                </span>
+              </span>
+              <span className="ml-auto text-[10px] font-mono" style={{ color: m.role === 'admin' ? 'var(--line-cobalt)' : 'var(--ink-faint)' }}>
+                {m.role}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -257,8 +319,8 @@ export default function DemoAgencyHubPage() {
         </aside>
 
         <div className="flex-1 md:overflow-y-auto p-8 md:p-10">
-          {tab === 'workspaces' && <WorkspacesTab />}
-          {tab === 'users' && <UsersTab />}
+          {tab === 'workspaces' && <WorkspacesTab workspaceId={workspaceId} />}
+          {tab === 'users' && <UsersTab workspaceId={workspaceId} />}
           {tab === 'billing' && <BillingTab />}
           {tab === 'guardrails' && <GuardrailsTab />}
           {tab === 'integrations' && <IntegrationsTab />}
