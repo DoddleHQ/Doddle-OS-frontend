@@ -1,11 +1,21 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Loader2, Pencil, Save, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { workspaceService } from '@/lib/services/workspaceService';
 import { notify } from '@/lib/stores/notificationStore';
+
+/** Styled markdown renderer — CSS-based styling, no custom components needed. */
+function Markdown({ content }: { content: string }) {
+  return (
+    <div className="markdown-body">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+    </div>
+  );
+}
 
 /**
  * Brand persona — renders as markdown, edits in a popup modal.
@@ -111,83 +121,101 @@ export function BrandPersonaEditor({ workspaceId }: { workspaceId: string }) {
       {/* Rendered markdown */}
       {hasPersona ? (
         <div className="plate p-6">
-          <div className="prose prose-sm max-w-none [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mt-4 [&_h2]:mb-2 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_li]:text-sm [&_p]:text-sm [&_p]:leading-relaxed [&_strong]:font-semibold [&_code]:text-xs [&_code]:font-mono [&_code]:bg-[var(--bg-hover)] [&_code]:px-1 [&_code]:rounded">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-          </div>
+          <Markdown content={content} />
         </div>
       ) : (
-        <div className="plate p-6 text-center">
+        <div className="plate p-8 text-center">
           <Pencil className="w-8 h-8 mx-auto mb-3 opacity-30" />
           <p className="text-xs text-[var(--ink-faint)]">Click Edit to create your brand persona</p>
+          <button type="button" className="btn-outline mt-4 !py-2 !px-4" onClick={openEditor}>
+            <Pencil className="w-3 h-3" /> Create Persona
+          </button>
         </div>
       )}
 
-      {/* Edit modal */}
-      {modalOpen && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
-          onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}
-        >
-          <div
-            className="plate w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+      {/* Edit modal — portaled to document.body to escape overflow-clipped parents */}
+      {modalOpen && <PersonaModal draft={draft} setDraft={setDraft} saving={saving} save={save} close={() => setModalOpen(false)} />}
+    </div>
+  );
+}
+
+/** Portaled modal — renders at document.body so the backdrop covers the full viewport */
+function PersonaModal({ draft, setDraft, saving, save, close }: {
+  draft: string;
+  setDraft: (v: string) => void;
+  saving: boolean;
+  save: () => void;
+  close: () => void;
+}) {
+  // Lock body scroll while open
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') close();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [close]);
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      style={{ background: 'rgba(0, 0, 0, 0.55)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) close(); }}
+    >
+      <div
+        className="plate w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden"
+        style={{ animation: 'modal-enter 0.2s ease-out' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 py-4 border-b agency-border flex items-center justify-between shrink-0">
+          <div>
+            <h3 className="text-sm font-bold font-mono">Edit Brand Persona</h3>
+            <p className="text-[10px] text-[var(--ink-faint)] font-mono mt-0.5">Markdown supported</p>
+          </div>
+          <button
+            type="button"
+            onClick={close}
+            className="dock-icon w-8 h-8 flex items-center justify-center border border-[var(--hairline)] rounded-[6px]"
+            aria-label="Close editor"
           >
-            {/* Modal header */}
-            <div className="px-5 py-4 border-b agency-border flex items-center justify-between shrink-0">
-              <div>
-                <h3 className="text-sm font-bold font-mono">Edit Brand Persona</h3>
-                <p className="text-[10px] text-[var(--ink-faint)] font-mono mt-0.5">Markdown supported</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setModalOpen(false)}
-                className="dock-icon w-8 h-8 flex items-center justify-center border border-[var(--hairline)] rounded-[6px]"
-                aria-label="Close editor"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+            <X className="w-4 h-4" />
+          </button>
+        </div>
 
-            {/* Modal body — textarea */}
-            <div className="flex-1 overflow-y-auto p-4">
-              <textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                rows={18}
-                className="w-full bg-transparent border border-[var(--hairline)] focus:border-[var(--hairline-strong)] outline-none rounded-[8px] px-4 py-3 text-xs font-mono text-[var(--ink)] transition-colors leading-relaxed resize-none"
-                spellCheck={false}
-                placeholder="# Brand Persona&#10;&#10;## Voice &amp; Tone&#10;- ..."
-              />
-            </div>
+        <div className="flex-1 overflow-y-auto p-4">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={18}
+            className="w-full bg-transparent border border-[var(--hairline)] focus:border-[var(--hairline-strong)] outline-none rounded-[8px] px-4 py-3 text-xs font-mono text-[var(--ink)] transition-colors leading-relaxed resize-none"
+            spellCheck={false}
+            placeholder="# Brand Persona..."
+            autoFocus
+          />
+        </div>
 
-            {/* Modal footer */}
-            <div className="px-5 py-4 border-t agency-border flex items-center justify-between shrink-0">
-              <p className="text-[10px] font-mono text-[var(--ink-faint)]">
-                Changes apply after saving
-              </p>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  className="btn-outline !py-2 !px-4"
-                  onClick={() => setModalOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary !py-2 !px-4"
-                  onClick={save}
-                  disabled={saving || !draft.trim()}
-                >
-                  {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                  {saving ? 'Saving…' : 'Save'}
-                </button>
-              </div>
-            </div>
+        <div className="px-5 py-4 border-t agency-border flex items-center justify-between shrink-0">
+          <p className="text-[10px] font-mono text-[var(--ink-faint)]">Changes apply after saving</p>
+          <div className="flex gap-2">
+            <button type="button" className="btn-outline !py-2 !px-4" onClick={close}>
+              Cancel
+            </button>
+            <button type="button" className="btn-primary !py-2 !px-4" onClick={save} disabled={saving || !draft.trim()}>
+              {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+              {saving ? 'Saving…' : 'Save'}
+            </button>
           </div>
         </div>
-      )}
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 

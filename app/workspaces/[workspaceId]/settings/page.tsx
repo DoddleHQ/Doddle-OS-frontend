@@ -11,8 +11,8 @@ import { editProfile } from '@/lib/services/authService';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { notify } from '@/lib/stores/notificationStore';
 import { useOS } from '@/lib/demo/osStore';
-import { DataSyncSection } from '@/components/demo/settings/DataSyncSection';
-import { BrandPersonaEditor } from '@/components/demo/settings/BrandPersonaEditor';
+import { DataSyncSection } from '@/components/workspace/settings/DataSyncSection';
+import { BrandPersonaEditor } from '@/components/workspace/settings/BrandPersonaEditor';
 import type { WorkspaceMember, InviteLink } from '@/lib/types/workspace.types';
 
 const TABS = [

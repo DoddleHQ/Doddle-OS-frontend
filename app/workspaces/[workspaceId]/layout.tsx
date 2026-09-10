@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Archivo, Fragment_Mono } from 'next/font/google';
-import './demo.css';
-import { DemoShell } from '@/components/demo/DemoShell';
+
+import { DemoShell } from '@/components/workspace/DemoShell';
 
 const archivo = Archivo({
   subsets: ['latin'],

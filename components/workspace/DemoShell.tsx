@@ -59,7 +59,10 @@ export function DemoShell({ children, workspaceId }: DemoShellProps) {
   }, [router, setOverlay, closeTopOverlay, routes]);
 
   return (
-    <div className="demo-scope daypass h-screen w-screen relative flex flex-col overflow-x-hidden overflow-y-hidden">
+    <div
+      className="h-screen w-screen relative flex flex-col overflow-x-hidden overflow-y-hidden antialiased"
+      style={{ background: 'var(--net-ground)', color: 'var(--ink)', fontFamily: "var(--font-archivo), 'Archivo', system-ui, sans-serif", textRendering: 'optimizeLegibility' }}
+    >
       {/* base-map linework beneath the board */}
       <div className="base-map absolute inset-0 pointer-events-none" aria-hidden="true" />
       <div className="flex-1 flex overflow-hidden relative z-10">
@@ -75,3 +78,6 @@ export function DemoShell({ children, workspaceId }: DemoShellProps) {
     </div>
   );
 }
+
+export const WorkspaceShell = DemoShell;
+

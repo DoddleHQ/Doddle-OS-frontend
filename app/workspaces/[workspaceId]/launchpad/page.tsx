@@ -8,7 +8,7 @@ import { runCost, useOS } from '@/lib/demo/osStore';
 import { abortRun, killThread, startRun } from '@/lib/demo/engine';
 import { AGENTS, DEFAULT_RUN_PROMPT, SQL_ARTIFACT } from '@/lib/demo/data';
 import { DemoIcon } from '@/lib/demo/icons';
-import { ProgressBar, SwarmBadge } from '@/components/demo/primitives';
+import { ProgressBar, SwarmBadge } from '@/components/workspace/primitives';
 import type { FeedEntry, LogEntry, ThreadState } from '@/lib/demo/types';
 
 const threadInk: Record<string, string> = {

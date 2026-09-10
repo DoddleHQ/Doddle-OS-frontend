@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { WelcomeHero } from '@/components/demo/dashboard/WelcomeHero';
+import { WelcomeHero } from '@/components/workspace/dashboard/WelcomeHero';
 
 export default function WorkspaceDashboardPage() {
   const params = useParams();
