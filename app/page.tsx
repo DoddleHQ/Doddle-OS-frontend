@@ -30,8 +30,10 @@ export default function RootPage() {
       router.replace(`/workspaces/${workspaces[0].workspaceId}`);
     } else if (authStatus === 'authenticated' && workspaces.length === 0) {
       router.replace('/onboarding');
+    } else if (authStatus === 'unauthenticated') {
+      // / is public in middleware, so it passed through — redirect manually
+      router.replace('/login');
     }
-    // Unauthenticated: middleware handles the /login redirect
   }, [authStatus, workspaces, workspacesLoading, router]);
 
   return (
