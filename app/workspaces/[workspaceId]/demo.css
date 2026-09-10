@@ -85,14 +85,6 @@
     color: var(--ink-dim);
     display: inline-flex;
     align-items: center;
-    gap: 0.6rem;
-}
-.demo-scope .label-rule::after {
-    content: '';
-    width: 2.5rem;
-    height: 1px;
-    background: var(--hairline-strong);
-    flex: none;
 }
 .demo-scope .tnum { font-variant-numeric: tabular-nums; }
 
