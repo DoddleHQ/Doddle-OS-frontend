@@ -43,7 +43,7 @@ export function Dock({ workspaceId }: DockProps) {
 
   return (
     <div
-      className={`agency-panel border-r agency-border shrink-0 z-40 relative transition-[width] duration-200 flex flex-col overflow-x-hidden ${dockOpen ? 'w-[224px] px-3 py-4' : 'w-[64px] md:w-[76px] px-2 py-4 items-center'}`}
+      className={`agency-panel border-r agency-border shrink-0 z-40 relative transition-[width] duration-200 flex flex-col ${dockOpen ? 'w-[224px] px-3 py-4' : 'w-[64px] md:w-[76px] px-2 py-4 items-center'}`}
     >
       {/* ── collapse toggle: sits on the dock's right edge, outside the content flow ── */}
       <button
@@ -171,7 +171,7 @@ export function Dock({ workspaceId }: DockProps) {
 
       {/* ── nav: grouped into Execution / Management ── */}
       {dockOpen ? (
-        <div className="flex-1 flex flex-col gap-4 min-h-0 overflow-y-auto overflow-x-hidden">
+        <div className="flex-1 flex flex-col gap-4">
           {/* execution group */}
           <div>
             <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono px-2 mb-1.5">execution</p>
@@ -194,7 +194,7 @@ export function Dock({ workspaceId }: DockProps) {
         </div>
       ) : (
         /* collapsed nav */
-        <div className="flex-1 flex flex-col gap-2.5 w-full min-h-0 overflow-y-auto overflow-x-hidden">
+        <div className="flex-1 flex flex-col gap-2.5 w-full">
           {routes.map((route, i) => (
             <div key={route.path} className="contents">
               {i === 3 && <div className="h-px bg-[var(--hairline)] my-1 mx-auto w-8" aria-hidden="true" />}
