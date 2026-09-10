@@ -66,7 +66,7 @@ export function Dock({ workspaceId }: DockProps) {
           <button
             type="button"
             onClick={() => setWsListOpen((v) => !v)}
-            className={`w-full flex items-start gap-3 rounded-[10px] border p-3 transition-colors text-left ${wsListOpen ? 'border-[var(--hairline-strong)] bg-[var(--accent-soft)]' : 'border-[var(--hairline)] bg-[var(--net-panel-2)] hover:border-[var(--hairline-strong)]'}`}
+            className={`w-full flex items-center gap-3 rounded-[10px] border p-3 transition-colors text-left ${wsListOpen ? 'border-[var(--hairline-strong)] bg-[var(--accent-soft)]' : 'border-[var(--hairline)] bg-[var(--net-panel-2)] hover:border-[var(--hairline-strong)]'}`}
           >
             <span
               className="flex items-center justify-center shrink-0 font-bold font-mono text-[13px] text-white rounded-[8px]"
@@ -74,13 +74,13 @@ export function Dock({ workspaceId }: DockProps) {
             >
               {currentInitial}
             </span>
-            <span className="flex-1 min-w-0 text-center">
+            <span className="flex-1 min-w-0">
               <span className="block text-[13px] font-semibold truncate leading-tight">{currentName}</span>
               {currentDomain && (
                 <span className="block text-[10px] font-mono text-[var(--ink-faint)] truncate mt-0.5">{currentDomain}</span>
               )}
             </span>
-            <ChevronDown className={`w-3.5 h-3.5 text-[var(--ink-faint)] transition-transform shrink-0 mt-1 ${wsListOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-3.5 h-3.5 text-[var(--ink-faint)] transition-transform shrink-0 ${wsListOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {/* workspace dropdown */}
