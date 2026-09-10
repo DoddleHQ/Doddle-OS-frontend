@@ -5,8 +5,10 @@ import { useParams } from 'next/navigation';
 import { Activity, Copy, CreditCard, Database, Link2, Plug, Plus, RefreshCw, Settings, ShieldAlert, Trash2, User, Users } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCurrentWorkspace, invalidateWorkspace } from '@/lib/hooks/useCurrentWorkspace';
+import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 import { workspaceService, inviteLinkService, memberService, InviteLinkConflictError } from '@/lib/services/workspaceService';
 import { editProfile } from '@/lib/services/authService';
+import { useAuthStore } from '@/lib/stores/authStore';
 import { notify } from '@/lib/stores/notificationStore';
 import { useOS } from '@/lib/demo/osStore';
 import { DataSyncSection } from '@/components/demo/settings/DataSyncSection';
@@ -51,6 +53,11 @@ function ProfileTab() {
     setSaving(true);
     try {
       await editProfile(name.trim());
+      // Propagate the new name to every component reading useAuth()
+      const store = useAuthStore.getState();
+      if (store.user) {
+        store.setAuthState({ status: 'authenticated', user: { ...store.user, name: name.trim() } });
+      }
       notify('Profile updated', 'success');
     } catch (err) {
       notify(err instanceof Error ? err.message : 'Failed to update profile', 'error');
@@ -109,6 +116,7 @@ function ProfileTab() {
 // ---------------------------------------------------------------------------
 function WorkspaceTab({ workspaceId }: { workspaceId: string }) {
   const { workspace } = useCurrentWorkspace(workspaceId);
+  const { refresh: refreshWorkspaceList } = useWorkspaces();
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -122,6 +130,7 @@ function WorkspaceTab({ workspaceId }: { workspaceId: string }) {
     try {
       await workspaceService.updateWorkspace(workspaceId, { name: name.trim() });
       invalidateWorkspace(workspaceId);
+      await refreshWorkspaceList();
       notify('Workspace updated', 'success');
     } catch (err) {
       notify(err instanceof Error ? err.message : 'Failed to update workspace', 'error');
