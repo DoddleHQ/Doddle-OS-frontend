@@ -45,19 +45,21 @@ export function Dock({ workspaceId }: DockProps) {
     <div
       className={`agency-panel border-r agency-border shrink-0 z-40 relative transition-[width] duration-200 flex flex-col ${dockOpen ? 'w-[224px] px-3 py-4' : 'w-[76px] px-2 py-4 items-center'}`}
     >
-      {/* ── top: logo + collapse ── */}
-      <div className={`flex items-center ${dockOpen ? 'justify-between mb-4' : 'justify-between w-full mb-3'}`}>
+      {/* ── collapse toggle: sits on the dock's right edge, outside the content flow ── */}
+      <button
+        type="button"
+        onClick={toggleDock}
+        aria-label={dockOpen ? 'Collapse dock' : 'Expand dock'}
+        className="absolute top-4 -right-3 z-50 w-6 h-6 rounded-[6px] border border-[var(--hairline)] bg-[var(--net-panel)] flex items-center justify-center hover:border-[var(--hairline-strong)] transition-colors shadow-sm"
+      >
+        {dockOpen ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+      </button>
+
+      {/* ── top: logo ── */}
+      <div className={`flex items-center ${dockOpen ? 'mb-4' : 'mb-3'}`}>
         <Link href="/" title="Doddle OS" className="hover:opacity-85 transition-opacity">
           <BrandMark className="w-9 h-9" />
         </Link>
-        <button
-          type="button"
-          onClick={toggleDock}
-          aria-label={dockOpen ? 'Collapse dock' : 'Expand dock'}
-          className={`dock-icon flex items-center justify-center border border-[var(--hairline)] hover:border-[var(--hairline-strong)] transition-colors ${dockOpen ? 'w-[30px] h-[30px] rounded-[7px]' : 'w-7 h-7 rounded-[7px]'}`}
-        >
-          {dockOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-        </button>
       </div>
 
       {/* ── workspace card ── */}
