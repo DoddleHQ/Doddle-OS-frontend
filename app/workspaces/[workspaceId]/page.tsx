@@ -31,7 +31,7 @@ export default function WorkspaceDashboardPage() {
             not configured — agents need your brand voice before writing.
           </p>
           <Link
-            href={\`/workspaces/${workspaceId}/settings\`}
+            href={`/workspaces/${workspaceId}/settings`}
             className="btn-outline !py-1.5 !px-3 !text-[10px] shrink-0 ml-4"
           >
             Configure
