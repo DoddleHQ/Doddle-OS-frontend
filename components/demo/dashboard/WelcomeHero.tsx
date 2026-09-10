@@ -20,6 +20,9 @@ export function WelcomeHero({ workspaceId }: { workspaceId: string }) {
   const magentoConnected = connections.some((c) => c.sourceType === 'magento' && c.isActive);
   const gscConnected = connections.some((c) => c.sourceType === 'gsc' && c.isActive);
 
+  const dot = (on: boolean) =>
+    `w-2 h-2 rounded-full ${on ? 'bg-[var(--line-green)]' : 'border border-[var(--hairline-strong)]'}`;
+
   return (
     <div className="w-full flex flex-col items-center justify-center mb-6 mt-2 text-center rise">
       <BrandMark className="w-12 h-12 mb-4" />
@@ -30,14 +33,14 @@ export function WelcomeHero({ workspaceId }: { workspaceId: string }) {
 
       <div className="flex items-center gap-4 text-[11px] font-mono">
         <span className="flex items-center gap-1.5">
-          <span className={\`w-2 h-2 rounded-full ${magentoConnected ? 'bg-[var(--line-green)]' : 'border border-[var(--hairline-strong)]'\`} />
+          <span className={dot(magentoConnected)} />
           <span style={{ color: magentoConnected ? 'var(--line-green)' : 'var(--ink-faint)' }}>
             Magento {magentoConnected ? 'connected' : 'offline'}
           </span>
         </span>
         <span className="w-px h-3 bg-[var(--hairline)]" />
         <span className="flex items-center gap-1.5">
-          <span className={\`w-2 h-2 rounded-full ${gscConnected ? 'bg-[var(--line-green)]' : 'border border-[var(--hairline-strong)]'\`} />
+          <span className={dot(gscConnected)} />
           <span style={{ color: gscConnected ? 'var(--line-green)' : 'var(--ink-faint)' }}>
             Search Console {gscConnected ? 'connected' : 'offline'}
           </span>
