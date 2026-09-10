@@ -20,6 +20,7 @@ import { AGENT_LIST } from '@/components/v2/content-factory/agents';
 import type { AuditThread, AuditArtifact } from '@/lib/types/thread.types';
 import type { DataSourceConnection } from '@/lib/types/connection.types';
 import { BrandMark, greeting } from '../primitives';
+import { DemoIcon } from '@/lib/demo/icons';
 
 interface DashboardData {
   threads: AuditThread[];
@@ -253,15 +254,86 @@ function ActivityFeed({ threads, workspaceId }: { threads: AuditThread[]; worksp
 }
 
 // ---------------------------------------------------------------------------
-// Power Agents — solo chat agents from the Power Agents page
+// Power Agents — real agents from the LangGraph server (via /api/power-agents)
 // ---------------------------------------------------------------------------
-const POWER_AGENTS = [
-  { id: 'data', handle: '@Data_Wrangler', role: 'ETL Specialist', desc: 'Extracts, transforms, and loads data from connected sources into your warehouse', ink: 'var(--line-green)' },
-  { id: 'writer', handle: '@glob_Writer', role: 'Marketing Copywriter', desc: 'Writes landing pages, product descriptions, and campaign copy in your brand voice', ink: 'var(--line-amber)' },
-  { id: 'infra', handle: '@Infra_Titan', role: 'Infrastructure Engineer', desc: 'Manages database schemas, benchmarks performance, and handles deployments', ink: 'var(--line-cobalt)' },
-];
+const ROLE_PRESETS: Record<string, { name: string; role: string; desc: string; icon: string }> = {
+  crawlability_audit: { name: 'Crawlability', role: 'Crawler & Indexer', desc: 'Audits crawler access, indexation, and robots directives', icon: 'bot' },
+  technical_foundations_audit: { name: 'Tech Foundations', role: 'Infra & Security', desc: 'Checks SSL, headers, DNS, and server infrastructure', icon: 'server' },
+  on_page_audit: { name: 'On-Page', role: 'Meta & Content Elements', desc: 'Reviews meta tags, headings, and content element coverage', icon: 'pen-tool' },
+  content_quality_audit: { name: 'Content Quality', role: 'Readability & Depth', desc: 'Scores readability, depth, and content completeness', icon: 'sparkles' },
+  site_structure_audit: { name: 'Site Structure', role: 'Links & Hierarchy', desc: 'Analyzes internal linking and URL hierarchy', icon: 'folder-tree' },
+  performance_audit: { name: 'Performance', role: 'Lighthouse & Vitals', desc: 'Benchmarks Core Web Vitals and page speed metrics', icon: 'activity' },
+  product_content: { name: 'Product', role: 'PDP Copywriter', desc: 'Writes product detail page content with SEO optimization', icon: 'database' },
+  category_content: { name: 'Category', role: 'PLP Copywriter', desc: 'Writes category landing page copy and descriptions', icon: 'layers' },
+  collection_content: { name: 'Collection', role: 'Curation Copywriter', desc: 'Writes collection page content for grouped products', icon: 'bot' },
+  brand_content: { name: 'Brand', role: 'Trust & Identity', desc: 'Crafts brand voice, trust signals, and identity copy', icon: 'shield' },
+  home_content: { name: 'Home', role: 'Homepage Copywriter', desc: 'Writes homepage hero, sections, and CTAs', icon: 'layout-dashboard' },
+  custom_page_content: { name: 'Custom', role: 'Any Page Type', desc: 'Writes content for any custom page you specify', icon: 'terminal' },
+};
+
+interface LiveAgent {
+  id: string;
+  name: string;
+  role: string;
+  desc: string;
+  icon: string;
+  isContent: boolean;
+}
+
+function usePowerAgents() {
+  const [agents, setAgents] = useState<LiveAgent[]>([]);
+  useEffect(() => {
+    fetch('/api/power-agents')
+      .then((r) => r.ok ? r.json() : [])
+      .then((list: { id: string }[]) => {
+        const mapped = list.map((a) => {
+          const preset = ROLE_PRESETS[a.id];
+          const isContent = a.id.endsWith('_content');
+          const short = a.id.replace(/_(audit|content)$/, '');
+          return {
+            id: a.id,
+            name: preset?.name ?? short.replace(/_/g, ' '),
+            role: preset?.role ?? 'Specialist',
+            desc: preset?.desc ?? 'Agent available for this task',
+            icon: preset?.icon ?? 'bot',
+            isContent,
+          };
+        });
+        setAgents(mapped);
+      })
+      .catch(() => setAgents([]));
+  }, []);
+  return agents;
+}
 
 function AgentDirectory({ workspaceId }: { workspaceId: string; magentoConnected: boolean }) {
+  const agents = usePowerAgents();
+  const auditAgents = agents.filter((a) => !a.isContent);
+  const contentAgents = agents.filter((a) => a.isContent);
+  const ink = (isContent: boolean) => isContent ? 'var(--line-amber)' : 'var(--line-green)';
+
+  const renderCard = (agent: LiveAgent) => (
+    <Link
+      key={agent.id}
+      href={`/workspaces/${workspaceId}/power-agents`}
+      className="agency-card p-4 text-left flex flex-col gap-2.5"
+    >
+      <div className="flex items-center gap-2.5">
+        <span
+          className="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0"
+          style={{ border: `1.5px solid ${ink(agent.isContent)}`, color: ink(agent.isContent) }}
+        >
+          <DemoIcon name={agent.icon} className="w-4 h-4" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[12px] font-semibold font-mono truncate">@{agent.name.replace(/\s/g, '_')}</p>
+          <p className="text-[10px] text-[var(--ink-faint)] truncate">{agent.role}</p>
+        </div>
+      </div>
+      <p className="text-[11px] text-[var(--ink-dim)] leading-relaxed line-clamp-2">{agent.desc}</p>
+    </Link>
+  );
+
   return (
     <div className="plate overflow-hidden">
       <div className="px-5 py-3.5 border-b agency-border flex items-center justify-between">
@@ -275,28 +347,24 @@ function AgentDirectory({ workspaceId }: { workspaceId: string; magentoConnected
           Open
         </Link>
       </div>
-      <div className="p-3 grid grid-cols-1 md:grid-cols-3 gap-3">
-        {POWER_AGENTS.map((agent) => (
-          <Link
-            key={agent.id}
-            href={`/workspaces/${workspaceId}/power-agents`}
-            className="agency-card p-4 text-left flex flex-col gap-3"
-          >
-            <div className="flex items-center gap-2.5">
-              <span
-                className="w-9 h-9 rounded-[8px] flex items-center justify-center shrink-0 text-[13px] font-bold font-mono"
-                style={{ border: `1.5px solid ${agent.ink}`, color: agent.ink }}
-              >
-                {agent.handle.replace('@', '')[0]}
-              </span>
-              <div className="min-w-0">
-                <p className="text-[13px] font-semibold font-mono truncate">{agent.handle}</p>
-                <p className="text-[10px] text-[var(--ink-faint)] truncate">{agent.role}</p>
-              </div>
-            </div>
-            <p className="text-[11px] text-[var(--ink-dim)] leading-relaxed line-clamp-2">{agent.desc}</p>
-          </Link>
-        ))}
+      <div className="p-3 space-y-3">
+        {auditAgents.length > 0 && (
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono mb-2 px-1">SEO Audit Suite</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">{auditAgents.map(renderCard)}</div>
+          </div>
+        )}
+        {contentAgents.length > 0 && (
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono mb-2 px-1">Website Content Suite</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">{contentAgents.map(renderCard)}</div>
+          </div>
+        )}
+        {agents.length === 0 && (
+          <div className="dense-row !cursor-default">
+            <span className="flex-1 text-xs text-[var(--ink-faint)]">Loading agents…</span>
+          </div>
+        )}
       </div>
     </div>
   );
