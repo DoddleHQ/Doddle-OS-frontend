@@ -19,16 +19,16 @@ export default function DemoGraphsPage() {
 
   return (
     <div className="absolute inset-0 flex flex-col z-20 fade-in">
-      <header className="flex justify-between items-end px-8 md:px-10 py-5 shrink-0 border-b agency-border">
+      <header className="flex justify-between items-end px-4 md:px-10 py-4 md:py-5 shrink-0 border-b agency-border">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
+          <h1 className="text-xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
             <FolderTree className="w-6 h-6 md:w-7 md:h-7" style={{ color: 'var(--line-amber)' }} /> Graphs
           </h1>
           <p className="text-[11px] text-[var(--ink-dim)] font-mono mt-2">Directory of available workflow templates to spawn into the Launchpad.</p>
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-8 md:p-10">
+      <div className="flex-1 overflow-y-auto p-4 md:p-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl rise">
           {GRAPH_TEMPLATES.map((tpl) => (
             <div

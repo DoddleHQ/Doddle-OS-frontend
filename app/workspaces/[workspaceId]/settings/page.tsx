@@ -459,8 +459,8 @@ export default function DemoSettingsPage() {
       </header>
 
       <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-y-auto md:overflow-hidden">
-        <aside className="md:w-64 shrink-0 border-b md:border-b-0 md:border-r agency-border agency-panel p-4">
-          <div className="flex md:flex-col gap-1 overflow-x-auto">
+        <aside className="md:w-64 shrink-0 border-b md:border-b-0 md:border-r agency-border agency-panel p-3 md:p-4">
+          <div className="flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible -mx-1 px-1">
             {TABS.map((group) => (
               <div key={group.group} className="flex md:flex-col gap-1 md:mt-5 first:md:mt-1">
                 <p className="hidden md:block text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono mb-1.5 px-3">{group.group}</p>

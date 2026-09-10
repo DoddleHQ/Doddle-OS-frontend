@@ -347,7 +347,7 @@ function ExecutionCanvas() {
         </span>
       </div>
 
-      <div className="flex-1 p-6 md:p-8 overflow-y-auto flex flex-col gap-6">
+      <div className="flex-1 p-4 md:p-8 overflow-y-auto flex flex-col gap-6">
         <div className="rounded-[10px] p-4 border border-dashed" style={{ borderColor: 'var(--hairline-strong)' }}>
           <p className="label-rule mb-2">objective</p>
           <p className="text-xs leading-relaxed font-mono">&gt; {t.objective}</p>
@@ -458,7 +458,7 @@ function Q4Canvas() {
         </span>
         <SwarmBadge status="completed" />
       </div>
-      <div className="flex-1 p-6 md:p-8 overflow-y-auto flex flex-col gap-6">
+      <div className="flex-1 p-4 md:p-8 overflow-y-auto flex flex-col gap-6">
         <div className="rounded-[10px] p-4 border border-dashed" style={{ borderColor: 'var(--hairline-strong)' }}>
           <p className="label-rule mb-2">objective</p>
           <p className="text-xs leading-relaxed font-mono">&gt; Draft the Q4 campaign landing page for Vercel deployment.</p>
@@ -521,9 +521,9 @@ export default function DemoLaunchpadPage() {
 
   return (
     <div className="absolute inset-0 flex flex-col z-20 fade-in">
-      <header className="flex justify-between items-end px-8 md:px-10 py-5 shrink-0 border-b agency-border">
+      <header className="flex justify-between items-end px-4 md:px-10 py-4 md:py-5 shrink-0 border-b agency-border">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
+          <h1 className="text-xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
             <Terminal className="w-6 h-6 md:w-7 md:h-7" style={{ color: 'var(--line-scarlet)' }} /> Launchpad
           </h1>
         </div>

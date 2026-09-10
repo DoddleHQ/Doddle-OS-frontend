@@ -990,7 +990,7 @@ export default function DemoPowerAgentsPage() {
       <div className="flex flex-col flex-1 min-h-0 w-full">
       <header className="flex justify-between items-end px-4 sm:px-8 md:px-10 py-3 sm:py-5 shrink-0 border-b agency-border">
         <div className="min-w-0">
-          <h1 className="text-lg sm:text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2 sm:gap-3">
+          <h1 className="text-lg sm:text-xl md:text-3xl font-bold tracking-tight flex items-center gap-2 sm:gap-3">
             <Zap className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" style={{ color: 'var(--line-green)' }} /> Power Agents
           </h1>
           {loadError && (

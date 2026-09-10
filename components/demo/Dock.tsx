@@ -43,7 +43,7 @@ export function Dock({ workspaceId }: DockProps) {
 
   return (
     <div
-      className={`agency-panel border-r agency-border shrink-0 z-40 relative transition-[width] duration-200 flex flex-col ${dockOpen ? 'w-[224px] px-3 py-4' : 'w-[76px] px-2 py-4 items-center'}`}
+      className={`agency-panel border-r agency-border shrink-0 z-40 relative transition-[width] duration-200 flex flex-col overflow-x-hidden ${dockOpen ? 'w-[224px] px-3 py-4' : 'w-[64px] md:w-[76px] px-2 py-4 items-center'}`}
     >
       {/* ── collapse toggle: sits on the dock's right edge, outside the content flow ── */}
       <button
@@ -125,7 +125,7 @@ export function Dock({ workspaceId }: DockProps) {
         >
           <span
             className="flex items-center justify-center font-bold font-mono text-[13px] text-white rounded-[8px]"
-            style={{ background: 'var(--line-cobalt)', width: 32, height: 32 }}
+            style={{ background: 'var(--line-cobalt)', width: 28, height: 28 }}
           >
             {currentInitial}
           </span>
