@@ -44,7 +44,7 @@ export function TelemetryHeader({ workspaceId }: TelemetryHeaderProps) {
         >
           <span className="line-dot" style={{ ['--dot' as string]: 'var(--line-scarlet)' }} aria-hidden="true" />
           <span className="flex flex-col items-start leading-none">
-            <span className="text-[9px] font-mono text-[var(--ink-faint)]">triage_queue</span>
+            <span className="text-[9px] font-mono text-[var(--ink-faint)]">Triage Queue</span>
             <span className="text-[16px] font-bold leading-none mt-1.5 tnum transition-colors group-hover:text-[var(--ink)]">
               {triageCount} <span className="text-[9px] font-bold ml-0.5" style={{ color: 'var(--line-scarlet)' }}>REQ</span>
             </span>
@@ -66,7 +66,7 @@ export function TelemetryHeader({ workspaceId }: TelemetryHeaderProps) {
             aria-hidden="true"
           />
           <span className="flex flex-col items-start leading-none">
-            <span className="text-[9px] font-mono text-[var(--ink-faint)]">active_swarms</span>
+            <span className="text-[9px] font-mono text-[var(--ink-faint)]">Active Swarms</span>
             <span className="text-[16px] font-bold leading-none mt-1.5 tnum">{runActive ? 1 : 0}</span>
           </span>
         </div>

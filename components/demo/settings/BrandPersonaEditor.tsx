@@ -73,7 +73,7 @@ export function BrandPersonaEditor({ workspaceId }: { workspaceId: string }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h3 className="text-lg font-bold font-mono">brand_persona()</h3>
+          <h3 className="text-lg font-bold font-mono">Brand Persona</h3>
           <p className="text-xs text-[var(--ink-dim)] mt-1">
             Agents read this before writing — tone, terminology, style guidelines, and guardrails.
           </p>
@@ -82,7 +82,7 @@ export function BrandPersonaEditor({ workspaceId }: { workspaceId: string }) {
           className={`service-chip ${hasPersona ? '' : ''}`}
           style={{ ['--chip' as string]: hasPersona ? 'var(--line-green)' : 'var(--line-amber)' }}
         >
-          {hasPersona ? 'configured' : 'not_set'}
+          {hasPersona ? 'configured' : 'Not Set'}
         </span>
       </div>
 
@@ -151,7 +151,7 @@ export function BrandPersonaEditor({ workspaceId }: { workspaceId: string }) {
 
       {/* Guardrails summary (static, from the reference) */}
       <div className="mt-6">
-        <p className="label-rule mb-3">agentic_guardrails</p>
+        <p className="label-rule mb-3">Guardrails</p>
         <div className="agency-card p-5 !cursor-default" style={{ borderColor: 'color-mix(in srgb, var(--line-scarlet) 25%, transparent)' }}>
           <h4 className="text-sm font-bold font-mono mb-2">Circuit Breaker</h4>
           <p className="text-xs text-[var(--ink-dim)]">

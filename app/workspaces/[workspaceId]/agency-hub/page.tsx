@@ -46,14 +46,14 @@ function WorkspacesTab() {
   return (
     <div className="max-w-4xl slide-in">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-bold font-mono">agency_workspaces</h3>
-        <button type="button" className="btn-outline">new_workspace()</button>
+        <h3 className="text-lg font-bold font-mono">Workspaces</h3>
+        <button type="button" className="btn-outline">New Workspace</button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="agency-card p-5 !cursor-default" style={{ borderColor: 'color-mix(in srgb, var(--line-cobalt) 40%, transparent)' }}>
           <div className="flex justify-between items-start mb-2">
             <span className="w-10 h-10 rounded-[6px] flex items-center justify-center text-sm font-bold font-mono" style={{ background: 'var(--net-tunnel)', color: 'var(--ink)' }}>AC</span>
-            <span className="text-[10px] font-mono" style={{ color: 'var(--line-cobalt)' }}>active_context</span>
+            <span className="text-[10px] font-mono" style={{ color: 'var(--line-cobalt)' }}>Active</span>
           </div>
           <h4 className="text-sm font-bold font-mono">Acme SaaS</h4>
           <p className="text-xs text-[var(--ink-dim)] mt-1 mb-3">Enterprise Data &amp; Marketing</p>
@@ -65,7 +65,7 @@ function WorkspacesTab() {
           </div>
           <h4 className="text-sm font-bold font-mono">Doddle Internal</h4>
           <p className="text-xs text-[var(--ink-dim)] mt-1 mb-3">Platform Development</p>
-          <button type="button" className="btn-outline w-full !py-1.5 !text-[10px]">switch_context()</button>
+          <button type="button" className="btn-outline w-full !py-1.5 !text-[10px]">Switch</button>
         </div>
       </div>
     </div>
@@ -77,8 +77,8 @@ function UsersTab() {
   return (
     <div className="max-w-4xl slide-in">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-bold font-mono">user_management</h3>
-        <button type="button" className="btn-outline">invite_human()</button>
+        <h3 className="text-lg font-bold font-mono">User Management</h3>
+        <button type="button" className="btn-outline">Invite Member</button>
       </div>
       <div className="plate overflow-hidden">
         <div className="dense-row !cursor-default">
@@ -106,7 +106,7 @@ function BillingTab() {
   ];
   return (
     <div className="max-w-4xl slide-in">
-      <h3 className="text-lg font-bold mb-2 font-mono">billing_info</h3>
+      <h3 className="text-lg font-bold mb-2 font-mono">Billing</h3>
       <p className="text-xs text-[var(--ink-dim)] mb-6">Manage your compute tier and API overages.</p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {plans.map((plan) => (
@@ -156,7 +156,7 @@ function GuardrailsTab() {
   ];
   return (
     <div className="max-w-3xl slide-in">
-      <h3 className="text-lg font-bold mb-2 font-mono">workspace_guardrails</h3>
+      <h3 className="text-lg font-bold mb-2 font-mono">Guardrails</h3>
       <p className="text-xs text-[var(--ink-dim)] mb-6">Define how the Orchestrator handles failures before routing to the Triage Center.</p>
       <div className="space-y-4">
         {tiers.map((tier, i) => (
@@ -194,8 +194,8 @@ function IntegrationsTab() {
   return (
     <div className="max-w-4xl slide-in">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-bold font-mono">workspace_integrations</h3>
-        <button type="button" className="btn-outline">add_integration()</button>
+        <h3 className="text-lg font-bold font-mono">Integrations</h3>
+        <button type="button" className="btn-outline">Add Integration</button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {integrations.map((int) => (

@@ -24,9 +24,9 @@ function buildCommands(navigate: (path: string) => void, workspaceId: string): C
     { icon: 'folder-tree', label: 'go: graphs', run: () => navigate(`${base}/graphs`) },
     { icon: 'building-2', label: 'go: agency_hub', run: () => navigate(`${base}/agency-hub`) },
     { icon: 'settings', label: 'go: platform_settings', run: () => navigate(`${base}/settings`) },
-    { icon: 'inbox', label: 'action: open_triage()', run: () => useOS.getState().setOverlay('triageOpen', true) },
-    { icon: 'folder-archive', label: 'action: open_artifact_vault()', run: () => useOS.getState().setOverlay('vaultOpen', true) },
-    { icon: 'play', label: 'action: run_demo_swarm()', run: () => { void startRun(DEFAULT_RUN_PROMPT); } },
+    { icon: 'inbox', label: 'Open Triage Queue', run: () => useOS.getState().setOverlay('triageOpen', true) },
+    { icon: 'folder-archive', label: 'Open Artifact Vault', run: () => useOS.getState().setOverlay('vaultOpen', true) },
+    { icon: 'play', label: 'Run Demo Swarm', run: () => { void startRun(DEFAULT_RUN_PROMPT); } },
   ];
   const s = useOS.getState();
   if (s.runStartedAt) {
@@ -113,7 +113,7 @@ export function CommandPalette({ workspaceId }: CommandPaletteProps) {
         </div>
         <div className="max-h-72 overflow-y-auto p-2">
           {items.length === 0 ? (
-            <div className="px-3 py-6 text-center text-xs font-mono text-[var(--ink-faint)]">no_matching_commands</div>
+            <div className="px-3 py-6 text-center text-xs font-mono text-[var(--ink-faint)]">No matching commands</div>
           ) : (
             items.map((c, i) => (
               <button

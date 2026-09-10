@@ -48,7 +48,7 @@ function TriageCard({ item }: { item: TriageItem }) {
                 className="flex-1 agency-panel border agency-border py-1.5 rounded-[3px] text-xs font-mono hover:bg-[var(--net-panel-2)] transition-colors"
                 onClick={() => setShowPreview((v) => !v)}
               >
-                {showPreview ? 'collapse()' : 'review()'}
+                {showPreview ? 'Collapse' : 'Review'}
               </button>
             )}
             <button

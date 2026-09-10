@@ -20,15 +20,15 @@ const TABS = [
   ] },
   { group: 'Team', items: [
     { id: 'members', label: 'members', icon: Users },
-    { id: 'invites', label: 'invite_links', icon: Link2 },
+    { id: 'invites', label: 'Invite Links', icon: Link2 },
   ] },
   { group: 'Organization', items: [
     { id: 'billing', label: 'billing', icon: CreditCard },
-    { id: 'brand_persona', label: 'brand_persona', icon: ShieldAlert },
+    { id: 'Brand Persona', label: 'Brand Persona', icon: ShieldAlert },
     { id: 'analytics', label: 'analytics', icon: Activity },
   ] },
   { group: 'System & Core', items: [
-    { id: 'data_sync', label: 'data_sync', icon: Database },
+    { id: 'Data Sync', label: 'Data Sync', icon: Database },
     { id: 'integrations', label: 'integrations', icon: Plug },
   ] },
 ] as const;
@@ -61,7 +61,7 @@ function ProfileTab() {
 
   return (
     <div className="max-w-2xl slide-in">
-      <h3 className="text-lg font-bold mb-6 font-mono">config_profile()</h3>
+      <h3 className="text-lg font-bold mb-6 font-mono">Profile</h3>
 
       <div className="agency-card p-6 mb-6 flex flex-col sm:flex-row gap-6 items-start !cursor-default">
         <span className="w-20 h-20 rounded-[10px] border border-[var(--hairline-strong)] flex items-center justify-center text-2xl font-bold font-mono shrink-0">
@@ -132,7 +132,7 @@ function WorkspaceTab({ workspaceId }: { workspaceId: string }) {
 
   return (
     <div className="max-w-2xl slide-in">
-      <h3 className="text-lg font-bold mb-6 font-mono">workspace_config()</h3>
+      <h3 className="text-lg font-bold mb-6 font-mono">Workspace Settings</h3>
 
       <div className="agency-card p-6 mb-6 !cursor-default space-y-4">
         <div>
@@ -162,7 +162,7 @@ function WorkspaceTab({ workspaceId }: { workspaceId: string }) {
       </div>
 
       <div className="agency-card p-6 !cursor-default" style={{ borderColor: 'color-mix(in srgb, var(--line-scarlet) 25%, transparent)' }}>
-        <h4 className="text-sm font-bold font-mono mb-2" style={{ color: 'var(--line-scarlet)' }}>danger_zone()</h4>
+        <h4 className="text-sm font-bold font-mono mb-2" style={{ color: 'var(--line-scarlet)' }}>Danger Zone</h4>
         <p className="text-xs text-[var(--ink-dim)] mb-4">Delete this workspace and all associated data. This cannot be undone.</p>
         <button
           type="button"
@@ -233,7 +233,7 @@ function MembersTab({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="max-w-2xl slide-in">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-bold font-mono">user_management()</h3>
+        <h3 className="text-lg font-bold font-mono">User Management</h3>
         <button type="button" onClick={load} className="text-[var(--ink-dim)] hover:text-[var(--ink)] transition-colors" title="Refresh">
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
@@ -371,7 +371,7 @@ function InvitesTab({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="max-w-2xl slide-in">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-bold font-mono">invite_links()</h3>
+        <h3 className="text-lg font-bold font-mono">Invite Links</h3>
         <div className="flex gap-2">
           <button type="button" className="btn-outline !py-1.5 !px-3 !text-[10px]" onClick={() => createLink('editor')} disabled={creating}>
             <Plus className="w-3 h-3" /> editor link
@@ -393,7 +393,7 @@ function InvitesTab({ workspaceId }: { workspaceId: string }) {
       ) : activeLinks.length === 0 ? (
         <div className="agency-card p-6 !cursor-default text-center">
           <Link2 className="w-8 h-8 mx-auto mb-3 opacity-30" />
-          <p className="text-xs font-mono text-[var(--ink-faint)]">no_active_links()</p>
+          <p className="text-xs font-mono text-[var(--ink-faint)]">No active links</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -478,7 +478,7 @@ export default function DemoSettingsPage() {
 
           {tab === 'billing' && (
             <div className="max-w-4xl slide-in">
-              <h3 className="text-lg font-bold mb-2 font-mono">billing_info()</h3>
+              <h3 className="text-lg font-bold mb-2 font-mono">Billing</h3>
               <p className="text-xs text-[var(--ink-dim)] mb-6">Managed in the Agency Hub.</p>
               <div className="agency-card p-6 !cursor-default max-w-sm relative">
                 <span className="absolute top-0 right-0 text-[9px] font-bold font-mono px-2 py-1 text-white rounded-bl-[8px]" style={{ background: 'var(--line-cobalt)' }}>ACTIVE</span>
@@ -491,35 +491,35 @@ export default function DemoSettingsPage() {
             </div>
           )}
 
-          {tab === 'brand_persona' && <BrandPersonaEditor workspaceId={workspaceId} />}
+          {tab === 'Brand Persona' && <BrandPersonaEditor workspaceId={workspaceId} />}
 
           {tab === 'analytics' && (
             <div className="max-w-4xl slide-in">
-              <h3 className="text-lg font-bold mb-6 font-mono">swarm_analytics()</h3>
+              <h3 className="text-lg font-bold mb-6 font-mono">Analytics</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
                 <div className="agency-card p-5 !cursor-default">
-                  <p className="label-rule mb-2">total_tasks_executed</p>
+                  <p className="label-rule mb-2">Total Tasks Executed</p>
                   <p className="text-2xl font-bold tnum" style={{ color: 'var(--line-cobalt)' }}>1,248</p>
                   <p className="text-[10px] font-bold mt-1" style={{ color: 'var(--line-green)' }}>↑ 12% this week</p>
                 </div>
                 <div className="agency-card p-5 !cursor-default">
-                  <p className="label-rule mb-2">hitl_intervention_rate</p>
+                  <p className="label-rule mb-2">HITL Intervention Rate</p>
                   <p className="text-2xl font-bold tnum" style={{ color: 'var(--line-amber)' }}>8.4%</p>
                   <p className="text-[10px] font-bold mt-1" style={{ color: 'var(--line-green)' }}>↓ 2.1%</p>
                 </div>
                 <div className="agency-card p-5 !cursor-default">
-                  <p className="label-rule mb-2">compute_tokens_mtd</p>
+                  <p className="label-rule mb-2">Compute Tokens (MTD)</p>
                   <p className="text-2xl font-bold tnum">4.2M</p>
                 </div>
               </div>
             </div>
           )}
 
-          {tab === 'data_sync' && <DataSyncSection workspaceId={workspaceId} />}
+          {tab === 'Data Sync' && <DataSyncSection workspaceId={workspaceId} />}
 
           {tab === 'integrations' && (
             <div className="max-w-4xl slide-in">
-              <h3 className="text-lg font-bold mb-6 font-mono">integrations_mcp()</h3>
+              <h3 className="text-lg font-bold mb-6 font-mono">Integrations</h3>
               <div className="agency-card p-5 flex items-center justify-between max-w-md !cursor-default">
                 <div className="flex items-center gap-4">
                   <span className="w-10 h-10 rounded-[6px] border border-[var(--hairline-strong)] flex items-center justify-center">

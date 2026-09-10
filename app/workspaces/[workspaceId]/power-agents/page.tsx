@@ -918,7 +918,7 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
 
       <section className="flex-1 hidden md:flex flex-col min-h-[280px] overflow-hidden">
         <div className="h-14 px-3 sm:px-5 md:px-7 border-b agency-border flex items-center shrink-0">
-          <h2 className="text-sm font-bold font-mono">execution_canvas</h2>
+          <h2 className="text-sm font-bold font-mono">Execution Canvas</h2>
           {status === 'streaming' && (
             <Loader2 className="w-3.5 h-3.5 ml-3 animate-spin opacity-60" />
           )}
@@ -1026,7 +1026,7 @@ export default function DemoPowerAgentsPage() {
         >
           {/* header with collapse toggle */}
           <div className="hidden lg:flex h-14 border-b agency-border items-center shrink-0 px-3">
-            {!sidebarCollapsed && <p className="label-rule flex-1 truncate">power_agents</p>}
+            {!sidebarCollapsed && <p className="label-rule flex-1 truncate">Power Agents</p>}
             <button
               type="button"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -1125,7 +1125,7 @@ export default function DemoPowerAgentsPage() {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-[var(--ink-faint)]">
             <Zap className="w-12 h-12 mb-4 opacity-30" />
-            <p className="text-xs font-mono">Select a Power Agent to begin a solo session.</p>
+            <p className="text-xs font-mono">Select an agent to begin a solo session.</p>
           </div>
         )}
       </div>

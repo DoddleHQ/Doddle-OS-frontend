@@ -89,7 +89,7 @@ function GateBubble({ entry }: { entry: Extract<FeedEntry, { kind: 'gate' }> }) 
           className="flex-1 btn-outline !py-1.5"
           onClick={() => setShowPreview((v) => !v)}
         >
-          {showPreview ? 'collapse()' : 'review()'}
+          {showPreview ? 'Collapse' : 'Review'}
         </button>
         <button
           type="button"
@@ -314,7 +314,7 @@ function ExecutionCanvas() {
     return (
       <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--ink-faint)]">
         <TerminalSquare className="w-12 h-12 mb-4 opacity-30" />
-        <p className="text-xs font-mono">Select a Thread Block in Mission Control to view stdout.</p>
+        <p className="text-xs font-mono">Select a thread to view its output.</p>
       </div>
     );
   }
@@ -354,7 +354,7 @@ function ExecutionCanvas() {
         </div>
 
         <div className="flex flex-col">
-          <p className="label-rule mb-2">execution_timeline</p>
+          <p className="label-rule mb-2">Execution Timeline</p>
           <Timeline />
         </div>
 
@@ -533,7 +533,7 @@ export default function DemoLaunchpadPage() {
         {/* active campaigns */}
         <aside className="lg:w-64 shrink-0 border-b lg:border-b-0 lg:border-r agency-border agency-panel z-30">
           <div className="hidden lg:flex h-14 px-4 border-b agency-border items-center shrink-0">
-            <p className="label-rule">active_campaigns</p>
+            <p className="label-rule">Active Campaigns</p>
           </div>
           <div className="flex lg:flex-col gap-2 p-3 overflow-x-auto">
             <button
@@ -559,7 +559,7 @@ export default function DemoLaunchpadPage() {
                 <Hash className="w-3.5 h-3.5 shrink-0" style={{ color: campaign === 'q4-assets' ? 'var(--line-amber)' : 'var(--ink-faint)' }} />
                 <span className="text-xs font-bold font-mono">q4-assets</span>
               </span>
-              <p className="text-[10px] font-mono mt-1.5" style={{ color: 'var(--line-amber)' }}>approval_req</p>
+              <p className="text-[10px] font-mono mt-1.5" style={{ color: 'var(--line-amber)' }}>Approval Required</p>
             </button>
           </div>
         </aside>
@@ -569,7 +569,7 @@ export default function DemoLaunchpadPage() {
           <div className="h-14 px-5 border-b agency-border flex items-center justify-between shrink-0">
             <div>
               <h2 className="text-sm font-bold font-mono"># {campaign === 'gsc-mcp' ? 'gsc-mcp-integration' : 'q4-assets'}</h2>
-              <p className="text-[9px] text-[var(--ink-faint)] font-mono mt-0.5">mission_control_feed</p>
+              <p className="text-[9px] text-[var(--ink-faint)] font-mono mt-0.5">Mission Control Feed</p>
             </div>
             <div className="flex items-center gap-3">
               {runActive && tokens > 0 && (
@@ -584,7 +584,7 @@ export default function DemoLaunchpadPage() {
                   style={armed ? { borderColor: 'var(--line-scarlet)', color: 'var(--line-scarlet)' } : undefined}
                   onClick={onAbort}
                 >
-                  <XOctagon className="w-3 h-3" /> {armed ? 'confirm_abort?' : 'abort_all'}
+                  <XOctagon className="w-3 h-3" /> {armed ? 'Confirm abort?' : 'Abort All'}
                 </button>
               )}
               <span className={`w-2 h-2 rounded-full ${engineDot.pulse ? 'animate-pulse' : ''}`} style={{ background: engineDot.bg }} />
@@ -613,7 +613,7 @@ export default function DemoLaunchpadPage() {
               />
               <button type="button" className="btn-primary !py-1.5 !px-3 shrink-0" onClick={submit} disabled={runActive}>
                 {runStartedAt && !runActive ? <RotateCcw className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                {runStartedAt && !runActive ? 'new_run' : 'init'}
+                {runStartedAt && !runActive ? 'New Run' : 'init'}
               </button>
             </div>
           </div>

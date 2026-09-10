@@ -260,7 +260,7 @@ function SourcePanel({ workspaceId, config }: { workspaceId: string; config: Sou
       {/* Schedule (when connected) */}
       {connected && (
         <div className="px-5 py-3.5 flex items-center justify-between">
-          <span className="label-rule !gap-2 !text-[9px]">sync_frequency</span>
+          <span className="label-rule !gap-2 !text-[9px]">Sync Frequency</span>
           <select
             value={frequency}
             onChange={async (e) => {
@@ -345,7 +345,7 @@ export function DataSyncSection({ workspaceId }: { workspaceId: string }) {
 
   return (
     <div className="max-w-3xl slide-in">
-      <h3 className="text-lg font-bold mb-2 font-mono">data_sync()</h3>
+      <h3 className="text-lg font-bold mb-2 font-mono">Data Sync</h3>
       <p className="text-xs text-[var(--ink-dim)] mb-6">
         Connect data sources. Agents use these connections to read your catalog, analytics, and search data.
       </p>

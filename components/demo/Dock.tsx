@@ -108,7 +108,7 @@ export function Dock({ workspaceId }: DockProps) {
                 className="flex items-center gap-2.5 h-8 px-2 rounded-[6px] border border-dashed border-[var(--hairline-strong)] hover:border-[var(--line-cobalt)] hover:bg-[var(--accent-soft)] transition-colors"
               >
                 <Plus className="w-3.5 h-3.5 text-[var(--ink-faint)] shrink-0" />
-                <span className="text-[10px] font-mono text-[var(--ink-faint)]">new_workspace()</span>
+                <span className="text-[10px] font-mono text-[var(--ink-faint)]">New Workspace</span>
               </Link>
             </div>
           )}
