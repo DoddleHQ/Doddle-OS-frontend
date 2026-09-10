@@ -3,23 +3,36 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
+import { useAuthStore } from '@/lib/stores/authStore';
 
 /**
  * Root page — redirects to the user's first workspace.
  * The demo OS interface is the main workspace experience.
+ *
+ * Waits for BOTH auth bootstrap AND workspace fetch to complete before
+ * deciding where to send the user. Without the auth check, the effect
+ * fires while authStatus is still 'loading', sees an empty workspace
+ * list, and wrongly redirects to /onboarding.
  */
 export default function RootPage() {
   const router = useRouter();
-  const { workspaces, isLoading } = useWorkspaces();
+  const authStatus = useAuthStore((s) => s.status);
+  const { workspaces, isLoading: workspacesLoading } = useWorkspaces();
 
   useEffect(() => {
-    if (isLoading) return;
-    if (workspaces.length > 0) {
+    // Auth still bootstrapping — wait
+    if (authStatus === 'loading') return;
+
+    // Authenticated but workspaces still fetching — wait
+    if (authStatus === 'authenticated' && workspacesLoading) return;
+
+    if (authStatus === 'authenticated' && workspaces.length > 0) {
       router.replace(`/workspaces/${workspaces[0].workspaceId}`);
-    } else {
+    } else if (authStatus === 'authenticated' && workspaces.length === 0) {
       router.replace('/onboarding');
     }
-  }, [workspaces, isLoading, router]);
+    // Unauthenticated: middleware handles the /login redirect
+  }, [authStatus, workspaces, workspacesLoading, router]);
 
   return (
     <div className="h-screen w-screen flex items-center justify-center bg-[#ECEAE1]">
