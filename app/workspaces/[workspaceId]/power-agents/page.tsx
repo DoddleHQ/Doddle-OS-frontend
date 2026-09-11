@@ -178,6 +178,42 @@ function reportTitle(text: string): string {
   return text.replace(/\s+/g, ' ').slice(0, 57) + '…';
 }
 
+// one artifact-card action button: distinct palette color + hover tooltip
+function ArtifactAction({
+  tip,
+  color,
+  onClick,
+  children,
+}: {
+  tip: string;
+  color: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <span className="relative group">
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex items-center gap-1 rounded-[4px] border px-1.5 py-0.5 hover:opacity-100 transition-opacity"
+        style={{ borderColor: `color-mix(in srgb, ${color} 35%, transparent)` }}
+      >
+        {children}
+      </button>
+      <span
+        className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block whitespace-nowrap rounded-[4px] border px-1.5 py-0.5 text-[9px] z-10"
+        style={{
+          borderColor: `color-mix(in srgb, ${color} 35%, transparent)`,
+          color,
+          background: 'var(--background, #fff)',
+        }}
+      >
+        {tip}
+      </span>
+    </span>
+  );
+}
+
 function ReportRow({
   ink,
   title,
@@ -220,9 +256,6 @@ function ReportRow({
     URL.revokeObjectURL(url);
   };
 
-  const actionBtn =
-    'flex items-center gap-1 rounded-[4px] border px-1.5 py-0.5 hover:opacity-100 transition-opacity';
-
   return (
     <div
       className="feed-bubble font-mono min-w-0 max-w-full whitespace-normal"
@@ -247,46 +280,33 @@ function ReportRow({
       )}
       {isOpen && (
         <>
-          {/* artifact actions — copy, download, render/raw toggle */}
-          <div className="mt-2 flex items-center gap-1.5 text-[10px] opacity-70">
-            <button
-              type="button"
-              onClick={copyBody}
-              className={actionBtn}
-              style={{ borderColor: `color-mix(in srgb, ${ink} 30%, transparent)` }}
-              title="Copy report markdown to clipboard"
-            >
+          {/* artifact actions — copy, download, render/raw toggle; each with
+              its own palette color and a hover tooltip */}
+          <div className="mt-2 flex items-center gap-1.5 text-[10px]">
+            <ArtifactAction tip="Copy report markdown to clipboard" color="var(--line-cobalt)" onClick={copyBody}>
               {copied ? (
-                <Check className="w-2.5 h-2.5 shrink-0" style={{ color: ink }} />
+                <Check className="w-2.5 h-2.5 shrink-0" style={{ color: 'var(--line-cobalt)' }} />
               ) : (
-                <CopyIcon className="w-2.5 h-2.5 shrink-0" style={{ color: ink }} />
+                <CopyIcon className="w-2.5 h-2.5 shrink-0" style={{ color: 'var(--line-cobalt)' }} />
               )}
-              <span style={{ color: ink }}>{copied ? 'Copied' : 'Copy'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={downloadBody}
-              className={actionBtn}
-              style={{ borderColor: `color-mix(in srgb, ${ink} 30%, transparent)` }}
-              title="Download report as .md"
-            >
-              <Download className="w-2.5 h-2.5 shrink-0" style={{ color: ink }} />
-              <span style={{ color: ink }}>Download</span>
-            </button>
-            <button
-              type="button"
+              <span style={{ color: 'var(--line-cobalt)' }}>{copied ? 'Copied' : 'Copy'}</span>
+            </ArtifactAction>
+            <ArtifactAction tip="Download this report as a .md file" color="var(--line-green)" onClick={downloadBody}>
+              <Download className="w-2.5 h-2.5 shrink-0" style={{ color: 'var(--line-green)' }} />
+              <span style={{ color: 'var(--line-green)' }}>Download</span>
+            </ArtifactAction>
+            <ArtifactAction
+              tip={rawView ? 'Render the markdown' : 'Show the raw markdown source'}
+              color="var(--line-amber)"
               onClick={() => setRawView((v) => !v)}
-              className={actionBtn}
-              style={{ borderColor: `color-mix(in srgb, ${ink} 30%, transparent)` }}
-              title={rawView ? 'Render the markdown' : 'Show the raw markdown source'}
             >
               {rawView ? (
-                <Eye className="w-2.5 h-2.5 shrink-0" style={{ color: ink }} />
+                <Eye className="w-2.5 h-2.5 shrink-0" style={{ color: 'var(--line-amber)' }} />
               ) : (
-                <Code2 className="w-2.5 h-2.5 shrink-0" style={{ color: ink }} />
+                <Code2 className="w-2.5 h-2.5 shrink-0" style={{ color: 'var(--line-amber)' }} />
               )}
-              <span style={{ color: ink }}>{rawView ? 'Render' : 'Raw'}</span>
-            </button>
+              <span style={{ color: 'var(--line-amber)' }}>{rawView ? 'Render' : 'Raw'}</span>
+            </ArtifactAction>
           </div>
           <div className="mt-2 border-t pt-2" style={{ borderColor: `color-mix(in srgb, ${ink} 20%, transparent)` }}>
             {rawView ? (
