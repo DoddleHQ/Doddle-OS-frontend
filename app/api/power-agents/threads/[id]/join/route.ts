@@ -79,6 +79,20 @@ export async function GET(
     { headers: { Accept: 'text/event-stream' } },
   );
 
+  if (upstream.status === 404) {
+    // Race: the run finished between listing it above and attaching to its
+    // stream. That is success, not an error — answer with the no-active-run
+    // stream so the client falls back to loading the thread's final state.
+    return new Response(
+      encoder.encode(
+        sse({ type: 'start' }) +
+          sse({ type: 'data-no-active-run', data: [threadId] }) +
+          sse({ type: 'finish' }),
+      ),
+      { headers: { 'Content-Type': 'text/event-stream; charset=utf-8' } },
+    );
+  }
+
   if (!upstream.ok || !upstream.body) {
     return new Response(
       JSON.stringify({ error: `join stream failed: ${upstream.status}` }),
