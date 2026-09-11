@@ -6,7 +6,7 @@ import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Check, ChevronDown, ChevronLeft, ChevronRight, FileText, Loader2, Plus, Send, TerminalSquare, X, Zap } from 'lucide-react';
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Code2, Copy as CopyIcon, Download, Eye, FileText, Loader2, Plus, Send, TerminalSquare, X, Zap } from 'lucide-react';
 import { DemoIcon } from '@/lib/demo/icons';
 import { useOS } from '@/lib/demo/osStore';
 
@@ -191,6 +191,38 @@ function ReportRow({
   isOpen: boolean;
   onToggle: () => void;
 }) {
+  const [rawView, setRawView] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const copyBody = async () => {
+    try {
+      await navigator.clipboard.writeText(body);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable (permissions/insecure ctx) — no-op */
+    }
+  };
+
+  const downloadBody = () => {
+    const slug =
+      (title || 'report')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 48) || 'report';
+    const blob = new Blob([body], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${slug}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const actionBtn =
+    'flex items-center gap-1 rounded-[4px] border px-1.5 py-0.5 hover:opacity-100 transition-opacity';
+
   return (
     <div
       className="feed-bubble font-mono min-w-0 max-w-full whitespace-normal"
@@ -214,9 +246,58 @@ function ReportRow({
         </p>
       )}
       {isOpen && (
-        <div className="mt-2 border-t pt-2 md" style={{ borderColor: `color-mix(in srgb, ${ink} 20%, transparent)` }}>
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
-        </div>
+        <>
+          {/* artifact actions — copy, download, render/raw toggle */}
+          <div className="mt-2 flex items-center gap-1.5 text-[10px] opacity-70">
+            <button
+              type="button"
+              onClick={copyBody}
+              className={actionBtn}
+              style={{ borderColor: `color-mix(in srgb, ${ink} 30%, transparent)` }}
+              title="Copy report markdown to clipboard"
+            >
+              {copied ? (
+                <Check className="w-2.5 h-2.5 shrink-0" style={{ color: ink }} />
+              ) : (
+                <CopyIcon className="w-2.5 h-2.5 shrink-0" style={{ color: ink }} />
+              )}
+              <span style={{ color: ink }}>{copied ? 'Copied' : 'Copy'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={downloadBody}
+              className={actionBtn}
+              style={{ borderColor: `color-mix(in srgb, ${ink} 30%, transparent)` }}
+              title="Download report as .md"
+            >
+              <Download className="w-2.5 h-2.5 shrink-0" style={{ color: ink }} />
+              <span style={{ color: ink }}>Download</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setRawView((v) => !v)}
+              className={actionBtn}
+              style={{ borderColor: `color-mix(in srgb, ${ink} 30%, transparent)` }}
+              title={rawView ? 'Render the markdown' : 'Show the raw markdown source'}
+            >
+              {rawView ? (
+                <Eye className="w-2.5 h-2.5 shrink-0" style={{ color: ink }} />
+              ) : (
+                <Code2 className="w-2.5 h-2.5 shrink-0" style={{ color: ink }} />
+              )}
+              <span style={{ color: ink }}>{rawView ? 'Render' : 'Raw'}</span>
+            </button>
+          </div>
+          <div className="mt-2 border-t pt-2" style={{ borderColor: `color-mix(in srgb, ${ink} 20%, transparent)` }}>
+            {rawView ? (
+              <pre className="whitespace-pre-wrap break-words text-[11px] leading-relaxed opacity-90">{body}</pre>
+            ) : (
+              <div className="md">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
