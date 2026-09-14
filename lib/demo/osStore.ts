@@ -1,10 +1,5 @@
 import { create } from 'zustand';
-import {
-  GSC_THREAD_SEEDS,
-  PRICE_PER_TOK,
-  TRIAGE_SEED,
-  VAULT_SEED,
-} from './data';
+import { GSC_THREAD_SEEDS, PRICE_PER_TOK } from './data';
 import type {
   FeedEntry,
   LogType,
@@ -106,8 +101,8 @@ export const useOS = create<OSState>((set, get) => ({
   feed: [],
   activeThreadId: null,
 
-  triage: TRIAGE_SEED,
-  vault: VAULT_SEED,
+  triage: [],
+  vault: [],
   toasts: [],
 
   initDock: () => {
@@ -151,7 +146,7 @@ export const useOS = create<OSState>((set, get) => ({
   addTriage: (item) => {
     set({ triage: [item, ...get().triage] });
     if (!get().triageOpen) {
-      get().pushToast('Circuit breaker tripped — item pushed to triage_queue', 'error');
+      get().pushToast('Thread halted and pushed to triage', 'error');
     }
   },
 
@@ -162,11 +157,6 @@ export const useOS = create<OSState>((set, get) => ({
     if (outcome === 'approved' && item.onApprove) item.onApprove();
     if (outcome === 'rejected' && item.onReject) item.onReject();
     if (outcome === 'restarted' && item.onRestart) item.onRestart();
-    if (!item.onApprove && !item.onReject && !item.onRestart) {
-      // Static seed card — own its toast locally.
-      if (outcome === 'approved') get().pushToast('Approved — Vercel deployment queued', 'success');
-      if (outcome === 'restarted') get().pushToast('Thread requeued — restart handed to orchestrator', 'warn');
-    }
   },
 
   beginRun: (prompt) => {
@@ -230,9 +220,9 @@ export const useOS = create<OSState>((set, get) => ({
       ts: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
       prompt: s.lastPrompt,
       results: Object.fromEntries(Object.values(s.threads).map((t) => [t.id, t.status])),
-      artifact: VAULT_SEED[0].artifact,
+      artifact: '',
     };
     set({ vault: [run, ...s.vault].slice(0, 25) });
-    s.pushToast('Run archived to artifact_vault', 'success');
+    s.pushToast('Run archived to the artifact vault', 'success');
   },
 }));

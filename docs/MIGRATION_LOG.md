@@ -167,3 +167,37 @@ These were agreed upon before any code was changed. Every decision below must re
 - Keyboard navigation (`g` + number)
 - Per-thread stdout terminal in Launchpad
 - Collapsible dock with inline labels
+
+---
+
+## Phase 5 — Overlay Panels on Real Data
+
+### 5.1 Triage panel: fabricated approval cards → real halted threads
+
+**Date:** 2026-09-14
+**What:** Rewrote `components/workspace/overlays/TriagePanel.tsx`. The panel previously rendered `TRIAGE_SEED` from `lib/demo/data.ts` — a fabricated "Q4 Marketing Assets" approval card with an `approve()` button. It now fetches real threads across every module we ship and lists the ones with `status: error`.
+**Why:** Standing rules: no fabricated data in user-visible surfaces, and no underscores or parentheses in labels. The old card also implied an approval workflow that does not exist in the backend.
+**How:** New hook `useAttentionThreads` in `lib/hooks/usePanelData.ts` queries `threadService.listThreads` per module (v2 agent modules + legacy `content-factory` + retired `magento-content-writer`), merges, and filters for errors. Each card links to the thread via a new `threadHref` resolver (v2 detail route for live agents, v1 detail for retired Maya, module home otherwise — fixes a 404 found when linking `/modules/{moduleId}` directly). Fetches only while the panel is open.
+**Impact:** Triage is now a real "needs attention" surface for halted runs; the theatrical approve/reject theater is gone.
+
+### 5.2 Artifact vault: fabricated run archive → real artifacts
+
+**Date:** 2026-09-14
+**What:** Rewrote `components/workspace/overlays/VaultPanel.tsx`. Previously seeded with `VAULT_SEED` (a fake "GSC MCP pipeline" run with a hardcoded ClickHouse schema). Now shows the latest real artifacts from the five most recent threads, with an Inspect toggle that reveals the actual persisted content.
+**Why:** Same rules as 5.1 — the vault pretended to have run history the system never produced.
+**How:** New hook `useRecentArtifacts` in `usePanelData.ts`. Fetch-on-open, newest first, capped at 10 artifacts.
+
+### 5.3 Deleted dead TelemetryHeader; cleaned palette and store
+
+**Date:** 2026-09-14
+**What:**
+- Deleted `components/workspace/dashboard/TelemetryHeader.tsx` (unmounted dead code carrying `triage_queue` / `active_swarms` labels).
+- Command palette: removed the "Run Demo Swarm" command and simulator-thread entries; unified labels to "Go to …" / "Open Triage" / "Open Artifact Vault".
+- `osStore`: `triage` and `vault` now initialize empty instead of with fabricated seeds; toast strings cleaned of underscores and long dashes; dead static-seed toast branch removed.
+**Why:** The palette could trigger the demo simulator from any page, seeding fake threads into shared state; the seeds resurfaced fabricated content after every reload.
+**Impact:** No user-visible surface outside Launchpad fabricates data anymore. The Launchpad page itself is still a simulator (see Known Gaps).
+
+### Known Gaps (flagged, not yet rebuilt)
+
+- **Launchpad** (`app/workspaces/[workspaceId]/launchpad/page.tsx`) is still the original demo simulator: a fake "gsc-mcp" swarm driven by `lib/demo/engine.ts` plus a hardcoded "q4-assets" campaign feed (`@glob_Writer`, `approve()`, `reject()`). Rebuilding it on the real run registry is a product decision — what should Launchpad be when runs are real?
+- `TRIAGE_SEED` / `VAULT_SEED` remain in `lib/demo/data.ts` for the Launchpad theater but are no longer consumed by the store or panels.

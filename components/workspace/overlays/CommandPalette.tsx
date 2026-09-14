@@ -4,8 +4,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Command } from 'lucide-react';
 import { useOS } from '@/lib/demo/osStore';
-import { startRun } from '@/lib/demo/engine';
-import { DEFAULT_RUN_PROMPT } from '@/lib/demo/data';
 import { DemoIcon } from '@/lib/demo/icons';
 
 interface Cmd {
@@ -17,28 +15,16 @@ interface Cmd {
 
 function buildCommands(navigate: (path: string) => void, workspaceId: string): Cmd[] {
   const base = `/workspaces/${workspaceId}`;
-  const routes: Cmd[] = [
-    { icon: 'layout-dashboard', label: 'go: dashboard', run: () => navigate(base) },
-    { icon: 'terminal', label: 'go: launchpad', run: () => navigate(`${base}/launchpad`) },
+  return [
+    { icon: 'layout-dashboard', label: 'Go to Dashboard', run: () => navigate(base) },
+    { icon: 'terminal', label: 'Go to Launchpad', run: () => navigate(`${base}/launchpad`) },
     { icon: 'zap', label: 'Go to Power Agents', run: () => navigate(`${base}/power-agents`) },
-    { icon: 'folder-tree', label: 'go: graphs', run: () => navigate(`${base}/graphs`) },
+    { icon: 'folder-tree', label: 'Go to Graphs', run: () => navigate(`${base}/graphs`) },
     { icon: 'building-2', label: 'Go to Agency Hub', run: () => navigate(`${base}/agency-hub`) },
     { icon: 'settings', label: 'Go to Settings', run: () => navigate(`${base}/settings`) },
-    { icon: 'inbox', label: 'Open Triage Queue', run: () => useOS.getState().setOverlay('triageOpen', true) },
+    { icon: 'inbox', label: 'Open Triage', run: () => useOS.getState().setOverlay('triageOpen', true) },
     { icon: 'folder-archive', label: 'Open Artifact Vault', run: () => useOS.getState().setOverlay('vaultOpen', true) },
-    { icon: 'play', label: 'Run Demo Swarm', run: () => { void startRun(DEFAULT_RUN_PROMPT); } },
   ];
-  const s = useOS.getState();
-  if (s.runStartedAt) {
-    for (const t of Object.values(s.threads)) {
-      routes.push({
-        icon: 'route',
-        label: `thread: ${t.title} · ${t.status}`,
-        run: () => navigate(`/workspaces/${workspaceId}/launchpad`),
-      });
-    }
-  }
-  return routes;
 }
 
 interface CommandPaletteProps {
@@ -48,8 +34,6 @@ interface CommandPaletteProps {
 export function CommandPalette({ workspaceId }: CommandPaletteProps) {
   const open = useOS((s) => s.paletteOpen);
   const setOverlay = useOS((s) => s.setOverlay);
-  const runStartedAt = useOS((s) => s.runStartedAt);
-  const threads = useOS((s) => s.threads);
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [index, setIndex] = useState(0);
@@ -61,7 +45,7 @@ export function CommandPalette({ workspaceId }: CommandPaletteProps) {
     const q = query.trim().toLowerCase();
     return q ? all.filter((c) => c.label.toLowerCase().includes(q)) : all;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, runStartedAt, threads, workspaceId]);
+  }, [query, workspaceId]);
 
   useEffect(() => {
     if (open) {

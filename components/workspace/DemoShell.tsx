@@ -69,8 +69,8 @@ export function DemoShell({ children, workspaceId }: DemoShellProps) {
         <Dock workspaceId={workspaceId} />
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
           {children}
-          <TriagePanel />
-          <VaultPanel />
+          <TriagePanel workspaceId={workspaceId} />
+          <VaultPanel workspaceId={workspaceId} />
         </div>
       </div>
       <CommandPalette workspaceId={workspaceId} />
