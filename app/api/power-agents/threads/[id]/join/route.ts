@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getLangGraphApiUrl } from '@/lib/config/langgraph.config';
+import { getLangGraphApiUrl, langgraphAuthHeaders } from '@/lib/config/langgraph.config';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -38,13 +38,15 @@ function sse(part: unknown): string {
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id: threadId } = await params;
 
   // find the active run on this thread
-  const runsRes = await fetch(`${base()}/threads/${threadId}/runs`);
+  const runsRes = await fetch(`${base()}/threads/${threadId}/runs`, {
+    headers: langgraphAuthHeaders(req),
+  });
   if (!runsRes.ok) {
     return new Response(
       JSON.stringify({ error: `cannot list runs: ${runsRes.status}` }),
@@ -76,7 +78,7 @@ export async function GET(
   // join the run's stream — same SSE translation as the chat route
   const upstream = await fetch(
     `${base()}/threads/${threadId}/runs/${activeRun.run_id}/stream?stream_mode=messages-tuple`,
-    { headers: { Accept: 'text/event-stream' } },
+    { headers: { Accept: 'text/event-stream', ...langgraphAuthHeaders(req) } },
   );
 
   if (upstream.status === 404) {

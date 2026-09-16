@@ -118,3 +118,15 @@ export function validateLangGraphConfig(): { valid: boolean; errors: string[] } 
 }
 
 export const langGraphConfig = getLangGraphConfig();
+
+/**
+ * Forward the caller's Doddle access token to the LangGraph server as a
+ * Bearer header. The browser-to-Next hop rides cookies; this converts for
+ * the Next-to-LangGraph hop (auth.py accepts Bearer or the cookie).
+ */
+export function langgraphAuthHeaders(
+    req: import('next/server').NextRequest,
+): Record<string, string> {
+    const token = req.cookies.get('access_token')?.value;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}

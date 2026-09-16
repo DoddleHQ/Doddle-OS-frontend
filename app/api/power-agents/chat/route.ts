@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getLangGraphApiUrl } from '@/lib/config/langgraph.config';
+import { getLangGraphApiUrl, langgraphAuthHeaders } from '@/lib/config/langgraph.config';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
       status: 400,
     });
   }
+  const authHeaders = langgraphAuthHeaders(req);
 
   // create or reuse the LangGraph thread (history lives server-side).
   // Lazily-created threads carry agent metadata so they appear in the
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
   if (!threadId) {
     const tRes = await fetch(`${base()}/threads`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({
         metadata: body.agentKey
           ? {
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
 
   const upstream = await fetch(`${base()}/threads/${threadId}/runs/stream`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
     body: JSON.stringify({
       assistant_id: assistantId,
       input,

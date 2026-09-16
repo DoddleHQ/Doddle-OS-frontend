@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLangGraphApiUrl } from '@/lib/config/langgraph.config';
+import { getLangGraphApiUrl, langgraphAuthHeaders } from '@/lib/config/langgraph.config';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,12 +8,12 @@ export const dynamic = 'force-dynamic';
  * Lists the assistants registered on the LangGraph server.
  * Server-side proxy so the browser never hits CORS or the raw server URL.
  */
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   const base = getLangGraphApiUrl();
   try {
     const res = await fetch(`${base}/assistants/search`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...langgraphAuthHeaders(req) },
       body: JSON.stringify({ limit: 50 }),
     });
     if (!res.ok) {

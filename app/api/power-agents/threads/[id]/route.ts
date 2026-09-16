@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLangGraphApiUrl } from '@/lib/config/langgraph.config';
+import { getLangGraphApiUrl, langgraphAuthHeaders } from '@/lib/config/langgraph.config';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,11 +76,13 @@ function toUIMessages(messages: LGMessage[]): Array<Record<string, unknown>> {
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const res = await fetch(`${getLangGraphApiUrl()}/threads/${id}/state`);
+  const res = await fetch(`${getLangGraphApiUrl()}/threads/${id}/state`, {
+    headers: langgraphAuthHeaders(req),
+  });
   if (res.status === 404) {
     // thread is gone (deleted elsewhere) — say so distinctly so the
     // frontend can drop the stale chip instead of showing a server error
@@ -98,7 +100,9 @@ export async function GET(
   };
 
   // check if the thread has an active run (for stream-join on switch-back)
-  const runsRes = await fetch(`${getLangGraphApiUrl()}/threads/${id}/runs`);
+  const runsRes = await fetch(`${getLangGraphApiUrl()}/threads/${id}/runs`, {
+    headers: langgraphAuthHeaders(req),
+  });
   const runs = runsRes.ok
     ? ((await runsRes.json()) as Array<{ status: string }>)
     : [];
@@ -122,7 +126,7 @@ export async function PATCH(
   const body = (await req.json()) as { title: string };
   const res = await fetch(`${getLangGraphApiUrl()}/threads/${id}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...langgraphAuthHeaders(req) },
     body: JSON.stringify({ metadata: { title: body.title } }),
   });
   if (res.status === 404) {
@@ -138,12 +142,13 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   const res = await fetch(`${getLangGraphApiUrl()}/threads/${id}`, {
     method: 'DELETE',
+    headers: langgraphAuthHeaders(req),
   });
   if (res.status === 404) {
     // already gone — treat as success so client cleanup proceeds

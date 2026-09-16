@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLangGraphApiUrl } from '@/lib/config/langgraph.config';
+import { getLangGraphApiUrl, langgraphAuthHeaders } from '@/lib/config/langgraph.config';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   }
   const res = await fetch(`${getLangGraphApiUrl()}/threads/search`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...langgraphAuthHeaders(req) },
     body: JSON.stringify({
       metadata: { agent_key: agentKey },
       limit: 50,
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
   }
   const res = await fetch(`${getLangGraphApiUrl()}/threads`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...langgraphAuthHeaders(req) },
     body: JSON.stringify({
       metadata: {
         assistant_id: body.assistantId,
