@@ -105,6 +105,14 @@ export async function POST(req: NextRequest) {
     }),
   });
 
+  if (upstream.status === 401) {
+    // auth rejected upstream (e.g. revoked backend session) — surface as
+    // 401 so the client can send the user to re-login
+    return new Response(
+      JSON.stringify({ error: 'session expired — sign in again' }),
+      { status: 401 },
+    );
+  }
   if (upstream.status === 404) {
     // the thread was deleted (another tab, backend cleanup) — tell the
     // client distinctly instead of a generic bad gateway

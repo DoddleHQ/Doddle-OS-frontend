@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   if (!res.ok) {
     return NextResponse.json(
       { error: `threads search failed: ${res.status}` },
-      { status: 502 },
+      { status: res.status === 401 ? 401 : 502 },
     );
   }
   const rows = (await res.json()) as ThreadRow[];
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
   if (!res.ok) {
     return NextResponse.json(
       { error: `thread creation failed: ${res.status}` },
-      { status: 502 },
+      { status: res.status === 401 ? 401 : 502 },
     );
   }
   const thread = (await res.json()) as ThreadRow;

@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     if (!res.ok) {
       return NextResponse.json(
         { error: `langgraph server responded ${res.status}` },
-        { status: 502 },
+        { status: res.status === 401 ? 401 : 502 },
       );
     }
     const assistants = (await res.json()) as Array<{

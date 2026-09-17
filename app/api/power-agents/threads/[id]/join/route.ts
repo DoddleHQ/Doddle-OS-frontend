@@ -50,7 +50,7 @@ export async function GET(
   if (!runsRes.ok) {
     return new Response(
       JSON.stringify({ error: `cannot list runs: ${runsRes.status}` }),
-      { status: 502 },
+      { status: runsRes.status === 401 ? 401 : 502 },
     );
   }
   const runs = (await runsRes.json()) as Array<{
@@ -98,7 +98,7 @@ export async function GET(
   if (!upstream.ok || !upstream.body) {
     return new Response(
       JSON.stringify({ error: `join stream failed: ${upstream.status}` }),
-      { status: 502 },
+      { status: upstream.status === 401 ? 401 : 502 },
     );
   }
 

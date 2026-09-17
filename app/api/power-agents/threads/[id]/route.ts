@@ -91,7 +91,7 @@ export async function GET(
   if (!res.ok) {
     return NextResponse.json(
       { error: `thread state failed: ${res.status}` },
-      { status: 502 },
+      { status: res.status === 401 ? 401 : 502 },
     );
   }
   const state = (await res.json()) as {
@@ -135,7 +135,7 @@ export async function PATCH(
   if (!res.ok) {
     return NextResponse.json(
       { error: `thread rename failed: ${res.status}` },
-      { status: 502 },
+      { status: res.status === 401 ? 401 : 502 },
     );
   }
   return NextResponse.json({ ok: true });
@@ -157,7 +157,7 @@ export async function DELETE(
   if (!res.ok) {
     return NextResponse.json(
       { error: `thread delete failed: ${res.status}` },
-      { status: 502 },
+      { status: res.status === 401 ? 401 : 502 },
     );
   }
   return NextResponse.json({ ok: true });

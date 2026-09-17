@@ -59,6 +59,15 @@ const ROLES: Record<string, { name: string; role: string; icon: string }> = {
   devops_agent: { name: 'DevOps', role: 'SSH Operator & Fixer', icon: 'terminal-square' },
 };
 
+
+// a 401 from our LangGraph proxies means the backend revoked the session
+// (single-session policy: another device logged in) — the JWT cookie can
+// still look valid to middleware, so send the user to re-login explicitly
+function redirectToLogin(): never {
+  window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+  throw new Error('session expired');
+}
+
 // a part is "visibly active" when text is streaming or a tool input is
 // pending output — used to decide whether the working-dots bubble is needed
 const isPartActive = (p: unknown) => {
@@ -377,6 +386,7 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
   const refreshSessions = async () => {
     try {
       const res = await fetch(`/api/power-agents/threads?agentKey=${agent.id}`);
+      if (res.status === 401) redirectToLogin();
       if (res.ok) setSessions(await res.json());
     } catch { /* list is best-effort */ }
   };
@@ -477,6 +487,7 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
 
     try {
       const res = await fetch(`/api/power-agents/threads/${id}`);
+      if (res.status === 401) redirectToLogin();
       if (res.status === 404) {
         // session was deleted out from under this tab (another tab,
         // backend cleanup) — drop the stale chip
@@ -1086,7 +1097,7 @@ export default function DemoPowerAgentsPage() {
 
   useEffect(() => {
     fetch('/api/power-agents')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((r) => (r.status === 401 ? redirectToLogin() : r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((list: LiveAgent[]) => {
         setAgents(list);
         const first = list.find((a) => a.id === 'crawlability_audit') ?? list[0];
