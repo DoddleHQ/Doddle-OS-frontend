@@ -58,7 +58,7 @@ const ROLES: Record<string, { name: string; role: string; icon: string }> = {
   home_content: { name: 'Home', role: 'Homepage Copywriter', icon: 'layout-dashboard' },
   custom_page_content: { name: 'Custom', role: 'Any Page Type', icon: 'terminal' },
   devops_agent: { name: 'DevOps', role: 'SSH Operator & Fixer', icon: 'terminal-square' },
-  shopify_agent: { name: 'Shopify', role: 'Store Operator & MCP', icon: 'shopping-bag' },
+  shopify_agent: { name: 'Shopify', role: 'Store Manager & Content', icon: 'shopping-bag' },
 };
 
 
