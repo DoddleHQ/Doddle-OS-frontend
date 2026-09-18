@@ -32,6 +32,7 @@ const INK = {
   audit: 'var(--line-green)',
   content: 'var(--line-amber)',
   devops: 'var(--line-cobalt)',
+  shopify: 'var(--line-violet)',
 } as const;
 
 interface AgentMeta {
@@ -40,7 +41,7 @@ interface AgentMeta {
   handle: string;
   name: string;
   role: string;
-  suite: 'SEO Audit Suite' | 'Website Content Suite' | 'DevOps Suite';
+  suite: 'SEO Audit Suite' | 'Website Content Suite' | 'DevOps Suite' | 'Shopify Suite';
 }
 
 const ROLES: Record<string, { name: string; role: string; icon: string }> = {
@@ -57,6 +58,7 @@ const ROLES: Record<string, { name: string; role: string; icon: string }> = {
   home_content: { name: 'Home', role: 'Homepage Copywriter', icon: 'layout-dashboard' },
   custom_page_content: { name: 'Custom', role: 'Any Page Type', icon: 'terminal' },
   devops_agent: { name: 'DevOps', role: 'SSH Operator & Fixer', icon: 'terminal-square' },
+  shopify_agent: { name: 'Shopify', role: 'Store Operator & MCP', icon: 'shopping-bag' },
 };
 
 
@@ -79,6 +81,7 @@ const isPartActive = (p: unknown) => {
 const SUITE_OF: Record<string, AgentMeta['suite']> = {
   _content: 'Website Content Suite',
   devops: 'DevOps Suite',
+  shopify: 'Shopify Suite',
 };
 const suiteOf = (id: string): AgentMeta['suite'] => {
   for (const [suffix, suite] of Object.entries(SUITE_OF)) {
@@ -93,7 +96,13 @@ function agentMeta(id: string): AgentMeta {
   const short = id.replace(/_(audit|content|agent)$/, '');
   const name = preset?.name ?? short.replace(/_/g, ' ');
   return {
-    ink: suite === 'Website Content Suite' ? INK.content : suite === 'DevOps Suite' ? INK.devops : INK.audit,
+    ink: suite === 'Website Content Suite'
+      ? INK.content
+      : suite === 'DevOps Suite'
+        ? INK.devops
+        : suite === 'Shopify Suite'
+          ? INK.shopify
+          : INK.audit,
     icon: preset?.icon ?? 'bot',
     handle: '@' + name.replace(/\s/g, '_'),
     name,
@@ -1169,10 +1178,17 @@ export default function DemoPowerAgentsPage() {
           </div>
 
           <div className="hidden lg:flex lg:flex-col gap-2 overflow-y-auto lg:flex-1 lg:min-h-0" style={{ padding: sidebarCollapsed ? '0.5rem 0.375rem' : '0.75rem' }}>
-            {(['SEO Audit Suite', 'Website Content Suite', 'DevOps Suite'] as const).map((suite) => {
+            {(['SEO Audit Suite', 'Website Content Suite', 'DevOps Suite', 'Shopify Suite'] as const).map((suite) => {
               const suiteAgents = agents.filter((a) => agentMeta(a.id).suite === suite);
               if (!suiteAgents.length) return null;
-              const suiteInk = suite === 'SEO Audit Suite' ? INK.audit : suite === 'DevOps Suite' ? INK.devops : INK.content;
+              const suiteInk =
+                suite === 'SEO Audit Suite'
+                  ? INK.audit
+                  : suite === 'DevOps Suite'
+                    ? INK.devops
+                    : suite === 'Shopify Suite'
+                      ? INK.shopify
+                      : INK.content;
               return (
                 <div key={suite} className="flex lg:flex-col gap-2 lg:min-w-0">
                   {!sidebarCollapsed && (
