@@ -113,6 +113,99 @@ function agentMeta(id: string): AgentMeta {
 
 // ── tool row in the feed's visual language (accordion-controlled) ──────
 
+// Map tool names to human-friendly labels — the user is a store owner
+// or marketer, not a developer. Pattern-based so it covers all agents.
+const TOOL_LABELS: Record<string, string> = {
+  // common
+  'read file': 'reading guide',
+  'fetch_sitemap_urls': 'discovering URLs',
+  'scrape_page': 'reading page',
+  'extract_page_structure': 'analyzing structure',
+  'check_field_bands': 'validating content',
+  // seo audit
+  'audit_robots_txt': 'checking robots.txt',
+  'audit_llms_txt': 'checking AI guides',
+  'audit_sitemaps': 'checking sitemaps',
+  'audit_url_status_codes': 'checking page statuses',
+  'audit_canonicals': 'checking canonicals',
+  'audit_redirects': 'checking redirects',
+  'audit_hreflang': 'checking language tags',
+  'audit_pagination': 'checking pagination',
+  'audit_security_headers': 'checking security',
+  'audit_compression': 'checking compression',
+  'audit_https': 'checking HTTPS',
+  'audit_ssl_certificate': 'checking SSL certificate',
+  'audit_server_response': 'checking response',
+  'audit_page_speed': 'checking speed',
+  'audit_url_structure': 'checking URL structure',
+  'audit_mobile_friendly': 'checking mobile',
+  'audit_page_performance': 'measuring performance',
+  'audit_accessibility': 'checking accessibility',
+  'audit_seo_basics': 'checking SEO basics',
+  'audit_best_practices': 'checking best practices',
+  'audit_agentic_browsing': 'checking AI readability',
+  'measure_core_web_vitals': 'measuring vitals',
+  'run_lighthouse_audits': 'running diagnostics',
+  'run_full_lighthouse_audit': 'running full diagnostics',
+  // devops
+  'ssh_connect': 'connecting to server',
+  'ssh_shell': 'running command',
+  'ssh_read_file': 'reading file',
+  'ssh_write_file': 'writing file',
+  'ssh_tail': 'reading logs',
+  'ssh_service': 'managing service',
+  'ssh_approve_action': 'recording approval',
+  'ssh_disconnect': 'disconnecting',
+  // shopify (MCP)
+  'get-products': 'browsing products',
+  'get-product-by-id': 'reading product',
+  'get-shop-info': 'checking store info',
+  'get-orders': 'browsing orders',
+  'get-order-by-id': 'reading order',
+  'get-customers': 'browsing customers',
+  'get-customer-by-id': 'reading customer',
+  'get-customer-orders': 'checking orders',
+  'get-collections': 'browsing collections',
+  'get-collection-by-id': 'reading collection',
+  'get-inventory-items': 'checking inventory',
+  'get-inventory-levels': 'checking stock levels',
+  'get-locations': 'checking locations',
+  'get-metafields': 'reading custom fields',
+  'get-metafield-definitions': 'reading field definitions',
+  'get-markets': 'checking markets',
+  'create-product': 'creating product',
+  'update-product': 'updating product',
+  'delete-product': 'removing product',
+  'manage-product-variants': 'updating variants',
+  'manage-product-options': 'updating options',
+  'delete-product-variants': 'removing variants',
+  'manage-tags': 'updating tags',
+  'set-metafields': 'setting custom fields',
+  'delete-metafields': 'removing custom fields',
+  'inventory-set-quantities': 'adjusting stock',
+  'create-draft-order': 'creating order',
+  'complete-draft-order': 'completing order',
+  'create-fulfillment': 'fulfilling order',
+  'get-fulfillment-orders': 'checking fulfillment',
+  'order-cancel': 'cancelling order',
+  'order-close-open': 'closing order',
+  'order-mark-as-paid': 'marking as paid',
+  'refund-create': 'creating refund',
+  'get-order-transactions': 'checking payments',
+  'get-order-refund-details': 'checking refund info',
+  'create-customer': 'creating customer',
+  'update-customer': 'updating customer',
+  'delete-customer': 'removing customer',
+  'customer-merge': 'merging customers',
+  'manage-customer-address': 'updating address',
+  'get-price-lists': 'checking pricing',
+  'get-product-variants-detailed': 'checking variants',
+};
+
+function toolLabel(name: string): string {
+  return TOOL_LABELS[name] ?? name.replace(/[_-]/g, ' ');
+}
+
 function ToolRow({
   ink,
   toolName,
@@ -130,7 +223,7 @@ function ToolRow({
   isOpen: boolean;
   onToggle: () => void;
 }) {
-  const label = (toolName ?? 'tool').replace(/_/g, ' ');
+  const label = toolLabel(toolName ?? 'tool');
   let target = '';
   if (input && typeof input === 'object') {
     const obj = input as Record<string, unknown>;
@@ -855,7 +948,7 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
                         const tp = part as unknown as { state: string };
                         toolRun.push({
                           idx: i,
-                          name: part.type.slice(5).replace(/_/g, ' '),
+                          name: toolLabel(part.type.slice(5)),
                           state: tp.state,
                         });
                       } else {
@@ -928,7 +1021,7 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
                         (t) => t.state === 'input-streaming' || t.state === 'input-available',
                       );
                       const anyFailed = item.tools.some((t) => t.state === 'output-error');
-                      const label = allSameName ? item.tools[0].name : 'tool calls';
+                      const label = allSameName ? item.tools[0].name : 'steps';
                       return (
                         <div key={item.key} className="space-y-1">
                           <button
