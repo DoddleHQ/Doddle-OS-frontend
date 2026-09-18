@@ -1015,7 +1015,15 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
 
           {error && (
             <div className="feed-bubble font-mono max-w-full" style={{ borderColor: 'color-mix(in srgb, crimson 40%, transparent)' }}>
-              <span className="text-[11px]">{String(error)}</span>
+              <span className="text-[11px]">
+                {String(error).includes('session expired') || String(error).includes('401')
+                  ? 'Your session has expired. Please sign in again to continue.'
+                  : String(error).includes('session no longer exists')
+                    ? 'This session is no longer available. Start a new session to continue.'
+                    : String(error).includes('network') || String(error).includes('fetch')
+                      ? 'Connection interrupted. Please check your internet and try again.'
+                      : 'Something went wrong sending your message. Please try again, or start a new session if the issue persists.'}
+              </span>
             </div>
           )}
           <div ref={bottomRef} />
@@ -1130,7 +1138,7 @@ export default function DemoPowerAgentsPage() {
           </h1>
           {loadError && (
             <p className="text-[10px] font-mono mt-1 opacity-60">
-              langgraph server unreachable — run `uv run langgraph dev`
+              Agents are unavailable right now — the service may be restarting. Refresh in a moment.
             </p>
           )}
         </div>
