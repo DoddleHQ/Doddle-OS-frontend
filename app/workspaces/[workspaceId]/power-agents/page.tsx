@@ -122,7 +122,10 @@ function agentMeta(id: string): AgentMeta {
 // or marketer, not a developer. Pattern-based so it covers all agents.
 const TOOL_LABELS: Record<string, string> = {
   // common
-  'read file': 'reading guide',
+  'read_file': 'reviewing approach',
+  'ls': 'checking resources',
+  'glob': 'finding references',
+  'grep': 'searching content',
   'fetch_sitemap_urls': 'discovering URLs',
   'scrape_page': 'reading page',
   'extract_page_structure': 'analyzing structure',
