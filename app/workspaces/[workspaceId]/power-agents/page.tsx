@@ -33,6 +33,7 @@ const INK = {
   content: 'var(--line-amber)',
   devops: 'var(--line-cobalt)',
   shopify: 'var(--line-violet)',
+  wordpress: 'var(--line-teal)',
 } as const;
 
 interface AgentMeta {
@@ -41,7 +42,7 @@ interface AgentMeta {
   handle: string;
   name: string;
   role: string;
-  suite: 'SEO Audit Suite' | 'Website Content Suite' | 'DevOps Suite' | 'Shopify Suite';
+  suite: 'SEO Audit Suite' | 'Website Content Suite' | 'DevOps Suite' | 'Shopify Suite' | 'WordPress Suite';
 }
 
 const ROLES: Record<string, { name: string; role: string; icon: string }> = {
@@ -59,6 +60,7 @@ const ROLES: Record<string, { name: string; role: string; icon: string }> = {
   custom_page_content: { name: 'Custom', role: 'Any Page Type', icon: 'terminal' },
   devops_agent: { name: 'DevOps', role: 'SSH Operator & Fixer', icon: 'terminal-square' },
   shopify_agent: { name: 'Shopify', role: 'Store Manager & Content', icon: 'shopping-bag' },
+  wordpress_agent: { name: 'WordPress', role: 'Site Manager & Content', icon: 'globe' },
 };
 
 
@@ -82,6 +84,7 @@ const SUITE_OF: Record<string, AgentMeta['suite']> = {
   _content: 'Website Content Suite',
   devops: 'DevOps Suite',
   shopify: 'Shopify Suite',
+  wordpress: 'WordPress Suite',
 };
 const suiteOf = (id: string): AgentMeta['suite'] => {
   for (const [suffix, suite] of Object.entries(SUITE_OF)) {
@@ -102,7 +105,9 @@ function agentMeta(id: string): AgentMeta {
         ? INK.devops
         : suite === 'Shopify Suite'
           ? INK.shopify
-          : INK.audit,
+          : suite === 'WordPress Suite'
+            ? INK.wordpress
+            : INK.audit,
     icon: preset?.icon ?? 'bot',
     handle: '@' + name.replace(/\s/g, '_'),
     name,
@@ -200,6 +205,43 @@ const TOOL_LABELS: Record<string, string> = {
   'manage-customer-address': 'updating address',
   'get-price-lists': 'checking pricing',
   'get-product-variants-detailed': 'checking variants',
+  // wordpress (MCP)
+  'wp_list_pages': 'browsing pages',
+  'wp_get_page': 'reading page',
+  'wp_create_page': 'creating page',
+  'wp_update_page': 'updating page',
+  'wp_delete_page': 'removing page',
+  'wp_get_page_revisions': 'checking history',
+  'wp_list_posts': 'browsing posts',
+  'wp_create_post': 'creating post',
+  'wp_update_post': 'updating post',
+  'wp_upload_media': 'uploading media',
+  'wp_list_media': 'browsing media',
+  'wp_seo_site_audit': 'running SEO audit',
+  'wp_seo_analyze_content': 'analyzing content',
+  'wp_seo_keyword_research': 'researching keywords',
+  'wp_seo_generate_metadata': 'generating metadata',
+  'wp_seo_bulk_update_metadata': 'updating metadata',
+  'wp_seo_generate_schema': 'generating schema',
+  'wp_seo_validate_schema': 'validating schema',
+  'wp_seo_suggest_internal_links': 'checking links',
+  'wp_seo_get_live_data': 'checking rankings',
+  'wp_seo_track_serp': 'tracking rankings',
+  'wp_performance_stats': 'checking performance',
+  'wp_performance_benchmark': 'benchmarking',
+  'wp_performance_optimize': 'optimizing',
+  'wp_performance_alerts': 'checking alerts',
+  'wp_cache_clear': 'clearing cache',
+  'wp_cache_info': 'checking cache',
+  'wp_cache_stats': 'cache stats',
+  'wp_get_site_settings': 'checking site',
+  'wp_update_site_settings': 'updating settings',
+  'wp_check_version': 'checking version',
+  'wp_search_site': 'searching site',
+  'wp_list_categories': 'browsing categories',
+  'wp_list_tags': 'browsing tags',
+  'wp_list_users': 'browsing users',
+  'wp_list_comments': 'browsing comments',
 };
 
 function toolLabel(name: string): string {
@@ -1279,7 +1321,7 @@ export default function DemoPowerAgentsPage() {
           </div>
 
           <div className="hidden lg:flex lg:flex-col gap-2 overflow-y-auto lg:flex-1 lg:min-h-0" style={{ padding: sidebarCollapsed ? '0.5rem 0.375rem' : '0.75rem' }}>
-            {(['SEO Audit Suite', 'Website Content Suite', 'DevOps Suite', 'Shopify Suite'] as const).map((suite) => {
+            {(['SEO Audit Suite', 'Website Content Suite', 'DevOps Suite', 'Shopify Suite', 'WordPress Suite'] as const).map((suite) => {
               const suiteAgents = agents.filter((a) => agentMeta(a.id).suite === suite);
               if (!suiteAgents.length) return null;
               const suiteInk =
@@ -1289,7 +1331,9 @@ export default function DemoPowerAgentsPage() {
                     ? INK.devops
                     : suite === 'Shopify Suite'
                       ? INK.shopify
-                      : INK.content;
+                      : suite === 'WordPress Suite'
+                        ? INK.wordpress
+                        : INK.content;
               return (
                 <div key={suite} className="flex lg:flex-col gap-2 lg:min-w-0">
                   {!sidebarCollapsed && (

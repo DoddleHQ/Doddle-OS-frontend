@@ -25,6 +25,7 @@
   --line-green: #1d7a3e;
   --line-maintenance: #9aa0b4;
   --line-violet: #6d28d9;
+  --line-teal: #0d7377;
 
   --accent: var(--line-scarlet);
   --success: var(--line-green);
