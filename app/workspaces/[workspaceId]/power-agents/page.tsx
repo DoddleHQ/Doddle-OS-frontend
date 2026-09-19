@@ -242,6 +242,7 @@ const TOOL_LABELS: Record<string, string> = {
   'wp_list_tags': 'browsing tags',
   'wp_list_users': 'browsing users',
   'wp_list_comments': 'browsing comments',
+  'download_file': 'downloading image',
 };
 
 function toolLabel(name: string): string {
