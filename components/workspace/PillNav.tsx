@@ -59,16 +59,16 @@ export function PillNav({ workspaceId }: { workspaceId: string }) {
 
   return (
     <div
-      className={`fixed top-4 left-1/2 -translate-x-1/2 z-[80] transition-all duration-300 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3 pointer-events-none'}`}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => {
-        setHovered(false);
-        scheduleHide();
-      }}
+      className={`fixed top-4 inset-x-0 z-[80] flex justify-center transition-all duration-300 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3 pointer-events-none'}`}
     >
       <nav
         aria-label="Workspace navigation"
-        className="agency-panel agency-border border rounded-full flex items-center gap-0.5 px-2 py-1.5"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => {
+          setHovered(false);
+          scheduleHide();
+        }}
+        className="agency-panel agency-border border rounded-full flex items-center gap-0.5 px-2 py-1.5 max-w-[calc(100vw-2rem)]"
       >
         <Link href="/" title="Doddle OS" className="hover:opacity-85 transition-opacity mx-1 shrink-0">
           <BrandMark className="w-6 h-6" />
