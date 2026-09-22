@@ -79,9 +79,14 @@ export function PillNav({ workspaceId }: { workspaceId: string }) {
             key={route.path}
             href={route.path}
             title={route.label}
-            className={`dock-icon relative w-9 h-9 flex items-center justify-center rounded-full shrink-0 ${isActive(route.path) ? 'active' : ''}`}
+            className={`dock-icon relative h-9 flex items-center rounded-full shrink-0 transition-[padding] duration-200 ${hovered ? 'px-2.5 gap-2' : 'w-9 justify-center'} ${isActive(route.path) ? 'active' : ''}`}
           >
-            <DemoIcon name={route.icon} className="w-4 h-4" />
+            <DemoIcon name={route.icon} className="w-4 h-4 shrink-0" />
+            <span
+              className={`text-[12px] font-mono whitespace-nowrap overflow-hidden transition-all duration-200 ${hovered ? 'max-w-[140px] opacity-100' : 'max-w-0 opacity-0'} ${isActive(route.path) ? 'text-[var(--ink)] font-semibold' : ''}`}
+            >
+              {route.label}
+            </span>
             {route.label === 'launchpad' && runActive && (
               <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[var(--line-scarlet)] animate-pulse" />
             )}
@@ -91,9 +96,16 @@ export function PillNav({ workspaceId }: { workspaceId: string }) {
         <Link
           href={`${basePath}/settings`}
           title={userName}
-          className="w-8 h-8 rounded-full border border-[var(--hairline)] flex items-center justify-center text-[10px] font-bold font-mono bg-[var(--net-panel-2)] hover:border-[var(--hairline-strong)] transition-colors shrink-0"
+          className={`h-8 flex items-center rounded-full border border-[var(--hairline)] bg-[var(--net-panel-2)] hover:border-[var(--hairline-strong)] transition-all duration-200 shrink-0 ${hovered ? 'px-2 gap-2' : 'w-8 justify-center'}`}
         >
-          {userInitial}
+          <span className="flex items-center justify-center text-[10px] font-bold font-mono w-6 h-6 rounded-full shrink-0">
+            {userInitial}
+          </span>
+          <span
+            className={`text-[11px] font-semibold whitespace-nowrap overflow-hidden transition-all duration-200 ${hovered ? 'max-w-[120px] opacity-100 pr-1' : 'max-w-0 opacity-0'}`}
+          >
+            {userName}
+          </span>
         </Link>
       </nav>
     </div>
