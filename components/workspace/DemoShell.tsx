@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useOS } from '@/lib/demo/osStore';
 import { Dock } from './Dock';
+import { PillNav } from './PillNav';
 import { TriagePanel } from './overlays/TriagePanel';
 import { VaultPanel } from './overlays/VaultPanel';
 import { CommandPalette } from './overlays/CommandPalette';
@@ -16,12 +17,17 @@ interface DemoShellProps {
 }
 
 export function DemoShell({ children, workspaceId }: DemoShellProps) {
+  const pathname = usePathname();
   const setOverlay = useOS((s) => s.setOverlay);
   const closeTopOverlay = useOS((s) => s.closeTopOverlay);
   const router = useRouter();
   const routes = buildDemoRoutes(workspaceId);
   const gPressed = useRef(false);
   const gTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const basePath = `/workspaces/${workspaceId}`;
+
+  // The dock lives on the dashboard only; every other page gets the floating pill.
+  const showDock = pathname === basePath;
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -61,13 +67,14 @@ export function DemoShell({ children, workspaceId }: DemoShellProps) {
       {/* base-map linework beneath the board */}
       <div className="base-map absolute inset-0 pointer-events-none" aria-hidden="true" />
       <div className="flex-1 flex overflow-hidden relative z-10">
-        <Dock workspaceId={workspaceId} />
+        {showDock && <Dock workspaceId={workspaceId} />}
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
           {children}
           <TriagePanel workspaceId={workspaceId} />
           <VaultPanel workspaceId={workspaceId} />
         </div>
       </div>
+      {!showDock && <PillNav workspaceId={workspaceId} />}
       <CommandPalette workspaceId={workspaceId} />
       <ToastStack />
     </div>
