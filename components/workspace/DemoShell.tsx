@@ -17,16 +17,11 @@ interface DemoShellProps {
 
 export function DemoShell({ children, workspaceId }: DemoShellProps) {
   const setOverlay = useOS((s) => s.setOverlay);
-  const initDock = useOS((s) => s.initDock);
   const closeTopOverlay = useOS((s) => s.closeTopOverlay);
   const router = useRouter();
   const routes = buildDemoRoutes(workspaceId);
   const gPressed = useRef(false);
   const gTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    initDock();
-  }, [initDock]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
