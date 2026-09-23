@@ -115,7 +115,7 @@ export function Dock({ workspaceId }: DockProps) {
             <motion.span
               initial={false}
               animate={labelAnim(expanded)}
-              transition={{ duration: 0.3, ease: EASE }}
+              transition={{ duration: 0.16, ease: EASE }}
               className="overflow-hidden shrink-0"
             >
               <span className="block w-[92px]">
@@ -128,7 +128,7 @@ export function Dock({ workspaceId }: DockProps) {
             <motion.span
               initial={false}
               animate={{ width: expanded ? 'auto' : 0, marginLeft: expanded ? 6 : 0 }}
-              transition={{ duration: 0.3, ease: EASE }}
+              transition={{ duration: 0.16, ease: EASE }}
               className="overflow-hidden shrink-0"
             >
               <ChevronDown className={`w-3.5 h-3.5 text-[var(--ink-faint)] transition-transform ${wsListOpen ? 'rotate-180' : ''}`} />
@@ -172,7 +172,7 @@ export function Dock({ workspaceId }: DockProps) {
             <motion.p
               initial={false}
               animate={{ height: expanded ? 'auto' : 0, marginBottom: expanded ? 6 : 0 }}
-              transition={{ duration: 0.3, ease: EASE }}
+              transition={{ duration: 0.16, ease: EASE }}
               className="overflow-hidden text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono px-2 whitespace-nowrap"
             >
               execution
@@ -190,7 +190,7 @@ export function Dock({ workspaceId }: DockProps) {
             <motion.p
               initial={false}
               animate={{ height: expanded ? 'auto' : 0, marginBottom: expanded ? 6 : 0 }}
-              transition={{ duration: 0.3, ease: EASE }}
+              transition={{ duration: 0.16, ease: EASE }}
               className="overflow-hidden text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono px-2 whitespace-nowrap"
             >
               management
@@ -216,7 +216,7 @@ export function Dock({ workspaceId }: DockProps) {
             <motion.span
               initial={false}
               animate={labelAnim(expanded)}
-              transition={{ duration: 0.3, ease: EASE }}
+              transition={{ duration: 0.16, ease: EASE }}
               className="overflow-hidden shrink-0"
             >
               <span className="block w-[104px]">
@@ -248,7 +248,7 @@ function NavLink({ route, expanded, isActive, runActive }: {
       <motion.span
         initial={false}
         animate={labelAnim(expanded)}
-        transition={{ duration: 0.3, ease: EASE }}
+        transition={{ duration: 0.16, ease: EASE }}
         className={`overflow-hidden whitespace-nowrap shrink-0 text-[12px] font-mono ${isActive ? 'text-[var(--ink)] font-semibold' : ''}`}
       >
         {route.label}
