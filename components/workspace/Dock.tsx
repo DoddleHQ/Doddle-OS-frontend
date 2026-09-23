@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion } from 'motion/react';
 import { ChevronDown, Plus } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCurrentWorkspace } from '@/lib/hooks/useCurrentWorkspace';
@@ -18,6 +19,22 @@ interface DockProps {
 
 /** Grace period before collapsing — stops flicker when the pointer skips across gaps. */
 const CLOSE_DELAY_MS = 150;
+
+/** Shared easing with the pill nav and thread transitions. */
+const EASE = [0.16, 1, 0.3, 1] as const;
+
+/** Rail (collapsed) and dock (expanded) widths. The rail holds the layout slot. */
+const RAIL_W = 72;
+const OPEN_W = 224;
+
+/** Label reveal used across tile, nav links, and footer — mirrors the pill nav. */
+function labelAnim(expanded: boolean) {
+  return {
+    width: expanded ? ('auto' as const) : 0,
+    marginLeft: expanded ? 10 : 0,
+    opacity: expanded ? 1 : 0,
+  };
+}
 
 export function Dock({ workspaceId }: DockProps) {
   const pathname = usePathname();
@@ -60,176 +77,160 @@ export function Dock({ workspaceId }: DockProps) {
   return (
     /* the rail holds the collapsed width in the layout; the dock itself overlays
        content while expanded so hovering never shifts the page */
-    <div className="relative shrink-0 z-40 w-[64px] md:w-[76px]">
-      <div
+    <div className="relative shrink-0 z-40 w-[72px]">
+      <motion.div
         onMouseEnter={openDock}
         onMouseLeave={closeDock}
-        className={`agency-panel border-r agency-border absolute inset-y-0 left-0 transition-[width] duration-200 flex flex-col ${expanded ? 'w-[224px] px-3 py-4' : 'w-[64px] md:w-[76px] px-2 py-4 items-center'}`}
+        onFocus={openDock}
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget)) closeDock();
+        }}
+        initial={false}
+        animate={{ width: expanded ? OPEN_W : RAIL_W }}
+        transition={{ duration: 0.3, ease: EASE }}
+        className="agency-panel border-r agency-border absolute inset-y-0 left-0 flex flex-col px-3 py-4 overflow-hidden"
       >
         {/* ── top: logo ── */}
-        <div className={`flex items-center ${expanded ? 'mb-4' : 'mb-3'}`}>
+        <div className="flex items-center mb-3.5">
           <Link href="/" title="Doddle OS" className="hover:opacity-85 transition-opacity">
             <BrandMark className="w-9 h-9" />
           </Link>
         </div>
 
         {/* ── workspace card ── */}
-        {expanded ? (
-          <div className="mb-4">
-            <button
-              type="button"
-              onClick={() => setWsListOpen((v) => !v)}
-              className={`w-full flex items-center gap-3 rounded-[10px] border p-3 transition-colors text-left ${wsListOpen ? 'border-[var(--hairline-strong)] bg-[var(--accent-soft)]' : 'border-[var(--hairline)] bg-[var(--net-panel-2)] hover:border-[var(--hairline-strong)]'}`}
+        <div className="mb-3">
+          <button
+            type="button"
+            onClick={() => setWsListOpen((v) => !v)}
+            aria-label={`Switch workspace (current: ${currentName})`}
+            className={`w-full flex items-center rounded-[10px] border p-1.5 transition-colors text-left ${wsListOpen ? 'border-[var(--hairline-strong)] bg-[var(--accent-soft)]' : 'border-[var(--hairline)] bg-[var(--net-panel-2)] hover:border-[var(--hairline-strong)]'}`}
+          >
+            <span
+              className="flex items-center justify-center shrink-0 font-bold font-mono text-[13px] text-white rounded-[8px]"
+              style={{ background: 'var(--line-cobalt)', width: 36, height: 36 }}
             >
-              <span
-                className="flex items-center justify-center shrink-0 font-bold font-mono text-[13px] text-white rounded-[8px]"
-                style={{ background: 'var(--line-cobalt)', width: 36, height: 36 }}
-              >
-                {currentInitial}
-              </span>
-              <span className="flex-1 min-w-0">
+              {currentInitial}
+            </span>
+            <motion.span
+              initial={false}
+              animate={labelAnim(expanded)}
+              transition={{ duration: 0.3, ease: EASE }}
+              className="overflow-hidden"
+            >
+              <span className="block w-[92px]">
                 <span className="block text-[13px] font-semibold truncate leading-tight">{currentName}</span>
                 {currentDomain && (
                   <span className="block text-[10px] font-mono text-[var(--ink-faint)] truncate mt-0.5">{currentDomain}</span>
                 )}
               </span>
-              <ChevronDown className={`w-3.5 h-3.5 text-[var(--ink-faint)] transition-transform shrink-0 ${wsListOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {/* workspace dropdown */}
-            {wsListOpen && (
-              <div className="mt-1.5 space-y-0.5 border border-[var(--hairline)] rounded-[8px] p-1.5 bg-[var(--net-panel)]">
-                {workspaces.filter((w) => w.workspaceId !== workspaceId).slice(0, 6).map((ws) => (
-                  <Link
-                    key={ws.workspaceId}
-                    href={`/workspaces/${ws.workspaceId}`}
-                    onClick={() => setWsListOpen(false)}
-                    className="flex items-center gap-2.5 h-8 px-2 rounded-[6px] hover:bg-[var(--net-panel-2)] transition-colors group"
-                  >
-                    <span
-                      className="flex items-center justify-center shrink-0 font-bold font-mono text-[10px] text-[var(--ink-dim)] border border-[var(--hairline)] rounded-[5px]"
-                      style={{ width: 22, height: 22 }}
-                    >
-                      {(ws.name || '?').trim().split(' ')[0]?.[0]?.toUpperCase()}
-                    </span>
-                    <span className="text-[11px] font-mono truncate flex-1">{ws.name || 'Workspace'}</span>
-                  </Link>
-                ))}
-                <Link
-                  href="/onboarding"
-                  onClick={() => setWsListOpen(false)}
-                  className="flex items-center gap-2.5 h-8 px-2 rounded-[6px] border border-dashed border-[var(--hairline-strong)] hover:border-[var(--line-cobalt)] hover:bg-[var(--accent-soft)] transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5 text-[var(--ink-faint)] shrink-0" />
-                  <span className="text-[10px] font-mono text-[var(--ink-faint)]">New Workspace</span>
-                </Link>
-              </div>
-            )}
-          </div>
-        ) : (
-          /* collapsed: just the tile (keyboard-reachable; hover expands first for mouse users) */
-          <button
-            type="button"
-            onClick={() => setWsListOpen((v) => !v)}
-            aria-label={`Switch workspace (current: ${currentName})`}
-            className="relative group w-full h-11 flex items-center justify-center rounded-[10px] mb-3"
-          >
-            <span
-              className="flex items-center justify-center font-bold font-mono text-[13px] text-white rounded-[8px]"
-              style={{ background: 'var(--line-cobalt)', width: 28, height: 28 }}
+            </motion.span>
+            <motion.span
+              initial={false}
+              animate={{ width: expanded ? 'auto' : 0, marginLeft: expanded ? 6 : 0, opacity: expanded ? 1 : 0 }}
+              transition={{ duration: 0.3, ease: EASE }}
+              className="overflow-hidden shrink-0"
             >
-              {currentInitial}
-            </span>
+              <ChevronDown className={`w-3.5 h-3.5 text-[var(--ink-faint)] transition-transform ${wsListOpen ? 'rotate-180' : ''}`} />
+            </motion.span>
           </button>
-        )}
 
-        {/* workspace switcher list (collapsed mode — keyboard path) */}
-        {!expanded && wsListOpen && (
-          <div className="w-full space-y-1 mb-3 border border-[var(--hairline)] rounded-[8px] p-1.5 bg-[var(--net-panel)]">
-            {workspaces.filter((w) => w.workspaceId !== workspaceId).slice(0, 6).map((ws) => (
-              <Link
-                key={ws.workspaceId}
-                href={`/workspaces/${ws.workspaceId}`}
-                onClick={() => setWsListOpen(false)}
-                className="relative group w-full h-9 flex items-center justify-center rounded-[8px] hover:bg-[var(--net-panel-2)] transition-colors"
-              >
-                <span
-                  className="flex items-center justify-center font-bold font-mono text-[11px] text-[var(--ink-dim)] border border-[var(--hairline)] rounded-[6px]"
-                  style={{ width: 26, height: 26 }}
+          {/* workspace dropdown */}
+          {wsListOpen && expanded && (
+            <div className="mt-1.5 space-y-0.5 border border-[var(--hairline)] rounded-[8px] p-1.5 bg-[var(--net-panel)]">
+              {workspaces.filter((w) => w.workspaceId !== workspaceId).slice(0, 6).map((ws) => (
+                <Link
+                  key={ws.workspaceId}
+                  href={`/workspaces/${ws.workspaceId}`}
+                  onClick={() => setWsListOpen(false)}
+                  className="flex items-center gap-2.5 h-8 px-2 rounded-[6px] hover:bg-[var(--net-panel-2)] transition-colors"
                 >
-                  {(ws.name || '?').trim().split(' ')[0]?.[0]?.toUpperCase()}
-                </span>
+                  <span
+                    className="flex items-center justify-center shrink-0 font-bold font-mono text-[10px] text-[var(--ink-dim)] border border-[var(--hairline)] rounded-[5px]"
+                    style={{ width: 22, height: 22 }}
+                  >
+                    {(ws.name || '?').trim().split(' ')[0]?.[0]?.toUpperCase()}
+                  </span>
+                  <span className="text-[11px] font-mono truncate flex-1">{ws.name || 'Workspace'}</span>
+                </Link>
+              ))}
+              <Link
+                href="/onboarding"
+                onClick={() => setWsListOpen(false)}
+                className="flex items-center gap-2.5 h-8 px-2 rounded-[6px] border border-dashed border-[var(--hairline-strong)] hover:border-[var(--line-cobalt)] hover:bg-[var(--accent-soft)] transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5 text-[var(--ink-faint)] shrink-0" />
+                <span className="text-[10px] font-mono text-[var(--ink-faint)]">New Workspace</span>
               </Link>
-            ))}
-            <Link
-              href="/onboarding"
-              onClick={() => setWsListOpen(false)}
-              className="relative group w-full h-9 flex items-center justify-center rounded-[8px] border border-dashed border-[var(--hairline-strong)] hover:border-[var(--line-cobalt)] transition-colors"
-            >
-              <Plus className="w-4 h-4 text-[var(--ink-faint)]" />
-            </Link>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
         {/* ── nav: grouped into Execution / Management ── */}
-        {expanded ? (
-          <div className="flex-1 flex flex-col gap-4">
-            {/* execution group */}
-            <div>
-              <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono px-2 mb-1.5">execution</p>
-              <div className="space-y-0.5">
-                {executionRoutes.map((route) => (
-                  <NavLink key={route.path} route={route} expanded={expanded} isActive={isActive(route.path)} runActive={runActive} />
-                ))}
-              </div>
+        <div className="flex-1 flex flex-col gap-2 min-h-0 overflow-y-auto">
+          <div>
+            <motion.p
+              initial={false}
+              animate={{ height: expanded ? 'auto' : 0, opacity: expanded ? 1 : 0, marginBottom: expanded ? 6 : 0 }}
+              transition={{ duration: 0.3, ease: EASE }}
+              className="overflow-hidden text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono px-2 whitespace-nowrap"
+            >
+              execution
+            </motion.p>
+            <div className="space-y-0.5">
+              {executionRoutes.map((route) => (
+                <NavLink key={route.path} route={route} expanded={expanded} isActive={isActive(route.path)} runActive={runActive} />
+              ))}
             </div>
+          </div>
 
-            {/* management group */}
-            <div>
-              <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono px-2 mb-1.5">management</p>
-              <div className="space-y-0.5">
-                {managementRoutes.map((route) => (
-                  <NavLink key={route.path} route={route} expanded={expanded} isActive={isActive(route.path)} runActive={runActive} />
-                ))}
-              </div>
+          <div className="h-px bg-[var(--hairline)] shrink-0" aria-hidden="true" />
+
+          <div>
+            <motion.p
+              initial={false}
+              animate={{ height: expanded ? 'auto' : 0, opacity: expanded ? 1 : 0, marginBottom: expanded ? 6 : 0 }}
+              transition={{ duration: 0.3, ease: EASE }}
+              className="overflow-hidden text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono px-2 whitespace-nowrap"
+            >
+              management
+            </motion.p>
+            <div className="space-y-0.5">
+              {managementRoutes.map((route) => (
+                <NavLink key={route.path} route={route} expanded={expanded} isActive={isActive(route.path)} runActive={runActive} />
+              ))}
             </div>
           </div>
-        ) : (
-          /* collapsed nav */
-          <div className="flex-1 flex flex-col gap-2.5 w-full">
-            {routes.map((route, i) => (
-              <div key={route.path} className="contents">
-                {i === 3 && <div className="h-px bg-[var(--hairline)] my-1 mx-auto w-8" aria-hidden="true" />}
-                <NavLink route={route} expanded={expanded} isActive={isActive(route.path)} runActive={runActive} />
-              </div>
-            ))}
-          </div>
-        )}
+        </div>
 
         {/* ── footer: user ── */}
-        <div className={`shrink-0 pt-3 border-t border-[var(--hairline)] mt-3 ${expanded ? 'px-1' : ''}`}>
+        <div className="shrink-0 pt-3 border-t border-[var(--hairline)] mt-3">
           <Link
             href={`${basePath}/settings`}
-            className={`flex items-center gap-2.5 rounded-[8px] transition-colors ${expanded ? 'h-10 px-2 hover:bg-[var(--net-panel-2)]' : 'w-full h-10 justify-center'}`}
             title={userName}
+            className="flex items-center h-10 px-1 rounded-[8px] hover:bg-[var(--net-panel-2)] transition-colors"
           >
             <span className="w-8 h-8 rounded-full border border-[var(--hairline)] flex items-center justify-center text-[11px] font-bold font-mono bg-[var(--net-panel-2)] shrink-0">
               {userInitial}
             </span>
-            {expanded && (
-              <span className="flex-1 min-w-0">
+            <motion.span
+              initial={false}
+              animate={labelAnim(expanded)}
+              transition={{ duration: 0.3, ease: EASE }}
+              className="overflow-hidden"
+            >
+              <span className="block w-[104px]">
                 <span className="block text-[11px] font-semibold truncate">{userName}</span>
                 <span className="block text-[9px] font-mono text-[var(--ink-faint)] truncate">{user?.email || ''}</span>
               </span>
-            )}
+            </motion.span>
           </Link>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
 
-/** Individual nav link — shared between collapsed and expanded states */
+/** Individual nav link — icon always visible, label animates in step with the dock width */
 function NavLink({ route, expanded, isActive, runActive }: {
   route: { path: string; label: string; icon: string };
   expanded: boolean;
@@ -239,17 +240,20 @@ function NavLink({ route, expanded, isActive, runActive }: {
   return (
     <Link
       href={route.path}
-      className={`dock-icon relative group ${expanded ? 'h-9 flex items-center gap-2.5 px-2.5 rounded-[8px]' : 'w-full h-11 flex items-center justify-center rounded-[10px]'}`}
+      className={`dock-icon relative flex items-center h-9 px-2.5 rounded-[8px] ${isActive ? 'active' : ''}`}
       title={route.label}
     >
-      <DemoIcon name={route.icon} className={expanded ? 'w-4 h-4 shrink-0' : 'w-5 h-5 shrink-0'} />
-      {expanded && (
-        <span className={`text-[12px] font-mono whitespace-nowrap ${isActive ? 'text-[var(--ink)] font-semibold' : ''}`}>
-          {route.label}
-        </span>
-      )}
+      <DemoIcon name={route.icon} className="w-4 h-4 shrink-0" />
+      <motion.span
+        initial={false}
+        animate={labelAnim(expanded)}
+        transition={{ duration: 0.3, ease: EASE }}
+        className={`overflow-hidden whitespace-nowrap text-[12px] font-mono ${isActive ? 'text-[var(--ink)] font-semibold' : ''}`}
+      >
+        {route.label}
+      </motion.span>
       {route.label === 'launchpad' && runActive && (
-        <span className={`absolute bg-[var(--line-scarlet)] animate-pulse ${expanded ? 'top-1/2 -translate-y-1/2 right-2.5 w-1.5 h-1.5 rounded-full' : 'top-1.5 right-1.5 w-2 h-2 rounded-full'}`} />
+        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--line-scarlet)] animate-pulse" />
       )}
     </Link>
   );

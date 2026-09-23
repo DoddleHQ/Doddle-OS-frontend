@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion } from 'motion/react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useOS } from '@/lib/demo/osStore';
 import { DemoIcon } from '@/lib/demo/icons';
@@ -11,6 +12,9 @@ import { buildDemoRoutes } from './routes';
 
 /** Hide the pill after this long without pointer, wheel, touch, or keyboard activity. */
 const IDLE_MS = 3000;
+
+/** Shared easing with the rest of the workspace (see ThreadDetail). */
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 /**
  * Floating pill header for non-dashboard pages. Replaces the left dock there:
@@ -68,6 +72,10 @@ export function PillNav({ workspaceId }: { workspaceId: string }) {
           setHovered(false);
           scheduleHide();
         }}
+        onFocus={() => setHovered(true)}
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget)) setHovered(false);
+        }}
         className="agency-panel agency-border border rounded-full flex items-center gap-0.5 px-2 py-1.5 max-w-[calc(100vw-2rem)]"
       >
         <Link href="/" title="Doddle OS" className="hover:opacity-85 transition-opacity mx-1 shrink-0">
@@ -79,14 +87,17 @@ export function PillNav({ workspaceId }: { workspaceId: string }) {
             key={route.path}
             href={route.path}
             title={route.label}
-            className={`dock-icon relative h-9 flex items-center rounded-full shrink-0 transition-[padding] duration-200 ${hovered ? 'px-2.5 gap-2' : 'w-9 justify-center'} ${isActive(route.path) ? 'active' : ''}`}
+            className={`dock-icon relative h-9 flex items-center rounded-full shrink-0 px-2.5 ${isActive(route.path) ? 'active' : ''}`}
           >
             <DemoIcon name={route.icon} className="w-4 h-4 shrink-0" />
-            <span
-              className={`text-[12px] font-mono whitespace-nowrap overflow-hidden transition-all duration-200 ${hovered ? 'max-w-[140px] opacity-100' : 'max-w-0 opacity-0'} ${isActive(route.path) ? 'text-[var(--ink)] font-semibold' : ''}`}
+            <motion.span
+              initial={false}
+              animate={{ width: hovered ? 'auto' : 0, marginLeft: hovered ? 8 : 0, opacity: hovered ? 1 : 0 }}
+              transition={{ duration: 0.3, ease: EASE }}
+              className={`overflow-hidden whitespace-nowrap text-[12px] font-mono ${isActive(route.path) ? 'text-[var(--ink)] font-semibold' : ''}`}
             >
               {route.label}
-            </span>
+            </motion.span>
             {route.label === 'launchpad' && runActive && (
               <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[var(--line-scarlet)] animate-pulse" />
             )}
@@ -96,16 +107,19 @@ export function PillNav({ workspaceId }: { workspaceId: string }) {
         <Link
           href={`${basePath}/settings`}
           title={userName}
-          className={`h-8 flex items-center rounded-full border border-[var(--hairline)] bg-[var(--net-panel-2)] hover:border-[var(--hairline-strong)] transition-all duration-200 shrink-0 ${hovered ? 'px-2 gap-2' : 'w-8 justify-center'}`}
+          className="h-8 flex items-center rounded-full border border-[var(--hairline)] bg-[var(--net-panel-2)] hover:border-[var(--hairline-strong)] transition-colors shrink-0 px-2"
         >
           <span className="flex items-center justify-center text-[10px] font-bold font-mono w-6 h-6 rounded-full shrink-0">
             {userInitial}
           </span>
-          <span
-            className={`text-[11px] font-semibold whitespace-nowrap overflow-hidden transition-all duration-200 ${hovered ? 'max-w-[120px] opacity-100 pr-1' : 'max-w-0 opacity-0'}`}
+          <motion.span
+            initial={false}
+            animate={{ width: hovered ? 'auto' : 0, marginLeft: hovered ? 8 : 0, opacity: hovered ? 1 : 0 }}
+            transition={{ duration: 0.3, ease: EASE }}
+            className="overflow-hidden whitespace-nowrap text-[11px] font-semibold"
           >
             {userName}
-          </span>
+          </motion.span>
         </Link>
       </nav>
     </div>
