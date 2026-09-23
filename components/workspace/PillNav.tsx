@@ -92,9 +92,9 @@ export function PillNav({ workspaceId }: { workspaceId: string }) {
             <DemoIcon name={route.icon} className="w-4 h-4 shrink-0" />
             <motion.span
               initial={false}
-              animate={{ width: hovered ? 'auto' : 0, marginLeft: hovered ? 8 : 0, opacity: hovered ? 1 : 0 }}
+              animate={{ width: hovered ? 'auto' : 0, marginLeft: hovered ? 8 : 0 }}
               transition={{ duration: 0.3, ease: EASE }}
-              className={`overflow-hidden whitespace-nowrap text-[12px] font-mono ${isActive(route.path) ? 'text-[var(--ink)] font-semibold' : ''}`}
+              className={`overflow-hidden whitespace-nowrap shrink-0 text-[12px] font-mono ${isActive(route.path) ? 'text-[var(--ink)] font-semibold' : ''}`}
             >
               {route.label}
             </motion.span>
@@ -114,9 +114,9 @@ export function PillNav({ workspaceId }: { workspaceId: string }) {
           </span>
           <motion.span
             initial={false}
-            animate={{ width: hovered ? 'auto' : 0, marginLeft: hovered ? 8 : 0, opacity: hovered ? 1 : 0 }}
+            animate={{ width: hovered ? 'auto' : 0, marginLeft: hovered ? 8 : 0 }}
             transition={{ duration: 0.3, ease: EASE }}
-            className="overflow-hidden whitespace-nowrap text-[11px] font-semibold"
+            className="overflow-hidden whitespace-nowrap shrink-0 text-[11px] font-semibold"
           >
             {userName}
           </motion.span>

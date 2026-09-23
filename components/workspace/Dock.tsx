@@ -27,12 +27,13 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 const RAIL_W = 72;
 const OPEN_W = 224;
 
-/** Label reveal used across tile, nav links, and footer — mirrors the pill nav. */
+/** Label reveal used across tile, nav links, and footer — mirrors the pill nav.
+ *  Text is hidden purely by the width clip; no opacity fade, so it reads
+ *  crisply from the first frame of the expansion. */
 function labelAnim(expanded: boolean) {
   return {
     width: expanded ? ('auto' as const) : 0,
     marginLeft: expanded ? 10 : 0,
-    opacity: expanded ? 1 : 0,
   };
 }
 
@@ -115,7 +116,7 @@ export function Dock({ workspaceId }: DockProps) {
               initial={false}
               animate={labelAnim(expanded)}
               transition={{ duration: 0.3, ease: EASE }}
-              className="overflow-hidden"
+              className="overflow-hidden shrink-0"
             >
               <span className="block w-[92px]">
                 <span className="block text-[13px] font-semibold truncate leading-tight">{currentName}</span>
@@ -126,7 +127,7 @@ export function Dock({ workspaceId }: DockProps) {
             </motion.span>
             <motion.span
               initial={false}
-              animate={{ width: expanded ? 'auto' : 0, marginLeft: expanded ? 6 : 0, opacity: expanded ? 1 : 0 }}
+              animate={{ width: expanded ? 'auto' : 0, marginLeft: expanded ? 6 : 0 }}
               transition={{ duration: 0.3, ease: EASE }}
               className="overflow-hidden shrink-0"
             >
@@ -170,7 +171,7 @@ export function Dock({ workspaceId }: DockProps) {
           <div>
             <motion.p
               initial={false}
-              animate={{ height: expanded ? 'auto' : 0, opacity: expanded ? 1 : 0, marginBottom: expanded ? 6 : 0 }}
+              animate={{ height: expanded ? 'auto' : 0, marginBottom: expanded ? 6 : 0 }}
               transition={{ duration: 0.3, ease: EASE }}
               className="overflow-hidden text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono px-2 whitespace-nowrap"
             >
@@ -188,7 +189,7 @@ export function Dock({ workspaceId }: DockProps) {
           <div>
             <motion.p
               initial={false}
-              animate={{ height: expanded ? 'auto' : 0, opacity: expanded ? 1 : 0, marginBottom: expanded ? 6 : 0 }}
+              animate={{ height: expanded ? 'auto' : 0, marginBottom: expanded ? 6 : 0 }}
               transition={{ duration: 0.3, ease: EASE }}
               className="overflow-hidden text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono px-2 whitespace-nowrap"
             >
@@ -216,7 +217,7 @@ export function Dock({ workspaceId }: DockProps) {
               initial={false}
               animate={labelAnim(expanded)}
               transition={{ duration: 0.3, ease: EASE }}
-              className="overflow-hidden"
+              className="overflow-hidden shrink-0"
             >
               <span className="block w-[104px]">
                 <span className="block text-[11px] font-semibold truncate">{userName}</span>
@@ -248,7 +249,7 @@ function NavLink({ route, expanded, isActive, runActive }: {
         initial={false}
         animate={labelAnim(expanded)}
         transition={{ duration: 0.3, ease: EASE }}
-        className={`overflow-hidden whitespace-nowrap text-[12px] font-mono ${isActive ? 'text-[var(--ink)] font-semibold' : ''}`}
+        className={`overflow-hidden whitespace-nowrap shrink-0 text-[12px] font-mono ${isActive ? 'text-[var(--ink)] font-semibold' : ''}`}
       >
         {route.label}
       </motion.span>
