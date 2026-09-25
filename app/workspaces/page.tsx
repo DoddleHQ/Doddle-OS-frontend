@@ -86,9 +86,12 @@ export default function WorkspacesPage() {
         <div className="max-w-[720px] mx-auto">
           {groups.map((group) => {
             const invited = ownOrgIds !== null && !ownOrgIds.has(group.organizationId);
+            // A lone org needs no header — it would only detach the section
+            // from the "Your Workspaces" title above it.
+            const singleOrg = groups.length === 1;
             return (
               <section key={group.organizationId} className="mb-8">
-                <div className="flex items-center gap-2.5 mb-3">
+                <div className={`flex items-center gap-2.5 mb-3 ${singleOrg ? 'hidden' : ''}`}>
                   <h2 className="v2-mono text-[11px] uppercase tracking-[0.08em]" style={{ color: 'var(--v2-paper-ink-2)' }}>
                     {group.organizationName}
                   </h2>

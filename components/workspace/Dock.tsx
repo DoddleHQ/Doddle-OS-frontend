@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
-import { ChevronDown, Plus } from 'lucide-react';
+import { Check, ChevronDown, Plus } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCurrentWorkspace } from '@/lib/hooks/useCurrentWorkspace';
 import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
@@ -136,32 +136,47 @@ export function Dock({ workspaceId }: DockProps) {
             </motion.span>
           </button>
 
-          {/* workspace dropdown — grouped by organization (own + invited) */}
+          {/* workspace dropdown — every workspace under its organization;
+              org headers only when there is more than one org, otherwise
+              they just detach the current workspace from its context */}
           {wsListOpen && expanded && (
             <div className="mt-1.5 space-y-1 border border-[var(--hairline)] rounded-[8px] p-1.5 bg-[var(--net-panel)] max-h-[60vh] overflow-y-auto">
-              {groupWorkspacesByOrg(workspaces.filter((w) => w.workspaceId !== workspaceId)).map((group) => (
-                <div key={group.organizationId}>
-                  <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono px-2 pt-1.5 pb-1 truncate">
-                    {group.organizationName}
-                  </p>
-                  {group.workspaces.map((ws) => (
-                    <Link
-                      key={ws.workspaceId}
-                      href={`/workspaces/${ws.workspaceId}`}
-                      onClick={() => setWsListOpen(false)}
-                      className="flex items-center gap-2.5 h-8 px-2 rounded-[6px] hover:bg-[var(--net-panel-2)] transition-colors"
-                    >
-                      <span
-                        className="flex items-center justify-center shrink-0 font-bold font-mono text-[10px] text-[var(--ink-dim)] border border-[var(--hairline)] rounded-[5px]"
-                        style={{ width: 22, height: 22 }}
-                      >
-                        {(ws.name || '?').trim().split(' ')[0]?.[0]?.toUpperCase()}
-                      </span>
-                      <span className="text-[11px] font-mono truncate flex-1">{ws.name || 'Workspace'}</span>
-                    </Link>
-                  ))}
-                </div>
-              ))}
+              {(() => {
+                const groups = groupWorkspacesByOrg(workspaces);
+                const singleOrg = groups.length === 1;
+                return groups.map((group) => (
+                  <div key={group.organizationId}>
+                    {!singleOrg && (
+                      <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)] font-mono px-2 pt-1.5 pb-1 truncate">
+                        {group.organizationName}
+                      </p>
+                    )}
+                    {group.workspaces.map((ws) => {
+                      const isCurrent = ws.workspaceId === workspaceId;
+                      return (
+                        <Link
+                          key={ws.workspaceId}
+                          href={`/workspaces/${ws.workspaceId}`}
+                          onClick={() => setWsListOpen(false)}
+                          aria-current={isCurrent ? 'page' : undefined}
+                          className={`flex items-center gap-2.5 h-8 px-2 rounded-[6px] transition-colors ${isCurrent ? 'bg-[var(--accent-soft)]' : 'hover:bg-[var(--net-panel-2)]'}`}
+                        >
+                          <span
+                            className="flex items-center justify-center shrink-0 font-bold font-mono text-[10px] text-[var(--ink-dim)] border border-[var(--hairline)] rounded-[5px]"
+                            style={{ width: 22, height: 22 }}
+                          >
+                            {(ws.name || '?').trim().split(' ')[0]?.[0]?.toUpperCase()}
+                          </span>
+                          <span className={`text-[11px] font-mono truncate flex-1 ${isCurrent ? 'text-[var(--ink)] font-semibold' : ''}`}>
+                            {ws.name || 'Workspace'}
+                          </span>
+                          {isCurrent && <Check className="w-3 h-3 shrink-0" style={{ color: 'var(--line-cobalt)' }} />}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ));
+              })()}
               <Link
                 href="/onboarding"
                 onClick={() => setWsListOpen(false)}
