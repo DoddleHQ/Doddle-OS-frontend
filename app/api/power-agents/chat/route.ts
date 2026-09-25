@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
     assistantId: string;
     threadId?: string;
     agentKey?: string;
+    workspaceId?: string;
     messages: Array<{ role: string; content: string }>;
   };
 
@@ -73,13 +74,12 @@ export async function POST(req: NextRequest) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({
-        metadata: body.agentKey
-          ? {
-              assistant_id: assistantId,
-              agent_key: body.agentKey,
-              title: 'New session',
-            }
-          : { assistant_id: assistantId, title: 'New session' },
+        metadata: {
+          assistant_id: assistantId,
+          ...(body.agentKey ? { agent_key: body.agentKey } : {}),
+          ...(body.workspaceId ? { workspace_id: body.workspaceId } : {}),
+          title: 'New session',
+        },
       }),
     });
     if (!tRes.ok) {

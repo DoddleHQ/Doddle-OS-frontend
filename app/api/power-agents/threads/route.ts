@@ -20,14 +20,19 @@ interface ThreadRow {
 
 export async function GET(req: NextRequest) {
   const agentKey = req.nextUrl.searchParams.get('agentKey');
+  const workspaceId = req.nextUrl.searchParams.get('workspaceId');
   if (!agentKey) {
     return NextResponse.json({ error: 'agentKey required' }, { status: 400 });
   }
+  // Threads are scoped to the workspace — without the workspace_id filter
+  // every workspace would see the same agent's sessions across tenants.
   const res = await fetch(`${getLangGraphApiUrl()}/threads/search`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...langgraphAuthHeaders(req) },
     body: JSON.stringify({
-      metadata: { agent_key: agentKey },
+      metadata: workspaceId
+        ? { agent_key: agentKey, workspace_id: workspaceId }
+        : { agent_key: agentKey },
       limit: 50,
       sort_by: 'updated_at',
       sort_order: 'desc',
@@ -54,6 +59,7 @@ export async function POST(req: NextRequest) {
   const body = (await req.json()) as {
     agentKey: string;
     assistantId: string;
+    workspaceId?: string;
     title?: string;
   };
   if (!body.agentKey || !body.assistantId) {
@@ -69,6 +75,7 @@ export async function POST(req: NextRequest) {
       metadata: {
         assistant_id: body.assistantId,
         agent_key: body.agentKey,
+        ...(body.workspaceId ? { workspace_id: body.workspaceId } : {}),
         title: body.title ?? 'New session',
       },
     }),

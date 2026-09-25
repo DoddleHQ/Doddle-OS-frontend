@@ -520,7 +520,7 @@ interface SessionChip {
   title: string;
 }
 
-function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: string) => void }) {
+function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspaceId: string; onDone: (label: string) => void }) {
   const meta = agentMeta(agent.id);
   const [task, setTask] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -566,7 +566,7 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
 
   const refreshSessions = async () => {
     try {
-      const res = await fetch(`/api/power-agents/threads?agentKey=${agent.id}`);
+      const res = await fetch(`/api/power-agents/threads?agentKey=${agent.id}&workspaceId=${workspaceId}`);
       if (res.status === 401) redirectToLogin();
       if (res.ok) setSessions(await res.json());
     } catch { /* list is best-effort */ }
@@ -588,6 +588,7 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
           ...(body as Record<string, unknown> | undefined),
           assistantId: agent.assistantId,
           agentKey: agent.id,
+          workspaceId,
           threadId: activeThreadRef.current,
           messages: chatMessages.map((m) => ({
             role: m.role,
@@ -649,7 +650,7 @@ function SoloSession({ agent, onDone }: { agent: LiveAgent; onDone: (label: stri
       const res = await fetch('/api/power-agents/threads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentKey: agent.id, assistantId: agent.assistantId }),
+        body: JSON.stringify({ agentKey: agent.id, assistantId: agent.assistantId, workspaceId }),
       });
       if (res.ok) {
         const t = (await res.json()) as SessionChip;
@@ -1440,6 +1441,7 @@ export default function DemoPowerAgentsPage() {
           <SoloSession
             key={selected.id}
             agent={selected}
+            workspaceId={workspaceId}
             onDone={(handle) => {
               if (toastedRef.current === handle + selected.id) return;
               toastedRef.current = handle + selected.id;
