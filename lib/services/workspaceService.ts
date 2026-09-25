@@ -48,6 +48,36 @@ export class InviteLinkConflictError extends Error {
 }
 
 // ---------------------------------------------------------------------------
+// Organizations
+// ---------------------------------------------------------------------------
+
+export interface OrganizationEntry {
+    organizationId: string;
+    name: string;
+    status: string;
+    isOwner: boolean;
+    memberCount: number;
+}
+
+export const organizationService = {
+    /**
+     * GET /api/v1/organizations
+     * Organizations the user belongs to — their own plus any they were
+     * invited to. Used to tell owned orgs from invited ones in switchers.
+     */
+    async listOrganizations(): Promise<OrganizationEntry[]> {
+        const raw = (await apiGet('/api/v1/organizations')) as Record<string, unknown>;
+        return ((raw.items as Record<string, unknown>[]) || []).map((o) => ({
+            organizationId: o.organizationId as string,
+            name: (o.name as string) ?? '',
+            status: (o.status as string) ?? 'active',
+            isOwner: Boolean(o.isOwner),
+            memberCount: (o.memberCount as number) ?? 0,
+        }));
+    },
+};
+
+// ---------------------------------------------------------------------------
 // Workspace CRUD
 // ---------------------------------------------------------------------------
 
@@ -295,6 +325,9 @@ function toWorkspace(raw: Record<string, unknown>): Workspace {
         websiteDomain: (raw.websiteDomain as string) ?? null,
         createdAt: raw.createdAt as string,
         updatedAt: (raw.updatedAt as string) ?? null,
+        organizationId: (raw.organizationId as string) ?? undefined,
+        organizationName: (raw.organizationName as string) ?? undefined,
+        yourRole: (raw.yourRole as Workspace['yourRole']) ?? undefined,
     };
 }
 

@@ -1,22 +1,23 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { organizationService } from '@/lib/services/workspaceService';
+import { groupWorkspacesByOrg } from '@/lib/utils/groupByOrg';
 import type { Workspace } from '@/lib/types/workspace.types';
 import { Logo } from '@/components/v2/Logo';
 
 /*
  * /workspaces — the workspace list page.
  *
- * If the user has workspaces, show them as cards to select from.
- * If the user has NO workspaces, automatically redirect to /onboarding
- * where the agent will guide them through brand persona setup and
- * create a workspace for them at the end.
+ * Workspaces are grouped under the organizations they belong to: the user's
+ * own org plus any organizations they were invited to. If the user has NO
+ * workspaces at all, redirect to /onboarding.
  */
 
 const PREMIUM_EASE = [0.4, 0, 0.2, 1] as const;
@@ -25,6 +26,16 @@ export default function WorkspacesPage() {
   const router = useRouter();
   const { workspaces, isLoading } = useWorkspaces();
   const status = useAuthStore((s) => s.status);
+  // Orgs the user owns — groups outside this set are orgs they were invited to.
+  const [ownOrgIds, setOwnOrgIds] = useState<Set<string> | null>(null);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    organizationService
+      .listOrganizations()
+      .then((orgs) => setOwnOrgIds(new Set(orgs.filter((o) => o.isOwner).map((o) => o.organizationId))))
+      .catch(() => setOwnOrgIds(null));
+  }, [status]);
 
   // No workspaces → go to onboarding (the agent creates the workspace)
   useEffect(() => {
@@ -51,6 +62,8 @@ export default function WorkspacesPage() {
     );
   }
 
+  const groups = groupWorkspacesByOrg(workspaces);
+
   return (
     <div className="v2-scope min-h-screen" style={{ background: 'var(--v2-paper-ground)' }}>
       {/* Header */}
@@ -68,12 +81,38 @@ export default function WorkspacesPage() {
         </div>
       </header>
 
-      {/* Workspace cards */}
+      {/* Workspace cards, grouped by organization */}
       <main className="px-6 md:px-10 pb-20">
-        <div className="max-w-[720px] mx-auto space-y-2">
-          {workspaces.map((ws, i) => (
-            <WorkspaceCard key={ws.workspaceId} ws={ws} index={i} />
-          ))}
+        <div className="max-w-[720px] mx-auto">
+          {groups.map((group) => {
+            const invited = ownOrgIds !== null && !ownOrgIds.has(group.organizationId);
+            return (
+              <section key={group.organizationId} className="mb-8">
+                <div className="flex items-center gap-2.5 mb-3">
+                  <h2 className="v2-mono text-[11px] uppercase tracking-[0.08em]" style={{ color: 'var(--v2-paper-ink-2)' }}>
+                    {group.organizationName}
+                  </h2>
+                  {invited && (
+                    <span
+                      className="v2-mono text-[9px] uppercase px-1.5 py-0.5 rounded-[4px]"
+                      style={{ color: 'var(--v2-vermilion)', border: '1px solid rgba(200,50,27,0.25)' }}
+                    >
+                      Invited
+                    </span>
+                  )}
+                  <span className="flex-1 h-px" style={{ background: 'var(--v2-paper-rule)' }} aria-hidden="true" />
+                  <span className="v2-mono text-[10px]" style={{ color: 'var(--v2-paper-ink-2)' }}>
+                    {group.workspaces.length}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {group.workspaces.map((ws, i) => (
+                    <WorkspaceCard key={ws.workspaceId} ws={ws} index={i} />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
 
           {/* Create another workspace */}
           <Link
@@ -99,7 +138,7 @@ function WorkspaceCard({ ws, index }: { ws: Workspace; index: number }) {
       transition={{ duration: 0.4, delay: index * 0.06, ease: PREMIUM_EASE }}
     >
       <Link
-        href={`/workspaces/${ws.workspaceId}/mission-control`}
+        href={`/workspaces/${ws.workspaceId}`}
         className="flex items-center justify-between gap-4 p-4 rounded-[10px] transition-all hover:translate-y-[-1px] group"
         style={{ background: 'rgba(255,255,255,0.35)', border: '1px solid var(--v2-paper-rule)' }}
       >
@@ -114,11 +153,21 @@ function WorkspaceCard({ ws, index }: { ws: Workspace; index: number }) {
             <h3 className="text-[14px] font-semibold truncate" style={{ color: 'var(--v2-paper-ink)' }}>
               {ws.name || 'Untitled Workspace'}
             </h3>
-            {ws.websiteDomain && (
-              <p className="v2-mono text-[11px] truncate" style={{ color: 'var(--v2-paper-ink-2)' }}>
-                {ws.websiteDomain}
-              </p>
-            )}
+            <div className="flex items-center gap-2 min-w-0">
+              {ws.websiteDomain && (
+                <p className="v2-mono text-[11px] truncate" style={{ color: 'var(--v2-paper-ink-2)' }}>
+                  {ws.websiteDomain}
+                </p>
+              )}
+              {ws.yourRole && (
+                <span
+                  className="v2-mono text-[9px] uppercase px-1.5 py-0.5 rounded-[4px] shrink-0"
+                  style={{ color: 'var(--v2-paper-ink-2)', border: '1px solid var(--v2-paper-rule)' }}
+                >
+                  {ws.yourRole}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <ArrowRight className="w-4 h-4 flex-shrink-0 transition-transform group-hover:translate-x-1" style={{ color: 'var(--v2-vermilion)' }} />

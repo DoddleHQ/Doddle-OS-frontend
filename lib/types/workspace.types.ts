@@ -25,6 +25,11 @@ export interface Workspace {
     websiteDomain: string | null;
     createdAt: string;
     updatedAt: string | null;
+    /** Organization the workspace belongs to (present on list responses). */
+    organizationId?: string;
+    organizationName?: string;
+    /** Caller's role in this workspace (present on list responses). */
+    yourRole?: WorkspaceRole;
 }
 
 // ---------------------------------------------------------------------------

@@ -42,7 +42,11 @@ const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const authStatus = useAuthStore((s) => s.status);
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    // Start as loading: until the first fetch completes, "empty" is unknown,
+    // not real — guards that treat empty as "send to onboarding" would fire
+    // during the first render otherwise (child effects run before this
+    // provider's fetch effect on a full page load).
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const fetchWorkspaces = useCallback(async () => {
@@ -64,8 +68,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (authStatus === 'authenticated') {
             fetchWorkspaces();
-        } else {
-            // Clear workspace data when user logs out
+        } else if (authStatus === 'unauthenticated') {
+            // Clear workspace data on logout. NOT while status is 'loading':
+            // during bootstrap the empty list is unknown, not real, and guards
+            // that treat empty as "go to onboarding" would fire before the
+            // first fetch even starts (child effects run before this
+            // provider's fetch effect on a full page load).
             setWorkspaces([]);
             setIsLoading(false);
             setError(null);
