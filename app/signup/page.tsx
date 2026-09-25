@@ -53,6 +53,14 @@ export default function SignupPage() {
     setStatus('loading');
     try {
       await signup({ name, email, password });
+      // Preserve an invite return URL (e.g. /accept-invite?token=...) through the
+      // email-verification round trip: check-email and the emailed verify link
+      // both lose query params, so stash the target for the login page to
+      // pick up once the user signs in.
+      const next = new URLSearchParams(window.location.search).get('next');
+      if (next) {
+        try { sessionStorage.setItem('pendingNext', next); } catch { /* private mode */ }
+      }
       router.push(`/check-email?email=${encodeURIComponent(email)}`);
     } catch (err: unknown) {
       setStatus('idle');

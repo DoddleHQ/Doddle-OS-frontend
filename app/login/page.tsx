@@ -21,6 +21,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
+  // Forward the return URL (e.g. an invite link) to signup so the new-user
+  // flow can return to it after email verification. Set in an effect — the
+  // state initializer would only run during SSR and never on hydration.
+  const [signupHref, setSignupHref] = useState('/signup');
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get('next');
+    if (next) setSignupHref(`/signup?next=${encodeURIComponent(next)}`);
+  }, []);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [status, setStatus] = useState<Status>('idle');
@@ -85,7 +93,15 @@ export default function LoginPage() {
       loginSuccess(result);
       setStatus('success');
 
-      const next = new URLSearchParams(window.location.search).get('next');
+      let next = new URLSearchParams(window.location.search).get('next');
+      if (!next) {
+        // Signup stashed an invite return URL here — the email verification
+        // round trip drops query params, so it's recovered at login instead.
+        try {
+          next = sessionStorage.getItem('pendingNext');
+          if (next) sessionStorage.removeItem('pendingNext');
+        } catch { next = null; }
+      }
       if (next) {
         setTimeout(() => {
           router.push(next);
@@ -229,7 +245,7 @@ export default function LoginPage() {
               </motion.button>
 
               <motion.p variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="v2-mono text-[12px] text-center mt-6" style={{ color: 'var(--v2-paper-ink-2)' }}>
-                No account? <Link href="/signup" className="hover:underline font-medium font-bold" style={{ color: 'var(--v2-vermilion)' }}>Create one</Link>
+                No account? <Link href={signupHref} className="hover:underline font-medium font-bold" style={{ color: 'var(--v2-vermilion)' }}>Create one</Link>
               </motion.p>
             </motion.form>
           )}

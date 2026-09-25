@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'motion/react';
@@ -8,6 +8,7 @@ import { CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
 import { FlowingThreads } from '@/components/v2/FlowingThreads';
 import { Logo } from '@/components/v2/Logo';
 import { inviteLinkService } from '@/lib/services/workspaceService';
+import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -23,9 +24,13 @@ function AcceptInviteContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const token = searchParams.get('token');
+    const { refresh: refreshWorkspaces } = useWorkspaces();
 
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [message, setMessage] = useState('');
+    // React StrictMode double-invokes effects in dev — without this guard the
+    // accept POST fires twice and the second attempt reads as a failure.
+    const attempted = useRef(false);
 
     useEffect(() => {
         async function acceptInvite() {
@@ -34,17 +39,34 @@ function AcceptInviteContent() {
                 setMessage('No invite token found. Please check your invite link.');
                 return;
             }
+            if (attempted.current) return;
+            attempted.current = true;
             try {
                 const result = await inviteLinkService.acceptInvite(token);
+                // Joining a workspace changes what the guards consider "your
+                // workspaces". The app-wide context fetched the list at login
+                // time — before this membership existed — so without a refetch
+                // every guard still sees an empty list and sends the user to
+                // onboarding to create a workspace they already have.
+                await refreshWorkspaces();
                 setStatus('success');
                 setMessage(result.message || 'You have joined the workspace.');
             } catch (err) {
+                // Re-visiting an already-used link is not a failure — the user
+                // is in the workspace either way.
+                const msg = err instanceof Error ? err.message : '';
+                if (/already a member/i.test(msg)) {
+                    await refreshWorkspaces().catch(() => {});
+                    setStatus('success');
+                    setMessage('You are already a member of this workspace.');
+                    return;
+                }
                 setStatus('error');
-                setMessage(err instanceof Error ? err.message : 'Failed to accept invite. The link may be expired or invalid.');
+                setMessage(msg || 'Failed to accept invite. The link may be expired or invalid.');
             }
         }
         acceptInvite();
-    }, [token]);
+    }, [token, refreshWorkspaces]);
 
     return (
         <div className="v2-scope min-h-screen flex flex-col relative overflow-hidden" style={{ background: 'var(--v2-paper-ground)' }}>
