@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'motion/react';
@@ -8,6 +8,7 @@ import { ArrowRight, Loader2 } from 'lucide-react';
 import { FlowingThreads } from '@/components/v2/FlowingThreads';
 import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { organizationService, type OrganizationEntry } from '@/lib/services/workspaceService';
 import { normalizeDomain } from '@/lib/utils/domain';
 import { Logo } from '@/components/v2/Logo';
 
@@ -19,6 +20,9 @@ const EASE = [0.4, 0, 0.2, 1] as const;
  * Replaces the slow graph-driven onboarding. Two inputs: name + website URL.
  * Domain is extracted via normalizeDomain() (JavaScript URL constructor).
  * No brand persona generation — that's a separate in-workspace setup step.
+ *
+ * Users invited into other organizations get an org picker (own org
+ * preselected); a single-org user never sees it.
  *
  * Design: Specimen Terminal paper register, FlowingThreads ambient background,
  * same visual language as the auth pages.
@@ -32,6 +36,21 @@ export function WorkspaceCreate() {
   const [url, setUrl] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [orgs, setOrgs] = useState<OrganizationEntry[]>([]);
+  const [orgId, setOrgId] = useState<string>('');
+
+  useEffect(() => {
+    organizationService
+      .listOrganizations()
+      .then((list) => {
+        // Only org owners can create workspaces (backend rule) — orgs the
+        // user was invited to are not valid creation targets.
+        const owned = list.filter((o) => o.isOwner);
+        setOrgs(owned);
+        if (owned[0]) setOrgId(owned[0].organizationId);
+      })
+      .catch(() => setOrgs([]));
+  }, []);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +63,7 @@ export function WorkspaceCreate() {
 
     try {
       const domain = url.trim() ? normalizeDomain(url.trim()) : undefined;
-      const ws = await createWorkspace(name.trim(), domain);
+      const ws = await createWorkspace(name.trim(), domain, undefined, orgId || undefined);
 
       // Refresh auth so middleware sees a fresh cookie
       // refreshAuth can hang (never resolves) — race it with a timeout so
@@ -61,7 +80,7 @@ export function WorkspaceCreate() {
       setError(err instanceof Error ? err.message : 'Failed to create workspace');
       setCreating(false);
     }
-  }, [name, url, createWorkspace, refreshAuth, router]);
+  }, [name, url, orgId, createWorkspace, refreshAuth, router]);
 
   return (
     <div className="v2-scope min-h-screen flex flex-col relative overflow-hidden" style={{ background: 'var(--v2-paper-ground)' }}>
@@ -155,6 +174,37 @@ export function WorkspaceCreate() {
                 Any format works — we&apos;ll extract the domain automatically.
               </p>
             </div>
+
+            {orgs.length > 1 && (
+              <div>
+                <label
+                  className="block text-[12px] font-medium mb-1.5"
+                  style={{ color: 'var(--v2-paper-ink)' }}
+                >
+                  Organization
+                </label>
+                <select
+                  value={orgId}
+                  onChange={(e) => setOrgId(e.target.value)}
+                  disabled={creating}
+                  className="w-full px-3.5 py-3 text-[14px] outline-none rounded-[10px] v2-auth-input"
+                  style={{
+                    background: 'rgba(255,255,255,0.5)',
+                    border: '1px solid var(--v2-paper-rule)',
+                    color: 'var(--v2-paper-ink)',
+                  }}
+                >
+                  {orgs.map((o) => (
+                    <option key={o.organizationId} value={o.organizationId}>
+                      {o.name}{o.isOwner ? '' : ' — invited'}
+                    </option>
+                  ))}
+                </select>
+                <p className="v2-mono text-[10px] mt-1.5" style={{ color: 'var(--v2-paper-ink-2)' }}>
+                  The workspace will belong to the selected organization.
+                </p>
+              </div>
+            )}
 
             {error && (
               <p className="text-[12px]" style={{ color: 'var(--v2-vermilion)' }}>{error}</p>

@@ -90,6 +90,8 @@ export interface CreateWorkspaceRequest {
     websiteDomain?: string;
     /** Initial brand persona markdown. Optional. */
     brandPersona?: string;
+    /** Organization the workspace is created in (backend requires it). */
+    organizationId: string;
 }
 
 export interface UpdateWorkspaceRequest {

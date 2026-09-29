@@ -8,7 +8,7 @@ import {
     useCallback,
     type ReactNode,
 } from 'react';
-import { workspaceService } from '@/lib/services/workspaceService';
+import { workspaceService, organizationService } from '@/lib/services/workspaceService';
 import { useAuthStore } from '@/lib/stores/authStore';
 import type { Workspace } from '@/lib/types/workspace.types';
 
@@ -25,8 +25,9 @@ type WorkspaceContextValue = {
     error: string | null;
     /** Refetch the workspace list. */
     refresh: () => Promise<void>;
-    /** Create a new workspace and refresh the list. */
-    createWorkspace: (name: string, websiteDomain?: string, brandPersona?: string) => Promise<Workspace>;
+    /** Create a new workspace and refresh the list. Without an explicit
+     *  organizationId it defaults to the user's own organization. */
+    createWorkspace: (name: string, websiteDomain?: string, brandPersona?: string, organizationId?: string) => Promise<Workspace>;
 };
 
 // ---------------------------------------------------------------------------
@@ -81,11 +82,24 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }, [authStatus, fetchWorkspaces]);
 
     const createWorkspace = useCallback(
-        async (name: string, websiteDomain?: string, brandPersona?: string): Promise<Workspace> => {
+        async (name: string, websiteDomain?: string, brandPersona?: string, organizationId?: string): Promise<Workspace> => {
+            // The backend requires the target organization. Callers that
+            // offer an org picker pass it explicitly; everyone else defaults
+            // to the user's own organization (auto-created at signup).
+            let orgId = organizationId;
+            if (!orgId) {
+                const orgs = await organizationService.listOrganizations().catch(() => []);
+                const owned = orgs.find((o) => o.isOwner) ?? orgs[0];
+                if (!owned) {
+                    throw new Error('No organization available — cannot create a workspace');
+                }
+                orgId = owned.organizationId;
+            }
             const workspace = await workspaceService.createWorkspace({
                 name,
                 websiteDomain,
                 brandPersona,
+                organizationId: orgId,
             });
             // Refresh the list to include the new workspace
             await fetchWorkspaces();
