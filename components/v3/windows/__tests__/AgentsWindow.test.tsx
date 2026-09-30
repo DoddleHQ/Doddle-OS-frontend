@@ -218,6 +218,38 @@ describe('AgentsWindow · execution (real chat wiring)', () => {
     expect(screen.getByText(/grep · done/i)).toBeTruthy();
   });
 
+  it('groups tool runs ACROSS messages: no repeated stray rows between assistant turns', async () => {
+    chatState.messages = [
+      { id: 'a1', role: 'assistant', parts: [{ type: 'tool-wp_get_page', toolCallId: 'p1', state: 'output-available' }, { type: 'tool-wp_get_site_settings', toolCallId: 'p2', state: 'output-available' }] },
+      { id: 'a2', role: 'assistant', parts: [{ type: 'tool-wp_get_page', toolCallId: 'p3', state: 'output-available' }] },
+      { id: 'a3', role: 'assistant', parts: [{ type: 'tool-wp_get_posts', toolCallId: 'p4', state: 'output-available' }] },
+      { id: 'a4', role: 'assistant', parts: [{ type: 'text', text: 'Drafted the page.' }] },
+    ];
+    mockFetchJson(/power-agents\/threads\?/, []);
+    render(<AgentsWindow />);
+    // four consecutive tools across four messages → ONE group row, no strays
+    const head = await screen.findByRole('button', { name: /steps/i });
+    expect(head.textContent).toContain('×4');
+    expect(screen.queryByText(/wp_get_page · done/i)).toBeNull();
+    expect(screen.getByText('Drafted the page.')).toBeTruthy();
+  });
+
+  it('a user turn breaks the tool run', async () => {
+    chatState.messages = [
+      { id: 'a1', role: 'assistant', parts: [{ type: 'tool-grep', toolCallId: 'g1', state: 'output-available' }] },
+      { id: 'u1', role: 'user', parts: [{ type: 'text', text: 'and now?' }] },
+      { id: 'a2', role: 'assistant', parts: [{ type: 'tool-grep', toolCallId: 'g2', state: 'output-available' }, { type: 'tool-grep', toolCallId: 'g3', state: 'output-available' }, { type: 'tool-grep', toolCallId: 'g4', state: 'output-available' }, { type: 'tool-grep', toolCallId: 'g5', state: 'output-available' }] },
+    ];
+    mockFetchJson(/power-agents\/threads\?/, []);
+    render(<AgentsWindow />);
+    expect(await screen.findByText(/and now?/i)).toBeTruthy();
+    // after the user turn: the same-name 4-run groups under its own label;
+    // the lone earlier one stays individual
+    const head = screen.getByRole('button', { name: /grep/i });
+    expect(head.textContent).toContain('×4');
+    expect(screen.getAllByText(/grep · done/i)).toHaveLength(1);
+  });
+
   it('same-name runs keep their tool name as the group label', async () => {
     chatState.messages = [
       {

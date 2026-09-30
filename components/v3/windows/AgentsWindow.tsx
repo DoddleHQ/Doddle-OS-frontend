@@ -395,9 +395,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
                   No messages yet — assign a task below. Nothing ships without you.
                 </p>
               )}
-              {messages.map((m) => (
-                <ChatMessage key={m.id} message={m} />
-              ))}
+              <ChatFeed messages={messages} />
               {busy && (
                 <p className="font-mono text-xs v3-working" style={{ color: 'var(--muted)' }}>
                   working…
@@ -577,28 +575,21 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
   );
 }
 
-/** One feed message: user lines echo mono; assistant renders markdown + tool rows. */
-function ChatMessage({ message }: { message: UIMessage }) {
+/**
+ * The conversation feed. Tool calls group across message boundaries: any
+ * uninterrupted run of tools (no text between) forms one accordion — runs of
+ * ≤3 render individually, 4+ collapse (same rule as the power-agents page).
+ */
+function ChatFeed({ messages }: { messages: UIMessage[] }) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-
-  if (message.role === 'user') {
-    const text = message.parts?.map((p) => (p.type === 'text' ? (p as { text?: string }).text ?? '' : '')).join('');
-    return (
-      <div className="v3-msg v3-msg-user">
-        <span className="v3-msg-prompt">$</span>
-        <span className="font-mono text-xs">{text}</span>
-      </div>
-    );
-  }
 
   type ToolInfo = { key: string; name: string; state: string };
   type Item =
+    | { kind: 'user'; key: string; text: string }
     | { kind: 'text'; key: string; text: string }
     | { kind: 'tool'; tool: ToolInfo }
     | { kind: 'toolgroup'; key: string; tools: ToolInfo[] };
 
-  // pre-group consecutive tool parts (same rule as the power-agents page):
-  // runs of ≤3 render individually; 4+ collapse into one expandable row
   const items: Item[] = [];
   let toolRun: ToolInfo[] = [];
   const flushRun = () => {
@@ -606,42 +597,59 @@ function ChatMessage({ message }: { message: UIMessage }) {
     if (toolRun.length <= 3) {
       toolRun.forEach((t) => items.push({ kind: 'tool', tool: t }));
     } else {
-      items.push({ kind: 'toolgroup', key: `grp-${message.id}-${items.length}`, tools: [...toolRun] });
+      items.push({ kind: 'toolgroup', key: `grp-${items.length}-${toolRun[0].key}`, tools: [...toolRun] });
     }
     toolRun = [];
   };
-  (message.parts ?? []).forEach((p, i) => {
-    if (p.type.startsWith('tool-')) {
-      const tp = p as unknown as { toolCallId?: string; state?: string };
-      toolRun.push({ key: tp.toolCallId ?? `${message.id}-${i}`, name: p.type.slice('tool-'.length) || 'tool', state: tp.state ?? '' });
-    } else {
-      flushRun();
-      if (p.type === 'text' && (p as { text?: string }).text) {
-        items.push({ kind: 'text', key: `txt-${message.id}-${i}`, text: (p as { text: string }).text });
-      }
+
+  messages.forEach((m) => {
+    if (m.role === 'user') {
+      flushRun(); // a user turn breaks any tool run
+      const text = m.parts?.map((p) => (p.type === 'text' ? (p as { text?: string }).text ?? '' : '')).join('');
+      if (text) items.push({ kind: 'user', key: `usr-${m.id}`, text });
+      return;
     }
+    (m.parts ?? []).forEach((p, i) => {
+      if (p.type.startsWith('tool-')) {
+        const tp = p as unknown as { toolCallId?: string; state?: string };
+        toolRun.push({ key: `${m.id}-${tp.toolCallId ?? i}`, name: p.type.slice('tool-'.length) || 'tool', state: tp.state ?? '' });
+      } else {
+        flushRun();
+        if (p.type === 'text' && (p as { text?: string }).text) {
+          items.push({ kind: 'text', key: `txt-${m.id}-${i}`, text: (p as { text: string }).text });
+        }
+      }
+    });
   });
   flushRun();
 
   const toolState = (state: string): 'running' | 'failed' | 'done' =>
     state === 'input-streaming' || state === 'input-available' ? 'running' : state === 'output-error' ? 'failed' : 'done';
 
-  return (
-    <div className="v3-msg v3-msg-assistant">
-      {items.map((item) => {
-        if (item.kind === 'text') return <V3Markdown key={item.key}>{item.text}</V3Markdown>;
+  const toolRow = (t: ToolInfo, className = '') => {
+    const st = toolState(t.state);
+    return (
+      <p key={t.key} className={`v3-tool-row font-mono text-[10px] ${className}${st === 'running' ? ' running' : ''}${st === 'failed' ? ' failed' : ''}`}>
+        <Wrench size={10} style={{ display: 'inline', verticalAlign: '-1px' }} /> {t.name}
+        {st === 'running' ? ' · running…' : st === 'failed' ? ' · failed' : ' · done'}
+      </p>
+    );
+  };
 
-        if (item.kind === 'tool') {
-          const st = toolState(item.tool.state);
+  return (
+    <>
+      {items.map((item) => {
+        if (item.kind === 'user') {
           return (
-            <p key={item.tool.key} className={`v3-tool-row font-mono text-[10px]${st === 'running' ? ' running' : ''}${st === 'failed' ? ' failed' : ''}`}>
-              <Wrench size={10} style={{ display: 'inline', verticalAlign: '-1px' }} /> {item.tool.name}
-              {st === 'running' ? ' · running…' : st === 'failed' ? ' · failed' : ' · done'}
-            </p>
+            <div key={item.key} className="v3-msg v3-msg-user">
+              <span className="v3-msg-prompt">$</span>
+              <span className="font-mono text-xs">{item.text}</span>
+            </div>
           );
         }
+        if (item.kind === 'text') return <V3Markdown key={item.key}>{item.text}</V3Markdown>;
+        if (item.kind === 'tool') return toolRow(item.tool);
 
-        // group: slim row + count, expandable to the individual calls
         const anyRunning = item.tools.some((t) => toolState(t.state) === 'running');
         const anyFailed = item.tools.some((t) => toolState(t.state) === 'failed');
         const allSameName = item.tools.every((t) => t.name === item.tools[0].name);
@@ -667,20 +675,11 @@ function ChatMessage({ message }: { message: UIMessage }) {
               <span className="v3-tool-count">×{item.tools.length}</span>
               <ChevronDown size={10} className="v3-tool-chev" style={{ display: 'inline', verticalAlign: '-1px' }} />
             </button>
-            {expanded &&
-              item.tools.map((t) => {
-                const st = toolState(t.state);
-                return (
-                  <p key={t.key} className={`v3-tool-row v3-tool-child font-mono text-[10px]${st === 'running' ? ' running' : ''}${st === 'failed' ? ' failed' : ''}`}>
-                    <Wrench size={10} style={{ display: 'inline', verticalAlign: '-1px' }} /> {t.name}
-                    {st === 'running' ? ' · running…' : st === 'failed' ? ' · failed' : ' · done'}
-                  </p>
-                );
-              })}
+            {expanded && item.tools.map((t) => toolRow(t, 'v3-tool-child '))}
           </div>
         );
       })}
-    </div>
+    </>
   );
 }
 
