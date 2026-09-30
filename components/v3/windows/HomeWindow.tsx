@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, Bot, Inbox, Layers, TerminalSquare, Zap } from 'lucide-react';
+import { ArrowRight, Bot, Inbox, Layers, Terminal, Zap } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 import { v3Data, OPERATOR_FIRST_NAME } from '@/lib/v3/adapter';
 import { Sparkline } from '@/components/v3/ui/Sparkline';
@@ -19,7 +19,7 @@ export function HomeWindow() {
   const triage = v3Data.getReviewQueue().length;
 
   const cards = [
-    { icon: TerminalSquare, label: 'Launchpad', sub: 'Pick a graph, agent, or describe.', onClick: () => openApp('launchpad') },
+    { icon: Terminal, label: 'Launchpad', sub: 'Pick a graph, agent, or describe.', onClick: () => openApp('launchpad') },
     { icon: Bot, label: 'Agents', sub: 'Contextual roster · pick one to run it', onClick: () => openApp('agents') },
     { icon: Layers, label: 'Assignments', sub: 'In-progress first, then review', onClick: () => openApp('assignments') },
     { icon: Inbox, label: `Triage Queue ${triage}`, sub: 'Items waiting for approval.', onClick: () => toggleNotifs(true) },

@@ -406,6 +406,9 @@
   padding: 6px 12px;
   cursor: pointer;
   transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 .v3-scope .hero-quick button:hover { color: var(--ink); border-color: var(--accent); }
 .v3-scope .scroll-cue { display: flex; justify-content: center; margin: 18px 0 8px; color: var(--muted); animation: v3-cue-bob 2s ease-in-out infinite; }

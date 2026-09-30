@@ -1,6 +1,6 @@
 'use client';
 
-import { Layers, Bot, Activity, Inbox, Zap, ChevronDown, Database, PenTool } from 'lucide-react';
+import { Layers, Bot, Activity, Inbox, Zap, ChevronDown, Database, PenTool, ArrowUpRight } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 import { v3Data, OPERATOR_FIRST_NAME } from '@/lib/v3/adapter';
 import { MorphText } from '@/components/v3/ui/MorphText';
@@ -69,10 +69,14 @@ export function Dashboard() {
             </button>
           </div>
           <div className="hero-quick">
-            <button onClick={() => openApp('launchpad')}>↗ Start a task</button>
-            <button onClick={() => openApp('agents')}>↗ Deploy an agent</button>
+            <button onClick={() => openApp('launchpad')}>
+              <ArrowUpRight size={12} aria-hidden="true" /> Start a task
+            </button>
+            <button onClick={() => openApp('agents')}>
+              <ArrowUpRight size={12} aria-hidden="true" /> Deploy an agent
+            </button>
             <button onClick={() => toggleNotifs(true)}>
-              ↗ Needs review ({review.length})
+              <ArrowUpRight size={12} aria-hidden="true" /> Needs review ({review.length})
             </button>
           </div>
           <div className="dash-cards" style={{ marginTop: 20 }}>
@@ -96,8 +100,12 @@ export function Dashboard() {
           <div className="flex items-end justify-between" style={{ marginBottom: 12 }}>
             <div>
               <h2 className="text-xl font-bold">System Telemetry</h2>
-              <p className="font-mono text-xs mt-1" style={{ color: 'var(--muted)' }}>
-                ● Ready · Marketing
+              <p className="font-mono text-xs mt-1 flex items-center gap-1.5" style={{ color: 'var(--muted)' }}>
+                <span
+                  aria-hidden="true"
+                  style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block', flexShrink: 0 }}
+                />
+                Ready · Marketing
               </p>
             </div>
             <div className="flex gap-2 items-center">
