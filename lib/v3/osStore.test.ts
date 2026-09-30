@@ -48,6 +48,15 @@ describe('v3 os store · windows', () => {
     expect(w.mode).toBe('page');
   });
 
+  it('zooming a page-default app back to window mode gives it a sane width', () => {
+    s().openApp('agents'); // page mode, width 0
+    s().setMode('agents', 'window');
+    const w = s().windows[0];
+    expect(w.mode).toBe('window');
+    expect(w.width).toBe(560);
+    expect(w.x).toBeGreaterThan(0);
+  });
+
   it('focusWin raises the window without duplicating it', () => {
     s().openApp('home');
     s().openApp('launchpad');

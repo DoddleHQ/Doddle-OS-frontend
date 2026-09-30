@@ -170,7 +170,15 @@ export const useV3OS = create<V3OSState>((set, get) => ({
   setWinPos: (id, x, y) =>
     set((st) => ({ windows: st.windows.map((w) => (w.id === id ? { ...w, x, y } : w)) })),
   setMode: (id, mode) =>
-    set((st) => ({ windows: st.windows.map((w) => (w.id === id ? { ...w, mode } : w)) })),
+    set((st) => ({
+      windows: st.windows.map((w) => {
+        if (w.id !== id) return w;
+        // apps that default to page mode carry width 0 — give them a sane
+        // floating width when zoomed back out to window mode
+        if (mode === 'window' && w.width === 0) return { ...w, mode, width: 560, x: w.x || 56, y: w.y || 16 };
+        return { ...w, mode };
+      }),
+    })),
   toggleSpot: (force) =>
     set((st) => ({ spotlightOpen: force ?? !st.spotlightOpen, notifsOpen: false, ccOpen: false, menu: null })),
   toggleNotifs: (force) =>

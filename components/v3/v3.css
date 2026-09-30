@@ -485,7 +485,14 @@
 .v3-scope ::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 10px; }
 
 /* ---------- agents screen: roster, agent head, threads, input console ---------- */
-.v3-scope .roster-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+/* the roster is container-responsive: windows resize independently of the
+   viewport, so column counts follow the window body, not the screen */
+.v3-scope .win-body { container-type: inline-size; }
+.v3-scope .roster-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.v3-scope .roster-grid > * { min-width: 0; }
+@container (min-width: 560px) {
+  .v3-scope .roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 /* odd final card claims the whole row instead of sitting alone */
 .v3-scope .roster-grid .span-row { grid-column: 1 / -1; }
 /* compact single-line agent row — the roster's only card shape */
@@ -497,6 +504,7 @@
   cursor: pointer;
   color: var(--ink);
   border-radius: 8px;
+  width: 100%;
 }
 @media (max-width: 900px) { .v3-scope .roster-grid { grid-template-columns: 1fr; } }
 .v3-scope .agent-head { display: flex; align-items: center; gap: 12px; }
@@ -622,10 +630,12 @@
 }
 .v3-scope .glide-menu button:hover { background: rgba(128, 128, 128, 0.12); }
 .v3-scope .glide-menu button.sel { background: rgba(29, 78, 216, 0.1); }
-.v3-scope .v3-split { display: flex; gap: 12px; align-items: stretch; }
+.v3-scope .v3-split { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
 .v3-scope .v3-split-canvas { flex: 6; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
 .v3-scope .v3-split-input { flex: 4; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
-@media (max-width: 900px) { .v3-scope .v3-split { flex-direction: column; } }
+@container (min-width: 720px) {
+  .v3-scope .v3-split { flex-direction: row; }
+}
 
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {
