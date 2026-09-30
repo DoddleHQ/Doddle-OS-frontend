@@ -3,7 +3,18 @@ import { MenuNotch } from '@/components/v3/shell/MenuNotch';
 import { useV3OS } from '@/lib/v3/osStore';
 
 beforeEach(() =>
-  useV3OS.setState({ windows: [], menu: null, spotlightOpen: false, notifsOpen: false, ccOpen: false }),
+  useV3OS.setState({
+    windows: [],
+    menu: null,
+    spotlightOpen: false,
+    notifsOpen: false,
+    ccOpen: false,
+    workspaces: [
+      { id: 'w1', name: 'Acme Marketing' },
+      { id: 'w2', name: 'Growth Labs' },
+    ],
+    workspaceId: 'w1',
+  }),
 );
 
 describe('MenuNotch', () => {
@@ -21,7 +32,7 @@ describe('MenuNotch', () => {
 
   it('shows the current workspace name from the store', () => {
     render(<MenuNotch />);
-    expect(screen.getByTitle('Workspace').textContent).toContain('Marketing');
+    expect(screen.getByTitle('Workspace').textContent).toContain('Acme Marketing');
   });
 
   it('clicking Home opens the home window in the store', () => {

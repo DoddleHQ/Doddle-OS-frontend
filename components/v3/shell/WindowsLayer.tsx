@@ -4,10 +4,12 @@ import { useRef } from 'react';
 import { useV3OS, type V3WindowState } from '@/lib/v3/osStore';
 import { V3_APP_META } from '@/lib/v3/apps';
 import { HomeWindow } from '@/components/v3/windows/HomeWindow';
+import { AgentsWindow } from '@/components/v3/windows/AgentsWindow';
 import { EmptyWindow } from '@/components/v3/windows/EmptyWindow';
 
 function WindowSlot({ id }: { id: V3WindowState['id'] }) {
   if (id === 'home') return <HomeWindow />;
+  if (id === 'agents') return <AgentsWindow />;
   return <EmptyWindow app={V3_APP_META[id]} />;
 }
 

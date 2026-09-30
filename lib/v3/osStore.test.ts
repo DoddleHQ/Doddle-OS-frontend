@@ -58,6 +58,26 @@ describe('v3 os store · windows', () => {
   });
 });
 
+describe('v3 os store · workspaces + agent selection', () => {
+  it('setWorkspaces falls back to the first real workspace when the stored id is gone', () => {
+    useV3OS.setState({ workspaces: [], workspaceId: 'gone' });
+    s().setWorkspaces([{ id: 'w1', name: 'One' }, { id: 'w2', name: 'Two' }]);
+    expect(s().workspaceId).toBe('w1');
+    expect(s().workspaces).toHaveLength(2);
+    s().setWorkspace('w2');
+    s().setWorkspaces([{ id: 'w1', name: 'One' }, { id: 'w2', name: 'Two' }]);
+    expect(s().workspaceId).toBe('w2'); // valid selection preserved
+  });
+
+  it('selectAgent switches between roster and an agent', () => {
+    expect(s().selectedAgentKey).toBeNull();
+    s().selectAgent('content-architect');
+    expect(s().selectedAgentKey).toBe('content-architect');
+    s().selectAgent(null);
+    expect(s().selectedAgentKey).toBeNull();
+  });
+});
+
 describe('v3 os store · overlays + theme', () => {
   it('closeTopOverlay clears in priority order: spotlight, notifs, cc, menu', () => {
     useV3OS.setState({ spotlightOpen: true, notifsOpen: true, ccOpen: true, menu: 'ws' });

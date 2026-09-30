@@ -1,8 +1,10 @@
 'use client';
 
-import { Layers, Bot, Activity, Inbox, Zap, ChevronDown, Database, PenTool, ArrowUpRight } from 'lucide-react';
+import { Layers, Bot, Activity, Inbox, Zap, ChevronDown } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
-import { v3Data, OPERATOR_FIRST_NAME } from '@/lib/v3/adapter';
+import { v3Data } from '@/lib/v3/adapter';
+import { useV3Fetch, useV3OperatorName, v3Ago } from '@/lib/v3/data';
+import { fetchV3PowerAgents, fetchV3Sessions, v3AgentByKey } from '@/lib/v3/powerAgents';
 import { MorphText } from '@/components/v3/ui/MorphText';
 import { Sparkline } from '@/components/v3/ui/Sparkline';
 
@@ -13,27 +15,55 @@ function greeting(): string {
   return 'Good evening';
 }
 
-const FLOW_AGENTS = ['@Google_Analyst', '@Content_Architect'];
+function LoadingLine({ label }: { label: string }) {
+  return (
+    <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
+      {label}…
+    </p>
+  );
+}
 
 /** Full-page chat-first dashboard — visible only when no window is open (reference #dashboard). */
 export function Dashboard() {
   const windows = useV3OS((s) => s.windows);
-  const { openApp, toggleNotifs } = useV3OS.getState();
+  const workspaceId = useV3OS((s) => s.workspaceId);
+  const { openApp, toggleNotifs, selectAgent } = useV3OS.getState();
   const hidden = windows.some((w) => !w.minimized);
 
-  const thread = v3Data.getActiveThread();
+  const operator = useV3OperatorName();
+  const agents = useV3Fetch(fetchV3PowerAgents, []);
+  const sessions = useV3Fetch(() => (workspaceId ? fetchV3Sessions(workspaceId) : Promise.resolve([])), [workspaceId]);
   const review = v3Data.getReviewQueue();
-  const agents = v3Data.getAgents().filter((a) => FLOW_AGENTS.includes(a.handle));
+
+  const list = sessions.data ?? [];
+  const active = list[0] ?? null;
+  const activeAgent = v3AgentByKey(agents.data ?? [], active?.agentKey ?? null);
+  const activeSub = active
+    ? `session · ${v3Ago(active.updatedAt ?? active.createdAt)}${activeAgent ? ` · ${activeAgent.handle}` : ''}`
+    : null;
+  // the two agents with the most recent activity, else the first two of the roster
+  const flowAgents = (() => {
+    const roster = agents.data ?? [];
+    const recentKeys = [...new Set(list.map((s) => s.agentKey).filter((k): k is string => !!k))];
+    const ordered = [...recentKeys.map((k) => v3AgentByKey(roster, k)), ...roster]
+      .filter((a): a is NonNullable<typeof a> => !!a)
+      .filter((a, i, arr) => arr.findIndex((x) => x.key === a.key) === i)
+      .slice(0, 2);
+    return ordered.map((a) => {
+      const mine = list.filter((s) => s.agentKey === a.key);
+      return { agent: a, count: mine.length, last: mine[0] };
+    });
+  })();
 
   const cards = [
     { icon: Layers, color: 'var(--green)', label: 'Assignments', sub: 'Tasks by type, in-progress first.', onClick: () => openApp('assignments') },
-    { icon: Bot, color: 'var(--violet)', label: 'Agents', sub: 'Contextual agents. Pick one to run it.', onClick: () => openApp('agents') },
+    { icon: Bot, color: 'var(--violet)', label: `Agents ${(agents.data?.length ?? 0) > 0 ? '· ' + agents.data!.length : ''}`, sub: 'Power agents. Pick one to run it.', onClick: () => openApp('agents') },
     {
       icon: Activity,
       color: 'var(--accent)',
-      label: `Active Execution ${thread ? '· ' + thread.progress + '%' : ''}`,
-      sub: thread ? thread.title : 'No active project.',
-      onClick: () => openApp('launchpad'),
+      label: `Active Execution ${active ? '· session' : ''}`,
+      sub: active ? active.title : 'No sessions in this workspace yet.',
+      onClick: () => openApp('agents'),
     },
     { icon: Inbox, color: 'var(--amber)', label: `Triage Queue ${review.length}`, sub: 'Items waiting for approval.', onClick: () => toggleNotifs(true) },
   ];
@@ -51,7 +81,8 @@ export function Dashboard() {
               DoddleOS
             </div>
             <h1 className="text-3xl font-bold mt-2">
-              {greeting()}, {OPERATOR_FIRST_NAME}. <MorphText options={['Ready?', 'Research?', 'Ship it?', 'Review?']} />
+              {greeting()}
+              {operator ? `, ${operator}` : ''}. <MorphText options={['Ready?', 'Research?', 'Ship it?', 'Review?']} />
             </h1>
             <p className="text-sm font-mono mt-1" style={{ color: 'var(--muted)' }}>
               What are you working on?
@@ -70,13 +101,13 @@ export function Dashboard() {
           </div>
           <div className="hero-quick">
             <button onClick={() => openApp('launchpad')}>
-              <ArrowUpRight size={12} aria-hidden="true" /> Start a task
+              <Zap size={12} aria-hidden="true" /> Start a task
             </button>
             <button onClick={() => openApp('agents')}>
-              <ArrowUpRight size={12} aria-hidden="true" /> Deploy an agent
+              <Bot size={12} aria-hidden="true" /> Deploy an agent
             </button>
             <button onClick={() => toggleNotifs(true)}>
-              <ArrowUpRight size={12} aria-hidden="true" /> Needs review ({review.length})
+              <Inbox size={12} aria-hidden="true" /> Needs review ({review.length})
             </button>
           </div>
           <div className="dash-cards" style={{ marginTop: 20 }}>
@@ -105,14 +136,14 @@ export function Dashboard() {
                   aria-hidden="true"
                   style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block', flexShrink: 0 }}
                 />
-                Ready · Marketing
+                {sessions.loading ? 'connecting…' : sessions.error ? 'session feed unavailable' : `${list.length} session${list.length === 1 ? '' : 's'} · ${agents.data?.length ?? 0} agents`}
               </p>
             </div>
             <div className="flex gap-2 items-center">
-              <span className="chip">active</span>
-              <strong className="font-mono text-sm">{thread ? '1' : '0'}</strong>
+              <span className="chip">live</span>
+              <strong className="font-mono text-sm">{list.length}</strong>
               <span className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
-                {thread ? 'campaign' : '—'}
+                sessions
               </span>
             </div>
           </div>
@@ -123,16 +154,29 @@ export function Dashboard() {
               </p>
               <div className="flex items-center gap-3">
                 <div className="min-w-0" style={{ flex: 1 }}>
-                  <p className="font-mono font-bold text-xs">{thread ? thread.title : 'No active project'}</p>
-                  <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
-                    {thread ? thread.step : 'in-progress tasks appear here first'}
-                  </p>
+                  {sessions.loading ? (
+                    <LoadingLine label="loading workspace sessions" />
+                  ) : sessions.error ? (
+                    <p className="font-mono text-[10px]" style={{ color: 'var(--amber)' }}>
+                      {sessions.error} ·{' '}
+                      <button className="chip" onClick={sessions.reload}>
+                        retry
+                      </button>
+                    </p>
+                  ) : (
+                    <>
+                      <p className="font-mono font-bold text-xs">{active ? active.title : 'No sessions yet'}</p>
+                      <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
+                        {activeSub ?? 'Deploy a power agent to start the first session'}
+                      </p>
+                    </>
+                  )}
                 </div>
                 <div className="pbar">
-                  <div style={{ width: `${thread?.progress ?? 0}%` }} />
+                  <div style={{ width: list.length ? '100%' : '0%' }} />
                 </div>
                 <span className="font-mono text-[11px]" style={{ color: 'var(--muted)' }}>
-                  {thread?.progress ?? 0}%
+                  {list.length}
                 </span>
               </div>
               <div className="flex items-center gap-3" style={{ marginTop: 12 }}>
@@ -143,21 +187,34 @@ export function Dashboard() {
               <p className="font-mono text-xs font-bold" style={{ marginBottom: 10 }}>
                 AGENTS_IN_FLOW
               </p>
-              {agents.map((a) => (
-                <div key={a.handle} className="flex items-center gap-3" style={{ padding: '8px 0' }}>
-                  {a.role === 'Analytics' ? (
-                    <Database size={16} style={{ color: a.color }} />
-                  ) : (
-                    <PenTool size={16} style={{ color: a.color }} />
-                  )}
-                  <div className="min-w-0">
-                    <p className="font-mono font-bold text-xs">{a.handle}</p>
-                    <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
-                      Waiting for a task
-                    </p>
-                  </div>
-                </div>
-              ))}
+              {agents.loading ? (
+                <LoadingLine label="loading agents" />
+              ) : (
+                flowAgents.map(({ agent, count, last }) => (
+                  <button
+                    key={agent.key}
+                    className="flex items-center gap-3 w-full text-left"
+                    style={{ padding: '8px 0' }}
+                    data-tip={`${agent.handle} — open execution`}
+                    onClick={() => {
+                      openApp('agents');
+                      selectAgent(agent.key);
+                    }}
+                  >
+                    <agent.icon size={16} style={{ color: 'var(--violet)' }} />
+                    <div className="min-w-0">
+                      <p className="font-mono font-bold text-xs">
+                        {agent.handle} · {agent.role}
+                      </p>
+                      <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
+                        {count
+                          ? `${count} session${count > 1 ? 's' : ''} · last ${v3Ago(last!.updatedAt ?? last!.createdAt)}`
+                          : 'Waiting for a task'}
+                      </p>
+                    </div>
+                  </button>
+                ))
+              )}
               <button className="btn-ghost w-full" style={{ marginTop: 8 }} onClick={() => openApp('agents')}>
                 open agents
               </button>

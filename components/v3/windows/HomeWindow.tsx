@@ -2,7 +2,8 @@
 
 import { ArrowRight, Bot, Inbox, Layers, Terminal, Zap } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
-import { v3Data, OPERATOR_FIRST_NAME } from '@/lib/v3/adapter';
+import { v3Data } from '@/lib/v3/adapter';
+import { useV3OperatorName } from '@/lib/v3/data';
 import { Sparkline } from '@/components/v3/ui/Sparkline';
 
 function greeting(): string {
@@ -16,6 +17,7 @@ function greeting(): string {
 export function HomeWindow() {
   const openApp = useV3OS((s) => s.openApp);
   const toggleNotifs = useV3OS((s) => s.toggleNotifs);
+  const operator = useV3OperatorName();
   const triage = v3Data.getReviewQueue().length;
 
   const cards = [
@@ -29,7 +31,8 @@ export function HomeWindow() {
     <div className="space-y-4">
       <div className="widget glass-deep">
         <h2 className="text-2xl font-bold">
-          {greeting()}, {OPERATOR_FIRST_NAME}.
+          {greeting()}
+          {operator ? `, ${operator}` : ''}.
         </h2>
         <p className="text-sm font-mono mt-1" style={{ color: 'var(--muted)' }}>
           What are you working on?

@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useV3OS, type WindowId } from '@/lib/v3/osStore';
+import { fetchV3Workspaces, useV3Fetch } from '@/lib/v3/data';
 import { Wallpaper } from './Wallpaper';
 import { MenuNotch } from './MenuNotch';
 import { NotchMenus } from './NotchMenus';
@@ -18,10 +19,17 @@ const SHORTCUT_APPS: WindowId[] = ['home', 'launchpad', 'agents', 'assignments',
 export function OSRoot() {
   const theme = useV3OS((s) => s.theme);
   const hydrate = useV3OS((s) => s.hydrate);
+  const setWorkspaces = useV3OS((s) => s.setWorkspaces);
+  const workspaces = useV3Fetch(fetchV3Workspaces, []);
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
+
+  useEffect(() => {
+    if (workspaces.data) setWorkspaces(workspaces.data.map((w) => ({ id: w.id, name: w.name })));
+    else if (workspaces.error) setWorkspaces([], workspaces.error);
+  }, [workspaces.data, workspaces.error, setWorkspaces]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

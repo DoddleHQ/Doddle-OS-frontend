@@ -1,33 +1,94 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Dashboard } from '@/components/v3/shell/Dashboard';
 import { useV3OS } from '@/lib/v3/osStore';
+import { fetchV3PowerAgents, fetchV3Sessions, type V3Agent, type V3Session } from '@/lib/v3/powerAgents';
+import { useV3OperatorName } from '@/lib/v3/data';
 
-describe('Dashboard', () => {
-  it('shows greeting, morph headline, ask bar, quick actions, and four bento cards', () => {
-    useV3OS.setState({ windows: [] });
-    render(<Dashboard />);
-    expect(screen.getByText(/Good (morning|afternoon|evening), Alex/i)).toBeTruthy();
-    expect(screen.getByText('Ready?')).toBeTruthy();
-    expect(screen.getByText('Assignments')).toBeTruthy();
-    expect(screen.getByText('Agents')).toBeTruthy();
-    expect(screen.getByText(/Active Execution/i)).toBeTruthy();
-    expect(screen.getByText(/Triage Queue/i)).toBeTruthy();
-    expect(screen.getByPlaceholderText(/Describe what you're working on/i)).toBeTruthy();
+jest.mock('@/lib/v3/data', () => {
+  const actual = jest.requireActual('@/lib/v3/data');
+  return {
+    ...actual,
+    useV3OperatorName: () => 'Alex',
+  };
+});
+
+jest.mock('@/lib/v3/powerAgents', () => {
+  const actual = jest.requireActual('@/lib/v3/powerAgents');
+  return {
+    ...actual,
+    fetchV3PowerAgents: jest.fn(),
+    fetchV3Sessions: jest.fn(),
+  };
+});
+
+const mockedAgents = fetchV3PowerAgents as jest.MockedFunction<typeof fetchV3PowerAgents>;
+const mockedSessions = fetchV3Sessions as jest.MockedFunction<typeof fetchV3Sessions>;
+
+const agent = (over: Partial<V3Agent>): V3Agent => ({
+  key: 'crawlability_audit',
+  assistantId: 'as_1',
+  name: 'Crawlability',
+  role: 'Crawler & Indexer',
+  handle: '@Crawlability',
+  suite: 'SEO Audit Suite',
+  icon: actualIcon(),
+  ...over,
+});
+function actualIcon() {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  return jest.requireActual('lucide-react').Bot;
+}
+
+const session = (over: Partial<V3Session>): V3Session => ({
+  id: 's1',
+  title: 'Q4 site audit',
+  agentKey: 'crawlability_audit',
+  createdAt: '2026-09-30T10:00:00Z',
+  updatedAt: '2026-09-30T11:00:00Z',
+  ...over,
+});
+
+describe('Dashboard (real power-agent data)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    useV3OS.setState({ windows: [], workspaceId: 'w1', workspaces: [{ id: 'w1', name: 'Acme' }], selectedAgentKey: null });
+    mockedAgents.mockResolvedValue([]);
+    mockedSessions.mockResolvedValue([]);
   });
 
-  it('is hidden (dash-hidden class) while a window is open', () => {
-    useV3OS.setState({ windows: [] });
+  it('greets the real operator and shows the latest session from the feed', async () => {
+    mockedAgents.mockResolvedValue([agent({}), agent({ key: 'shopify_agent', name: 'Shopify', handle: '@Shopify', suite: 'Shopify Suite' })]);
+    mockedSessions.mockResolvedValue([session({})]);
+    render(<Dashboard />);
+    expect(screen.getByText(/Good (morning|afternoon|evening), Alex/i)).toBeTruthy();
+    // title appears in the Active Execution card and telemetry
+    await waitFor(() => expect(screen.getAllByText('Q4 site audit').length).toBeGreaterThan(0));
+    expect(await screen.findByText(/session · .* · @Crawlability/i)).toBeTruthy();
+  });
+
+  it('hides while a window is open', () => {
+    mockedAgents.mockResolvedValue([]);
+    mockedSessions.mockResolvedValue([]);
     useV3OS.getState().openApp('home');
     const { container } = render(<Dashboard />);
     expect(container.firstElementChild?.className).toContain('dash-hidden');
   });
 
-  it('renders telemetry from the adapter', () => {
-    useV3OS.setState({ windows: [] });
+  it('shows the session-feed error with retry, never fake data', async () => {
+    mockedAgents.mockResolvedValue([]);
+    mockedSessions.mockRejectedValue(new Error('offline'));
     render(<Dashboard />);
-    // thread title appears in the Active Execution card and telemetry
-    expect(screen.getAllByText('SEO content sprint — Q4 cluster').length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/@Google_Analyst/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/@Content_Architect/i).length).toBeGreaterThan(0);
+    await waitFor(() => expect(screen.getByText(/offline ·/i)).toBeTruthy());
+    expect(screen.getByText('retry')).toBeTruthy();
+  });
+
+  it('AGENTS_IN_FLOW rows open the agents window with that agent selected', async () => {
+    mockedAgents.mockResolvedValue([agent({})]);
+    mockedSessions.mockResolvedValue([session({})]);
+    render(<Dashboard />);
+    const row = await screen.findByText(/@Crawlability · Crawler & Indexer/i);
+    fireEvent.click(row);
+    expect(useV3OS.getState().windows.map((w) => w.id)).toContain('agents');
+    expect(useV3OS.getState().selectedAgentKey).toBe('crawlability_audit');
   });
 });

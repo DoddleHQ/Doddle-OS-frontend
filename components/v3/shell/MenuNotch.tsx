@@ -37,9 +37,12 @@ export function MenuNotch() {
   const windows = useV3OS((s) => s.windows);
   const menu = useV3OS((s) => s.menu);
   const workspaceId = useV3OS((s) => s.workspaceId);
+  const workspaces = useV3OS((s) => s.workspaces);
   const { openApp, setMenu, toggleSpot } = useV3OS.getState();
 
-  const workspace = v3Data.getWorkspaces().find((w) => w.id === workspaceId) ?? v3Data.getWorkspaces()[0];
+  const wsError = useV3OS((s) => s.workspacesError);
+  const workspace = workspaces.find((w) => w.id === workspaceId) ?? workspaces[0];
+  const workspaceLabel = workspace ? workspace.name : wsError ? 'offline' : '…';
   const reviewCount = v3Data.getReviewQueue().length;
   const isOpen = (id: WindowId) => windows.some((w) => w.id === id && !w.minimized);
 
@@ -54,7 +57,7 @@ export function MenuNotch() {
           title="Workspace"
           onClick={() => setMenu(menu === 'ws' ? null : 'ws')}
         >
-          <Briefcase size={16} /> <span>{workspace.name}</span>
+          <Briefcase size={16} /> <span>{workspaceLabel}</span>
         </button>
         <div className="notch-sep" />
         {APP_BUTTONS.map(({ id, icon: Icon, color, title }) => (

@@ -34,7 +34,8 @@ describe('WindowsLayer', () => {
   it('renders the home window content (greeting + ask bar)', () => {
     useV3OS.getState().openApp('home');
     render(<WindowsLayer />);
-    expect(screen.getByText(/Good (morning|afternoon|evening), Alex/i)).toBeTruthy();
+    // operator name arrives async from the API — assert the greeting stem only
+    expect(screen.getByText(/^Good (morning|afternoon|evening)\.?/i)).toBeTruthy();
     expect(screen.getByPlaceholderText(/Describe what you're working on/i)).toBeTruthy();
   });
 

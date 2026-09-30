@@ -2,38 +2,54 @@
 
 import { useV3OS } from '@/lib/v3/osStore';
 import { V3_APP_META } from '@/lib/v3/apps';
-import { v3Data } from '@/lib/v3/adapter';
+import { fetchV3PowerAgents, fetchV3Sessions, v3AgentByKey } from '@/lib/v3/powerAgents';
+import { useV3Fetch, v3Ago } from '@/lib/v3/data';
 
-/** Right-edge peek rail: what's doing, what's stashed (reference #activity-rail). */
+/** Right-edge peek rail: recent power-agent sessions + stashed windows (reference #activity-rail). */
 export function ActivityRail() {
   const railPinned = useV3OS((s) => s.railPinned);
+  const workspaceId = useV3OS((s) => s.workspaceId);
   const windows = useV3OS((s) => s.windows);
   const minimized = windows.filter((w) => w.minimized);
-  const { openApp } = useV3OS.getState();
-  const thread = v3Data.getActiveThread();
-  const AssignmentsIcon = V3_APP_META.assignments.icon;
+  const { openApp, selectAgent } = useV3OS.getState();
+
+  const agents = useV3Fetch(fetchV3PowerAgents, []);
+  const sessions = useV3Fetch(() => (workspaceId ? fetchV3Sessions(workspaceId) : Promise.resolve([])), [workspaceId]);
+  const recent = (sessions.data ?? []).slice(0, 5);
   const HistoryIcon = V3_APP_META.history.icon;
 
   return (
     <aside className={`activity-rail glass no-select${railPinned ? ' pinned' : ''}`} aria-label="Activity">
-      <div className="rail-label">DOING</div>
+      <div className="rail-label">RECENT</div>
       <div className="flex flex-col items-center gap-2">
-        {thread ? (
-          <button
-            className="rail-btn st-running kind-campaign"
-            style={{ ['--p' as string]: thread.progress }}
-            data-tip={`${thread.title} · ${thread.progress}% · running — click to open Assignments`}
-            aria-label={`${thread.title}, ${thread.progress} percent, running. Opens Assignments.`}
-            onClick={() => openApp('assignments')}
-          >
-            <span className="bar" />
-            <AssignmentsIcon size={18} />
-            <span className="dot" />
-          </button>
-        ) : (
+        {sessions.loading ? (
+          <span className="rail-label" style={{ writingMode: 'vertical-rl' }}>
+            …
+          </span>
+        ) : recent.length === 0 ? (
           <span className="rail-label" style={{ writingMode: 'vertical-rl' }}>
             idle
           </span>
+        ) : (
+          recent.map((s) => {
+            const agent = v3AgentByKey(agents.data ?? [], s.agentKey);
+            const Icon = agent?.icon ?? V3_APP_META.agents.icon;
+            return (
+              <button
+                key={s.id}
+                className="rail-btn st-running kind-agent"
+                data-tip={`${s.title} · ${agent ? agent.handle : 'session'} · ${v3Ago(s.updatedAt ?? s.createdAt)} · click to open`}
+                aria-label={`${s.title}, session. Opens the agent.`}
+                onClick={() => {
+                  openApp('agents');
+                  if (s.agentKey) selectAgent(s.agentKey);
+                }}
+              >
+                <Icon size={18} />
+                <span className="dot" />
+              </button>
+            );
+          })
         )}
       </div>
       {minimized.length > 0 && (

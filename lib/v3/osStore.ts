@@ -64,11 +64,19 @@ interface V3OSState {
   menu: 'ws' | 'settings' | null;
   railPinned: boolean;
   hydrated: boolean;
+  /** Real workspace list (fetched once, kept for the switcher + guards). */
+  workspaces: { id: string; name: string }[];
+  /** Non-null when the workspace list fetch failed (shown in the switcher). */
+  workspacesError: string | null;
+  /** Selected agent in the Agents window; null = roster view. */
+  selectedAgentKey: string | null;
   hydrate(): void;
   setTheme(t: ThemeMode): void;
   toggleTheme(): void;
   setBackdrop(b: Backdrop): void;
   setWorkspace(id: string): void;
+  setWorkspaces(list: { id: string; name: string }[], error?: string | null): void;
+  selectAgent(slug: string | null): void;
   openApp(id: WindowId, opts?: { mode?: WindowMode }): void;
   closeWin(id: WindowId): void;
   closeTopPage(): void;
@@ -87,7 +95,7 @@ interface V3OSState {
 export const useV3OS = create<V3OSState>((set, get) => ({
   theme: 'light',
   backdrop: 'aurora',
-  workspaceId: 'marketing',
+  workspaceId: '',
   windows: [],
   spotlightOpen: false,
   notifsOpen: false,
@@ -95,6 +103,9 @@ export const useV3OS = create<V3OSState>((set, get) => ({
   menu: null,
   railPinned: false,
   hydrated: false,
+  workspaces: [],
+  workspacesError: null,
+  selectedAgentKey: null,
 
   hydrate: () => {
     const theme = read('v3.theme');
@@ -124,6 +135,14 @@ export const useV3OS = create<V3OSState>((set, get) => ({
     write('v3.workspace', id);
     set({ workspaceId: id, menu: null });
   },
+  setWorkspaces: (list, error = null) =>
+    set((st) => ({
+      workspaces: list,
+      workspacesError: error,
+      // guard: a stored selection that no longer exists falls back to the first real workspace
+      workspaceId: list.some((w) => w.id === st.workspaceId) || list.length === 0 ? st.workspaceId : list[0].id,
+    })),
+  selectAgent: (slug) => set({ selectedAgentKey: slug }),
   openApp: (id, opts) =>
     set((st) => {
       const existing = st.windows.find((w) => w.id === id);
