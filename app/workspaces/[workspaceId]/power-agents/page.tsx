@@ -34,6 +34,7 @@ const INK = {
   devops: 'var(--line-cobalt)',
   shopify: 'var(--line-violet)',
   wordpress: 'var(--line-teal)',
+  gitops: 'var(--line-orange)',
 } as const;
 
 interface AgentMeta {
@@ -42,7 +43,7 @@ interface AgentMeta {
   handle: string;
   name: string;
   role: string;
-  suite: 'SEO Audit Suite' | 'Website Content Suite' | 'DevOps Suite' | 'Shopify Suite' | 'WordPress Suite';
+  suite: 'SEO Audit Suite' | 'Website Content Suite' | 'DevOps Suite' | 'Shopify Suite' | 'WordPress Suite' | 'GitOps Suite';
 }
 
 const ROLES: Record<string, { name: string; role: string; icon: string }> = {
@@ -61,6 +62,7 @@ const ROLES: Record<string, { name: string; role: string; icon: string }> = {
   devops_agent: { name: 'DevOps', role: 'SSH Operator & Fixer', icon: 'terminal-square' },
   shopify_agent: { name: 'Shopify', role: 'Store Manager & Content', icon: 'shopping-bag' },
   wordpress_agent: { name: 'WordPress', role: 'Site Manager & Content', icon: 'globe' },
+  gitops_agent: { name: 'GitOps', role: 'Repository Manager', icon: 'git-branch' },
 };
 
 
@@ -85,6 +87,7 @@ const SUITE_OF: Record<string, AgentMeta['suite']> = {
   devops: 'DevOps Suite',
   shopify: 'Shopify Suite',
   wordpress: 'WordPress Suite',
+  gitops: 'GitOps Suite',
 };
 const suiteOf = (id: string): AgentMeta['suite'] => {
   for (const [suffix, suite] of Object.entries(SUITE_OF)) {
@@ -107,7 +110,9 @@ function agentMeta(id: string): AgentMeta {
           ? INK.shopify
           : suite === 'WordPress Suite'
             ? INK.wordpress
-            : INK.audit,
+            : suite === 'GitOps Suite'
+              ? INK.gitops
+              : INK.audit,
     icon: preset?.icon ?? 'bot',
     handle: '@' + name.replace(/\s/g, '_'),
     name,
@@ -246,6 +251,50 @@ const TOOL_LABELS: Record<string, string> = {
   'wp_list_users': 'browsing users',
   'wp_list_comments': 'browsing comments',
   'download_file': 'downloading image',
+  // gitops (GitHub MCP)
+  'get_me': 'checking profile',
+  'get_file_contents': 'reading file',
+  'list_branches': 'browsing branches',
+  'list_commits': 'browsing commits',
+  'get_commit': 'reading commit',
+  'list_tags': 'browsing tags',
+  'get_tag': 'reading tag',
+  'list_releases': 'browsing releases',
+  'get_latest_release': 'checking releases',
+  'get_release_by_tag': 'reading release',
+  'list_issues': 'browsing issues',
+  'issue_read': 'reading issue',
+  'list_pull_requests': 'browsing PRs',
+  'pull_request_read': 'reading PR',
+  'search_code': 'searching code',
+  'search_commits': 'searching commits',
+  'search_issues': 'searching issues',
+  'search_pull_requests': 'searching PRs',
+  'search_repositories': 'finding repos',
+  'search_users': 'finding users',
+  'list_repository_collaborators': 'checking team',
+  'get_teams': 'checking teams',
+  'get_team_members': 'checking members',
+  'get_label': 'reading label',
+  'list_issue_types': 'checking types',
+  'list_issue_fields': 'checking fields',
+  'push_files': 'pushing changes',
+  'create_pull_request': 'creating PR',
+  'update_pull_request': 'updating PR',
+  'merge_pull_request': 'merging PR',
+  'create_branch': 'creating branch',
+  'create_or_update_file': 'updating file',
+  'create_repository': 'creating repo',
+  'fork_repository': 'forking repo',
+  'delete_file': 'removing file',
+  'issue_write': 'updating issue',
+  'sub_issue_write': 'updating sub-issue',
+  'update_issue_comment': 'updating comment',
+  'add_issue_comment': 'adding comment',
+  'pull_request_review_write': 'submitting review',
+  'request_copilot_review': 'requesting review',
+  'update_pull_request_branch': 'updating branch',
+  'run_secret_scanning': 'scanning secrets',
   'wp_discover_taxonomies': 'discovering taxonomies',
   'wp_discover_content_types': 'discovering types',
   'wp_get_content_summary': 'summarizing content',
@@ -1359,7 +1408,7 @@ export default function DemoPowerAgentsPage() {
           </div>
 
           <div className="hidden lg:flex lg:flex-col gap-2 overflow-y-auto lg:flex-1 lg:min-h-0" style={{ padding: sidebarCollapsed ? '0.5rem 0.375rem' : '0.75rem' }}>
-            {(['SEO Audit Suite', 'Website Content Suite', 'DevOps Suite', 'Shopify Suite', 'WordPress Suite'] as const).map((suite) => {
+            {(['SEO Audit Suite', 'Website Content Suite', 'DevOps Suite', 'Shopify Suite', 'WordPress Suite', 'GitOps Suite'] as const).map((suite) => {
               const suiteAgents = agents.filter((a) => agentMeta(a.id).suite === suite);
               if (!suiteAgents.length) return null;
               const suiteInk =

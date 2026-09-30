@@ -35,7 +35,6 @@ const agent = (over: Partial<V3Agent>): V3Agent => ({
   ...over,
 });
 function actualIcon() {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   return jest.requireActual('lucide-react').Bot;
 }
 
