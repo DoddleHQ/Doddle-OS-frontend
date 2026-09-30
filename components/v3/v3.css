@@ -146,7 +146,7 @@
 .v3-scope .v3-ws-menu { position: fixed; z-index: 90; min-width: 220px; border-radius: 10px; padding: 6px; top: 60px; left: 16px; }
 .v3-scope .v3-settings-menu { position: fixed; z-index: 90; min-width: 240px; border-radius: 10px; padding: 6px; top: 60px; right: 16px; }
 
-/* ---------- right activity rail: doing + done at a glance ---------- */
+/* ---------- right activity rail: doing + stashed at a glance ---------- */
 .v3-scope .activity-rail {
   position: fixed;
   right: 12px;
@@ -160,8 +160,8 @@
   gap: 8px;
   padding: 12px 8px;
   border-radius: 10px;
-  max-height: 70vh;
-  overflow-y: auto;
+  /* visible (not auto) so block tooltips can extend past the rail edge */
+  overflow: visible;
   transition: transform 0.25s ease, opacity 0.25s ease;
 }
 .v3-scope .activity-rail:hover,
@@ -180,14 +180,16 @@
   border: 1px solid transparent;
   position: relative;
   transition: 0.2s;
-  overflow: hidden;
+  /* visible so the ::after tooltip can extend past the button; the .bar rounds itself */
+  overflow: visible;
   flex-shrink: 0;
 }
 .v3-scope .rail-btn:hover { background: rgba(128, 128, 128, 0.1); color: var(--ink); }
-.v3-scope .rail-btn .bar { position: absolute; left: 0; bottom: 0; top: 0; width: calc(var(--p, 0) * 1%); background: rgba(128, 128, 128, 0.16); pointer-events: none; }
+.v3-scope .rail-btn .bar { position: absolute; left: 0; bottom: 0; top: 0; width: calc(var(--p, 0) * 1%); background: rgba(128, 128, 128, 0.16); pointer-events: none; border-radius: 8px; }
 .v3-scope .rail-btn .dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; z-index: 1; }
 .v3-scope .rail-btn.st-running .dot { background: var(--accent); animation: v3-pulse 1.2s infinite; }
 .v3-scope .rail-btn.st-attention .dot { background: var(--amber); box-shadow: 0 0 8px var(--amber); animation: v3-pulse 1.2s infinite; }
+.v3-scope .rail-btn.st-minimized .dot { background: var(--muted); }
 .v3-scope .rail-btn.st-done { opacity: 0.6; }
 .v3-scope .rail-btn.st-done .dot { background: #10b981; }
 .v3-scope .rail-btn.kind-campaign { border-color: rgba(5, 150, 105, 0.45); color: var(--green); }
@@ -195,6 +197,32 @@
 .v3-scope .rail-btn.kind-review { border-color: rgba(245, 158, 11, 0.5); color: var(--amber); }
 @keyframes v3-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.35); opacity: 0.6; } }
 .v3-scope .rail-sep { width: 24px; height: 1px; background: var(--glass-border); opacity: 0.6; flex-shrink: 0; }
+/* instant glass tooltip naming each rail block (data-tip) */
+.v3-scope .rail-btn::after {
+  content: attr(data-tip);
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--glass-bg);
+  backdrop-filter: blur(36px) saturate(180%);
+  -webkit-backdrop-filter: blur(36px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-family: var(--font-v3-jmono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  white-space: nowrap;
+  box-shadow: var(--win-shadow);
+  z-index: 6;
+}
+.v3-scope .rail-btn:hover::after,
+.v3-scope .rail-btn:focus-visible::after { opacity: 1; transform: translateY(-50%) translateX(0); }
 
 /* ---------- windows layer ---------- */
 .v3-scope .windows-layer { position: fixed; inset: 76px 0 0 0; z-index: 20; pointer-events: none; }
@@ -228,7 +256,8 @@
   z-index: 15 !important;
 }
 .v3-scope .os-window.page .titlebar { cursor: default; }
-.v3-scope .os-window.page .traffic { visibility: hidden; }
+/* page mode keeps Close + Zoom (zoom restores window mode); only Minimize hides */
+.v3-scope .os-window.page .t-min { display: none; }
 .v3-scope .os-window::after {
   content: '';
   position: absolute;

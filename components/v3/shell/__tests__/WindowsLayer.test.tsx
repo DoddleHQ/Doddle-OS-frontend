@@ -37,4 +37,19 @@ describe('WindowsLayer', () => {
     expect(screen.getByText(/Good (morning|afternoon|evening), Alex/i)).toBeTruthy();
     expect(screen.getByPlaceholderText(/Describe what you're working on/i)).toBeTruthy();
   });
+
+  it('page mode: window carries the page class, Close works, Zoom restores window mode', () => {
+    useV3OS.getState().openApp('home');
+    useV3OS.getState().setMode('home', 'page');
+    const { container } = render(<WindowsLayer />);
+    // the page class drives CSS: t-min hidden, window fills the stage
+    expect(container.querySelector('.os-window.page')).toBeTruthy();
+    // zoom returns to window mode
+    fireEvent.click(screen.getByLabelText('Zoom'));
+    expect(useV3OS.getState().windows[0].mode).toBe('window');
+    // and in page mode, close works
+    useV3OS.getState().setMode('home', 'page');
+    fireEvent.click(screen.getByLabelText('Close'));
+    expect(useV3OS.getState().windows).toHaveLength(0);
+  });
 });
