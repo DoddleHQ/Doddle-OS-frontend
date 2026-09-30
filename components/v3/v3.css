@@ -486,15 +486,16 @@
 
 /* ---------- agents screen: roster, agent head, threads, input console ---------- */
 /* the roster is container-responsive: windows resize independently of the
-   viewport, so column counts follow the window body, not the screen */
+   viewport, so column counts follow the window body, not the screen —
+   auto-fill packs as many compact cards as the width allows (4-up on a full
+   desktop, fewer as the window narrows) */
 .v3-scope .win-body { container-type: inline-size; }
-.v3-scope .roster-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
-.v3-scope .roster-grid > * { min-width: 0; }
-@container (min-width: 560px) {
-  .v3-scope .roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.v3-scope .roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: 8px;
 }
-/* odd final card claims the whole row instead of sitting alone */
-.v3-scope .roster-grid .span-row { grid-column: 1 / -1; }
+.v3-scope .roster-grid > * { min-width: 0; }
 /* compact single-line agent row — the roster's only card shape */
 .v3-scope .roster-grid .h-row {
   display: flex;

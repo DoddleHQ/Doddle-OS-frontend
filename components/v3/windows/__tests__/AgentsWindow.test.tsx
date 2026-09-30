@@ -74,17 +74,13 @@ describe('AgentsWindow · roster (power agents)', () => {
     expect(await screen.findByText(/SEO Audit Suite · 2 agents/i)).toBeTruthy();
     expect(screen.getByText(/Shopify Suite · 1 agent/i)).toBeTruthy();
     expect(screen.getByText(/@Crawlability · Crawler & Indexer/i)).toBeTruthy();
-    // every card is the compact horizontal row; lone Shopify card spans the row
+    // every card is the same compact horizontal row; the grid auto-fills
+    // columns by container width (no special lone-card treatment)
     const seoCards = screen.getByText(/SEO Audit Suite · 2 agents/i)
       .parentElement!.querySelectorAll('.roster-grid .bento-item');
     expect(seoCards.length).toBe(2);
     expect(seoCards[0].className).toContain('h-row');
     expect(seoCards[0].className).not.toContain('span-row');
-    expect(seoCards[1].className).not.toContain('span-row');
-    const shopifyCard = screen.getByText(/Shopify Suite · 1 agent/i)
-      .parentElement!.querySelector('.roster-grid .bento-item');
-    expect(shopifyCard!.className).toContain('span-row');
-    expect(shopifyCard!.className).toContain('h-row');
     fireEvent.change(screen.getByLabelText('Search power agents'), { target: { value: 'shopify' } });
     expect(screen.queryByText(/@Crawlability · Crawler & Indexer/i)).toBeNull();
     expect(screen.getByText(/@Shopify · Store Manager & Content/i)).toBeTruthy();

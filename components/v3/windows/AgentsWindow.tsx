@@ -71,53 +71,48 @@ function RosterView() {
             {suite} · {list.length} agent{list.length === 1 ? '' : 's'}
           </p>
           <div className="roster-grid">
-            {list.map((a, i) => {
-              // every card is one compact horizontal row; a lone trailing
-              // agent simply spans the full width — same shape, wider
-              const lone = list.length % 2 === 1 && i === list.length - 1;
-              return (
-                <button
-                  key={a.key}
-                  type="button"
-                  className={`bento-item h-row${lone ? ' span-row' : ''}`}
-                  style={{ textAlign: 'left' }}
-                  onClick={() => selectAgent(a.key)}
+            {list.map((a) => (
+              <button
+                key={a.key}
+                type="button"
+                className="bento-item h-row"
+                style={{ textAlign: 'left' }}
+                onClick={() => selectAgent(a.key)}
+              >
+                <span
+                  className="rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: 'rgba(147,51,234,.14)', width: 28, height: 28 }}
                 >
-                  <span
-                    className="rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: 'rgba(147,51,234,.14)', width: 28, height: 28 }}
-                  >
-                    <a.icon size={16} style={{ color: 'var(--violet)' }} />
+                  <a.icon size={16} style={{ color: 'var(--violet)' }} />
+                </span>
+                <span className="min-w-0" style={{ flex: 1 }}>
+                  <span className="block font-mono font-bold text-xs truncate">
+                    {a.handle} · {a.role}
                   </span>
-                  <span className="min-w-0" style={{ flex: 1 }}>
-                    <span className="block font-mono font-bold text-xs truncate">
-                      {a.handle} · {a.role}
-                    </span>
-                    <span className="block text-[10px] font-mono truncate" style={{ color: 'var(--muted)' }}>
-                      {a.name} — {a.suite}
-                    </span>
+                  <span className="block text-[10px] font-mono truncate" style={{ color: 'var(--muted)' }}>
+                    {a.name} — {a.suite}
                   </span>
-                  <span
-                    className="chip shrink-0"
-                    role="button"
-                    tabIndex={0}
-                    onClick={(e) => {
+                </span>
+                <span
+                  className="chip shrink-0"
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    selectAgent(a.key);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
                       e.stopPropagation();
+                      e.preventDefault();
                       selectAgent(a.key);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        selectAgent(a.key);
-                      }
-                    }}
-                  >
-                    Deploy <ArrowUpRight size={10} style={{ display: 'inline' }} />
-                  </span>
-                </button>
-              );
-            })}
+                    }
+                  }}
+                >
+                  Deploy <ArrowUpRight size={10} style={{ display: 'inline' }} />
+                </span>
+              </button>
+            ))}
           </div>
         </div>
       ))}
