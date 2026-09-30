@@ -6,6 +6,8 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
     '\\.(css|less|scss)$': '<rootDir>/jest/styleMock.js',
+    '^react-markdown$': '<rootDir>/jest/reactMarkdownMock.js',
+    '^remark-gfm$': '<rootDir>/jest/remarkGfmMock.js',
   },
   // tsconfig uses `jsx: preserve` for Next; tests need emitted JSX.
   transform: {

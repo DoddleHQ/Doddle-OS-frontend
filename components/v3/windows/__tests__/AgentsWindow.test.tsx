@@ -15,6 +15,21 @@ jest.mock('@/lib/v3/powerAgents', () => {
 const mockedAgents = fetchV3PowerAgents as jest.MockedFunction<typeof fetchV3PowerAgents>;
 const mockedSessions = fetchV3SessionsForAgent as jest.MockedFunction<typeof fetchV3SessionsForAgent>;
 
+// the same streaming utils the real exec view uses — mocked for tests
+const chatState: { messages: UIMessageLike[]; status: string; error: { message: string } | null } = {
+  messages: [],
+  status: 'ready',
+  error: null,
+};
+const sendMessage = jest.fn();
+const setMessages = jest.fn();
+const stopRun = jest.fn();
+type UIMessageLike = { id: string; role: string; parts: Array<{ type: string; text?: string; toolCallId?: string; state?: string }> };
+jest.mock('@ai-sdk/react', () => ({
+  useChat: () => ({ messages: chatState.messages, setMessages, sendMessage, status: chatState.status, stop: stopRun, error: chatState.error }),
+}));
+jest.mock('ai', () => ({ DefaultChatTransport: jest.fn().mockImplementation(() => ({})) }));
+
 const Bot = jest.requireActual('lucide-react').Bot;
 const ShoppingBag = jest.requireActual('lucide-react').ShoppingBag;
 
@@ -95,50 +110,101 @@ describe('AgentsWindow · roster (power agents)', () => {
   });
 });
 
-describe('AgentsWindow · execution', () => {
+describe('AgentsWindow · execution (real chat wiring)', () => {
+  const realFetch = global.fetch;
+
   beforeEach(() => {
     jest.clearAllMocks();
     setup();
     mockedAgents.mockResolvedValue([agent({})]);
     mockedSessions.mockResolvedValue([]);
     useV3OS.getState().selectAgent('crawlability_audit');
+    chatState.messages = [];
+    chatState.status = 'ready';
+    chatState.error = null;
+  });
+  afterEach(() => {
+    global.fetch = realFetch;
   });
 
-  it('shows the agent head and their real sessions', async () => {
-    mockedSessions.mockResolvedValue([session({ title: 'Q4 site audit' })]);
+  function mockFetchJson(url: RegExp, json: unknown) {
+    global.fetch = jest.fn().mockImplementation((input: RequestInfo | URL) => {
+      if (url.test(String(input))) return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(json) });
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve([]) });
+    }) as unknown as typeof fetch;
+  }
+
+  it('shows the agent head and their sessions from the threads API', async () => {
+    mockFetchJson(/power-agents\/threads\?/, [
+      { id: 't1', title: 'Q4 site audit', agentKey: 'crawlability_audit', createdAt: '2026-09-30T10:00:00Z', updatedAt: '2026-09-30T11:00:00Z' },
+    ]);
     render(<AgentsWindow />);
     expect(await screen.findByText(/@Crawlability · Crawler & Indexer/i)).toBeTruthy();
     expect(await screen.findByText('Q4 site audit')).toBeTruthy();
-    expect(screen.getByText(/session ·/i)).toBeTruthy();
+    expect(screen.getByText(/Conversation · @Crawlability · new session/i)).toBeTruthy();
   });
 
-  it('empty state is honest when the agent has no sessions', async () => {
-    mockedSessions.mockResolvedValue([]);
+  it('empty state is honest when no sessions exist', async () => {
+    mockFetchJson(/power-agents\/threads\?/, []);
     render(<AgentsWindow />);
-    await waitFor(() => expect(screen.getByText(/No sessions yet/i)).toBeTruthy());
+    await screen.findByText(/No sessions yet — the first task starts one/i);
   });
 
-  it('session error surfaces with retry', async () => {
-    mockedSessions.mockRejectedValue(new Error('api down'));
+  it('clicking a session loads its history into the chat', async () => {
+    mockFetchJson(/power-agents\/threads\?/, [{ id: 't1', title: 'Q4 site audit', agentKey: 'crawlability_audit', createdAt: null, updatedAt: null }]);
     render(<AgentsWindow />);
-    await waitFor(() => expect(screen.getByText(/api down ·/i)).toBeTruthy());
+    fireEvent.click(await screen.findByText('Q4 site audit'));
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith(expect.stringMatching(/power-agents\/threads\/t1$/)),
+    );
+    await waitFor(() => expect(setMessages).toHaveBeenCalled());
   });
 
-  it('the console echoes a queued task; the model glide switches models', async () => {
-    mockedSessions.mockResolvedValue([]);
+  it('the console sends a real message via the chat transport', async () => {
+    mockFetchJson(/power-agents\/threads\?/, []);
     render(<AgentsWindow />);
-    await screen.findByText(/← all agents/i);
-    const input = screen.getByLabelText(/assign @Crawlability a task/i);
-    fireEvent.change(input, { target: { value: 'crawl the Q4 sitemap' } });
+    const input = await screen.findByLabelText(/message @Crawlability/i);
+    fireEvent.change(input, { target: { value: 'crawl the sitemap' } });
     fireEvent.keyDown(input, { key: 'Enter' });
-    expect(await screen.findByText(/crawl the Q4 sitemap/)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /Model: GPT-5/i }));
-    fireEvent.click(screen.getByRole('menuitem', { name: /Claude 4/i }));
-    expect(screen.getByRole('button', { name: /Model: Claude 4/i })).toBeTruthy();
+    expect(sendMessage).toHaveBeenCalledWith({ text: 'crawl the sitemap' });
+  });
+
+  it('renders tool rows and assistant markdown from streamed messages', async () => {
+    chatState.messages = [
+      { id: 'u1', role: 'user', parts: [{ type: 'text', text: 'crawl the sitemap' }] },
+      {
+        id: 'a1',
+        role: 'assistant',
+        parts: [
+          { type: 'tool-read_file', toolCallId: 'c1', state: 'output-available' },
+          { type: 'tool-fetch_sitemap_urls', toolCallId: 'c2', state: 'input-available' },
+          { type: 'text', text: 'Crawled **42 URLs**. Report below.' },
+        ],
+      },
+    ];
+    mockFetchJson(/power-agents\/threads\?/, []);
+    render(<AgentsWindow />);
+    expect(await screen.findByText(/read_file · done/i)).toBeTruthy();
+    expect(screen.getByText(/fetch_sitemap_urls · running…/i)).toBeTruthy();
+    expect(screen.getByText('Crawled 42 URLs. Report below.')).toBeTruthy();
+    expect(screen.getByText('$', { selector: '.v3-msg-user .v3-msg-prompt' })).toBeTruthy();
+  });
+
+  it('busy runs show Stop; stream errors surface honestly', async () => {
+    chatState.status = 'streaming';
+    mockFetchJson(/power-agents\/threads\?/, []);
+    const { rerender } = render(<AgentsWindow />);
+    expect(await screen.findByRole('button', { name: /Stop the run/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Stop the run/i }));
+    expect(stopRun).toHaveBeenCalled();
+    chatState.status = 'ready';
+    chatState.error = { message: 'HTTP 502' };
+    rerender(<AgentsWindow />);
+    expect(await screen.findByText(/stream error: HTTP 502/i)).toBeTruthy();
   });
 
   it('back link returns to the roster', async () => {
-    mockedSessions.mockResolvedValue([]);
+    mockFetchJson(/power-agents\/threads\?/, []);
     render(<AgentsWindow />);
     fireEvent.click(await screen.findByText(/← all agents/i));
     expect(useV3OS.getState().selectedAgentKey).toBeNull();

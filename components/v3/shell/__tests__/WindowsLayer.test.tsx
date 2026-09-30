@@ -1,3 +1,9 @@
+// the agents window pulls in the ai-sdk; jsdom lacks TransformStream, so mock it
+jest.mock('@ai-sdk/react', () => ({
+  useChat: () => ({ messages: [], setMessages: jest.fn(), sendMessage: jest.fn(), status: 'ready', stop: jest.fn(), error: null }),
+}));
+jest.mock('ai', () => ({ DefaultChatTransport: jest.fn().mockImplementation(() => ({})) }));
+
 import { render, screen, fireEvent } from '@testing-library/react';
 import { WindowsLayer } from '@/components/v3/shell/WindowsLayer';
 import { useV3OS } from '@/lib/v3/osStore';
