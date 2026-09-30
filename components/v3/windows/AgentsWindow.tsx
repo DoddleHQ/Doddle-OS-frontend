@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, ArrowUpRight, MessageSquare, Wrench } from 'lucide-react';
+import { Search, ArrowUpRight, MessageSquare, Wrench, Pencil, Trash2 } from 'lucide-react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
@@ -137,6 +137,8 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
   const agent = v3AgentByKey(agents.data ?? [], agentKey);
 
   const [sessions, setSessions] = useState<V3Session[]>([]);
+  const [renaming, setRenaming] = useState<{ id: string; value: string } | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
   const [activeThread, setActiveThread] = useState<string | null>(null);
   const activeThreadRef = useRef<string | null>(null);
   const titlePatchedRef = useRef<string | null>(null);
@@ -240,11 +242,14 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
         body: JSON.stringify({ agentKey: agent.key, assistantId: agent.assistantId, workspaceId }),
       });
       if (res.ok) {
-        const t = (await res.json()) as { id: string; title: string };
-        setSessions((s) => [{ id: t.id, title: t.title, agentKey: agent.key, createdAt: null, updatedAt: null }, ...s]);
-        setActiveThread(t.id);
-        activeThreadRef.current = t.id;
-        setMessages([]);
+        const t = (await res.json()) as { id?: string; title?: string };
+        const id = t?.id;
+        if (id) {
+          setSessions((s) => [{ id, title: t.title ?? 'New session', agentKey: agent.key, createdAt: null, updatedAt: null }, ...s]);
+          setActiveThread(id);
+          activeThreadRef.current = id;
+          setMessages([]);
+        }
       }
     } catch {
       /* keep current session on failure */
@@ -268,6 +273,63 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
     } catch {
       /* stay on current */
     }
+  }
+
+  async function renameSession(id: string) {
+    if (!renaming || !renaming.value.trim()) return setRenaming(null);
+    const title = renaming.value.trim().slice(0, 80);
+    setRenaming(null);
+    setSessions((s) => s.map((c) => (c.id === id ? { ...c, title } : c)));
+    try {
+      await fetch(`/api/power-agents/threads/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+      });
+    } catch {
+      refreshSessions(); // optimistic — revert on failure
+    }
+  }
+
+  async function deleteSession(id: string) {
+    setConfirmingDelete(null);
+    setSessions((s) => s.filter((c) => c.id !== id));
+    if (activeThreadRef.current === id) {
+      activeThreadRef.current = null;
+      setActiveThread(null);
+      setMessages([]);
+    }
+    try {
+      await fetch(`/api/power-agents/threads/${id}`, { method: 'DELETE' });
+    } catch {
+      /* chip stays gone; the server list reconciles on next refresh */
+    }
+    refreshSessions();
+  }
+
+  /** Send — creating the session thread up front when none is selected,
+   *  so a new run has its identity immediately (not only at stream end). */
+  async function sendWithSession(text: string) {
+    if (!agent || busy) return;
+    if (!activeThreadRef.current) {
+      try {
+        const res = await fetch('/api/power-agents/threads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agentKey: agent.key, assistantId: agent.assistantId, workspaceId, title: 'New session' }),
+        });
+        const t = res.ok ? ((await res.json()) as { id?: string; title?: string }) : null;
+        const id = t?.id;
+        if (id) {
+          activeThreadRef.current = id;
+          setActiveThread(id);
+          setSessions((s) => (s.some((c) => c.id === id) ? s : [{ id, title: t.title ?? 'New session', agentKey: agent.key, createdAt: null, updatedAt: null }, ...s]));
+        }
+      } catch {
+        /* fall back to the server's lazy thread creation on send */
+      }
+    }
+    await sendMessage({ text });
   }
 
   useEffect(() => {
@@ -321,7 +383,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
       </div>
       <div className="v3-split">
         <div className="v3-split-canvas">
-          <div className="widget" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 280 }}>
+          <div className="widget v3-chat-wrap">
             <p className="font-mono text-[10px] tracking-[0.08em] uppercase" style={{ color: 'var(--muted)', marginBottom: 8 }}>
               Conversation · {agent.handle}
               {activeChip ? ` · ${activeChip.title}` : ' · new session'}
@@ -362,22 +424,69 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
                 No sessions yet — the first task starts one.
               </p>
             ) : (
-              sessions.map((s) => (
-                <button
-                  key={s.id}
-                  className={`thread-row${s.id === activeThread ? ' viewing' : ''}`}
-                  data-tip={`${s.title} · click to load`}
-                  onClick={() => switchSession(s.id)}
-                >
-                  <MessageSquare size={12} style={{ color: 'var(--violet)', flexShrink: 0 }} />
-                  <span className="meta">
-                    <p className="font-mono font-bold text-xs">{s.title}</p>
-                    <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
-                      {s.id === activeThread ? 'active' : v3Ago(s.updatedAt ?? s.createdAt)}
-                    </p>
-                  </span>
-                </button>
-              ))
+              sessions.map((s) => {
+                const active = s.id === activeThread;
+                if (renaming && renaming.id === s.id) {
+                  return (
+                    <div key={s.id} className="thread-row" style={{ cursor: 'default' }}>
+                      <MessageSquare size={12} style={{ color: 'var(--violet)', flexShrink: 0 }} />
+                      <input
+                        className="task-input meta"
+                        autoFocus
+                        value={renaming.value}
+                        aria-label={`Rename ${s.title}`}
+                        onChange={(e) => setRenaming({ id: s.id, value: e.target.value })}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') renameSession(s.id);
+                          if (e.key === 'Escape') setRenaming(null);
+                        }}
+                        style={{ padding: '4px 8px', fontSize: 12 }}
+                      />
+                      <button className="chip shrink-0" onClick={() => renameSession(s.id)} aria-label="Save name">
+                        save
+                      </button>
+                    </div>
+                  );
+                }
+                return (
+                  <div
+                    key={s.id}
+                    className={`thread-row v3-session${active ? ' viewing' : ''}`}
+                    data-tip={`${s.title} · click to load`}
+                    onClick={() => switchSession(s.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && switchSession(s.id)}
+                  >
+                    <MessageSquare size={12} style={{ color: 'var(--violet)', flexShrink: 0 }} />
+                    <span className="meta">
+                      <p className="font-mono font-bold text-xs">{s.title}</p>
+                      <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
+                        {active ? 'active' : v3Ago(s.updatedAt ?? s.createdAt)}
+                      </p>
+                    </span>
+                    {confirmingDelete === s.id ? (
+                      <span className="v3-session-actions shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <button className="chip" style={{ color: '#dc2626' }} onClick={() => deleteSession(s.id)} aria-label={`Confirm delete ${s.title}`}>
+                          delete?
+                        </button>
+                        <button className="chip" onClick={() => setConfirmingDelete(null)} aria-label="Cancel delete">
+                          ✕
+                        </button>
+                      </span>
+                    ) : (
+                      <span className="v3-session-actions shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <button className="chip" onClick={() => { setRenaming({ id: s.id, value: s.title }); }} aria-label={`Rename ${s.title}`} data-tip="rename">
+                          <Pencil size={10} />
+                        </button>
+                        <button className="chip" onClick={() => setConfirmingDelete(s.id)} aria-label={`Delete ${s.title}`} data-tip="delete">
+                          <Trash2 size={10} />
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
@@ -397,7 +506,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
             busy={busy}
             onStop={stop}
             showModels={false}
-            onRun={(text) => sendMessage({ text })}
+            onRun={(text) => void sendWithSession(text)}
           />
         </div>
       </div>

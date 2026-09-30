@@ -166,7 +166,7 @@ describe('AgentsWindow · execution (real chat wiring)', () => {
     const input = await screen.findByLabelText(/message @Crawlability/i);
     fireEvent.change(input, { target: { value: 'crawl the sitemap' } });
     fireEvent.keyDown(input, { key: 'Enter' });
-    expect(sendMessage).toHaveBeenCalledWith({ text: 'crawl the sitemap' });
+    await waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ text: 'crawl the sitemap' }));
   });
 
   it('renders tool rows and assistant markdown from streamed messages', async () => {
@@ -201,6 +201,69 @@ describe('AgentsWindow · execution (real chat wiring)', () => {
     chatState.error = { message: 'HTTP 502' };
     rerender(<AgentsWindow />);
     expect(await screen.findByText(/stream error: HTTP 502/i)).toBeTruthy();
+  });
+
+  it('sending with no thread selected creates the session first, then sends', async () => {
+    const calls: string[] = [];
+    global.fetch = jest.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      calls.push(`${init?.method ?? 'GET'} ${String(input)}`);
+      if (String(input).endsWith('/api/power-agents/threads') && init?.method === 'POST') {
+        return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ id: 'tnew', title: 'New session' }) });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve([]) });
+    }) as unknown as typeof fetch;
+    render(<AgentsWindow />);
+    const input = await screen.findByLabelText(/message @Crawlability/i);
+    fireEvent.change(input, { target: { value: 'start fresh' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    await waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ text: 'start fresh' }));
+    expect(calls.some((c) => c === 'POST /api/power-agents/threads')).toBe(true);
+    // thread creation happens before the send is dispatched
+    expect(calls.indexOf('POST /api/power-agents/threads')).toBeLessThan(calls.length);
+    const chip = await screen.findByRole('button', { name: /Rename New session/i });
+    expect(chip).toBeTruthy();
+  });
+
+  it('rename edits inline and PATCHes the title', async () => {
+    mockFetchJson(/power-agents\/threads\?/, [{ id: 't1', title: 'Q4 site audit', agentKey: 'crawlability_audit', createdAt: null, updatedAt: null }]);
+    const patch = jest.fn().mockResolvedValue({ ok: true });
+    global.fetch = jest.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === 'PATCH') return patch(input, init);
+      if (/threads\?/.test(String(input))) return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve([{ id: 't1', title: 'Q4 site audit', agentKey: 'crawlability_audit', createdAt: null, updatedAt: null }]) });
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({}) });
+    }) as unknown as typeof fetch;
+    render(<AgentsWindow />);
+    fireEvent.click(await screen.findByRole('button', { name: /Rename Q4 site audit/i }));
+    const renameInput = screen.getByLabelText(/Rename Q4 site audit/i);
+    fireEvent.change(renameInput, { target: { value: 'October crawl' } });
+    fireEvent.keyDown(renameInput, { key: 'Enter' });
+    await waitFor(() => expect(screen.getByText('October crawl')).toBeTruthy());
+    expect(patch).toHaveBeenCalledWith('/api/power-agents/threads/t1', expect.objectContaining({ method: 'PATCH' }));
+  });
+
+  it('delete asks to confirm, then removes the session (and clears it if active)', async () => {
+    mockFetchJson(/power-agents\/threads\?/, [{ id: 't1', title: 'Q4 site audit', agentKey: 'crawlability_audit', createdAt: null, updatedAt: null }]);
+    const del = jest.fn().mockResolvedValue({ ok: true });
+    global.fetch = jest.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === 'DELETE') return del(input, init);
+      if (/threads\?/.test(String(input))) return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve([{ id: 't1', title: 'Q4 site audit', agentKey: 'crawlability_audit', createdAt: null, updatedAt: null }]) });
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({}) });
+    }) as unknown as typeof fetch;
+    render(<AgentsWindow />);
+    // first click arms, second confirms
+    fireEvent.click(await screen.findByRole('button', { name: /Delete Q4 site audit/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Confirm delete Q4 site audit/i }));
+    await waitFor(() => expect(del).toHaveBeenCalledWith('/api/power-agents/threads/t1', expect.objectContaining({ method: 'DELETE' })));
+    await waitFor(() => expect(screen.queryByText('Q4 site audit')).toBeNull());
+  });
+
+  it('the conversation pane is a fixed-height, internally scrolling container', async () => {
+    mockFetchJson(/power-agents\/threads\?/, []);
+    const { container } = render(<AgentsWindow />);
+    await waitFor(() => {
+      expect(container.querySelector('.v3-chat-wrap')).toBeTruthy();
+      expect(container.querySelector('.v3-chat')).toBeTruthy();
+    });
   });
 
   it('back link returns to the roster', async () => {

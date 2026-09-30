@@ -638,15 +638,27 @@
 }
 
 /* ---------- conversation feed (power-agent execution) ---------- */
+/* fixed-height pane: long conversations scroll inside, never stretch the window */
+.v3-scope .v3-chat-wrap {
+  display: flex;
+  flex-direction: column;
+  height: clamp(280px, 48vh, 520px);
+}
 .v3-scope .v3-chat {
   flex: 1;
-  min-height: 200px;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding-right: 2px;
 }
+/* session rows: actions appear on hover/focus, never steal row space */
+.v3-scope .v3-session { cursor: pointer; }
+.v3-scope .v3-session-actions { display: none; gap: 4px; }
+.v3-scope .v3-session:hover .v3-session-actions,
+.v3-scope .v3-session:focus-visible .v3-session-actions { display: inline-flex; }
+.v3-scope .v3-session-actions .chip { padding: 3px 6px; }
 .v3-scope .v3-msg-user {
   display: flex;
   gap: 8px;
