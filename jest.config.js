@@ -7,4 +7,8 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/$1',
     '\\.(css|less|scss)$': '<rootDir>/jest/styleMock.js',
   },
+  // tsconfig uses `jsx: preserve` for Next; tests need emitted JSX.
+  transform: {
+    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: { jsx: 'react-jsx' } }],
+  },
 };
