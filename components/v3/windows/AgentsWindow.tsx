@@ -62,63 +62,56 @@ function RosterView() {
         <span className="chip font-mono">{visible.length}/{agents.data?.length ?? 0}</span>
       </div>
       {suites.map(([suite, list]) => (
-        <div key={suite} style={{ marginBottom: 16 }}>
-          <p className="font-mono text-[10px] tracking-[0.08em] uppercase" style={{ color: 'var(--muted)', marginBottom: 8 }}>
+        <div key={suite} style={{ marginBottom: 12 }}>
+          <p className="font-mono text-[10px] tracking-[0.08em] uppercase" style={{ color: 'var(--muted)', marginBottom: 6 }}>
             {suite} · {list.length} agent{list.length === 1 ? '' : 's'}
           </p>
           <div className="roster-grid">
             {list.map((a, i) => {
+              // every card is one compact horizontal row; a lone trailing
+              // agent simply spans the full width — same shape, wider
               const lone = list.length % 2 === 1 && i === list.length - 1;
-              if (lone) {
-                // lone card claims the row, laid out horizontally so the width reads intentional
-                return (
-                  <div key={a.key} className="bento-item span-row h-row">
-                    <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: 'rgba(147,51,234,.14)' }}
-                    >
-                      <a.icon size={20} style={{ color: 'var(--violet)' }} />
-                    </div>
-                    <div className="min-w-0" style={{ flex: 1 }}>
-                      <p className="font-mono font-bold text-sm">
-                        {a.handle} · {a.role}
-                      </p>
-                      <p className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
-                        {a.name} — {a.suite}
-                      </p>
-                    </div>
-                    <button className="back-link shrink-0" onClick={() => selectAgent(a.key)}>
-                      Open execution <ArrowUpRight size={12} style={{ display: 'inline' }} />
-                    </button>
-                    <button className="btn-deploy shrink-0" onClick={() => selectAgent(a.key)}>
-                      Deploy
-                    </button>
-                  </div>
-                );
-              }
               return (
-                <div key={a.key} className="bento-item">
-                  <div className="flex items-start justify-between">
-                    <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: 'rgba(147,51,234,.14)' }}
-                    >
-                      <a.icon size={20} style={{ color: 'var(--violet)' }} />
-                    </div>
-                    <button className="btn-deploy" onClick={() => selectAgent(a.key)}>
-                      Deploy
-                    </button>
-                  </div>
-                  <p className="font-mono font-bold text-sm mt-3">
-                    {a.handle} · {a.role}
-                  </p>
-                  <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
-                    {a.name} — {a.suite}
-                  </p>
-                  <button className="back-link mt-3" onClick={() => selectAgent(a.key)}>
-                    Open execution <ArrowUpRight size={12} style={{ display: 'inline' }} />
-                  </button>
-                </div>
+                <button
+                  key={a.key}
+                  type="button"
+                  className={`bento-item h-row${lone ? ' span-row' : ''}`}
+                  style={{ textAlign: 'left' }}
+                  onClick={() => selectAgent(a.key)}
+                >
+                  <span
+                    className="rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: 'rgba(147,51,234,.14)', width: 28, height: 28 }}
+                  >
+                    <a.icon size={16} style={{ color: 'var(--violet)' }} />
+                  </span>
+                  <span className="min-w-0" style={{ flex: 1 }}>
+                    <span className="block font-mono font-bold text-xs truncate">
+                      {a.handle} · {a.role}
+                    </span>
+                    <span className="block text-[10px] font-mono truncate" style={{ color: 'var(--muted)' }}>
+                      {a.name} — {a.suite}
+                    </span>
+                  </span>
+                  <span
+                    className="chip shrink-0"
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      selectAgent(a.key);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        selectAgent(a.key);
+                      }
+                    }}
+                  >
+                    Deploy <ArrowUpRight size={10} style={{ display: 'inline' }} />
+                  </span>
+                </button>
               );
             })}
           </div>

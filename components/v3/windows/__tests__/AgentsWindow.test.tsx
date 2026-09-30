@@ -59,16 +59,16 @@ describe('AgentsWindow · roster (power agents)', () => {
     expect(await screen.findByText(/SEO Audit Suite · 2 agents/i)).toBeTruthy();
     expect(screen.getByText(/Shopify Suite · 1 agent/i)).toBeTruthy();
     expect(screen.getByText(/@Crawlability · Crawler & Indexer/i)).toBeTruthy();
-    // even section: no span; lone Shopify card claims the full row
+    // every card is the compact horizontal row; lone Shopify card spans the row
     const seoCards = screen.getByText(/SEO Audit Suite · 2 agents/i)
       .parentElement!.querySelectorAll('.roster-grid .bento-item');
     expect(seoCards.length).toBe(2);
+    expect(seoCards[0].className).toContain('h-row');
     expect(seoCards[0].className).not.toContain('span-row');
     expect(seoCards[1].className).not.toContain('span-row');
     const shopifyCard = screen.getByText(/Shopify Suite · 1 agent/i)
       .parentElement!.querySelector('.roster-grid .bento-item');
     expect(shopifyCard!.className).toContain('span-row');
-    // spanning card lays out horizontally, so the width reads intentional
     expect(shopifyCard!.className).toContain('h-row');
     fireEvent.change(screen.getByLabelText('Search power agents'), { target: { value: 'shopify' } });
     expect(screen.queryByText(/@Crawlability · Crawler & Indexer/i)).toBeNull();
@@ -82,13 +82,16 @@ describe('AgentsWindow · roster (power agents)', () => {
     expect(screen.getByText('retry')).toBeTruthy();
   });
 
-  it('Deploy opens the execution view for that agent', async () => {
+  it('clicking a card (or its Deploy chip) opens the execution view', async () => {
     mockedAgents.mockResolvedValue([agent({})]);
     render(<AgentsWindow />);
-    await screen.findByText(/@Crawlability · Crawler & Indexer/i);
-    fireEvent.click(screen.getAllByText('Deploy')[0]);
+    const card = (await screen.findAllByText(/@Crawlability · Crawler & Indexer/i))[0].closest('.bento-item')!;
+    fireEvent.click(card);
     expect(useV3OS.getState().selectedAgentKey).toBe('crawlability_audit');
-    await screen.findByText(/← all agents/i);
+    fireEvent.click(await screen.findByText(/← all agents/i));
+    useV3OS.getState().selectAgent(null);
+    fireEvent.click((await screen.findAllByText(/Deploy/i))[0]);
+    expect(useV3OS.getState().selectedAgentKey).toBe('crawlability_audit');
   });
 });
 

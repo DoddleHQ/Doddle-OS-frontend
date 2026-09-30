@@ -485,11 +485,19 @@
 .v3-scope ::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 10px; }
 
 /* ---------- agents screen: roster, agent head, threads, input console ---------- */
-.v3-scope .roster-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.v3-scope .roster-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 /* odd final card claims the whole row instead of sitting alone */
 .v3-scope .roster-grid .span-row { grid-column: 1 / -1; }
-/* …and lays out horizontally so the extra width reads intentional */
-.v3-scope .roster-grid .h-row { display: flex; align-items: center; gap: 16px; padding: 14px 20px; }
+/* compact single-line agent row — the roster's only card shape */
+.v3-scope .roster-grid .h-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: var(--ink);
+  border-radius: 8px;
+}
 @media (max-width: 900px) { .v3-scope .roster-grid { grid-template-columns: 1fr; } }
 .v3-scope .agent-head { display: flex; align-items: center; gap: 12px; }
 .v3-scope .agent-head .tile {
