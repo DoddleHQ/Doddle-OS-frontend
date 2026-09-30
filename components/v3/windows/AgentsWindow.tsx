@@ -576,9 +576,10 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
 }
 
 /**
- * The conversation feed. Tool calls group across message boundaries: any
- * uninterrupted run of tools (no text between) forms one accordion — runs of
- * ≤3 render individually, 4+ collapse (same rule as the power-agents page).
+ * The conversation feed. Tool calls group across message boundaries, per tool
+ * name: within an uninterrupted run (no text between), repeated invocations
+ * of the SAME tool collapse into one accordion row (name ×N); distinct tools
+ * stay their own rows and are never merged into a generic blob.
  */
 function ChatFeed({ messages }: { messages: UIMessage[] }) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -588,17 +589,27 @@ function ChatFeed({ messages }: { messages: UIMessage[] }) {
     | { kind: 'user'; key: string; text: string }
     | { kind: 'text'; key: string; text: string }
     | { kind: 'tool'; tool: ToolInfo }
-    | { kind: 'toolgroup'; key: string; tools: ToolInfo[] };
+    | { kind: 'toolgroup'; key: string; label: string; tools: ToolInfo[] };
 
   const items: Item[] = [];
   let toolRun: ToolInfo[] = [];
   const flushRun = () => {
     if (toolRun.length === 0) return;
-    if (toolRun.length <= 3) {
-      toolRun.forEach((t) => items.push({ kind: 'tool', tool: t }));
-    } else {
-      items.push({ kind: 'toolgroup', key: `grp-${items.length}-${toolRun[0].key}`, tools: [...toolRun] });
-    }
+    // group the run by tool name, preserving first-appearance order —
+    // repeats of the same tool collapse; different tools never merge
+    const byName = new Map<string, ToolInfo[]>();
+    toolRun.forEach((t) => {
+      const list = byName.get(t.name) ?? [];
+      list.push(t);
+      byName.set(t.name, list);
+    });
+    byName.forEach((tools, name) => {
+      if (tools.length === 1) {
+        items.push({ kind: 'tool', tool: tools[0] });
+      } else {
+        items.push({ kind: 'toolgroup', key: `grp-${name}-${items.length}`, tools, label: name });
+      }
+    });
     toolRun = [];
   };
 
@@ -652,8 +663,7 @@ function ChatFeed({ messages }: { messages: UIMessage[] }) {
 
         const anyRunning = item.tools.some((t) => toolState(t.state) === 'running');
         const anyFailed = item.tools.some((t) => toolState(t.state) === 'failed');
-        const allSameName = item.tools.every((t) => t.name === item.tools[0].name);
-        const label = allSameName ? item.tools[0].name : 'steps';
+        const label = item.label;
         const expanded = expandedGroups.has(item.key);
         return (
           <div key={item.key} className="v3-tool-group">

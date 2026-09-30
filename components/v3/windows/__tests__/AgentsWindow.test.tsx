@@ -190,35 +190,35 @@ describe('AgentsWindow · execution (real chat wiring)', () => {
     expect(screen.getByText('$', { selector: '.v3-msg-user .v3-msg-prompt' })).toBeTruthy();
   });
 
-  it('wraps 4+ consecutive tool calls into one expandable group row', async () => {
+  it('wraps REPEATED same-name calls per name; distinct tools never merge', async () => {
     chatState.messages = [
       {
         id: 'a1',
         role: 'assistant',
         parts: [
           { type: 'tool-read_file', toolCallId: 'c1', state: 'output-available' },
+          { type: 'tool-grep', toolCallId: 'c5', state: 'output-available' },
           { type: 'tool-read_file', toolCallId: 'c2', state: 'output-available' },
           { type: 'tool-read_file', toolCallId: 'c3', state: 'output-available' },
           { type: 'tool-read_file', toolCallId: 'c4', state: 'output-available' },
-          { type: 'tool-grep', toolCallId: 'c5', state: 'output-available' },
           { type: 'text', text: 'Done crawling.' },
         ],
       },
     ];
     mockFetchJson(/power-agents\/threads\?/, []);
     render(<AgentsWindow />);
-    // one collapsed head: mixed names → "steps ×5", individual rows hidden
-    const head = await screen.findByRole('button', { name: /steps/i });
-    expect(head.textContent).toContain('×5');
+    // 4× read_file → one collapsed per-name row; lone grep stays its own row
+    const head = await screen.findByRole('button', { name: /read_file/i });
+    expect(head.textContent).toContain('×4');
     expect(head.getAttribute('aria-expanded')).toBe('false');
-    expect(screen.queryByText(/read_file · done/i)).toBeNull();
-    // expand → children appear
+    expect(screen.queryByText(/steps/i)).toBeNull();
+    expect(screen.getByText(/grep · done/i)).toBeTruthy();
+    // expand → the four read_file occurrences appear
     fireEvent.click(head);
     expect(screen.getAllByText(/read_file · done/i)).toHaveLength(4);
-    expect(screen.getByText(/grep · done/i)).toBeTruthy();
   });
 
-  it('groups tool runs ACROSS messages: no repeated stray rows between assistant turns', async () => {
+  it('same-name repeats group ACROSS messages; distinct tools stay separate rows', async () => {
     chatState.messages = [
       { id: 'a1', role: 'assistant', parts: [{ type: 'tool-wp_get_page', toolCallId: 'p1', state: 'output-available' }, { type: 'tool-wp_get_site_settings', toolCallId: 'p2', state: 'output-available' }] },
       { id: 'a2', role: 'assistant', parts: [{ type: 'tool-wp_get_page', toolCallId: 'p3', state: 'output-available' }] },
@@ -227,10 +227,13 @@ describe('AgentsWindow · execution (real chat wiring)', () => {
     ];
     mockFetchJson(/power-agents\/threads\?/, []);
     render(<AgentsWindow />);
-    // four consecutive tools across four messages → ONE group row, no strays
-    const head = await screen.findByRole('button', { name: /steps/i });
-    expect(head.textContent).toContain('×4');
-    expect(screen.queryByText(/wp_get_page · done/i)).toBeNull();
+    // wp_get_page appears in two messages → one ×2 row, no stray individual rows
+    const head = await screen.findByRole('button', { name: /wp_get_page/i });
+    expect(head.textContent).toContain('×2');
+    expect(screen.queryByText(/steps/i)).toBeNull();
+    // the distinct single tools keep their own rows
+    expect(screen.getByText(/wp_get_site_settings · done/i)).toBeTruthy();
+    expect(screen.getByText(/wp_get_posts · done/i)).toBeTruthy();
     expect(screen.getByText('Drafted the page.')).toBeTruthy();
   });
 
