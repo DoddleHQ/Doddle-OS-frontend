@@ -8,6 +8,9 @@ import { NotchMenus } from './NotchMenus';
 import { WindowsLayer } from './WindowsLayer';
 import { Dashboard } from './Dashboard';
 import { ActivityRail } from './ActivityRail';
+import { Spotlight } from './Spotlight';
+import { Notifications } from './Notifications';
+import { ControlCenter } from './ControlCenter';
 
 const SHORTCUT_APPS: WindowId[] = ['home', 'launchpad', 'agents', 'assignments', 'hub', 'reports', 'tasks'];
 
@@ -50,7 +53,9 @@ export function OSRoot() {
       <WindowsLayer />
       <Dashboard />
       <ActivityRail />
-      {/* Task 7: <Spotlight /> <Notifications /> <ControlCenter /> */}
+      <Spotlight />
+      <Notifications />
+      <ControlCenter />
     </div>
   );
 }
