@@ -309,6 +309,30 @@ describe('AgentsWindow · execution (real chat wiring)', () => {
     });
   });
 
+  it('the run-context column shows session facts and live run stats', async () => {
+    chatState.messages = [
+      { id: 'u1', role: 'user', parts: [{ type: 'text', text: 'go' }] },
+      {
+        id: 'a1',
+        role: 'assistant',
+        parts: [
+          { type: 'tool-read_file', toolCallId: 'c1', state: 'output-available' },
+          { type: 'tool-grep', toolCallId: 'c2', state: 'input-available' },
+          { type: 'text', text: 'ok' },
+        ],
+      },
+    ];
+    mockFetchJson(/power-agents\/threads\?/, []);
+    render(<AgentsWindow />);
+    expect(await screen.findByText('This run')).toBeTruthy();
+    expect(screen.getByText('messages').parentElement!.textContent).toContain('2');
+    const toolStat = screen.getByText('tool calls').parentElement!;
+    expect(toolStat.textContent).toContain('2');
+    expect(screen.getByText('in flight').parentElement!.textContent).toContain('1');
+    expect(screen.getByText(/starts on first message/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /\+ new session/i })).toBeTruthy();
+  });
+
   it('back link returns to the roster', async () => {
     mockFetchJson(/power-agents\/threads\?/, []);
     render(<AgentsWindow />);

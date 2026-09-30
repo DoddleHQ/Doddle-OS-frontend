@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, ArrowUpRight, MessageSquare, Wrench, Pencil, Trash2, ChevronDown } from 'lucide-react';
+import { Search, ArrowUpRight, MessageSquare, Wrench, Pencil, Trash2, ChevronDown, Copy, Check } from 'lucide-react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
@@ -138,6 +138,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
 
   const [sessions, setSessions] = useState<V3Session[]>([]);
   const [renaming, setRenaming] = useState<{ id: string; value: string } | null>(null);
+  const [copiedId, setCopiedId] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
   const [activeThread, setActiveThread] = useState<string | null>(null);
   const activeThreadRef = useRef<string | null>(null);
@@ -491,14 +492,76 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
           </div>
         </div>
         <div className="v3-split-input">
+          {/* run context panel — fills the column above the console */}
           <div className="widget">
             <p className="font-mono text-[10px] tracking-[0.08em] uppercase" style={{ color: 'var(--muted)', marginBottom: 8 }}>
               Session
             </p>
-            <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
-              {activeChip ? `${activeChip.title} · ${activeChip.id.slice(0, 8)}…` : 'new — the first message starts it'}
-              {busy ? ' · streaming' : ''}
+            <p className="font-mono font-bold text-xs truncate" title={activeChip?.title}>
+              {activeChip?.title ?? 'new session'}
             </p>
+            {activeThread ? (
+              <button
+                className="chip mt-2"
+                style={{ maxWidth: '100%' }}
+                data-tip="copy thread id"
+                onClick={() => {
+                  try {
+                    navigator.clipboard?.writeText(activeThread);
+                    setCopiedId(true);
+                    setTimeout(() => setCopiedId(false), 1500);
+                  } catch {
+                    /* clipboard unavailable */
+                  }
+                }}
+              >
+                {copiedId ? <Check size={10} /> : <Copy size={10} />} {activeThread.slice(0, 14)}…
+              </button>
+            ) : (
+              <p className="font-mono text-[10px] mt-2" style={{ color: 'var(--muted)' }}>
+                starts on first message
+              </p>
+            )}
+            <p className="font-mono text-[10px] mt-2 flex items-center gap-1.5" style={{ color: busy ? 'var(--accent)' : 'var(--muted)' }}>
+              <span
+                aria-hidden="true"
+                className={busy ? 'v3-working' : ''}
+                style={{ width: 6, height: 6, borderRadius: '50%', background: busy ? 'var(--accent)' : error ? '#dc2626' : '#10b981', display: 'inline-block', flexShrink: 0 }}
+              />
+              {busy ? 'streaming' : error ? 'stream error' : 'ready'}
+            </p>
+          </div>
+
+          <div className="widget" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            <p className="font-mono text-[10px] tracking-[0.08em] uppercase" style={{ color: 'var(--muted)', marginBottom: 8 }}>
+              This run
+            </p>
+            {[
+              ['messages', String(messages.length)],
+              ['tool calls', String(messages.reduce((n, m) => n + (m.parts ?? []).filter((p) => p.type.startsWith('tool-')).length, 0))],
+              [
+                'in flight',
+                String(
+                  messages.reduce(
+                    (n, m) =>
+                      n +
+                      (m.parts ?? []).filter(
+                        (p) => p.type.startsWith('tool-') && ['input-streaming', 'input-available'].includes((p as { state?: string }).state ?? ''),
+                      ).length,
+                    0,
+                  ),
+                ),
+              ],
+              ['sessions', String(sessions.length)],
+            ].map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between font-mono text-[10px]" style={{ padding: '3px 0' }}>
+                <span style={{ color: 'var(--muted)' }}>{k}</span>
+                <span className="font-bold">{v}</span>
+              </div>
+            ))}
+            <button className="btn-ghost w-full" style={{ marginTop: 10, minHeight: 32, fontSize: 11 }} onClick={newSession}>
+              + new session
+            </button>
           </div>
           <EngConsole
             placeholder={`message ${agent.handle}…`}
