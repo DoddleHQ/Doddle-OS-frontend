@@ -25,9 +25,10 @@ import {
   TerminalSquare,
   ShoppingBag,
   Globe,
+  GitBranch,
 } from 'lucide-react';
 
-export type V3Suite = 'SEO Audit Suite' | 'Website Content Suite' | 'DevOps Suite' | 'Shopify Suite' | 'WordPress Suite';
+export type V3Suite = 'SEO Audit Suite' | 'Website Content Suite' | 'DevOps Suite' | 'Shopify Suite' | 'WordPress Suite' | 'GitOps Suite';
 
 export interface V3Agent {
   /** LangGraph agent key, e.g. crawlability_audit */
@@ -65,6 +66,7 @@ const ROLES: Record<string, { name: string; role: string; icon: LucideIcon }> = 
   devops_agent: { name: 'DevOps', role: 'SSH Operator & Fixer', icon: TerminalSquare },
   shopify_agent: { name: 'Shopify', role: 'Store Manager & Content', icon: ShoppingBag },
   wordpress_agent: { name: 'WordPress', role: 'Site Manager & Content', icon: Globe },
+  gitops_agent: { name: 'GitOps', role: 'Repository Manager', icon: GitBranch },
 };
 
 const SUITE_OF: Partial<Record<V3Suite, string>> & Record<string, V3Suite> = {
@@ -72,6 +74,7 @@ const SUITE_OF: Partial<Record<V3Suite, string>> & Record<string, V3Suite> = {
   devops: 'DevOps Suite',
   shopify: 'Shopify Suite',
   wordpress: 'WordPress Suite',
+  gitops: 'GitOps Suite',
 } as Record<string, V3Suite>;
 
 function suiteOf(id: string): V3Suite {

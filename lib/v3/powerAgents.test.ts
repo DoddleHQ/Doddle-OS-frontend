@@ -6,6 +6,7 @@ describe('powerAgents meta', () => {
     expect(powerAgentMeta('devops_agent')).toMatchObject({ name: 'DevOps', suite: 'DevOps Suite' });
     expect(powerAgentMeta('shopify_agent')).toMatchObject({ name: 'Shopify', suite: 'Shopify Suite' });
     expect(powerAgentMeta('product_content')).toMatchObject({ suite: 'Website Content Suite' });
+    expect(powerAgentMeta('gitops_agent')).toMatchObject({ name: 'GitOps', role: 'Repository Manager', handle: '@GitOps', suite: 'GitOps Suite' });
   });
 
   it('falls back gracefully for unknown keys', () => {
