@@ -19,6 +19,18 @@ function RosterView() {
     return roster.filter((a) => `${a.name} ${a.role} ${a.suite} ${a.key} ${a.handle}`.toLowerCase().includes(needle));
   }, [agents.data, q]);
 
+  // suite sections in roster order; within a section, an odd trailing card
+  // spans the full row so no row is left half-empty
+  const suites = useMemo(() => {
+    const by = new Map<string, typeof visible>();
+    visible.forEach((a) => {
+      const list = by.get(a.suite) ?? [];
+      list.push(a);
+      by.set(a.suite, list);
+    });
+    return [...by.entries()];
+  }, [visible]);
+
   if (agents.loading) {
     return (
       <p className="font-mono text-xs" style={{ color: 'var(--muted)', padding: 24 }}>
@@ -49,37 +61,42 @@ function RosterView() {
         />
         <span className="chip font-mono">{visible.length}/{agents.data?.length ?? 0}</span>
       </div>
-      {/* flat 2-col grid — a final lone card (odd count) spans the full row so
-          every row carries two agents; suite stays visible as the card label */}
-      <div className="roster-grid">
-        {visible.map((a, i) => {
-          const lone = visible.length % 2 === 1 && i === visible.length - 1;
-          return (
-            <div key={a.key} className={`bento-item${lone ? ' span-row' : ''}`}>
-              <div className="flex items-start justify-between">
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: 'rgba(147,51,234,.14)' }}
-                >
-                  <a.icon size={20} style={{ color: 'var(--violet)' }} />
+      {suites.map(([suite, list]) => (
+        <div key={suite} style={{ marginBottom: 16 }}>
+          <p className="font-mono text-[10px] tracking-[0.08em] uppercase" style={{ color: 'var(--muted)', marginBottom: 8 }}>
+            {suite} · {list.length} agent{list.length === 1 ? '' : 's'}
+          </p>
+          <div className="roster-grid">
+            {list.map((a, i) => {
+              const lone = list.length % 2 === 1 && i === list.length - 1;
+              return (
+                <div key={a.key} className={`bento-item${lone ? ' span-row' : ''}`}>
+                  <div className="flex items-start justify-between">
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: 'rgba(147,51,234,.14)' }}
+                    >
+                      <a.icon size={20} style={{ color: 'var(--violet)' }} />
+                    </div>
+                    <button className="btn-deploy" onClick={() => selectAgent(a.key)}>
+                      Deploy
+                    </button>
+                  </div>
+                  <p className="font-mono font-bold text-sm mt-3">
+                    {a.handle} · {a.role}
+                  </p>
+                  <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
+                    {a.name} — {a.suite}
+                  </p>
+                  <button className="back-link mt-3" onClick={() => selectAgent(a.key)}>
+                    Open execution <ArrowUpRight size={12} style={{ display: 'inline' }} />
+                  </button>
                 </div>
-                <button className="btn-deploy" onClick={() => selectAgent(a.key)}>
-                  Deploy
-                </button>
-              </div>
-              <p className="font-mono font-bold text-sm mt-3">
-                {a.handle} · {a.role}
-              </p>
-              <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
-                {a.name} — {a.suite}
-              </p>
-              <button className="back-link mt-3" onClick={() => selectAgent(a.key)}>
-                Open execution <ArrowUpRight size={12} style={{ display: 'inline' }} />
-              </button>
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
       {visible.length === 0 && (
         <p className="font-mono text-xs" style={{ color: 'var(--muted)' }}>
           No power agents match “{q}”.

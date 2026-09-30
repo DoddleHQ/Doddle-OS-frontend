@@ -49,21 +49,25 @@ describe('AgentsWindow · roster (power agents)', () => {
     mockedSessions.mockResolvedValue([]);
   });
 
-  it('flat roster: every row pairs two agents; an odd final card spans the row; search filters', async () => {
+  it('suite-grouped cards: even sections pair up, a lone agent spans its row; search filters', async () => {
     mockedAgents.mockResolvedValue([
       agent({}),
       agent({ key: 'on_page_audit', name: 'On-Page', handle: '@On-Page', role: 'Meta & Content Elements' }),
       agent({ key: 'shopify_agent', name: 'Shopify', handle: '@Shopify', role: 'Store Manager & Content', suite: 'Shopify Suite', icon: ShoppingBag }),
     ]);
     render(<AgentsWindow />);
-    expect(await screen.findByText(/@Crawlability · Crawler & Indexer/i)).toBeTruthy();
-    // suite identity rides on the card
-    expect(screen.getByText(/Shopify — Shopify Suite/i)).toBeTruthy();
-    // odd count: the last card claims the full row, none sits half-empty
-    const cards = document.querySelectorAll('.roster-grid .bento-item');
-    expect(cards.length).toBe(3);
-    expect(cards[2].className).toContain('span-row');
-    expect(cards[0].className).not.toContain('span-row');
+    expect(await screen.findByText(/SEO Audit Suite · 2 agents/i)).toBeTruthy();
+    expect(screen.getByText(/Shopify Suite · 1 agent/i)).toBeTruthy();
+    expect(screen.getByText(/@Crawlability · Crawler & Indexer/i)).toBeTruthy();
+    // even section: no span; lone Shopify card claims the full row
+    const seoCards = screen.getByText(/SEO Audit Suite · 2 agents/i)
+      .parentElement!.querySelectorAll('.roster-grid .bento-item');
+    expect(seoCards.length).toBe(2);
+    expect(seoCards[0].className).not.toContain('span-row');
+    expect(seoCards[1].className).not.toContain('span-row');
+    const shopifyCard = screen.getByText(/Shopify Suite · 1 agent/i)
+      .parentElement!.querySelector('.roster-grid .bento-item');
+    expect(shopifyCard!.className).toContain('span-row');
     fireEvent.change(screen.getByLabelText('Search power agents'), { target: { value: 'shopify' } });
     expect(screen.queryByText(/@Crawlability · Crawler & Indexer/i)).toBeNull();
     expect(screen.getByText(/@Shopify · Store Manager & Content/i)).toBeTruthy();
