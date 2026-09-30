@@ -5,6 +5,7 @@ import { useV3OS, type WindowId } from '@/lib/v3/osStore';
 import { Wallpaper } from './Wallpaper';
 import { MenuNotch } from './MenuNotch';
 import { NotchMenus } from './NotchMenus';
+import { WindowsLayer } from './WindowsLayer';
 
 const SHORTCUT_APPS: WindowId[] = ['home', 'launchpad', 'agents', 'assignments', 'hub', 'reports', 'tasks'];
 
@@ -44,7 +45,8 @@ export function OSRoot() {
       <Wallpaper />
       <MenuNotch />
       <NotchMenus />
-      {/* Task 5: <WindowsLayer /> and <ActivityRail /> */}
+      <WindowsLayer />
+      {/* Task 6: <Dashboard /> and <ActivityRail /> */}
       {/* Task 6: <Dashboard /> */}
       {/* Task 7: <Spotlight /> <Notifications /> <ControlCenter /> */}
     </div>
