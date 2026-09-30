@@ -49,15 +49,21 @@ describe('AgentsWindow · roster (power agents)', () => {
     mockedSessions.mockResolvedValue([]);
   });
 
-  it('renders the live roster grouped by suite, with search', async () => {
+  it('flat roster: every row pairs two agents; an odd final card spans the row; search filters', async () => {
     mockedAgents.mockResolvedValue([
       agent({}),
+      agent({ key: 'on_page_audit', name: 'On-Page', handle: '@On-Page', role: 'Meta & Content Elements' }),
       agent({ key: 'shopify_agent', name: 'Shopify', handle: '@Shopify', role: 'Store Manager & Content', suite: 'Shopify Suite', icon: ShoppingBag }),
     ]);
     render(<AgentsWindow />);
-    expect(await screen.findByText(/SEO Audit Suite · 1 agents/i)).toBeTruthy();
-    expect(screen.getByText(/Shopify Suite · 1 agents/i)).toBeTruthy();
-    expect(screen.getByText(/@Crawlability · Crawler & Indexer/i)).toBeTruthy();
+    expect(await screen.findByText(/@Crawlability · Crawler & Indexer/i)).toBeTruthy();
+    // suite identity rides on the card
+    expect(screen.getByText(/Shopify — Shopify Suite/i)).toBeTruthy();
+    // odd count: the last card claims the full row, none sits half-empty
+    const cards = document.querySelectorAll('.roster-grid .bento-item');
+    expect(cards.length).toBe(3);
+    expect(cards[2].className).toContain('span-row');
+    expect(cards[0].className).not.toContain('span-row');
     fireEvent.change(screen.getByLabelText('Search power agents'), { target: { value: 'shopify' } });
     expect(screen.queryByText(/@Crawlability · Crawler & Indexer/i)).toBeNull();
     expect(screen.getByText(/@Shopify · Store Manager & Content/i)).toBeTruthy();
