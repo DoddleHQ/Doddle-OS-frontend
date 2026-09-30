@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, ArrowUpRight, MessageSquare, Wrench, Pencil, Trash2 } from 'lucide-react';
+import { Search, ArrowUpRight, MessageSquare, Wrench, Pencil, Trash2, ChevronDown } from 'lucide-react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
@@ -516,6 +516,8 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
 
 /** One feed message: user lines echo mono; assistant renders markdown + tool rows. */
 function ChatMessage({ message }: { message: UIMessage }) {
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
   if (message.role === 'user') {
     const text = message.parts?.map((p) => (p.type === 'text' ? (p as { text?: string }).text ?? '' : '')).join('');
     return (
@@ -525,26 +527,96 @@ function ChatMessage({ message }: { message: UIMessage }) {
       </div>
     );
   }
-  const text = message.parts?.map((p) => (p.type === 'text' ? (p as { text?: string }).text ?? '' : '')).join('');
-  const tools = (message.parts ?? []).filter((p) => p.type.startsWith('tool-')) as Array<{
-    type: string;
-    toolCallId: string;
-    state: string;
-  }>;
+
+  type ToolInfo = { key: string; name: string; state: string };
+  type Item =
+    | { kind: 'text'; key: string; text: string }
+    | { kind: 'tool'; tool: ToolInfo }
+    | { kind: 'toolgroup'; key: string; tools: ToolInfo[] };
+
+  // pre-group consecutive tool parts (same rule as the power-agents page):
+  // runs of ≤3 render individually; 4+ collapse into one expandable row
+  const items: Item[] = [];
+  let toolRun: ToolInfo[] = [];
+  const flushRun = () => {
+    if (toolRun.length === 0) return;
+    if (toolRun.length <= 3) {
+      toolRun.forEach((t) => items.push({ kind: 'tool', tool: t }));
+    } else {
+      items.push({ kind: 'toolgroup', key: `grp-${message.id}-${items.length}`, tools: [...toolRun] });
+    }
+    toolRun = [];
+  };
+  (message.parts ?? []).forEach((p, i) => {
+    if (p.type.startsWith('tool-')) {
+      const tp = p as unknown as { toolCallId?: string; state?: string };
+      toolRun.push({ key: tp.toolCallId ?? `${message.id}-${i}`, name: p.type.slice('tool-'.length) || 'tool', state: tp.state ?? '' });
+    } else {
+      flushRun();
+      if (p.type === 'text' && (p as { text?: string }).text) {
+        items.push({ kind: 'text', key: `txt-${message.id}-${i}`, text: (p as { text: string }).text });
+      }
+    }
+  });
+  flushRun();
+
+  const toolState = (state: string): 'running' | 'failed' | 'done' =>
+    state === 'input-streaming' || state === 'input-available' ? 'running' : state === 'output-error' ? 'failed' : 'done';
+
   return (
     <div className="v3-msg v3-msg-assistant">
-      {tools.map((t) => {
-        const name = t.type.slice('tool-'.length) || 'tool';
-        const running = t.state === 'input-streaming' || t.state === 'input-available';
-        const failed = t.state === 'output-error';
+      {items.map((item) => {
+        if (item.kind === 'text') return <V3Markdown key={item.key}>{item.text}</V3Markdown>;
+
+        if (item.kind === 'tool') {
+          const st = toolState(item.tool.state);
+          return (
+            <p key={item.tool.key} className={`v3-tool-row font-mono text-[10px]${st === 'running' ? ' running' : ''}${st === 'failed' ? ' failed' : ''}`}>
+              <Wrench size={10} style={{ display: 'inline', verticalAlign: '-1px' }} /> {item.tool.name}
+              {st === 'running' ? ' · running…' : st === 'failed' ? ' · failed' : ' · done'}
+            </p>
+          );
+        }
+
+        // group: slim row + count, expandable to the individual calls
+        const anyRunning = item.tools.some((t) => toolState(t.state) === 'running');
+        const anyFailed = item.tools.some((t) => toolState(t.state) === 'failed');
+        const allSameName = item.tools.every((t) => t.name === item.tools[0].name);
+        const label = allSameName ? item.tools[0].name : 'steps';
+        const expanded = expandedGroups.has(item.key);
         return (
-          <p key={t.toolCallId} className={`v3-tool-row font-mono text-[10px]${running ? ' running' : ''}${failed ? ' failed' : ''}`}>
-            <Wrench size={10} style={{ display: 'inline', verticalAlign: '-1px' }} /> {name}
-            {running ? ' · running…' : failed ? ' · failed' : ' · done'}
-          </p>
+          <div key={item.key} className="v3-tool-group">
+            <button
+              type="button"
+              className={`v3-tool-row v3-tool-group-head font-mono text-[10px]${anyRunning ? ' running' : ''}${anyFailed ? ' failed' : ''}`}
+              aria-expanded={expanded}
+              onClick={() =>
+                setExpandedGroups((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(item.key)) next.delete(item.key);
+                  else next.add(item.key);
+                  return next;
+                })
+              }
+            >
+              <Wrench size={10} style={{ display: 'inline', verticalAlign: '-1px' }} />
+              <span className="truncate">{label}</span>
+              <span className="v3-tool-count">×{item.tools.length}</span>
+              <ChevronDown size={10} className="v3-tool-chev" style={{ display: 'inline', verticalAlign: '-1px' }} />
+            </button>
+            {expanded &&
+              item.tools.map((t) => {
+                const st = toolState(t.state);
+                return (
+                  <p key={t.key} className={`v3-tool-row v3-tool-child font-mono text-[10px]${st === 'running' ? ' running' : ''}${st === 'failed' ? ' failed' : ''}`}>
+                    <Wrench size={10} style={{ display: 'inline', verticalAlign: '-1px' }} /> {t.name}
+                    {st === 'running' ? ' · running…' : st === 'failed' ? ' · failed' : ' · done'}
+                  </p>
+                );
+              })}
+          </div>
         );
       })}
-      {text ? <V3Markdown>{text}</V3Markdown> : null}
     </div>
   );
 }

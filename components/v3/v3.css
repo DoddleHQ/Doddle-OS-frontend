@@ -677,6 +677,35 @@
 .v3-scope .v3-tool-row.running::before { background: var(--accent); animation: v3-pulse 1.2s infinite; }
 .v3-scope .v3-tool-row.failed { color: #dc2626; }
 .v3-scope .v3-tool-row.failed::before { background: #dc2626; }
+/* grouped tool run: slim expandable row + indented children */
+.v3-scope .v3-tool-group { display: flex; flex-direction: column; gap: 3px; }
+.v3-scope .v3-tool-group-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  align-self: flex-start;
+  max-width: 100%;
+  color: inherit;
+  transition: border-color 0.15s ease;
+}
+.v3-scope .v3-tool-group-head::before { display: none; }
+.v3-scope .v3-tool-group-head:hover { border-color: var(--accent); }
+.v3-scope .v3-tool-count {
+  background: rgba(128, 128, 128, 0.16);
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 9px;
+  line-height: 14px;
+  flex-shrink: 0;
+}
+.v3-scope .v3-tool-chev { transition: transform 0.15s ease; margin-left: 2px; }
+.v3-scope .v3-tool-group-head[aria-expanded='true'] .v3-tool-chev { transform: rotate(180deg); }
+.v3-scope .v3-tool-child { padding-left: 14px; }
 .v3-scope .v3-working { animation: v3-cue-bob 1.6s ease-in-out infinite; }
 /* markdown in the feed */
 .v3-scope .v3-md { font-size: 13px; line-height: 1.6; min-width: 0; overflow-wrap: break-word; }

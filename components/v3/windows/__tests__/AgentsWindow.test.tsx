@@ -190,6 +190,49 @@ describe('AgentsWindow · execution (real chat wiring)', () => {
     expect(screen.getByText('$', { selector: '.v3-msg-user .v3-msg-prompt' })).toBeTruthy();
   });
 
+  it('wraps 4+ consecutive tool calls into one expandable group row', async () => {
+    chatState.messages = [
+      {
+        id: 'a1',
+        role: 'assistant',
+        parts: [
+          { type: 'tool-read_file', toolCallId: 'c1', state: 'output-available' },
+          { type: 'tool-read_file', toolCallId: 'c2', state: 'output-available' },
+          { type: 'tool-read_file', toolCallId: 'c3', state: 'output-available' },
+          { type: 'tool-read_file', toolCallId: 'c4', state: 'output-available' },
+          { type: 'tool-grep', toolCallId: 'c5', state: 'output-available' },
+          { type: 'text', text: 'Done crawling.' },
+        ],
+      },
+    ];
+    mockFetchJson(/power-agents\/threads\?/, []);
+    render(<AgentsWindow />);
+    // one collapsed head: mixed names → "steps ×5", individual rows hidden
+    const head = await screen.findByRole('button', { name: /steps/i });
+    expect(head.textContent).toContain('×5');
+    expect(head.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByText(/read_file · done/i)).toBeNull();
+    // expand → children appear
+    fireEvent.click(head);
+    expect(screen.getAllByText(/read_file · done/i)).toHaveLength(4);
+    expect(screen.getByText(/grep · done/i)).toBeTruthy();
+  });
+
+  it('same-name runs keep their tool name as the group label', async () => {
+    chatState.messages = [
+      {
+        id: 'a2',
+        role: 'assistant',
+        parts: Array.from({ length: 6 }, (_, i) => ({ type: 'tool-scrape_page', toolCallId: `s${i}`, state: 'input-available' })),
+      },
+    ];
+    mockFetchJson(/power-agents\/threads\?/, []);
+    render(<AgentsWindow />);
+    const head = await screen.findByRole('button', { name: /scrape_page/i });
+    expect(head.textContent).toContain('×6');
+    expect(head.className).toContain('running');
+  });
+
   it('busy runs show Stop; stream errors surface honestly', async () => {
     chatState.status = 'streaming';
     mockFetchJson(/power-agents\/threads\?/, []);
