@@ -68,6 +68,8 @@ describe('AgentsWindow · roster (power agents)', () => {
     const shopifyCard = screen.getByText(/Shopify Suite · 1 agent/i)
       .parentElement!.querySelector('.roster-grid .bento-item');
     expect(shopifyCard!.className).toContain('span-row');
+    // spanning card lays out horizontally, so the width reads intentional
+    expect(shopifyCard!.className).toContain('h-row');
     fireEvent.change(screen.getByLabelText('Search power agents'), { target: { value: 'shopify' } });
     expect(screen.queryByText(/@Crawlability · Crawler & Indexer/i)).toBeNull();
     expect(screen.getByText(/@Shopify · Store Manager & Content/i)).toBeTruthy();

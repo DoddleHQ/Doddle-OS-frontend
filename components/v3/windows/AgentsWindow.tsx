@@ -69,8 +69,35 @@ function RosterView() {
           <div className="roster-grid">
             {list.map((a, i) => {
               const lone = list.length % 2 === 1 && i === list.length - 1;
+              if (lone) {
+                // lone card claims the row, laid out horizontally so the width reads intentional
+                return (
+                  <div key={a.key} className="bento-item span-row h-row">
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: 'rgba(147,51,234,.14)' }}
+                    >
+                      <a.icon size={20} style={{ color: 'var(--violet)' }} />
+                    </div>
+                    <div className="min-w-0" style={{ flex: 1 }}>
+                      <p className="font-mono font-bold text-sm">
+                        {a.handle} · {a.role}
+                      </p>
+                      <p className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
+                        {a.name} — {a.suite}
+                      </p>
+                    </div>
+                    <button className="back-link shrink-0" onClick={() => selectAgent(a.key)}>
+                      Open execution <ArrowUpRight size={12} style={{ display: 'inline' }} />
+                    </button>
+                    <button className="btn-deploy shrink-0" onClick={() => selectAgent(a.key)}>
+                      Deploy
+                    </button>
+                  </div>
+                );
+              }
               return (
-                <div key={a.key} className={`bento-item${lone ? ' span-row' : ''}`}>
+                <div key={a.key} className="bento-item">
                   <div className="flex items-start justify-between">
                     <div
                       className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
