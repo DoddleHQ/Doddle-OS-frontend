@@ -132,6 +132,13 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
   const agent = v3AgentByKey(agents.data ?? [], agentKey);
 
   const [sessions, setSessions] = useState<V3Session[]>([]);
+  // the chat transport's request builder is captured once — read live values
+  // through refs so a deep-linked exec view (roster still loading at mount)
+  // sends the resolved agent/workspace, not the undefined first render
+  const agentRef = useRef(agent);
+  agentRef.current = agent;
+  const workspaceIdRef = useRef(workspaceId);
+  workspaceIdRef.current = workspaceId;
   const [renaming, setRenaming] = useState<{ id: string; value: string } | null>(null);
   const [copiedId, setCopiedId] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
@@ -172,9 +179,9 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
         credentials,
         body: {
           ...(body as Record<string, unknown> | undefined),
-          assistantId: agent?.assistantId,
-          agentKey: agent?.key,
-          workspaceId,
+          assistantId: agentRef.current?.assistantId,
+          agentKey: agentRef.current?.key,
+          workspaceId: workspaceIdRef.current,
           threadId: activeThreadRef.current,
           messages: chatMessages.map((m) => ({
             role: m.role,
