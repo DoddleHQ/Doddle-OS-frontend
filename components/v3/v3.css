@@ -256,6 +256,15 @@
 
 /* ---------- ui components ---------- */
 .v3-scope .widget { border-radius: 8px; padding: 20px; background: var(--glass-tint); border: 1px solid var(--glass-border); }
+.v3-scope .bento-item {
+  border-radius: 8px;
+  padding: 20px;
+  background: var(--glass-tint);
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.v3-scope .bento-item:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06); }
+.v3-scope.dark .bento-item:hover { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); }
 .v3-scope .chip {
   font-family: var(--font-v3-jmono), 'JetBrains Mono', monospace;
   font-size: 11px;

@@ -17,7 +17,7 @@ export function Wallpaper() {
     if (!cv) return;
     const ctx = cv.getContext('2d');
     if (!ctx) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const dark = theme === 'dark';
     const cols = dark

@@ -3,6 +3,7 @@
 import { ArrowRight, Bot, Inbox, Layers, TerminalSquare, Zap } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 import { v3Data, OPERATOR_FIRST_NAME } from '@/lib/v3/adapter';
+import { Sparkline } from '@/components/v3/ui/Sparkline';
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -55,6 +56,9 @@ export function HomeWindow() {
             </p>
           </button>
         ))}
+      </div>
+      <div className="widget glass-deep flex items-center gap-3">
+        <Sparkline series={v3Data.getSparkSeries()} />
       </div>
       <p className="text-[11px] font-mono" style={{ color: 'var(--muted)' }}>
         v3 preview — mock data. Live threads stream via LangGraph from Screen 3.

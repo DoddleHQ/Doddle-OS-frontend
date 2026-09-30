@@ -6,6 +6,8 @@ import { Wallpaper } from './Wallpaper';
 import { MenuNotch } from './MenuNotch';
 import { NotchMenus } from './NotchMenus';
 import { WindowsLayer } from './WindowsLayer';
+import { Dashboard } from './Dashboard';
+import { ActivityRail } from './ActivityRail';
 
 const SHORTCUT_APPS: WindowId[] = ['home', 'launchpad', 'agents', 'assignments', 'hub', 'reports', 'tasks'];
 
@@ -46,8 +48,8 @@ export function OSRoot() {
       <MenuNotch />
       <NotchMenus />
       <WindowsLayer />
-      {/* Task 6: <Dashboard /> and <ActivityRail /> */}
-      {/* Task 6: <Dashboard /> */}
+      <Dashboard />
+      <ActivityRail />
       {/* Task 7: <Spotlight /> <Notifications /> <ControlCenter /> */}
     </div>
   );
