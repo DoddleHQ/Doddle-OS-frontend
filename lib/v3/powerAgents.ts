@@ -77,6 +77,17 @@ const SUITE_OF: Partial<Record<V3Suite, string>> & Record<string, V3Suite> = {
   gitops: 'GitOps Suite',
 } as Record<string, V3Suite>;
 
+/** One accent per suite — the v13 profile-card tint (banner + avatar tile),
+ *  shared by the roster cards and the execution header. */
+export const SUITE_TINT: Record<V3Suite, { color: string; bg: string }> = {
+  'SEO Audit Suite': { color: 'var(--violet)', bg: 'color-mix(in srgb, var(--violet) 16%, transparent)' },
+  'Website Content Suite': { color: 'var(--pink)', bg: 'color-mix(in srgb, var(--pink) 16%, transparent)' },
+  'DevOps Suite': { color: 'var(--cyan)', bg: 'color-mix(in srgb, var(--cyan) 16%, transparent)' },
+  'Shopify Suite': { color: 'var(--amber)', bg: 'color-mix(in srgb, var(--amber) 18%, transparent)' },
+  'WordPress Suite': { color: 'var(--accent)', bg: 'color-mix(in srgb, var(--accent) 14%, transparent)' },
+  'GitOps Suite': { color: 'var(--green)', bg: 'color-mix(in srgb, var(--green) 16%, transparent)' },
+};
+
 function suiteOf(id: string): V3Suite {
   for (const [suffix, suite] of Object.entries(SUITE_OF)) {
     if (id === suffix.slice(1) || id.includes(suffix)) return suite as V3Suite;

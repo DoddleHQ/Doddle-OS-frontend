@@ -1,18 +1,20 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AgentsWindow } from '@/components/v3/windows/AgentsWindow';
 import { useV3OS } from '@/lib/v3/osStore';
-import { fetchV3PowerAgents, fetchV3SessionsForAgent, type V3Agent, type V3Session } from '@/lib/v3/powerAgents';
+import { fetchV3PowerAgents, fetchV3Sessions, fetchV3SessionsForAgent, type V3Agent, type V3Session } from '@/lib/v3/powerAgents';
 
 jest.mock('@/lib/v3/powerAgents', () => {
   const actual = jest.requireActual('@/lib/v3/powerAgents');
   return {
     ...actual,
     fetchV3PowerAgents: jest.fn(),
+    fetchV3Sessions: jest.fn(),
     fetchV3SessionsForAgent: jest.fn(),
   };
 });
 
 const mockedAgents = fetchV3PowerAgents as jest.MockedFunction<typeof fetchV3PowerAgents>;
+const mockedFeed = fetchV3Sessions as jest.MockedFunction<typeof fetchV3Sessions>;
 const mockedSessions = fetchV3SessionsForAgent as jest.MockedFunction<typeof fetchV3SessionsForAgent>;
 
 // the same streaming utils the real exec view uses — mocked for tests
@@ -62,9 +64,13 @@ describe('AgentsWindow · roster (power agents)', () => {
     jest.clearAllMocks();
     setup();
     mockedSessions.mockResolvedValue([]);
+    mockedFeed.mockResolvedValue([]);
   });
 
-  it('suite-grouped cards: even sections pair up, a lone agent spans its row; search filters', async () => {
+  /** stat values split across <strong> — match the inner stat line's full text */
+  const statText = (re: RegExp) => (_: string, el: Element | null) => !!el?.textContent?.match(re) && el.tagName === 'SPAN';
+
+  it('v13 profile cards per suite section; search filters; deploy prompt on Enter', async () => {
     mockedAgents.mockResolvedValue([
       agent({}),
       agent({ key: 'on_page_audit', name: 'On-Page', handle: '@On-Page', role: 'Meta & Content Elements' }),
@@ -73,17 +79,49 @@ describe('AgentsWindow · roster (power agents)', () => {
     render(<AgentsWindow />);
     expect(await screen.findByText(/SEO Audit Suite · 2 agents/i)).toBeTruthy();
     expect(screen.getByText(/Shopify Suite · 1 agent/i)).toBeTruthy();
-    expect(screen.getByText(/@Crawlability · Crawler & Indexer/i)).toBeTruthy();
-    // every card is the same compact horizontal row; the grid auto-fills
-    // columns by container width (no special lone-card treatment)
+    // v13 profile-card anatomy: handle, role line, suite chip, stats, actions
+    expect(screen.getByText('@Crawlability')).toBeTruthy();
+    expect(screen.getByText('Crawler & Indexer')).toBeTruthy();
+    expect(screen.getAllByText('SEO Audit').length).toBe(2); // one suite chip per card
+    expect((await screen.findAllByText(statText(/^0 sessions$/))).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/Open execution →/i)).length).toBe(3); // one per card
+    // every card is one button in the auto-fill grid (no lone-card spanning)
     const seoCards = screen.getByText(/SEO Audit Suite · 2 agents/i)
       .parentElement!.querySelectorAll('.roster-grid .bento-item');
     expect(seoCards.length).toBe(2);
-    expect(seoCards[0].className).toContain('h-row');
-    expect(seoCards[0].className).not.toContain('span-row');
+    expect(seoCards[0].className).toContain('agent-card');
+    // search narrows the roster
     fireEvent.change(screen.getByLabelText('Search power agents'), { target: { value: 'shopify' } });
-    expect(screen.queryByText(/@Crawlability · Crawler & Indexer/i)).toBeNull();
-    expect(screen.getByText(/@Shopify · Store Manager & Content/i)).toBeTruthy();
+    expect(screen.queryByText('@Crawlability')).toBeNull();
+    expect(screen.getByText('@Shopify')).toBeTruthy();
+    // Enter in the deploy prompt opens the best-scoring match (v13 behavior)
+    fireEvent.keyDown(screen.getByLabelText('Search power agents'), { key: 'Enter' });
+    expect(useV3OS.getState().selectedAgentKey).toBe('shopify_agent');
+  });
+
+  it('suite filter chips narrow the roster; clicking again restores all', async () => {
+    mockedAgents.mockResolvedValue([
+      agent({}),
+      agent({ key: 'shopify_agent', name: 'Shopify', handle: '@Shopify', role: 'Store Manager & Content', suite: 'Shopify Suite', icon: ShoppingBag }),
+    ]);
+    render(<AgentsWindow />);
+    fireEvent.click(await screen.findByRole('button', { name: /shopify · 1/i }));
+    expect(screen.queryByText(/SEO Audit Suite · 1 agent/i)).toBeNull();
+    expect(screen.getByText(/Shopify Suite · 1 agent/i)).toBeTruthy();
+    expect(screen.getByText('@Shopify')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /shopify · 1/i }));
+    expect(screen.getByText(/SEO Audit Suite · 1 agent/i)).toBeTruthy();
+  });
+
+  it('card stats come from the real workspace feed, not seeds', async () => {
+    mockedAgents.mockResolvedValue([agent({})]);
+    mockedFeed.mockResolvedValue([
+      session({ id: 'f1', agentKey: 'crawlability_audit', updatedAt: new Date().toISOString() }),
+      session({ id: 'f2', agentKey: 'crawlability_audit', createdAt: '2026-09-28T10:00:00Z', updatedAt: null }),
+    ]);
+    render(<AgentsWindow />);
+    expect(await screen.findByText(statText(/^2 sessions$/))).toBeTruthy(); // both feed rows group onto the agent
+    expect(screen.getAllByText(/just now/i).length).toBeGreaterThan(0); // latest run wins
   });
 
   it('roster error surfaces with retry, no fake agents', async () => {
@@ -93,15 +131,17 @@ describe('AgentsWindow · roster (power agents)', () => {
     expect(screen.getByText('retry')).toBeTruthy();
   });
 
-  it('clicking a card (or its Deploy chip) opens the execution view', async () => {
+  it('clicking a card (or its Deploy affordance) opens the execution view', async () => {
     mockedAgents.mockResolvedValue([agent({})]);
     render(<AgentsWindow />);
-    const card = (await screen.findAllByText(/@Crawlability · Crawler & Indexer/i))[0].closest('.bento-item')!;
+    const card = (await screen.findByText('@Crawlability')).closest('.bento-item')!;
     fireEvent.click(card);
     expect(useV3OS.getState().selectedAgentKey).toBe('crawlability_audit');
     fireEvent.click(await screen.findByText(/← all agents/i));
     useV3OS.getState().selectAgent(null);
-    fireEvent.click((await screen.findAllByText(/Deploy/i))[0]);
+    // the card's Deploy affordance rides the same single-button action
+    const deploy = (await screen.findAllByText((_, el) => el?.classList.contains('profile-deploy') ?? false))[0];
+    fireEvent.click(deploy);
     expect(useV3OS.getState().selectedAgentKey).toBe('crawlability_audit');
   });
 });
@@ -114,6 +154,7 @@ describe('AgentsWindow · execution (real chat wiring)', () => {
     setup();
     mockedAgents.mockResolvedValue([agent({})]);
     mockedSessions.mockResolvedValue([]);
+    mockedFeed.mockResolvedValue([]);
     useV3OS.getState().selectAgent('crawlability_audit');
     chatState.messages = [];
     chatState.status = 'ready';
@@ -362,6 +403,18 @@ describe('AgentsWindow · execution (real chat wiring)', () => {
     expect(screen.getByText('in flight').parentElement!.textContent).toContain('1');
     expect(screen.getByText(/starts on first message/i)).toBeTruthy();
     expect(screen.getByRole('button', { name: /\+ new session/i })).toBeTruthy();
+  });
+
+  it('run states follow the v13 vocabulary: deployed → streaming → awaiting review', async () => {
+    mockFetchJson(/power-agents\/threads\?/, []);
+    const { unmount } = render(<AgentsWindow />);
+    expect(await screen.findByText('deployed')).toBeTruthy();
+    unmount();
+    chatState.messages = [{ id: 'u1', role: 'user', parts: [{ type: 'text', text: 'go' }] }];
+    render(<AgentsWindow />);
+    // header chip + session status line both carry the finished-run state
+    const els = await screen.findAllByText(/done — awaiting your review/i);
+    expect(els.length).toBeGreaterThanOrEqual(2);
   });
 
   it('back link returns to the roster', async () => {

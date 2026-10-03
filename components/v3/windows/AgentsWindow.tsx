@@ -6,22 +6,42 @@ import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
 import { useV3OS } from '@/lib/v3/osStore';
-import { fetchV3PowerAgents, type V3Session, v3AgentByKey } from '@/lib/v3/powerAgents';
+import { fetchV3PowerAgents, fetchV3Sessions, SUITE_TINT, v3AgentByKey, type V3Session, type V3Suite } from '@/lib/v3/powerAgents';
 import { useV3Fetch, v3Ago } from '@/lib/v3/data';
 import { EngConsole } from '@/components/v3/ui/EngConsole';
 import { V3Markdown } from '@/components/v3/ui/V3Markdown';
 
 function RosterView() {
   const [q, setQ] = useState('');
+  const [suiteFilter, setSuiteFilter] = useState<V3Suite | 'all'>('all');
   const { selectAgent } = useV3OS.getState();
+  const workspaceId = useV3OS((s) => s.workspaceId);
   const agents = useV3Fetch(fetchV3PowerAgents, []);
+  // workspace-wide feed powers each card's stats line (real session counts)
+  const feed = useV3Fetch(() => (workspaceId ? fetchV3Sessions(workspaceId) : Promise.resolve([] as V3Session[])), [workspaceId]);
+
+  const stats = useMemo(() => {
+    const by = new Map<string, { count: number; last: string | null }>();
+    (feed.data ?? []).forEach((s) => {
+      if (!s.agentKey) return;
+      const cur = by.get(s.agentKey) ?? { count: 0, last: null };
+      cur.count += 1;
+      const t = s.updatedAt ?? s.createdAt;
+      if (t && (!cur.last || t > cur.last)) cur.last = t;
+      by.set(s.agentKey, cur);
+    });
+    return by;
+  }, [feed.data]);
 
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const roster = agents.data ?? [];
-    if (!needle) return roster;
-    return roster.filter((a) => `${a.name} ${a.role} ${a.suite} ${a.key} ${a.handle}`.toLowerCase().includes(needle));
-  }, [agents.data, q]);
+    return roster.filter((a) => {
+      if (suiteFilter !== 'all' && a.suite !== suiteFilter) return false;
+      if (!needle) return true;
+      return `${a.name} ${a.role} ${a.suite} ${a.key} ${a.handle}`.toLowerCase().includes(needle);
+    });
+  }, [agents.data, q, suiteFilter]);
 
   // suite sections in roster order; within a section, an odd trailing card
   // spans the full row so no row is left half-empty
@@ -34,6 +54,30 @@ function RosterView() {
     });
     return [...by.entries()];
   }, [visible]);
+
+  const suiteList = useMemo(() => {
+    const by = new Map<V3Suite, number>();
+    (agents.data ?? []).forEach((a) => by.set(a.suite, (by.get(a.suite) ?? 0) + 1));
+    return [...by.entries()];
+  }, [agents.data]);
+
+  /** Enter in the deploy prompt opens the best-scoring match (v13 behavior). */
+  function deployBest() {
+    const needle = q.trim().toLowerCase();
+    if (!needle || visible.length === 0) return;
+    const best = visible
+      .map((a) => {
+        let s = 0;
+        if (a.handle.toLowerCase().includes(needle)) s += 3;
+        if (a.name.toLowerCase().includes(needle)) s += 3;
+        if (a.key.toLowerCase().includes(needle)) s += 2;
+        if (a.role.toLowerCase().includes(needle)) s += 1;
+        if (a.suite.toLowerCase().includes(needle)) s += 1;
+        return [a, s] as const;
+      })
+      .sort((x, y) => y[1] - x[1])[0];
+    if (best) selectAgent(best[0].key);
+  }
 
   if (agents.loading) {
     return (
@@ -55,15 +99,42 @@ function RosterView() {
 
   return (
     <div>
-      <div className="askbar" style={{ marginBottom: 12 }}>
+      <p className="font-mono text-[10px] tracking-[0.08em] uppercase" style={{ color: 'var(--muted)', marginBottom: 6 }}>
+        Deploy prompt · describe work — we pick the agent
+      </p>
+      <div className="askbar" style={{ marginBottom: 10 }}>
         <Search size={16} style={{ color: 'var(--muted)' }} />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') deployBest();
+          }}
           placeholder="Search power agents… try 'crawl', 'shopify', 'content'"
           aria-label="Search power agents"
         />
         <span className="chip font-mono">{visible.length}/{agents.data?.length ?? 0}</span>
+      </div>
+      <div className="v3-fchips" role="group" aria-label="Filter agents by suite">
+        <button
+          type="button"
+          className={`fchip${suiteFilter === 'all' ? ' on' : ''}`}
+          aria-pressed={suiteFilter === 'all'}
+          onClick={() => setSuiteFilter('all')}
+        >
+          all · {agents.data?.length ?? 0}
+        </button>
+        {suiteList.map(([s, n]) => (
+          <button
+            key={s}
+            type="button"
+            className={`fchip${suiteFilter === s ? ' on' : ''}`}
+            aria-pressed={suiteFilter === s}
+            onClick={() => setSuiteFilter(suiteFilter === s ? 'all' : s)}
+          >
+            {s.replace(' Suite', '').toLowerCase()} · {n}
+          </button>
+        ))}
       </div>
       {suites.map(([suite, list]) => (
         <div key={suite} style={{ marginBottom: 12 }}>
@@ -71,48 +142,47 @@ function RosterView() {
             {suite} · {list.length} agent{list.length === 1 ? '' : 's'}
           </p>
           <div className="roster-grid">
-            {list.map((a) => (
-              <button
-                key={a.key}
-                type="button"
-                className="bento-item h-row"
-                style={{ textAlign: 'left' }}
-                onClick={() => selectAgent(a.key)}
-              >
-                <span
-                  className="rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: 'rgba(147,51,234,.14)', width: 28, height: 28 }}
+            {list.map((a) => {
+              const tint = SUITE_TINT[a.suite];
+              const st = stats.get(a.key);
+              return (
+                <button
+                  key={a.key}
+                  type="button"
+                  className="bento-item agent-card"
+                  aria-label={`Deploy ${a.handle} — ${a.role} · ${st?.count ?? 0} sessions`}
+                  onClick={() => selectAgent(a.key)}
                 >
-                  <a.icon size={16} style={{ color: 'var(--violet)' }} />
-                </span>
-                <span className="min-w-0" style={{ flex: 1 }}>
-                  <span className="block font-mono font-bold text-xs truncate">
-                    {a.handle} · {a.role}
+                  <span className="profile-banner" style={{ background: tint.bg }} aria-hidden="true">
+                    <span className="profile-dot" />
                   </span>
-                  <span className="block text-[10px] font-mono truncate" style={{ color: 'var(--muted)' }}>
-                    {a.name} — {a.suite}
+                  <span className="profile-avatar" style={{ background: tint.bg, color: tint.color }} aria-hidden="true">
+                    <a.icon size={22} />
                   </span>
-                </span>
-                <span
-                  className="chip shrink-0"
-                  role="button"
-                  tabIndex={0}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    selectAgent(a.key);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      selectAgent(a.key);
-                    }
-                  }}
-                >
-                  Deploy <ArrowUpRight size={10} style={{ display: 'inline' }} />
-                </span>
-              </button>
-            ))}
+                  <span className="profile-id min-w-0">
+                    <span className="block font-mono font-bold text-xs truncate">{a.handle}</span>
+                    <span className="block font-mono text-[11px] truncate" style={{ color: 'var(--muted)' }}>
+                      {a.role}
+                    </span>
+                  </span>
+                  <span className="chip profile-suite">{a.suite.replace(' Suite', '')}</span>
+                  <span className="profile-stats font-mono">
+                    <span>
+                      <strong>{st?.count ?? 0}</strong> sessions
+                    </span>
+                    <span>
+                      <strong>{st ? v3Ago(st.last) : '—'}</strong> last run
+                    </span>
+                  </span>
+                  <span className="btn-deploy profile-deploy" aria-hidden="true">
+                    Deploy <ArrowUpRight size={10} style={{ display: 'inline' }} />
+                  </span>
+                  <span className="back-link profile-open" aria-hidden="true">
+                    Open execution →
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       ))}
@@ -360,22 +430,26 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
   }
   const Icon = agent.icon;
   const activeChip = sessions.find((s) => s.id === activeThread) ?? null;
+  const tint = SUITE_TINT[agent.suite];
+  // v13 run states: an idle agent is deployed, a finished run awaits review
+  const runState = busy ? 'streaming…' : error ? 'stream error' : messages.length > 0 ? 'done — awaiting your review' : 'deployed';
 
   return (
     <div>
-      <div className="widget" style={{ marginBottom: 12 }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+      <div className="widget agent-profile-head" style={{ marginBottom: 12 }}>
+        <div className="profile-banner" style={{ background: tint.bg }} aria-hidden="true" />
+        <div className="head-row">
           <button className="back-link" onClick={() => selectAgent(null)}>
             ← all agents
           </button>
-          <span className="chip">{busy ? 'streaming…' : 'deployed'}</span>
+          <span className="chip">{runState}</span>
         </div>
         <div className="agent-head">
-          <div className="tile" style={{ background: 'rgba(147,51,234,.14)' }}>
-            <Icon size={20} style={{ color: 'var(--violet)' }} />
+          <div className="tile" style={{ background: tint.bg, color: tint.color }}>
+            <Icon size={20} />
           </div>
           <div className="min-w-0">
-            <p className="font-mono font-bold text-base">
+            <p className="font-mono font-bold text-base truncate">
               {agent.handle} · {agent.role}
             </p>
             <p className="font-mono text-xs" style={{ color: 'var(--muted)' }}>
@@ -430,7 +504,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
                 if (renaming && renaming.id === s.id) {
                   return (
                     <div key={s.id} className="thread-row" style={{ cursor: 'default' }}>
-                      <MessageSquare size={12} style={{ color: 'var(--violet)', flexShrink: 0 }} />
+                      <MessageSquare size={12} style={{ color: tint.color, flexShrink: 0 }} />
                       <input
                         className="task-input meta"
                         autoFocus
@@ -459,7 +533,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
                     tabIndex={0}
                     onKeyDown={(e) => e.key === 'Enter' && switchSession(s.id)}
                   >
-                    <MessageSquare size={12} style={{ color: 'var(--violet)', flexShrink: 0 }} />
+                    <MessageSquare size={12} style={{ color: tint.color, flexShrink: 0 }} />
                     <span className="meta">
                       <p className="font-mono font-bold text-xs">{s.title}</p>
                       <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
@@ -528,7 +602,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
                 className={busy ? 'v3-working' : ''}
                 style={{ width: 6, height: 6, borderRadius: '50%', background: busy ? 'var(--accent)' : error ? '#dc2626' : '#10b981', display: 'inline-block', flexShrink: 0 }}
               />
-              {busy ? 'streaming' : error ? 'stream error' : 'ready'}
+              {busy ? 'streaming' : error ? 'stream error' : messages.length > 0 ? 'done — awaiting your review' : 'ready'}
             </p>
           </div>
 

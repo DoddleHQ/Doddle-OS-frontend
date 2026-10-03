@@ -492,22 +492,115 @@
 .v3-scope .win-body { container-type: inline-size; }
 .v3-scope .roster-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+  gap: 10px;
 }
 .v3-scope .roster-grid > * { min-width: 0; }
-/* compact single-line agent row — the roster's only card shape */
-.v3-scope .roster-grid .h-row {
+
+/* v13 suite filter chips */
+.v3-scope .v3-fchips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.v3-scope .fchip {
+  font-family: var(--font-v3-jmono), 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.v3-scope .fchip:hover { color: var(--ink); border-color: var(--accent); }
+.v3-scope .fchip.on { background: var(--accent); color: #fff; border-color: transparent; }
+.v3-scope.dark .fchip.on { color: #071022; }
+
+/* v13 agent profile cards — suite-tinted banner, overlapping avatar, real
+   per-agent stats from the workspace feed. The whole card is one button;
+   the Deploy / Open execution visuals are affordances of that same action. */
+.v3-scope .agent-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 14px 14px;
+  color: var(--ink);
+  cursor: pointer;
+  overflow: hidden;
+}
+.v3-scope .agent-card .profile-banner {
+  display: block;
+  height: 52px;
+  width: calc(100% + 28px);
+  margin: 0 -14px;
+  border-bottom: 1px solid var(--glass-border);
+  position: relative;
+}
+.v3-scope .profile-dot {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--green);
+  border: 2px solid var(--glass-tint);
+}
+.v3-scope .agent-card .profile-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  cursor: pointer;
-  color: var(--ink);
-  border-radius: 8px;
-  width: 100%;
+  justify-content: center;
+  margin-top: -26px;
+  border: 3px solid var(--glass-tint);
+  flex-shrink: 0;
+}
+.v3-scope .agent-card .profile-id { margin-top: 8px; }
+.v3-scope .agent-card .profile-suite { margin-top: 8px; }
+.v3-scope .agent-card .profile-stats {
+  display: flex;
+  gap: 18px;
+  margin-top: 10px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.v3-scope .agent-card .profile-stats strong { color: var(--ink); font-size: 12px; display: block; }
+.v3-scope .agent-card .profile-deploy { margin-top: 12px; width: 100%; }
+.v3-scope .agent-card .profile-open { margin-top: 8px; }
+/* narrow window body: the card reflows to the compact single-line row */
+@container (max-width: 599px) {
+  .v3-scope .agent-card {
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    gap: 10px;
+    padding: 8px 12px;
+  }
+  .v3-scope .agent-card .profile-banner,
+  .v3-scope .agent-card .profile-stats,
+  .v3-scope .agent-card .profile-suite,
+  .v3-scope .agent-card .profile-deploy,
+  .v3-scope .agent-card .profile-open { display: none; }
+  .v3-scope .agent-card .profile-avatar { width: 28px; height: 28px; margin-top: 0; border: 0; }
+  .v3-scope .agent-card .profile-avatar svg { width: 14px; height: 14px; }
+  .v3-scope .agent-card .profile-id { margin-top: 0; flex: 1; }
 }
 @media (max-width: 900px) { .v3-scope .roster-grid { grid-template-columns: 1fr; } }
+
+/* v13 execution header: full-bleed suite banner over the agent identity */
+.v3-scope .agent-profile-head { padding: 0; overflow: hidden; }
+.v3-scope .agent-profile-head .profile-banner {
+  display: block;
+  height: 44px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.v3-scope .agent-profile-head .head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 0;
+}
+.v3-scope .agent-profile-head .agent-head { padding: 8px 14px 12px; }
 .v3-scope .agent-head { display: flex; align-items: center; gap: 12px; }
 .v3-scope .agent-head .tile {
   width: 44px;
