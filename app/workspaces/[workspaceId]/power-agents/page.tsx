@@ -295,6 +295,7 @@ const TOOL_LABELS: Record<string, string> = {
   'request_copilot_review': 'requesting review',
   'update_pull_request_branch': 'updating branch',
   'run_secret_scanning': 'scanning secrets',
+  'list_accessible_repos': 'listing your repos',
   'wp_discover_taxonomies': 'discovering taxonomies',
   'wp_discover_content_types': 'discovering types',
   'wp_get_content_summary': 'summarizing content',
