@@ -744,7 +744,7 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   padding-right: 2px;
 }
 /* session rows: actions appear on hover/focus, never steal row space */
@@ -753,18 +753,55 @@
 .v3-scope .v3-session:hover .v3-session-actions,
 .v3-scope .v3-session:focus-visible .v3-session-actions { display: inline-flex; }
 .v3-scope .v3-session-actions .chip { padding: 3px 6px; }
-.v3-scope .v3-msg-user {
+/* v13 chat grammar: every turn is avatar · name · time · bubble;
+   tool calls read as nested replies under the flow (avatar-gutter indent
+   + reply edge). The user keeps the terminal `$` voice inside its bubble. */
+.v3-scope .v3-cmsg { display: flex; gap: 10px; min-width: 0; align-items: flex-start; }
+.v3-scope .v3-cavatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-tint);
+  color: var(--muted);
+}
+.v3-scope .v3-cbody { flex: 1; min-width: 0; }
+.v3-scope .v3-chead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 3px; }
+.v3-scope .v3-cname { font-family: var(--font-v3-jmono), 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; }
+.v3-scope .v3-ctime { font-family: var(--font-v3-jmono), 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); }
+.v3-scope .v3-cbubble {
   display: flex;
   gap: 8px;
   align-items: baseline;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(29, 78, 216, 0.08);
-  border: 1px solid rgba(29, 78, 216, 0.22);
+  max-width: 72ch;
+  border: 1px solid var(--glass-border);
+  background: rgba(128, 128, 128, 0.08);
+  border-radius: 4px 10px 10px 10px;
+  padding: 10px 12px;
 }
-.v3-scope.dark .v3-msg-user { background: rgba(59, 130, 246, 0.12); border-color: rgba(59, 130, 246, 0.3); }
+.v3-scope .v3-cbubble-user {
+  background: rgba(29, 78, 216, 0.08);
+  border-color: rgba(29, 78, 216, 0.22);
+}
+.v3-scope.dark .v3-cbubble-user { background: rgba(59, 130, 246, 0.12); border-color: rgba(59, 130, 246, 0.3); }
 .v3-scope .v3-msg-prompt { font-family: var(--font-v3-jmono), 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; color: var(--accent); flex-shrink: 0; }
 .v3-scope .v3-msg-assistant { min-width: 0; }
+.v3-scope .v3-msg-assistant .v3-cbubble { display: block; }
+/* tool replies nest under the flow: one shared avatar-gutter indent and
+   reply rail for single rows and groups alike */
+.v3-scope .v3-chat .v3-tool-row:not(.v3-tool-child),
+.v3-scope .v3-chat .v3-tool-group {
+  margin-left: 44px;
+  border-left: 2px solid rgba(128, 128, 128, 0.35);
+  padding-left: 10px;
+}
+.v3-scope.dark .v3-chat .v3-tool-row:not(.v3-tool-child),
+.v3-scope.dark .v3-chat .v3-tool-group { border-left-color: rgba(255, 255, 255, 0.18); }
+.v3-scope .v3-chat .v3-tool-row:not(.v3-tool-child) { margin-bottom: 4px; }
 .v3-scope .v3-tool-row { color: var(--muted); margin: 0 0 4px 0; display: flex; align-items: center; gap: 6px; }
 .v3-scope .v3-tool-row::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
 .v3-scope .v3-tool-row.running { color: var(--accent); }

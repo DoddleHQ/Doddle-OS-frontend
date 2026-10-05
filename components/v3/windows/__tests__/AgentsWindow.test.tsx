@@ -26,7 +26,7 @@ const chatState: { messages: UIMessageLike[]; status: string; error: { message: 
 const sendMessage = jest.fn();
 const setMessages = jest.fn();
 const stopRun = jest.fn();
-type UIMessageLike = { id: string; role: string; parts: Array<{ type: string; text?: string; toolCallId?: string; state?: string }> };
+type UIMessageLike = { id: string; role: string; createdAt?: string; parts: Array<{ type: string; text?: string; toolCallId?: string; state?: string }> };
 jest.mock('@ai-sdk/react', () => ({
   useChat: () => ({ messages: chatState.messages, setMessages, sendMessage, status: chatState.status, stop: stopRun, error: chatState.error }),
 }));
@@ -204,6 +204,24 @@ describe('AgentsWindow · execution (real chat wiring)', () => {
     fireEvent.change(input, { target: { value: 'crawl the sitemap' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     await waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ text: 'crawl the sitemap' }));
+  });
+
+  it('messages render in the chat grammar: avatar · name · time heads over bubbles', async () => {
+    chatState.messages = [
+      { id: 'u1', role: 'user', createdAt: '2026-10-03T10:00:00Z', parts: [{ type: 'text', text: 'crawl the sitemap' }] },
+      { id: 'a1', role: 'assistant', parts: [{ type: 'text', text: 'On it.' }] },
+    ];
+    mockFetchJson(/power-agents\/threads\?/, []);
+    const { container } = render(<AgentsWindow />);
+    expect(await screen.findByText('you')).toBeTruthy();
+    expect(screen.getByText('@Crawlability')).toBeTruthy(); // assistant head uses the handle
+    const d = new Date('2026-10-03T10:00:00Z'); // chat times render in the operator's local zone
+    const hhmm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    expect(screen.getByText(hhmm)).toBeTruthy();
+    expect(container.querySelectorAll('.v3-cmsg').length).toBe(2);
+    expect(container.querySelectorAll('.v3-cavatar').length).toBe(2);
+    // tool replies keep the nested-reply indent under the flow
+    expect(container.querySelector('.v3-chat')).toBeTruthy();
   });
 
   it('renders tool rows and assistant markdown from streamed messages', async () => {

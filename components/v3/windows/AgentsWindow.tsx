@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, ArrowUpRight, MessageSquare, Wrench, Pencil, Trash2, ChevronDown, Copy, Check } from 'lucide-react';
+import { Search, ArrowUpRight, MessageSquare, Wrench, Pencil, Trash2, ChevronDown, Copy, Check, UserRound } from 'lucide-react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
 import { useV3OS } from '@/lib/v3/osStore';
-import { fetchV3PowerAgents, fetchV3Sessions, SUITE_TINT, v3AgentByKey, type V3Session, type V3Suite } from '@/lib/v3/powerAgents';
+import { fetchV3PowerAgents, fetchV3Sessions, SUITE_TINT, v3AgentByKey, type V3Agent, type V3Session, type V3Suite } from '@/lib/v3/powerAgents';
 import { useV3Fetch, v3Ago } from '@/lib/v3/data';
 import { EngConsole } from '@/components/v3/ui/EngConsole';
 import { V3Markdown } from '@/components/v3/ui/V3Markdown';
@@ -465,13 +465,13 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
               Conversation · {agent.handle}
               {activeChip ? ` · ${activeChip.title}` : ' · new session'}
             </p>
-            <div className="v3-chat" role="log" aria-live="polite">
+              <div className="v3-chat" role="log" aria-live="polite">
               {messages.length === 0 && !busy && (
                 <p className="font-mono text-xs" style={{ color: 'var(--muted)' }}>
                   No messages yet — assign a task below. Nothing ships without you.
                 </p>
               )}
-              <ChatFeed messages={messages} />
+              <ChatFeed messages={messages} agent={agent} />
               {busy && (
                 <p className="font-mono text-xs v3-working" style={{ color: 'var(--muted)' }}>
                   working…
@@ -652,20 +652,34 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
 }
 
 /**
- * The conversation feed. Tool calls group across message boundaries, per tool
- * name: within an uninterrupted run (no text between), repeated invocations
- * of the SAME tool collapse into one accordion row (name ×N); distinct tools
- * stay their own rows and are never merged into a generic blob.
+ * The conversation feed, in the v13 chat grammar: every turn is a chat
+ * message (avatar · name · time · bubble) and tool calls render as nested
+ * replies under the flow. Tool grouping is unchanged: across message
+ * boundaries, per tool name — within an uninterrupted run (no text
+ * between), repeated invocations of the SAME tool collapse into one
+ * accordion row (name ×N); distinct tools stay their own rows and are
+ * never merged into a generic blob.
  */
-function ChatFeed({ messages }: { messages: UIMessage[] }) {
+function ChatFeed({ messages, agent }: { messages: UIMessage[]; agent?: V3Agent }) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const tint = agent ? SUITE_TINT[agent.suite] : undefined;
+  const Avatar = agent?.icon;
 
   type ToolInfo = { key: string; name: string; state: string };
   type Item =
-    | { kind: 'user'; key: string; text: string }
-    | { kind: 'text'; key: string; text: string }
+    | { kind: 'user'; key: string; text: string; time: string | null }
+    | { kind: 'text'; key: string; text: string; time: string | null }
     | { kind: 'tool'; tool: ToolInfo }
     | { kind: 'toolgroup'; key: string; label: string; tools: ToolInfo[] };
+
+  // UIMessage.createdAt (when the stream provides it) → "HH:MM" chat time
+  const timeOf = (m: UIMessage): string | null => {
+    const t = (m as { createdAt?: unknown }).createdAt;
+    if (!t) return null;
+    const d = t instanceof Date ? t : new Date(String(t));
+    if (Number.isNaN(d.getTime())) return null;
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
 
   const items: Item[] = [];
   let toolRun: ToolInfo[] = [];
@@ -690,10 +704,11 @@ function ChatFeed({ messages }: { messages: UIMessage[] }) {
   };
 
   messages.forEach((m) => {
+    const time = timeOf(m);
     if (m.role === 'user') {
       flushRun(); // a user turn breaks any tool run
       const text = m.parts?.map((p) => (p.type === 'text' ? (p as { text?: string }).text ?? '' : '')).join('');
-      if (text) items.push({ kind: 'user', key: `usr-${m.id}`, text });
+      if (text) items.push({ kind: 'user', key: `usr-${m.id}`, text, time });
       return;
     }
     (m.parts ?? []).forEach((p, i) => {
@@ -703,7 +718,7 @@ function ChatFeed({ messages }: { messages: UIMessage[] }) {
       } else {
         flushRun();
         if (p.type === 'text' && (p as { text?: string }).text) {
-          items.push({ kind: 'text', key: `txt-${m.id}-${i}`, text: (p as { text: string }).text });
+          items.push({ kind: 'text', key: `txt-${m.id}-${i}`, text: (p as { text: string }).text, time });
         }
       }
     });
@@ -728,13 +743,41 @@ function ChatFeed({ messages }: { messages: UIMessage[] }) {
       {items.map((item) => {
         if (item.kind === 'user') {
           return (
-            <div key={item.key} className="v3-msg v3-msg-user">
-              <span className="v3-msg-prompt">$</span>
-              <span className="font-mono text-xs">{item.text}</span>
+            <div key={item.key} className="v3-cmsg v3-msg-user">
+              <span className="v3-cavatar" aria-hidden="true">
+                <UserRound size={15} />
+              </span>
+              <span className="v3-cbody">
+                <span className="v3-chead">
+                  <span className="v3-cname">you</span>
+                  {item.time && <span className="v3-ctime">{item.time}</span>}
+                </span>
+                <span className="v3-cbubble v3-cbubble-user">
+                  <span className="v3-msg-prompt">$</span>
+                  <span className="font-mono text-xs">{item.text}</span>
+                </span>
+              </span>
             </div>
           );
         }
-        if (item.kind === 'text') return <V3Markdown key={item.key}>{item.text}</V3Markdown>;
+        if (item.kind === 'text') {
+          return (
+            <div key={item.key} className="v3-cmsg v3-msg-assistant">
+              <span className="v3-cavatar" style={tint ? { background: tint.bg, color: tint.color } : undefined} aria-hidden="true">
+                {Avatar && <Avatar size={15} />}
+              </span>
+              <span className="v3-cbody">
+                <span className="v3-chead">
+                  <span className="v3-cname">{agent?.handle ?? 'agent'}</span>
+                  {item.time && <span className="v3-ctime">{item.time}</span>}
+                </span>
+                <span className="v3-cbubble">
+                  <V3Markdown>{item.text}</V3Markdown>
+                </span>
+              </span>
+            </div>
+          );
+        }
         if (item.kind === 'tool') return toolRow(item.tool);
 
         const anyRunning = item.tools.some((t) => toolState(t.state) === 'running');
