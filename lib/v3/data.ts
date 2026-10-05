@@ -18,7 +18,7 @@ import { getMe } from '@/lib/services/authService';
 export interface V3Workspace {
   id: string;
   name: string;
-  domain: string | null;
+  domain?: string | null;
   orgName?: string;
 }
 

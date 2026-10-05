@@ -2,6 +2,8 @@
 
 import { Building2, SlidersHorizontal, SunMoon, Briefcase } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
+import { fetchV3Sessions } from '@/lib/v3/powerAgents';
+import { useV3Fetch, isV3SessionUnread } from '@/lib/v3/data';
 
 /** Workspace switcher + settings dropdowns hanging off the menu notch. */
 export function NotchMenus() {
@@ -10,8 +12,13 @@ export function NotchMenus() {
   const workspaces = useV3OS((s) => s.workspaces);
   const theme = useV3OS((s) => s.theme);
   const { setMenu, setWorkspace, openApp, toggleCC, toggleTheme } = useV3OS.getState();
+  // live activity for the CURRENT workspace only (the feed is workspace-
+  // scoped; other entries show their real domain instead of a fake metric)
+  const feed = useV3Fetch(() => (workspaceId ? fetchV3Sessions(workspaceId) : Promise.resolve([])), [workspaceId]);
 
   if (menu === 'ws') {
+    const sessions = feed.data ?? [];
+    const unread = sessions.filter((s) => isV3SessionUnread(s)).length;
     return (
       <div className="glass v3-ws-menu no-select" role="menu" aria-label="Workspace">
         {workspaces.length === 0 && (
@@ -21,12 +28,25 @@ export function NotchMenus() {
               : 'loading workspaces…'}
           </p>
         )}
-        {workspaces.map((w) => (
-          <button key={w.id} className="spot-item" onClick={() => setWorkspace(w.id)}>
-            <Briefcase size={16} /> {w.name} workspace
-            {w.id === workspaceId ? <span className="chip ml-auto">on</span> : null}
-          </button>
-        ))}
+        {workspaces.map((w) => {
+          const on = w.id === workspaceId;
+          return (
+            <button key={w.id} className="spot-item v3-ws-item" onClick={() => setWorkspace(w.id)}>
+              <span className="v3-ws-ico" aria-hidden="true">
+                <Briefcase size={14} />
+              </span>
+              <span className="min-w-0">
+                <span className="block font-mono font-bold text-xs truncate">{w.name}</span>
+                <span className="block font-mono text-[10px] truncate" style={{ color: 'var(--muted)' }}>
+                  {on
+                    ? `${sessions.length} session${sessions.length === 1 ? '' : 's'}${unread ? ` · ${unread} new` : ''}`
+                    : w.domain ?? w.orgName ?? 'workspace'}
+                </span>
+              </span>
+              {on ? <span className="chip ml-auto">on</span> : null}
+            </button>
+          );
+        })}
       </div>
     );
   }

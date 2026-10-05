@@ -27,7 +27,7 @@ export function OSRoot() {
   }, [hydrate]);
 
   useEffect(() => {
-    if (workspaces.data) setWorkspaces(workspaces.data.map((w) => ({ id: w.id, name: w.name })));
+    if (workspaces.data) setWorkspaces(workspaces.data);
     else if (workspaces.error) setWorkspaces([], workspaces.error);
   }, [workspaces.data, workspaces.error, setWorkspaces]);
 

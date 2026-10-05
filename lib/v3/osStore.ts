@@ -1,6 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
+import type { V3Workspace } from '@/lib/v3/data';
 
 export type ThemeMode = 'light' | 'dark';
 export type Backdrop = 'aurora' | 'lattice' | 'halo' | 'calm';
@@ -65,7 +66,7 @@ interface V3OSState {
   railPinned: boolean;
   hydrated: boolean;
   /** Real workspace list (fetched once, kept for the switcher + guards). */
-  workspaces: { id: string; name: string }[];
+  workspaces: V3Workspace[];
   /** Non-null when the workspace list fetch failed (shown in the switcher). */
   workspacesError: string | null;
   /** Selected agent in the Agents window; null = roster view. */
@@ -75,7 +76,7 @@ interface V3OSState {
   toggleTheme(): void;
   setBackdrop(b: Backdrop): void;
   setWorkspace(id: string): void;
-  setWorkspaces(list: { id: string; name: string }[], error?: string | null): void;
+  setWorkspaces(list: V3Workspace[], error?: string | null): void;
   selectAgent(slug: string | null): void;
   openApp(id: WindowId, opts?: { mode?: WindowMode }): void;
   closeWin(id: WindowId): void;
