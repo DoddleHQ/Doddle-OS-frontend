@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useV3OS, type WindowId } from '@/lib/v3/osStore';
 import { fetchV3Workspaces, useV3Fetch } from '@/lib/v3/data';
+import { fetchV3Sessions } from '@/lib/v3/powerAgents';
 import { Wallpaper } from './Wallpaper';
 import { MenuNotch } from './MenuNotch';
 import { NotchMenus } from './NotchMenus';
@@ -20,7 +21,15 @@ export function OSRoot() {
   const theme = useV3OS((s) => s.theme);
   const hydrate = useV3OS((s) => s.hydrate);
   const setWorkspaces = useV3OS((s) => s.setWorkspaces);
+  const setSessionFeed = useV3OS((s) => s.setSessionFeed);
+  const workspaceId = useV3OS((s) => s.workspaceId);
   const workspaces = useV3Fetch(fetchV3Workspaces, []);
+  // the ONE workspace feed fetch — every consumer reads it from the store
+  const feed = useV3Fetch(() => (workspaceId ? fetchV3Sessions(workspaceId) : Promise.resolve([])), [workspaceId]);
+
+  useEffect(() => {
+    setSessionFeed(feed.data ?? [], feed.error);
+  }, [feed.data, feed.error, setSessionFeed]);
 
   useEffect(() => {
     hydrate();

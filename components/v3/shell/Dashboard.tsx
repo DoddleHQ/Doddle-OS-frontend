@@ -3,8 +3,8 @@
 import { Layers, Bot, Activity, Inbox, Zap, ChevronDown } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 import { v3Data } from '@/lib/v3/adapter';
-import { useV3Fetch, useV3OperatorName, v3Ago } from '@/lib/v3/data';
-import { fetchV3PowerAgents, fetchV3Sessions, v3AgentByKey } from '@/lib/v3/powerAgents';
+import { useV3Fetch, useV3OperatorName, v3Ago, isV3SessionUnread } from '@/lib/v3/data';
+import { fetchV3PowerAgents, v3AgentByKey } from '@/lib/v3/powerAgents';
 import { MorphText } from '@/components/v3/ui/MorphText';
 import { Sparkline } from '@/components/v3/ui/Sparkline';
 
@@ -26,16 +26,16 @@ function LoadingLine({ label }: { label: string }) {
 /** Full-page chat-first dashboard — visible only when no window is open (reference #dashboard). */
 export function Dashboard() {
   const windows = useV3OS((s) => s.windows);
-  const workspaceId = useV3OS((s) => s.workspaceId);
-  const { openApp, toggleNotifs, selectAgent } = useV3OS.getState();
+  const feed = useV3OS((s) => s.sessionFeed);
+  const feedError = useV3OS((s) => s.sessionFeedError);
+  const { openApp, selectAgent } = useV3OS.getState();
   const hidden = windows.some((w) => !w.minimized);
 
   const operator = useV3OperatorName();
   const agents = useV3Fetch(fetchV3PowerAgents, []);
-  const sessions = useV3Fetch(() => (workspaceId ? fetchV3Sessions(workspaceId) : Promise.resolve([])), [workspaceId]);
-  const review = v3Data.getReviewQueue();
 
-  const list = sessions.data ?? [];
+  const list = feed;
+  const reviewCount = list.filter((s) => isV3SessionUnread(s)).length;
   const active = list[0] ?? null;
   const activeAgent = v3AgentByKey(agents.data ?? [], active?.agentKey ?? null);
   const activeSub = active
@@ -56,7 +56,7 @@ export function Dashboard() {
   })();
 
   const cards = [
-    { icon: Layers, color: 'var(--green)', label: 'Assignments', sub: 'Tasks by type, in-progress first.', onClick: () => openApp('assignments') },
+    { icon: Layers, color: 'var(--green)', label: 'Assignments', sub: 'Every session, grouped by agent.', onClick: () => openApp('assignments') },
     { icon: Bot, color: 'var(--violet)', label: `Agents ${(agents.data?.length ?? 0) > 0 ? '· ' + agents.data!.length : ''}`, sub: 'Power agents. Pick one to run it.', onClick: () => openApp('agents') },
     {
       icon: Activity,
@@ -65,7 +65,13 @@ export function Dashboard() {
       sub: active ? active.title : 'No sessions in this workspace yet.',
       onClick: () => openApp('agents'),
     },
-    { icon: Inbox, color: 'var(--amber)', label: `Triage Queue ${review.length}`, sub: 'Items waiting for approval.', onClick: () => toggleNotifs(true) },
+    {
+      icon: Inbox,
+      color: 'var(--amber)',
+      label: `Triage Queue ${reviewCount}`,
+      sub: reviewCount > 0 ? 'Finished runs awaiting your review.' : 'All clear — nothing waiting.',
+      onClick: () => openApp('reports'),
+    },
   ];
 
   return (
@@ -106,8 +112,8 @@ export function Dashboard() {
             <button onClick={() => openApp('agents')}>
               <Bot size={12} aria-hidden="true" /> Deploy an agent
             </button>
-            <button onClick={() => toggleNotifs(true)}>
-              <Inbox size={12} aria-hidden="true" /> Needs review ({review.length})
+            <button onClick={() => openApp('reports')}>
+              <Inbox size={12} aria-hidden="true" /> Needs review ({reviewCount})
             </button>
           </div>
           <div className="dash-cards" style={{ marginTop: 20 }}>
@@ -136,7 +142,7 @@ export function Dashboard() {
                   aria-hidden="true"
                   style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block', flexShrink: 0 }}
                 />
-                {sessions.loading ? 'connecting…' : sessions.error ? 'session feed unavailable' : `${list.length} session${list.length === 1 ? '' : 's'} · ${agents.data?.length ?? 0} agents`}
+                {feedError ? 'session feed unavailable' : `${list.length} session${list.length === 1 ? '' : 's'} · ${agents.data?.length ?? 0} agents`}
               </p>
             </div>
             <div className="flex gap-2 items-center">
@@ -154,14 +160,9 @@ export function Dashboard() {
               </p>
               <div className="flex items-center gap-3">
                 <div className="min-w-0" style={{ flex: 1 }}>
-                  {sessions.loading ? (
-                    <LoadingLine label="loading workspace sessions" />
-                  ) : sessions.error ? (
+                  {feedError ? (
                     <p className="font-mono text-[10px]" style={{ color: 'var(--amber)' }}>
-                      {sessions.error} ·{' '}
-                      <button className="chip" onClick={sessions.reload}>
-                        retry
-                      </button>
+                      {feedError}
                     </p>
                   ) : (
                     <>

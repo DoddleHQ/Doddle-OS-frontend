@@ -3,7 +3,7 @@
 import { ArrowRight, Bot, Inbox, Layers, Terminal, Zap } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 import { v3Data } from '@/lib/v3/adapter';
-import { useV3OperatorName } from '@/lib/v3/data';
+import { useV3OperatorName, isV3SessionUnread } from '@/lib/v3/data';
 import { Sparkline } from '@/components/v3/ui/Sparkline';
 
 function greeting(): string {
@@ -16,15 +16,14 @@ function greeting(): string {
 /** Home floating window: ask bar + quick starts (reference win-home). */
 export function HomeWindow() {
   const openApp = useV3OS((s) => s.openApp);
-  const toggleNotifs = useV3OS((s) => s.toggleNotifs);
   const operator = useV3OperatorName();
-  const triage = v3Data.getReviewQueue().length;
+  const triage = useV3OS((s) => s.sessionFeed.filter((x) => isV3SessionUnread(x)).length);
 
   const cards = [
     { icon: Terminal, label: 'Launchpad', sub: 'Pick a graph, agent, or describe.', onClick: () => openApp('launchpad') },
     { icon: Bot, label: 'Agents', sub: 'Contextual roster · pick one to run it', onClick: () => openApp('agents') },
     { icon: Layers, label: 'Assignments', sub: 'In-progress first, then review', onClick: () => openApp('assignments') },
-    { icon: Inbox, label: `Triage Queue ${triage}`, sub: 'Items waiting for approval.', onClick: () => toggleNotifs(true) },
+    { icon: Inbox, label: `Triage Queue ${triage}`, sub: 'Finished runs awaiting your review.', onClick: () => openApp('reports') },
   ];
 
   return (

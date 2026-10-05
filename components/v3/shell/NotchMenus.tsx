@@ -2,8 +2,7 @@
 
 import { Building2, SlidersHorizontal, SunMoon, Briefcase } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
-import { fetchV3Sessions } from '@/lib/v3/powerAgents';
-import { useV3Fetch, isV3SessionUnread } from '@/lib/v3/data';
+import { isV3SessionUnread } from '@/lib/v3/data';
 
 /** Workspace switcher + settings dropdowns hanging off the menu notch. */
 export function NotchMenus() {
@@ -11,13 +10,11 @@ export function NotchMenus() {
   const workspaceId = useV3OS((s) => s.workspaceId);
   const workspaces = useV3OS((s) => s.workspaces);
   const theme = useV3OS((s) => s.theme);
+  const sessionFeed = useV3OS((s) => s.sessionFeed);
   const { setMenu, setWorkspace, openApp, toggleCC, toggleTheme } = useV3OS.getState();
-  // live activity for the CURRENT workspace only (the feed is workspace-
-  // scoped; other entries show their real domain instead of a fake metric)
-  const feed = useV3Fetch(() => (workspaceId ? fetchV3Sessions(workspaceId) : Promise.resolve([])), [workspaceId]);
 
   if (menu === 'ws') {
-    const sessions = feed.data ?? [];
+    const sessions = sessionFeed;
     const unread = sessions.filter((s) => isV3SessionUnread(s)).length;
     return (
       <div className="glass v3-ws-menu no-select" role="menu" aria-label="Workspace">

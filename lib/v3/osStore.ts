@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import type { V3Workspace } from '@/lib/v3/data';
+import type { V3Session } from '@/lib/v3/powerAgents';
 
 export type ThemeMode = 'light' | 'dark';
 export type Backdrop = 'aurora' | 'lattice' | 'halo' | 'calm';
@@ -71,6 +72,13 @@ interface V3OSState {
   workspacesError: string | null;
   /** Selected agent in the Agents window; null = roster view. */
   selectedAgentKey: string | null;
+  /** Deep-linked thread: set by triage/assignments, consumed (and cleared)
+   *  by the exec view on mount — opens that session's history. */
+  selectedThreadKey: string | null;
+  /** Workspace-wide session feed, fetched once by the shell for every
+   *  consumer (dashboard, notch menus + badge, triage, assignments). */
+  sessionFeed: V3Session[];
+  sessionFeedError: string | null;
   hydrate(): void;
   setTheme(t: ThemeMode): void;
   toggleTheme(): void;
@@ -78,6 +86,8 @@ interface V3OSState {
   setWorkspace(id: string): void;
   setWorkspaces(list: V3Workspace[], error?: string | null): void;
   selectAgent(slug: string | null): void;
+  viewThread(agentKey: string, threadId: string): void;
+  setSessionFeed(list: V3Session[], error?: string | null): void;
   openApp(id: WindowId, opts?: { mode?: WindowMode }): void;
   closeWin(id: WindowId): void;
   closeTopPage(): void;
@@ -107,6 +117,9 @@ export const useV3OS = create<V3OSState>((set, get) => ({
   workspaces: [],
   workspacesError: null,
   selectedAgentKey: null,
+  selectedThreadKey: null,
+  sessionFeed: [],
+  sessionFeedError: null,
 
   hydrate: () => {
     const theme = read('v3.theme');
@@ -143,7 +156,13 @@ export const useV3OS = create<V3OSState>((set, get) => ({
       // guard: a stored selection that no longer exists falls back to the first real workspace
       workspaceId: list.some((w) => w.id === st.workspaceId) || list.length === 0 ? st.workspaceId : list[0].id,
     })),
-  selectAgent: (slug) => set({ selectedAgentKey: slug }),
+  selectAgent: (slug) => set({ selectedAgentKey: slug, selectedThreadKey: null }),
+  /** Deep-link: open the agents exec view with a specific session loaded. */
+  viewThread: (agentKey, threadId) => {
+    set({ selectedAgentKey: agentKey, selectedThreadKey: threadId });
+    get().openApp('agents');
+  },
+  setSessionFeed: (list, error = null) => set({ sessionFeed: list, sessionFeedError: error }),
   openApp: (id, opts) =>
     set((st) => {
       const existing = st.windows.find((w) => w.id === id);

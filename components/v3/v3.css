@@ -514,6 +514,63 @@
 }
 .v3-scope .roster-grid > * { min-width: 0; }
 
+/* assignments board: agent columns on wide window bodies, stacked when narrow */
+.v3-scope .v3-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.v3-scope .v3-board-col { min-width: 0; }
+/* v13 triage 3-pane: queue | conversation | details — container-responsive
+   (the window body decides, not the viewport) */
+.v3-scope .v3-triage { display: grid; grid-template-columns: 280px minmax(0, 1fr) 260px; gap: 12px; align-items: start; }
+.v3-scope .v3-triage-queue { max-height: 560px; overflow-y: auto; }
+.v3-scope .v3-triage-conv { width: 100%; }
+.v3-scope .v3-triage-detail { position: sticky; top: 0; }
+@container (max-width: 899px) {
+  .v3-scope .v3-triage { grid-template-columns: 240px minmax(0, 1fr); }
+  .v3-scope .v3-triage-detail { grid-column: 1 / -1; position: static; }
+}
+@container (max-width: 599px) {
+  .v3-scope .v3-triage { grid-template-columns: 1fr; }
+}
+/* v13 vehicle picker: live ranked module suggestions under the define bar */
+.v3-scope .v3-vehicle { display: flex; gap: 8px; flex-wrap: wrap; }
+.v3-scope .v3-vehicle-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-tint);
+  color: var(--ink);
+  text-decoration: none;
+  cursor: pointer;
+  flex: 1 1 220px;
+  max-width: 320px;
+}
+.v3-scope .v3-vehicle-pick:hover { border-color: var(--accent); }
+.v3-scope .v3-vehicle-rank {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 6px;
+  padding: 2px 6px;
+  flex-shrink: 0;
+}
+.v3-scope.dark .v3-vehicle-rank { color: #071022; }
+/* module cards reuse the profile anatomy; the blurb replaces the stats line */
+.v3-scope .v3-module-blurb { margin-top: 8px; }
+@container (max-width: 599px) {
+  .v3-scope .v3-vehicle-pick { flex: 1 1 100%; max-width: none; }
+  .v3-scope .v3-module-blurb { display: none; }
+}
 /* v13 suite filter chips */
 .v3-scope .v3-fchips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
 .v3-scope .fchip {

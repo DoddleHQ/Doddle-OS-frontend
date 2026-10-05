@@ -5,11 +5,17 @@ import { useV3OS, type V3WindowState } from '@/lib/v3/osStore';
 import { V3_APP_META } from '@/lib/v3/apps';
 import { HomeWindow } from '@/components/v3/windows/HomeWindow';
 import { AgentsWindow } from '@/components/v3/windows/AgentsWindow';
+import { LaunchpadWindow } from '@/components/v3/windows/LaunchpadWindow';
+import { TriageWindow } from '@/components/v3/windows/TriageWindow';
+import { AssignmentsWindow } from '@/components/v3/windows/AssignmentsWindow';
 import { EmptyWindow } from '@/components/v3/windows/EmptyWindow';
 
 function WindowSlot({ id }: { id: V3WindowState['id'] }) {
   if (id === 'home') return <HomeWindow />;
   if (id === 'agents') return <AgentsWindow />;
+  if (id === 'launchpad') return <LaunchpadWindow />;
+  if (id === 'reports') return <TriageWindow />;
+  if (id === 'assignments') return <AssignmentsWindow />;
   return <EmptyWindow app={V3_APP_META[id]} />;
 }
 

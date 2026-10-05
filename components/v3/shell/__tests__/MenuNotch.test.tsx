@@ -4,6 +4,7 @@ import { useV3OS } from '@/lib/v3/osStore';
 
 beforeEach(() =>
   useV3OS.setState({
+    sessionFeed: [],
     windows: [],
     menu: null,
     spotlightOpen: false,
@@ -26,7 +27,7 @@ describe('MenuNotch', () => {
     expect(screen.getByTitle('Agents · ⌘3')).toBeTruthy();
     expect(screen.getByTitle('Assignments · ⌘4')).toBeTruthy();
     expect(screen.getByTitle('Spotlight · ⌘K')).toBeTruthy();
-    expect(screen.getByTitle('Artefacts · ⌘6')).toBeTruthy();
+    expect(screen.getByTitle('Triage · ⌘6')).toBeTruthy();
     expect(screen.getByTitle('Tasks · ⌘7')).toBeTruthy();
   });
 
@@ -41,9 +42,21 @@ describe('MenuNotch', () => {
     expect(useV3OS.getState().windows.map((w) => w.id)).toContain('home');
   });
 
-  it('shows the triage badge count from the review queue', () => {
-    render(<MenuNotch />);
-    expect(screen.getByTitle('Artefacts · ⌘6').textContent).toContain('1');
+  it('shows the triage badge from the real unread feed count', () => {
+    try {
+      window.localStorage.clear();
+      window.localStorage.setItem('v3.firstVisit', String(Date.now() - 60_000));
+    } catch {
+      /* ignore */
+    }
+    useV3OS.setState({
+      sessionFeed: [{ id: 't9', title: 'fresh', agentKey: 'crawlability_audit', createdAt: null, updatedAt: new Date().toISOString() }],
+    });
+    const { rerender } = render(<MenuNotch />);
+    expect(screen.getByTitle('Triage · ⌘6').textContent).toContain('1');
+    useV3OS.setState({ sessionFeed: [] });
+    rerender(<MenuNotch />);
+    expect(screen.getByTitle('Triage · ⌘6').textContent).not.toContain('1');
   });
 
   it('clicking Workspace toggles the ws menu', () => {

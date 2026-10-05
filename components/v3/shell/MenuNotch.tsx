@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { LayoutDashboard, TerminalSquare, Bot, Layers, Search, Inbox, ListChecks, Settings, Briefcase } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useV3OS, type WindowId } from '@/lib/v3/osStore';
-import { v3Data } from '@/lib/v3/adapter';
+import { isV3SessionUnread } from '@/lib/v3/data';
 
 export const APP_BUTTONS: { id: WindowId; icon: LucideIcon; color: string; title: string }[] = [
   { id: 'home', icon: LayoutDashboard, color: '#1d4ed8', title: 'Home · ⌘1' },
@@ -43,7 +43,8 @@ export function MenuNotch() {
   const wsError = useV3OS((s) => s.workspacesError);
   const workspace = workspaces.find((w) => w.id === workspaceId) ?? workspaces[0];
   const workspaceLabel = workspace ? workspace.name : wsError ? 'offline' : '…';
-  const reviewCount = v3Data.getReviewQueue().length;
+  // real triage badge: sessions updated since their last view
+  const reviewCount = useV3OS((s) => s.sessionFeed.filter((x) => isV3SessionUnread(x)).length);
   const isOpen = (id: WindowId) => windows.some((w) => w.id === id && !w.minimized);
 
   return (
@@ -71,7 +72,7 @@ export function MenuNotch() {
         <button className="notch-btn" title="Spotlight · ⌘K" onClick={() => toggleSpot(true)}>
           <Search size={20} />
         </button>
-        <button className="notch-btn" title="Artefacts · ⌘6" onClick={() => openApp('reports')}>
+        <button className="notch-btn" title="Triage · ⌘6" onClick={() => openApp('reports')}>
           <Inbox size={20} />
           {reviewCount > 0 && <span className="triage-badge">{reviewCount}</span>}
         </button>

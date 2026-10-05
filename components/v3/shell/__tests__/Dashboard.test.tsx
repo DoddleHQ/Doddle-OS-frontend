@@ -50,14 +50,13 @@ const session = (over: Partial<V3Session>): V3Session => ({
 describe('Dashboard (real power-agent data)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useV3OS.setState({ windows: [], workspaceId: 'w1', workspaces: [{ id: 'w1', name: 'Acme' }], selectedAgentKey: null });
+    useV3OS.setState({ windows: [], workspaceId: 'w1', workspaces: [{ id: 'w1', name: 'Acme' }], selectedAgentKey: null, sessionFeed: [], sessionFeedError: null });
     mockedAgents.mockResolvedValue([]);
-    mockedSessions.mockResolvedValue([]);
   });
 
   it('greets the real operator and shows the latest session from the feed', async () => {
     mockedAgents.mockResolvedValue([agent({}), agent({ key: 'shopify_agent', name: 'Shopify', handle: '@Shopify', suite: 'Shopify Suite' })]);
-    mockedSessions.mockResolvedValue([session({})]);
+    useV3OS.setState({ sessionFeed: [session({})] });
     render(<Dashboard />);
     expect(screen.getByText(/Good (morning|afternoon|evening), Alex/i)).toBeTruthy();
     // title appears in the Active Execution card and telemetry
@@ -67,23 +66,21 @@ describe('Dashboard (real power-agent data)', () => {
 
   it('hides while a window is open', () => {
     mockedAgents.mockResolvedValue([]);
-    mockedSessions.mockResolvedValue([]);
     useV3OS.getState().openApp('home');
     const { container } = render(<Dashboard />);
     expect(container.firstElementChild?.className).toContain('dash-hidden');
   });
 
-  it('shows the session-feed error with retry, never fake data', async () => {
+  it('shows the session-feed error honestly, never fake data', async () => {
     mockedAgents.mockResolvedValue([]);
-    mockedSessions.mockRejectedValue(new Error('offline'));
+    useV3OS.setState({ sessionFeed: [], sessionFeedError: 'offline' });
     render(<Dashboard />);
-    await waitFor(() => expect(screen.getByText(/offline ·/i)).toBeTruthy());
-    expect(screen.getByText('retry')).toBeTruthy();
+    await waitFor(() => expect(screen.getAllByText(/session feed unavailable|offline/i).length).toBeGreaterThan(0));
   });
 
   it('AGENTS_IN_FLOW rows open the agents window with that agent selected', async () => {
     mockedAgents.mockResolvedValue([agent({})]);
-    mockedSessions.mockResolvedValue([session({})]);
+    useV3OS.setState({ sessionFeed: [session({})] });
     render(<Dashboard />);
     const row = await screen.findByText(/@Crawlability · Crawler & Indexer/i);
     fireEvent.click(row);

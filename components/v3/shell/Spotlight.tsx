@@ -5,7 +5,7 @@ import { Search, Play, Inbox, SunMoon, Building2, BarChart3, ListChecks } from '
 import type { LucideIcon } from 'lucide-react';
 import { useV3OS, type WindowId } from '@/lib/v3/osStore';
 import { APP_BUTTONS } from './MenuNotch';
-import { v3Data } from '@/lib/v3/adapter';
+import { isV3SessionUnread } from '@/lib/v3/data';
 
 interface SpotItem {
   key: string;
@@ -22,7 +22,8 @@ export function Spotlight() {
   const [q, setQ] = useState('');
 
   const items = useMemo<SpotItem[]>(() => {
-    const { openApp, toggleNotifs, toggleTheme } = useV3OS.getState();
+    const { openApp, toggleTheme } = useV3OS.getState();
+    const unreadCount = useV3OS.getState().sessionFeed.filter((x) => isV3SessionUnread(x)).length;
     const SPOT_KEYS: Record<WindowId, string> = {
       home: 'home dashboard status reviews',
       launchpad: 'launchpad choose graph agent describe outcome start',
@@ -73,9 +74,9 @@ export function Spotlight() {
       },
       {
         key: 'triage queue review approve inbox needs',
-        label: `Triage Queue — ${v3Data.getReviewQueue().length} needs you`,
+        label: `Triage Queue — ${unreadCount} needs you`,
         icon: Inbox,
-        run: () => toggleNotifs(true),
+        run: () => openApp('reports'),
       },
       {
         key: 'theme dark light appearance toggle',

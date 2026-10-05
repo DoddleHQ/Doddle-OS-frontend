@@ -248,6 +248,18 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
     activeThreadRef.current = null;
   }, [refreshSessions]);
 
+  // consume a deep-linked thread (triage/assignments) exactly once: load
+  // that session's history into the fresh exec view
+  const deepThread = useV3OS((s) => s.selectedThreadKey);
+  const deepConsumedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (deepThread && deepThread !== deepConsumedRef.current) {
+      deepConsumedRef.current = deepThread;
+      useV3OS.setState({ selectedThreadKey: null });
+      void switchSession(deepThread);
+    }
+  }, [deepThread]);
+
   // the same streaming utils the /power-agents page uses: stock useChat over
   // the AI-SDK bridge at /api/power-agents/chat
   const { messages, setMessages, sendMessage, status, stop, error } = useChat({
@@ -683,7 +695,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
  * accordion row (name ×N); distinct tools stay their own rows and are
  * never merged into a generic blob.
  */
-function ChatFeed({ messages, agent }: { messages: UIMessage[]; agent?: V3Agent }) {
+export function ChatFeed({ messages, agent }: { messages: UIMessage[]; agent?: V3Agent }) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const tint = agent ? SUITE_TINT[agent.suite] : undefined;
   const Avatar = agent?.icon;

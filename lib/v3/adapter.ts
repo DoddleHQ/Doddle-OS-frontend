@@ -1,10 +1,7 @@
-import { SEED_REVIEW, SEED_SPARK, type V3ReviewItem } from './seed';
-
-export type { V3ReviewItem } from './seed';
+import { SEED_SPARK } from './seed';
 
 export interface V3DemoAdapter {
   getSparkSeries(): number[];
-  getReviewQueue(): V3ReviewItem[];
 }
 
 /**
@@ -13,5 +10,4 @@ export interface V3DemoAdapter {
  */
 export const v3Data: V3DemoAdapter = {
   getSparkSeries: () => SEED_SPARK,
-  getReviewQueue: () => SEED_REVIEW,
 };
