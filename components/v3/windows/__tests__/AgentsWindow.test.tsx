@@ -57,6 +57,11 @@ const session = (over: Partial<V3Session>): V3Session => ({
 
 function setup() {
   useV3OS.setState({ windows: [], workspaceId: 'w1', selectedAgentKey: null });
+  try {
+    window.localStorage.clear(); // unread state is per-thread, persisted
+  } catch {
+    /* ignore */
+  }
 }
 
 describe('AgentsWindow · roster (power agents)', () => {
@@ -122,6 +127,25 @@ describe('AgentsWindow · roster (power agents)', () => {
     render(<AgentsWindow />);
     expect(await screen.findByText(statText(/^2 sessions$/))).toBeTruthy(); // both feed rows group onto the agent
     expect(screen.getAllByText(/just now/i).length).toBeGreaterThan(0); // latest run wins
+  });
+
+  it('roster dot flags agents with sessions updated since their last view', async () => {
+    mockedAgents.mockResolvedValue([agent({})]);
+    mockedFeed.mockResolvedValue([
+      session({ id: 'u1', agentKey: 'crawlability_audit', updatedAt: new Date().toISOString() }),
+    ]);
+    // first visit an hour ago so the fresh update counts as new
+    window.localStorage.setItem('v3.firstVisit', String(Date.now() - 60_000));
+    // never viewed → unread
+    const { container, unmount } = render(<AgentsWindow />);
+    await screen.findByText('@Crawlability');
+    expect(container.querySelector('.profile-dot.has-unread')).toBeTruthy();
+    unmount();
+    // viewed just now → quiet
+    window.localStorage.setItem('v3.seen.th.u1', String(Date.now()));
+    const { container: c2 } = render(<AgentsWindow />);
+    await screen.findByText('@Crawlability');
+    expect(c2.querySelector('.profile-dot.has-unread')).toBeNull();
   });
 
   it('roster error surfaces with retry, no fake agents', async () => {
@@ -433,6 +457,25 @@ describe('AgentsWindow · execution (real chat wiring)', () => {
     // header chip + session status line both carry the finished-run state
     const els = await screen.findAllByText(/done — awaiting your review/i);
     expect(els.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('unread session rows show a new chip that clears once viewed', async () => {
+    window.localStorage.setItem('v3.firstVisit', String(Date.now() - 60_000));
+    mockFetchJson(/power-agents\/threads\?/, [
+      { id: 't1', title: 'Q4 site audit', agentKey: 'crawlability_audit', createdAt: null, updatedAt: new Date().toISOString() },
+      { id: 't2', title: 'older sweep', agentKey: 'crawlability_audit', createdAt: null, updatedAt: '2026-09-20T10:00:00Z' },
+    ]);
+    render(<AgentsWindow />);
+    // fresh thread flags unread; the stale one stays quiet
+    const chipOf = (title: string) =>
+      screen.getAllByText(title).map((e) => e.closest('.thread-row')).find(Boolean)!.querySelector('.v3-unread-chip');
+    await screen.findByText('Q4 site audit');
+    expect(chipOf('Q4 site audit')).toBeTruthy();
+    expect(chipOf('older sweep')).toBeNull();
+    // opening the thread reads it — the chip disappears
+    fireEvent.click(screen.getAllByText('Q4 site audit').map((e) => e.closest('.thread-row')).find(Boolean)!);
+    await waitFor(() => expect(chipOf('Q4 site audit')).toBeNull());
+    expect(window.localStorage.getItem('v3.seen.th.t1')).toBeTruthy();
   });
 
   it('back link returns to the roster', async () => {

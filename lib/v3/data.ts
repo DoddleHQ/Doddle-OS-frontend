@@ -113,3 +113,55 @@ export function v3Ago(iso: string | null): string {
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
 }
+
+// ---------------------------------------------------------------------------
+// Unread tracking — a thread is unread while it has been updated (updatedAt)
+// more recently than the operator last viewed it. Per-thread, persisted.
+// ---------------------------------------------------------------------------
+
+const THREAD_SEEN_PREFIX = 'v3.seen.th.';
+
+/** Epoch ms of the last view of a thread; 0 when never viewed. */
+export function readThreadSeenAt(threadId: string): number {
+  try {
+    const v = localStorage.getItem(THREAD_SEEN_PREFIX + threadId);
+    return v ? Number(v) || 0 : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function markThreadSeen(threadId: string): void {
+  try {
+    localStorage.setItem(THREAD_SEEN_PREFIX + threadId, String(Date.now()));
+  } catch {
+    /* private mode */
+  }
+}
+
+/** Epoch ms of the operator's first v3 visit — stamped once. Activity from
+ *  before you ever used the OS is never "new"; only updates since. */
+function firstVisitMs(): number {
+  try {
+    const k = 'v3.firstVisit';
+    let v = localStorage.getItem(k);
+    if (!v) {
+      v = String(Date.now());
+      localStorage.setItem(k, v);
+    }
+    return Number(v) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** A session row is unread when its latest activity beats the last view
+ *  (or the first-visit baseline for threads never viewed). */
+export function isV3SessionUnread(s: { id: string; updatedAt?: string | null; createdAt?: string | null }): boolean {
+  const t = s.updatedAt ?? s.createdAt;
+  if (!t) return false;
+  const ms = new Date(t).getTime();
+  if (Number.isNaN(ms)) return false;
+  const seenAt = readThreadSeenAt(s.id) || firstVisitMs();
+  return ms > seenAt;
+}

@@ -7,7 +7,7 @@ import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
 import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3PowerAgents, fetchV3Sessions, SUITE_TINT, v3AgentByKey, type V3Agent, type V3Session, type V3Suite } from '@/lib/v3/powerAgents';
-import { useV3Fetch, v3Ago } from '@/lib/v3/data';
+import { useV3Fetch, v3Ago, isV3SessionUnread, markThreadSeen } from '@/lib/v3/data';
 import { EngConsole } from '@/components/v3/ui/EngConsole';
 import { V3Markdown } from '@/components/v3/ui/V3Markdown';
 
@@ -21,11 +21,12 @@ function RosterView() {
   const feed = useV3Fetch(() => (workspaceId ? fetchV3Sessions(workspaceId) : Promise.resolve([] as V3Session[])), [workspaceId]);
 
   const stats = useMemo(() => {
-    const by = new Map<string, { count: number; last: string | null }>();
+    const by = new Map<string, { count: number; last: string | null; unread: number }>();
     (feed.data ?? []).forEach((s) => {
       if (!s.agentKey) return;
-      const cur = by.get(s.agentKey) ?? { count: 0, last: null };
+      const cur = by.get(s.agentKey) ?? { count: 0, last: null, unread: 0 };
       cur.count += 1;
+      if (isV3SessionUnread(s)) cur.unread += 1;
       const t = s.updatedAt ?? s.createdAt;
       if (t && (!cur.last || t > cur.last)) cur.last = t;
       by.set(s.agentKey, cur);
@@ -150,11 +151,11 @@ function RosterView() {
                   key={a.key}
                   type="button"
                   className="bento-item agent-card"
-                  aria-label={`Deploy ${a.handle} — ${a.role} · ${st?.count ?? 0} sessions`}
+                  aria-label={`Deploy ${a.handle} — ${a.role} · ${st?.count ?? 0} sessions${st?.unread ? ` · ${st.unread} unread` : ''}`}
                   onClick={() => selectAgent(a.key)}
                 >
                   <span className="profile-banner" style={{ background: tint.bg }} aria-hidden="true">
-                    <span className="profile-dot" />
+                    <span className={`profile-dot${st?.unread ? ' has-unread' : ''}`} />
                   </span>
                   <span className="profile-avatar" style={{ background: tint.bg, color: tint.color }} aria-hidden="true">
                     <a.icon size={22} />
@@ -216,6 +217,18 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
   const activeThreadRef = useRef<string | null>(null);
   const titlePatchedRef = useRef<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  // unread chips re-render when a thread is marked viewed
+  const [seenTick, setSeenTick] = useState(0);
+  const seen = useCallback((id: string) => {
+    markThreadSeen(id);
+    setSeenTick((t) => t + 1);
+  }, []);
+  // unread: threads updated since their last view, except the one open now
+  // (declared with the other hooks — before the early returns below)
+  const unreadIds = useMemo(() => {
+    void seenTick; // recompute when a thread is marked viewed
+    return new Set(sessions.filter((s) => s.id !== activeThread && isV3SessionUnread(s)).map((s) => s.id));
+  }, [sessions, activeThread, seenTick]);
 
   const refreshSessions = useCallback(async () => {
     if (!agent || !workspaceId) return;
@@ -271,6 +284,8 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
         activeThreadRef.current = id;
         setSessions((s) => (s.some((c) => c.id === id) ? s : [{ id, title: 'New session', agentKey: agentKey, createdAt: null, updatedAt: null }, ...s]));
       }
+      const viewedId = id ?? activeThreadRef.current;
+      if (viewedId) seen(viewedId); // the run you just watched is read
       // first reply in an untitled session: auto-title from context
       const chip = sessions.find((c) => c.id === (id ?? activeThreadRef.current));
       if (chip && (chip.title === 'New session' || !chip.title) && titlePatchedRef.current !== chip.id) {
@@ -322,6 +337,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
           setActiveThread(id);
           activeThreadRef.current = id;
           setMessages([]);
+          seen(id);
         }
       }
     } catch {
@@ -341,6 +357,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
       setActiveThread(id);
       activeThreadRef.current = id;
       setMessages(t.messages);
+      seen(id); // viewing the thread reads it
       // NOTE: joining an in-flight run's live stream (threads/[id]/join) is
       // deliberately not ported yet — history loads, tokens resume next pass
     } catch {
@@ -396,6 +413,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
         if (id) {
           activeThreadRef.current = id;
           setActiveThread(id);
+          seen(id);
           setSessions((s) => (s.some((c) => c.id === id) ? s : [{ id, title: t.title ?? 'New session', agentKey: agent.key, createdAt: null, updatedAt: null }, ...s]));
         }
       } catch {
@@ -540,6 +558,11 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
                         {active ? 'active' : v3Ago(s.updatedAt ?? s.createdAt)}
                       </p>
                     </span>
+                    {unreadIds.has(s.id) && (
+                      <span className="v3-unread-chip shrink-0" title="updated since your last view">
+                        new
+                      </span>
+                    )}
                     {confirmingDelete === s.id ? (
                       <span className="v3-session-actions shrink-0" onClick={(e) => e.stopPropagation()}>
                         <button className="chip" style={{ color: '#dc2626' }} onClick={() => deleteSession(s.id)} aria-label={`Confirm delete ${s.title}`}>
