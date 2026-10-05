@@ -22,6 +22,8 @@
   --green: #059669;
   --amber: #d97706;
   --pink: #db2777;
+  /* radius discipline (v13 reliability pass): component corners stay clamped
+     to 4–10px; only circles (50%) and pill badges are exempt */
   --r: 8px;
 
   font-family: var(--font-v3-inter), 'Inter', system-ui, sans-serif;
