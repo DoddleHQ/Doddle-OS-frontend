@@ -223,6 +223,10 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
     markThreadSeen(id);
     setSeenTick((t) => t + 1);
   }, []);
+  // live-join of an in-flight run (switch-back resume) — abortable
+  const joinAbortRef = useRef<AbortController | null>(null);
+  const [liveJoin, setLiveJoin] = useState(false);
+  useEffect(() => () => joinAbortRef.current?.abort(), []);
   // unread: threads updated since their last view, except the one open now
   // (declared with the other hooks — before the early returns below)
   const unreadIds = useMemo(() => {
@@ -331,9 +335,12 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
   });
 
   const busy = status === 'submitted' || status === 'streaming';
+  // the run-state chip treats a joined in-flight run as streaming too
+  const streaming = busy || liveJoin;
 
   async function newSession() {
     if (busy) stop();
+    joinAbortRef.current?.abort();
     if (!agent || !workspaceId) return;
     try {
       const res = await fetch('/api/power-agents/threads', {
@@ -359,21 +366,93 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
 
   async function switchSession(id: string) {
     if (id === activeThread || busy) return;
+    joinAbortRef.current?.abort(); // drop any joined stream before switching
     try {
       const res = await fetch(`/api/power-agents/threads/${id}`);
       if (!res.ok) {
         if (res.status === 404) setSessions((s) => s.filter((c) => c.id !== id));
         return;
       }
-      const t = (await res.json()) as { messages: UIMessage[] };
+      const t = (await res.json()) as { messages: UIMessage[]; busy?: boolean };
       setActiveThread(id);
       activeThreadRef.current = id;
       setMessages(t.messages);
       seen(id); // viewing the thread reads it
-      // NOTE: joining an in-flight run's live stream (threads/[id]/join) is
-      // deliberately not ported yet — history loads, tokens resume next pass
+      // a live run on this thread: attach to its stream for token-level resume
+      if (t.busy) void joinActiveStream(id);
     } catch {
       /* stay on current */
+    }
+  }
+
+  /** Attach to a running stream on a thread and feed parts into messages —
+   *  the same join protocol the production power-agents page uses. */
+  async function joinActiveStream(threadId: string) {
+    joinAbortRef.current?.abort();
+    setLiveJoin(true);
+    let ac: AbortController | null = null;
+    const patchLastAssistant = (patch: (parts: UIMessage['parts']) => UIMessage['parts']) => {
+      setMessages((prev) => {
+        const next = [...prev];
+        for (let i = next.length - 1; i >= 0; i--) {
+          if (next[i].role === 'assistant') {
+            next[i] = { ...next[i], parts: patch(next[i].parts ?? []) };
+            break;
+          }
+        }
+        return next;
+      });
+    };
+    try {
+      ac = new AbortController();
+      joinAbortRef.current = ac;
+      const res = await fetch(`/api/power-agents/threads/${threadId}/join`, { signal: ac.signal });
+      if (!res.ok || !res.body) return;
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let joinedText = '';
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, nl).replace(/\r$/, '');
+          buffer = buffer.slice(nl + 1);
+          if (!line.startsWith('data:')) continue;
+          const data = line.slice(5).trim();
+          if (!data || data === '[DONE]') continue;
+          let part: Record<string, unknown>;
+          try {
+            part = JSON.parse(data);
+          } catch {
+            continue;
+          }
+          if (part.type === 'text-delta') {
+            joinedText += part.delta as string;
+            const text = joinedText;
+            patchLastAssistant((parts) => {
+              const idx = parts.findIndex((p) => p.type === 'text');
+              if (idx >= 0) {
+                return parts.map((p, i) => (i === idx ? ({ ...p, type: 'text', text, state: 'streaming' } as UIMessage['parts'][number]) : p));
+              }
+              return [...parts, { type: 'text', text, state: 'streaming' } as UIMessage['parts'][number]];
+            });
+          } else if (part.type === 'finish') {
+            patchLastAssistant((parts) => parts.map((p) => (p.type === 'text' ? ({ ...p, state: 'done' } as UIMessage['parts'][number]) : p)));
+            seen(threadId);
+            refreshSessions();
+            return;
+          } else if (part.type === 'data-no-active-run') {
+            return; // run finished between the check and the join
+          }
+        }
+      }
+    } catch {
+      /* join is best-effort */
+    } finally {
+      setLiveJoin(false);
     }
   }
 
@@ -412,7 +491,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
   /** Send — creating the session thread up front when none is selected,
    *  so a new run has its identity immediately (not only at stream end). */
   async function sendWithSession(text: string) {
-    if (!agent || busy) return;
+    if (!agent || streaming) return;
     if (!activeThreadRef.current) {
       try {
         const res = await fetch('/api/power-agents/threads', {
@@ -462,7 +541,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
   const activeChip = sessions.find((s) => s.id === activeThread) ?? null;
   const tint = SUITE_TINT[agent.suite];
   // v13 run states: an idle agent is deployed, a finished run awaits review
-  const runState = busy ? 'streaming…' : error ? 'stream error' : messages.length > 0 ? 'done — awaiting your review' : 'deployed';
+  const runState = streaming ? 'streaming…' : error ? 'stream error' : messages.length > 0 ? 'done — awaiting your review' : 'deployed';
 
   return (
     <div>
@@ -502,7 +581,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
                 </p>
               )}
               <ChatFeed messages={messages} agent={agent} />
-              {busy && (
+              {streaming && (
                 <p className="font-mono text-xs v3-working" style={{ color: 'var(--muted)' }}>
                   working…
                 </p>
@@ -637,7 +716,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
                 className={busy ? 'v3-working' : ''}
                 style={{ width: 6, height: 6, borderRadius: '50%', background: busy ? 'var(--accent)' : error ? '#dc2626' : '#10b981', display: 'inline-block', flexShrink: 0 }}
               />
-              {busy ? 'streaming' : error ? 'stream error' : messages.length > 0 ? 'done — awaiting your review' : 'ready'}
+              {streaming ? 'streaming' : error ? 'stream error' : messages.length > 0 ? 'done — awaiting your review' : 'ready'}
             </p>
           </div>
 
@@ -675,8 +754,11 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
           <EngConsole
             placeholder={`message ${agent.handle}…`}
             buttonLabel="Run"
-            busy={busy}
-            onStop={stop}
+            busy={streaming}
+            onStop={() => {
+              stop();
+              joinAbortRef.current?.abort(); // Stop also detaches a joined run
+            }}
             showModels={false}
             onRun={(text) => void sendWithSession(text)}
           />

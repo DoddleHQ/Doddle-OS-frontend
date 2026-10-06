@@ -1,3 +1,4 @@
+import { TextDecoder, TextEncoder } from 'node:util';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AgentsWindow } from '@/components/v3/windows/AgentsWindow';
 import { useV3OS } from '@/lib/v3/osStore';
@@ -31,6 +32,12 @@ jest.mock('@ai-sdk/react', () => ({
   useChat: () => ({ messages: chatState.messages, setMessages, sendMessage, status: chatState.status, stop: stopRun, error: chatState.error }),
 }));
 jest.mock('ai', () => ({ DefaultChatTransport: jest.fn().mockImplementation(() => ({})) }));
+
+// jsdom omits the Web codecs; the join path decodes SSE in the browser
+if (typeof global.TextDecoder === 'undefined') {
+  (global as Record<string, unknown>).TextDecoder = TextDecoder;
+  (global as Record<string, unknown>).TextEncoder = TextEncoder;
+}
 
 const Bot = jest.requireActual('lucide-react').Bot;
 const ShoppingBag = jest.requireActual('lucide-react').ShoppingBag;
@@ -476,6 +483,64 @@ describe('AgentsWindow · execution (real chat wiring)', () => {
     fireEvent.click(screen.getAllByText('Q4 site audit').map((e) => e.closest('.thread-row')).find(Boolean)!);
     await waitFor(() => expect(chipOf('Q4 site audit')).toBeNull());
     expect(window.localStorage.getItem('v3.seen.th.t1')).toBeTruthy();
+  });
+
+  it('switching to a busy thread joins its live stream (token-level resume)', async () => {
+    const enc = new TextEncoder();
+    const sse = (obj: unknown) => enc.encode(`data: ${JSON.stringify(obj)}\n\n`);
+    const makeReader = (chunks: Uint8Array[]) => {
+      let i = 0;
+      return {
+        read: async () => (i < chunks.length ? { done: false as const, value: chunks[i++] } : { done: true as const, value: undefined }),
+      };
+    };
+    global.fetch = jest.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (/\/threads\/t1$/.test(url)) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () =>
+            Promise.resolve({
+              messages: [
+                { id: 'u1', role: 'user', parts: [{ type: 'text', text: 'crawl the sitemap' }] },
+                { id: 'a1', role: 'assistant', parts: [] },
+              ],
+              busy: true, // a run is live on this thread
+            }),
+        });
+      }
+      if (/\/threads\/t1\/join$/.test(url)) {
+        return Promise.resolve({
+          ok: true,
+          body: {
+            getReader: () =>
+              makeReader([
+                sse({ type: 'text-delta', delta: 'Hello' }),
+                sse({ type: 'text-delta', delta: ' world' }),
+                sse({ type: 'finish' }),
+              ]),
+          },
+        });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve([{ id: 't1', title: 'Q4 site audit', agentKey: 'crawlability_audit', createdAt: null, updatedAt: null }]) });
+    }) as unknown as typeof fetch;
+    // the mocked setMessages must actually apply joined parts for re-render
+    setMessages.mockImplementation((updater: unknown) => {
+      chatState.messages =
+        typeof updater === 'function' ? (updater as (m: typeof chatState.messages) => typeof chatState.messages)(chatState.messages) : (updater as typeof chatState.messages);
+    });
+    render(<AgentsWindow />);
+    fireEvent.click(await screen.findByText('Q4 site audit'));
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith(expect.stringMatching(/\/threads\/t1(?!\/join)$/)),
+    );
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith(expect.stringMatching(/\/threads\/t1\/join$/), expect.anything()),
+    );
+    // joined deltas stream into the last assistant message, then the run settles
+    await waitFor(() => expect(screen.getByText(/Hello world/i)).toBeTruthy(), { timeout: 3000 });
+    await waitFor(() => expect(screen.getAllByText(/done — awaiting your review/i).length).toBeGreaterThanOrEqual(1));
   });
 
   it('back link returns to the roster', async () => {
