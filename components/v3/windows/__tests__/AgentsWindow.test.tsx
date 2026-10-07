@@ -297,7 +297,7 @@ describe('AgentsWindow · execution (real chat wiring)', () => {
     const head = await screen.findByRole('button', { name: /read_file/i });
     expect(head.textContent).toContain('×4');
     expect(head.getAttribute('aria-expanded')).toBe('false');
-    expect(screen.queryByText(/steps/i)).toBeNull();
+    expect(screen.queryByText(/^steps$/i)).toBeNull(); // the old generic accordion is gone; DAG captions are N/M steps
     expect(screen.getByText(/grep · done/i)).toBeTruthy();
     // expand → the four read_file occurrences appear
     fireEvent.click(head);
@@ -316,7 +316,7 @@ describe('AgentsWindow · execution (real chat wiring)', () => {
     // wp_get_page appears in two messages → one ×2 row, no stray individual rows
     const head = await screen.findByRole('button', { name: /wp_get_page/i });
     expect(head.textContent).toContain('×2');
-    expect(screen.queryByText(/steps/i)).toBeNull();
+    expect(screen.queryByText(/^steps$/i)).toBeNull(); // the old generic accordion is gone; DAG captions are N/M steps
     // the distinct single tools keep their own rows
     expect(screen.getByText(/wp_get_site_settings · done/i)).toBeTruthy();
     expect(screen.getByText(/wp_get_posts · done/i)).toBeTruthy();
@@ -541,6 +541,36 @@ describe('AgentsWindow · execution (real chat wiring)', () => {
     // joined deltas stream into the last assistant message, then the run settles
     await waitFor(() => expect(screen.getByText(/Hello world/i)).toBeTruthy(), { timeout: 3000 });
     await waitFor(() => expect(screen.getAllByText(/done — awaiting your review/i).length).toBeGreaterThanOrEqual(1));
+  });
+
+  it('the run panel renders the v13 DAG strip from real tool states', async () => {
+    chatState.messages = [
+      { id: 'u1', role: 'user', parts: [{ type: 'text', text: 'go' }] },
+      {
+        id: 'a1',
+        role: 'assistant',
+        parts: [
+          { type: 'tool-fetch_sitemap_urls', toolCallId: 'c1', state: 'output-available' },
+          { type: 'tool-fetch_robots_txt', toolCallId: 'c2', state: 'input-available' },
+          { type: 'tool-grep', toolCallId: 'c3', state: 'output-available' },
+        ],
+      },
+    ];
+    mockFetchJson(/power-agents\/threads\?/, []);
+    const { container } = render(<AgentsWindow />);
+    const dag = await waitFor(() => {
+      const el = container.querySelector('.dag');
+      expect(el).toBeTruthy();
+      return el as HTMLElement;
+    });
+    const nodes = dag.querySelectorAll('.dag-node');
+    expect(nodes.length).toBe(3);
+    expect(nodes[0].className).toContain('done');
+    expect(nodes[1].className).toContain('active'); // in-flight tool pulses
+    expect(nodes[2].className).toContain('done');
+    expect(screen.getByText(/2\/3 steps/i)).toBeTruthy();
+    expect(screen.getAllByText(/· running/i).length).toBeGreaterThan(0); // dag caption + tool row
+    expect(dag.querySelectorAll('.dag-line.fill').length).toBe(1); // only the completed hop fills
   });
 
   it('back link returns to the roster', async () => {

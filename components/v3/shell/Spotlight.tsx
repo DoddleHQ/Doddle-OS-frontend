@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Search, Play, Inbox, SunMoon, Building2, BarChart3, ListChecks } from 'lucide-react';
+import { Search, Play, Inbox, SunMoon, Building2, BarChart3, ListChecks, BookOpen } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useV3OS, type WindowId } from '@/lib/v3/osStore';
 import { APP_BUTTONS } from './MenuNotch';
@@ -27,6 +27,7 @@ export function Spotlight() {
     const SPOT_KEYS: Record<WindowId, string> = {
       home: 'home dashboard status reviews',
       launchpad: 'launchpad choose graph agent describe outcome start',
+      blueprints: 'blueprints library layers sops playbooks',
       agents: 'agents contextual roster helper writer data',
       assignments: 'assignments project task in progress review route',
       hub: 'hub settings billing workspace',
@@ -71,6 +72,12 @@ export function Spotlight() {
         label: '/run — start execution',
         icon: Play,
         run: () => openApp('launchpad'),
+      },
+      {
+        key: 'blueprints library layers strategy structure execution review sops playbooks docs',
+        label: 'Blueprints — the layered library',
+        icon: BookOpen,
+        run: () => openApp('blueprints'),
       },
       {
         key: 'triage queue review approve inbox needs',

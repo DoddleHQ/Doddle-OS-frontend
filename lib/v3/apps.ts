@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   TerminalSquare,
+  BookOpen,
   Bot,
   Layers,
   Building2,
@@ -22,6 +23,7 @@ export interface V3AppMeta {
 export const V3_APP_META: Record<WindowId, V3AppMeta> = {
   home: { name: 'Home', arrivesScreen: 1, blurb: 'Status & quick starts.', icon: LayoutDashboard },
   launchpad: { name: 'Launchpad', arrivesScreen: 2, blurb: 'Pick a category or agent, or describe the task.', icon: TerminalSquare },
+  blueprints: { name: 'Blueprints', arrivesScreen: 2, blurb: 'The library: layers of strategy, structure, execution, review.', icon: BookOpen },
   agents: { name: 'Agents', arrivesScreen: 4, blurb: 'Contextual roster. Pick one to run it.', icon: Bot },
   assignments: { name: 'Assignments & Tasks', arrivesScreen: 5, blurb: 'In-progress, routing, review.', icon: Layers },
   hub: { name: 'Agency Hub', arrivesScreen: 7, blurb: 'Workspaces, team, billing, settings.', icon: Building2 },

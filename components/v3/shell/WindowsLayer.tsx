@@ -7,6 +7,8 @@ import { HomeWindow } from '@/components/v3/windows/HomeWindow';
 import { AgentsWindow } from '@/components/v3/windows/AgentsWindow';
 import { LaunchpadWindow } from '@/components/v3/windows/LaunchpadWindow';
 import { TriageWindow } from '@/components/v3/windows/TriageWindow';
+import { BlueprintsWindow } from '@/components/v3/windows/BlueprintsWindow';
+import { HistoryWindow } from '@/components/v3/windows/HistoryWindow';
 import { AssignmentsWindow } from '@/components/v3/windows/AssignmentsWindow';
 import { EmptyWindow } from '@/components/v3/windows/EmptyWindow';
 
@@ -14,6 +16,8 @@ function WindowSlot({ id }: { id: V3WindowState['id'] }) {
   if (id === 'home') return <HomeWindow />;
   if (id === 'agents') return <AgentsWindow />;
   if (id === 'launchpad') return <LaunchpadWindow />;
+  if (id === 'blueprints') return <BlueprintsWindow />;
+  if (id === 'history') return <HistoryWindow />;
   if (id === 'reports') return <TriageWindow />;
   if (id === 'assignments') return <AssignmentsWindow />;
   return <EmptyWindow app={V3_APP_META[id]} />;

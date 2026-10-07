@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Layers, Bot, Activity, Inbox, Zap, ChevronDown } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 import { v3Data } from '@/lib/v3/adapter';
@@ -7,6 +8,7 @@ import { useV3Fetch, useV3OperatorName, v3Ago, isV3SessionUnread } from '@/lib/v
 import { fetchV3PowerAgents, v3AgentByKey } from '@/lib/v3/powerAgents';
 import { MorphText } from '@/components/v3/ui/MorphText';
 import { Sparkline } from '@/components/v3/ui/Sparkline';
+import { Composer } from '@/components/v3/ui/Composer';
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -33,6 +35,58 @@ export function Dashboard() {
 
   const operator = useV3OperatorName();
   const agents = useV3Fetch(fetchV3PowerAgents, []);
+
+  // composer state — model/mode are design-forward picks (persisted locally)
+  const [ask, setAsk] = useState('');
+  const [model, setModel] = useState(() => {
+    try {
+      return localStorage.getItem('v3.model') ?? 'Muse Spark 1.3';
+    } catch {
+      return 'Muse Spark 1.3';
+    }
+  });
+  const [mode, setMode] = useState(() => {
+    try {
+      return localStorage.getItem('v3.mode') ?? 'default';
+    } catch {
+      return 'default';
+    }
+  });
+  const pickModel = (v: string) => {
+    setModel(v);
+    try {
+      localStorage.setItem('v3.model', v);
+    } catch {
+      /* private mode */
+    }
+  };
+  const pickMode = (v: string) => {
+    setMode(v);
+    try {
+      localStorage.setItem('v3.mode', v);
+    } catch {
+      /* private mode */
+    }
+  };
+
+  // @mentions route to the real roster: "@Crawlability audit the blog" opens
+  // that agent's execution view; anything else goes to the launchpad
+  const mentioned = (text: string) => {
+    const handles = [...text.matchAll(/@([A-Za-z0-9_]+)/g)].map((m) => '@' + m[1].toLowerCase());
+    return (agents.data ?? []).find((a) => handles.includes(a.handle.toLowerCase()));
+  };
+  const send = () => {
+    if (!ask.trim()) return;
+    const target = mentioned(ask);
+    if (target) {
+      selectAgent(target.key);
+      openApp('agents');
+    } else {
+      openApp('launchpad');
+    }
+    setAsk('');
+  };
+  const liveMention = mentioned(ask);
 
   const list = feed;
   const reviewCount = list.filter((s) => isV3SessionUnread(s)).length;
@@ -94,17 +148,22 @@ export function Dashboard() {
               What are you working on?
             </p>
           </div>
-          <div className="hero-ask" style={{ marginTop: 20 }}>
-            <Zap size={20} style={{ color: 'var(--accent)' }} />
-            <input
-              placeholder="Describe what you're working on… e.g. research Q4 keywords, review the landing draft"
-              aria-label="Describe what you're working on"
-              onKeyDown={(e) => e.key === 'Enter' && openApp('launchpad')}
-            />
-            <button className="btn-deploy" onClick={() => openApp('launchpad')}>
-              Get started <kbd>⏎</kbd>
-            </button>
-          </div>
+          <Composer
+            value={ask}
+            onChange={setAsk}
+            onSend={send}
+            placeholder="Describe what you're working on… e.g. research Q4 keywords, @Crawlability audit the blog"
+            ariaLabel="Describe what you're working on"
+            model={model}
+            onModel={pickModel}
+            mode={mode}
+            onMode={pickMode}
+          />
+          {liveMention && (
+            <p className="font-mono text-[10px]" style={{ color: 'var(--accent)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+              → {liveMention.handle} · {liveMention.role} — mention routes the run to this agent
+            </p>
+          )}
           <div className="hero-quick">
             <button onClick={() => openApp('launchpad')}>
               <Zap size={12} aria-hidden="true" /> Start a task

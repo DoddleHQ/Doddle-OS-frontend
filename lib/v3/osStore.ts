@@ -9,6 +9,7 @@ export type Backdrop = 'aurora' | 'lattice' | 'halo' | 'calm';
 export type WindowId =
   | 'home'
   | 'launchpad'
+  | 'blueprints'
   | 'agents'
   | 'assignments'
   | 'hub'
@@ -31,6 +32,7 @@ export interface V3WindowState {
 const DEFAULT_GEOMETRY: Record<WindowId, Pick<V3WindowState, 'mode' | 'x' | 'y' | 'width'>> = {
   home: { mode: 'window', x: 56, y: 16, width: 430 },
   launchpad: { mode: 'page', x: 0, y: 0, width: 0 },
+  blueprints: { mode: 'page', x: 0, y: 0, width: 0 },
   agents: { mode: 'page', x: 0, y: 0, width: 0 },
   assignments: { mode: 'page', x: 0, y: 0, width: 0 },
   hub: { mode: 'page', x: 0, y: 0, width: 0 },

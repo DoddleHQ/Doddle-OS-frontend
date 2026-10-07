@@ -234,6 +234,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
     return new Set(sessions.filter((s) => s.id !== activeThread && isV3SessionUnread(s)).map((s) => s.id));
   }, [sessions, activeThread, seenTick]);
 
+
   const refreshSessions = useCallback(async () => {
     if (!agent || !workspaceId) return;
     try {
@@ -337,6 +338,22 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
   const busy = status === 'submitted' || status === 'streaming';
   // the run-state chip treats a joined in-flight run as streaming too
   const streaming = busy || liveJoin;
+  // DAG steps: this run's tool calls in order, with their live states
+  const runSteps = useMemo(() => {
+    const out: { name: string; state: 'running' | 'done' | 'failed' }[] = [];
+    messages.forEach((m) =>
+      (m.parts ?? []).forEach((p) => {
+        if (!p.type.startsWith('tool-')) return;
+        const st = (p as { state?: string }).state ?? '';
+        out.push({
+          name: p.type.slice('tool-'.length) || 'tool',
+          state: st === 'input-streaming' || st === 'input-available' ? 'running' : st === 'output-error' ? 'failed' : 'done',
+        });
+      }),
+    );
+    return out;
+  }, [messages]);
+
 
   async function newSession() {
     if (busy) stop();
@@ -724,6 +741,31 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
             <p className="font-mono text-[10px] tracking-[0.08em] uppercase" style={{ color: 'var(--muted)', marginBottom: 8 }}>
               This run
             </p>
+            {/* v13 kinetic DAG: the run's tool sequence as step nodes — done
+                dim green, active pulses in accent, fill lines complete */}
+            {runSteps.length > 0 && (
+              <>
+                <div className="dag" role="list" aria-label="Run progress">
+                  {runSteps.map((s, i) => (
+                    <span key={`${s.name}-${i}`} style={{ display: 'contents' }}>
+                      {i > 0 && <span className={`dag-line${runSteps[i - 1].state === 'done' ? ' fill' : ''}`} aria-hidden="true" />}
+                      <span
+                        className={`dag-node${s.state === 'running' ? ' active' : s.state === 'failed' ? ' failed' : ' done'}`}
+                        role="listitem"
+                        aria-label={`${s.name} ${s.state}`}
+                      >
+                        <span className={`dag-dot${s.state === 'running' ? ' run' : ''}`} aria-hidden="true" />
+                        <span className="dag-label font-mono">{s.name}</span>
+                      </span>
+                    </span>
+                  ))}
+                </div>
+                <p className="font-mono text-[10px]" style={{ color: 'var(--muted)', marginBottom: 8 }}>
+                  {runSteps.filter((s) => s.state === 'done').length}/{runSteps.length} steps
+                  {runSteps.some((s) => s.state === 'running') ? ' · running' : ''}
+                </p>
+              </>
+            )}
             {[
               ['messages', String(messages.length)],
               ['tool calls', String(messages.reduce((n, m) => n + (m.parts ?? []).filter((p) => p.type.startsWith('tool-')).length, 0))],
