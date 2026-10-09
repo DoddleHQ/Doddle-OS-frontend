@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Search, ArrowUpRight } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 import { V3_MODULES, v3ModuleHref, type V3ModuleDomain } from '@/lib/v3/modules';
 
@@ -97,20 +97,19 @@ export function BlueprintsWindow() {
                   rel="noreferrer"
                   aria-label={`Open ${m.name} — ${m.blurb}`}
                 >
-                  <span className="flex items-center justify-between" style={{ marginBottom: 10 }}>
-                    <m.icon size={22} style={{ color: 'var(--accent)' }} />
-                    <span className="v3-lib-badge font-mono">{LAYER_OF[m.domain]}</span>
-                  </span>
-                  <p className="font-bold text-sm">{m.name}</p>
-                  <p className="font-mono text-[11px] mt-1" style={{ color: 'var(--muted)' }}>
-                    {m.tags.slice(0, 3).join(' · ')}
+                  <div className="flex items-center justify-between">
+                    <m.icon size={24} className="mb-3" style={{ color: 'var(--accent)' }} />
+                    <span className="task-category-badge" style={{ background: 'var(--accent)' }}>
+                      {LAYER_OF[m.domain]}
+                    </span>
+                  </div>
+                  <p className="font-bold">{m.name}</p>
+                  <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
+                    {m.domain} module · {m.tags.length} steps
                   </p>
                   <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
                     {m.blurb}
                   </p>
-                  <span className="back-link mt-2 inline-flex items-center gap-1">
-                    open module <ArrowUpRight size={10} />
-                  </span>
                 </a>
               ))}
             </div>

@@ -3,6 +3,7 @@
 import { useRef } from 'react';
 import { useV3OS, type V3WindowState } from '@/lib/v3/osStore';
 import { V3_APP_META } from '@/lib/v3/apps';
+import { isV3SessionUnread } from '@/lib/v3/data';
 import { HomeWindow } from '@/components/v3/windows/HomeWindow';
 import { AgentsWindow } from '@/components/v3/windows/AgentsWindow';
 import { LaunchpadWindow } from '@/components/v3/windows/LaunchpadWindow';
@@ -11,6 +12,13 @@ import { BlueprintsWindow } from '@/components/v3/windows/BlueprintsWindow';
 import { HistoryWindow } from '@/components/v3/windows/HistoryWindow';
 import { AssignmentsWindow } from '@/components/v3/windows/AssignmentsWindow';
 import { EmptyWindow } from '@/components/v3/windows/EmptyWindow';
+
+/** v13 titlebar chips: the reference's per-window state, triage counts live. */
+function TitlebarChip({ id, mode }: { id: V3WindowState['id']; mode: V3WindowState['mode'] }) {
+  const unread = useV3OS((s) => (id === 'reports' ? s.sessionFeed.filter((x) => isV3SessionUnread(x)).length : 0));
+  const chip = id === 'reports' ? `${unread} waiting` : V3_APP_META[id].chip ?? (mode === 'page' ? 'page' : '⌘');
+  return <span className="chip ml-auto">{chip}</span>;
+}
 
 function WindowSlot({ id }: { id: V3WindowState['id'] }) {
   if (id === 'home') return <HomeWindow />;
@@ -69,7 +77,7 @@ function OSWindow({ win }: { win: V3WindowState }) {
           />
         </div>
         <strong className="text-sm">{V3_APP_META[win.id].name}</strong>
-        <span className="chip ml-auto">{win.mode === 'page' ? 'page' : '⌘'}</span>
+        <TitlebarChip id={win.id} mode={win.mode} />
       </div>
       <div className="win-body">
         <WindowSlot id={win.id} />
