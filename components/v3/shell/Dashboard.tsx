@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Layers, Bot, Activity, Inbox, Zap, ChevronDown } from 'lucide-react';
+import { Layers, Bot, Activity, Inbox, ChevronDown } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 import { v3Data } from '@/lib/v3/adapter';
 import { useV3Fetch, useV3OperatorName, v3Ago, isV3SessionUnread } from '@/lib/v3/data';
-import { fetchV3PowerAgents, v3AgentByKey } from '@/lib/v3/powerAgents';
+import { fetchV3PowerAgents, v3AgentByKey, SUITE_TINT } from '@/lib/v3/powerAgents';
 import { MorphText } from '@/components/v3/ui/MorphText';
 import { Sparkline } from '@/components/v3/ui/Sparkline';
 import { Composer } from '@/components/v3/ui/Composer';
@@ -17,19 +17,14 @@ function greeting(): string {
   return 'Good evening';
 }
 
-function LoadingLine({ label }: { label: string }) {
-  return (
-    <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
-      {label}…
-    </p>
-  );
-}
-
-/** Full-page chat-first dashboard — visible only when no window is open (reference #dashboard). */
+/** The v13 index page, exact DOM: hero + composer + quick links + cards +
+ *  telemetry (active-task rows with progress bars, agents in flow). */
 export function Dashboard() {
   const windows = useV3OS((s) => s.windows);
   const feed = useV3OS((s) => s.sessionFeed);
   const feedError = useV3OS((s) => s.sessionFeedError);
+  const workspaceId = useV3OS((s) => s.workspaceId);
+  const workspaces = useV3OS((s) => s.workspaces);
   const { openApp, selectAgent } = useV3OS.getState();
   const hidden = windows.some((w) => !w.minimized);
 
@@ -69,8 +64,7 @@ export function Dashboard() {
     }
   };
 
-  // @mentions route to the real roster: "@Crawlability audit the blog" opens
-  // that agent's execution view; anything else goes to the launchpad
+  // @mentions route to the real roster
   const mentioned = (text: string) => {
     const handles = [...text.matchAll(/@([A-Za-z0-9_]+)/g)].map((m) => '@' + m[1].toLowerCase());
     return (agents.data ?? []).find((a) => handles.includes(a.handle.toLowerCase()));
@@ -92,10 +86,11 @@ export function Dashboard() {
   const reviewCount = list.filter((s) => isV3SessionUnread(s)).length;
   const active = list[0] ?? null;
   const activeAgent = v3AgentByKey(agents.data ?? [], active?.agentKey ?? null);
-  const activeSub = active
-    ? `session · ${v3Ago(active.updatedAt ?? active.createdAt)}${activeAgent ? ` · ${activeAgent.handle}` : ''}`
-    : null;
-  // the two agents with the most recent activity, else the first two of the roster
+  const wsLabel = (workspaces.find((w) => w.id === workspaceId) ?? workspaces[0])?.name ?? '';
+
+  // v13 semantics on real data: every session is a finished run (100%), the
+  // top one is the headline row, the rest fill the glass table
+  const taskRows = list.slice(1, 5);
   const flowAgents = (() => {
     const roster = agents.data ?? [];
     const recentKeys = [...new Set(list.map((s) => s.agentKey).filter((k): k is string => !!k))];
@@ -105,33 +100,13 @@ export function Dashboard() {
       .slice(0, 2);
     return ordered.map((a) => {
       const mine = list.filter((s) => s.agentKey === a.key);
-      return { agent: a, count: mine.length, last: mine[0] };
+      return { agent: a, last: mine[0], count: mine.length };
     });
   })();
 
-  const cards = [
-    { icon: Layers, color: 'var(--green)', label: 'Assignments', sub: 'Every session, grouped by agent.', onClick: () => openApp('assignments') },
-    { icon: Bot, color: 'var(--violet)', label: `Agents ${(agents.data?.length ?? 0) > 0 ? '· ' + agents.data!.length : ''}`, sub: 'Power agents. Pick one to run it.', onClick: () => openApp('agents') },
-    {
-      icon: Activity,
-      color: 'var(--accent)',
-      label: `Active Execution ${active ? '· session' : ''}`,
-      sub: active ? active.title : 'No sessions in this workspace yet.',
-      onClick: () => openApp('agents'),
-    },
-    {
-      icon: Inbox,
-      color: 'var(--amber)',
-      label: `Triage Queue ${reviewCount}`,
-      sub: reviewCount > 0 ? 'Finished runs awaiting your review.' : 'All clear — nothing waiting.',
-      onClick: () => openApp('reports'),
-    },
-  ];
-
   return (
-    <section className={`dashboard${hidden ? ' dash-hidden' : ''}`} aria-label="Dashboard">
+    <section id="dashboard" className={`dashboard${hidden ? ' dash-hidden' : ''}`} aria-label="Dashboard">
       <div className="dash-inner">
-        {/* ABOVE THE FOLD: the ask bar is the highlighter */}
         <div className="dash-hero">
           <div className="text-center">
             <div
@@ -148,6 +123,7 @@ export function Dashboard() {
               What are you working on?
             </p>
           </div>
+
           <Composer
             value={ask}
             onChange={setAsk}
@@ -164,117 +140,156 @@ export function Dashboard() {
               → {liveMention.handle} · {liveMention.role} — mention routes the run to this agent
             </p>
           )}
+
           <div className="hero-quick">
             <button onClick={() => openApp('launchpad')}>
-              <Zap size={12} aria-hidden="true" /> Start a task
+              ↗ Research task
             </button>
             <button onClick={() => openApp('agents')}>
-              <Bot size={12} aria-hidden="true" /> Deploy an agent
+              ↗ Deploy research agent
             </button>
             <button onClick={() => openApp('reports')}>
-              <Inbox size={12} aria-hidden="true" /> Needs review ({reviewCount})
+              ↗ Needs review ({reviewCount})
             </button>
           </div>
+
           <div className="dash-cards" style={{ marginTop: 20 }}>
-            {cards.map(({ icon: Icon, color, label, sub, onClick }) => (
-              <button key={label} className="bento-item text-left" onClick={onClick}>
-                <Icon size={20} className="mb-2" style={{ color }} />
-                <p className="font-bold text-sm">{label}</p>
-                <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
-                  {sub}
-                </p>
-              </button>
-            ))}
+            <button className="bento-item text-left" onClick={() => openApp('assignments')}>
+              <Layers size={20} className="mb-2" style={{ color: 'var(--green)' }} />
+              <p className="font-bold text-sm">Assignments</p>
+              <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
+                Tasks by type, in-progress first.
+              </p>
+            </button>
+            <button className="bento-item text-left" onClick={() => openApp('agents')}>
+              <Bot size={20} className="mb-2" style={{ color: 'var(--violet)' }} />
+              <p className="font-bold text-sm">Agents</p>
+              <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
+                Contextual agents. Pick one to run it.
+              </p>
+            </button>
+            <button className="bento-item text-left" onClick={() => openApp('agents')}>
+              <Activity size={20} className="mb-2" style={{ color: 'var(--accent)' }} />
+              <p className="font-bold text-sm">
+                Active Execution {active ? <span className="font-mono text-xs" style={{ color: 'var(--muted)' }}>· session</span> : null}
+              </p>
+              <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
+                {active ? `${active.title}. Open Active Execution to follow it.` : 'No active project.'}
+              </p>
+            </button>
+            <button className="bento-item text-left" onClick={() => openApp('reports')}>
+              <Inbox size={20} className="mb-2" style={{ color: 'var(--amber)' }} />
+              <p className="font-bold text-sm">
+                Triage Queue <span style={{ color: '#ef4444' }}>{reviewCount}</span>
+              </p>
+              <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
+                Items waiting for approval.
+              </p>
+            </button>
           </div>
           <div className="scroll-cue">
             <ChevronDown size={20} />
           </div>
         </div>
 
-        {/* BELOW THE FOLD: telemetry */}
-        <div style={{ marginTop: 24 }}>
+        <div id="dash-telemetry" style={{ marginTop: 24 }}>
           <div className="flex items-end justify-between" style={{ marginBottom: 12 }}>
             <div>
               <h2 className="text-xl font-bold">System Telemetry</h2>
-              <p className="font-mono text-xs mt-1 flex items-center gap-1.5" style={{ color: 'var(--muted)' }}>
-                <span
-                  aria-hidden="true"
-                  style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block', flexShrink: 0 }}
-                />
-                {feedError ? 'session feed unavailable' : `${list.length} session${list.length === 1 ? '' : 's'} · ${agents.data?.length ?? 0} agents`}
+              <p className="font-mono text-xs mt-1" style={{ color: 'var(--muted)' }}>
+                <span aria-hidden="true" style={{ color: feedError ? '#ef4444' : '#10b981' }}>●</span>{' '}
+                {feedError ? 'session feed unavailable' : `${list.length} active · ${wsLabel}`}
               </p>
             </div>
-            <div className="flex gap-2 items-center">
-              <span className="chip">live</span>
-              <strong className="font-mono text-sm">{list.length}</strong>
-              <span className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
-                sessions
+            <div className="flex gap-2">
+              <span className="chip">{wsLabel || '—'}</span>
+              <span className="chip">active</span>
+              <strong className="font-mono text-sm">{reviewCount}</strong>
+              <span className="font-mono text-[10px] ml-1" style={{ color: 'var(--muted)' }}>
+                need review
               </span>
             </div>
           </div>
           <div className="dash-telemetry">
-            <div className="widget">
+            <div className="bento-item">
               <p className="font-mono text-xs font-bold" style={{ marginBottom: 10 }}>
                 ACTIVE_TASKS
               </p>
               <div className="flex items-center gap-3">
                 <div className="min-w-0" style={{ flex: 1 }}>
-                  {feedError ? (
-                    <p className="font-mono text-[10px]" style={{ color: 'var(--amber)' }}>
-                      {feedError}
-                    </p>
-                  ) : (
-                    <>
-                      <p className="font-mono font-bold text-xs">{active ? active.title : 'No sessions yet'}</p>
-                      <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
-                        {activeSub ?? 'Deploy a power agent to start the first session'}
-                      </p>
-                    </>
-                  )}
+                  <p className="font-mono font-bold text-xs">{active ? active.title : 'No active project'}</p>
+                  <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
+                    {active
+                      ? `session · ${v3Ago(active.updatedAt ?? active.createdAt)}${activeAgent ? ` · ${activeAgent.handle}` : ''}`
+                      : 'in-progress tasks appear here first'}
+                  </p>
                 </div>
                 <div className="pbar">
-                  <div style={{ width: list.length ? '100%' : '0%' }} />
+                  <div style={{ width: active ? '100%' : '0%' }} />
                 </div>
                 <span className="font-mono text-[11px]" style={{ color: 'var(--muted)' }}>
-                  {list.length}
+                  {active ? '100%' : '0%'}
                 </span>
+              </div>
+              <div className="table-glass" style={{ marginTop: 12 }}>
+                <div className="space-y-2">
+                  {taskRows.length > 0 ? (
+                    taskRows.map((t) => {
+                      const a = v3AgentByKey(agents.data ?? [], t.agentKey ?? null);
+                      const unread = isV3SessionUnread(t);
+                      return (
+                        <div className="hrow" key={t.id}>
+                          <div className="min-w-0" style={{ flex: 1 }}>
+                            <p className="font-mono font-bold text-xs" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {t.title}
+                            </p>
+                            <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
+                              {`${unread ? 'awaiting review' : 'reviewed'}${a ? ` · ${a.handle}` : ''} · ${v3Ago(t.updatedAt ?? t.createdAt)}`}
+                            </p>
+                          </div>
+                          <div className="pbar">
+                            <div style={{ width: unread ? '40%' : '100%', background: unread ? 'var(--amber)' : undefined }} />
+                          </div>
+                          <span className="font-mono text-[11px]" style={{ color: 'var(--muted)' }}>
+                            {unread ? '—' : '100%'}
+                          </span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
+                      in-progress tasks appear here first
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-3" style={{ marginTop: 12 }}>
                 <Sparkline series={v3Data.getSparkSeries()} />
               </div>
             </div>
-            <div className="widget">
+            <div className="bento-item">
               <p className="font-mono text-xs font-bold" style={{ marginBottom: 10 }}>
                 AGENTS_IN_FLOW
               </p>
-              {agents.loading ? (
-                <LoadingLine label="loading agents" />
-              ) : (
-                flowAgents.map(({ agent, count, last }) => (
-                  <button
-                    key={agent.key}
-                    className="flex items-center gap-3 w-full text-left"
-                    style={{ padding: '8px 0' }}
-                    data-tip={`${agent.handle} — open execution`}
-                    onClick={() => {
-                      openApp('agents');
-                      selectAgent(agent.key);
-                    }}
-                  >
-                    <agent.icon size={16} style={{ color: 'var(--violet)' }} />
-                    <div className="min-w-0">
-                      <p className="font-mono font-bold text-xs">
-                        {agent.handle} · {agent.role}
-                      </p>
-                      <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
-                        {count
-                          ? `${count} session${count > 1 ? 's' : ''} · last ${v3Ago(last!.updatedAt ?? last!.createdAt)}`
-                          : 'Waiting for a task'}
-                      </p>
-                    </div>
-                  </button>
-                ))
-              )}
+              {flowAgents.map(({ agent, last, count }) => (
+                <button
+                  key={agent.key}
+                  className="flex items-center gap-3 w-full text-left"
+                  style={{ padding: '8px 0' }}
+                  onClick={() => {
+                    openApp('agents');
+                    selectAgent(agent.key);
+                  }}
+                >
+                  <agent.icon size={16} style={{ color: SUITE_TINT[agent.suite]?.color ?? 'var(--violet)' }} />
+                  <div className="min-w-0">
+                    <p className="font-mono font-bold text-xs">{agent.handle}</p>
+                    <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
+                      {last ? `${last.title} — ${v3Ago(last.updatedAt ?? last.createdAt)}${count > 1 ? ` · ${count} sessions` : ''}` : 'Waiting for a task'}
+                    </p>
+                  </div>
+                </button>
+              ))}
               <button className="btn-ghost w-full" style={{ marginTop: 8 }} onClick={() => openApp('agents')}>
                 open agents
               </button>

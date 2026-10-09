@@ -4,8 +4,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { Search, Play, Inbox, SunMoon, Building2, BarChart3, ListChecks, BookOpen } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useV3OS, type WindowId } from '@/lib/v3/osStore';
-import { APP_BUTTONS } from './MenuNotch';
+import { LayoutDashboard, Terminal, Layers, Bot } from 'lucide-react';
 import { isV3SessionUnread } from '@/lib/v3/data';
+
+const APP_BUTTONS: { id: WindowId; title: string; icon: typeof Bot; color: string }[] = [
+  { id: 'home', title: 'Home · full OS', icon: LayoutDashboard, color: '#1d4ed8' },
+  { id: 'launchpad', title: 'Launchpad · define', icon: Terminal, color: 'var(--cyan)' },
+  { id: 'assignments', title: 'Assignments · track', icon: Layers, color: 'var(--green)' },
+  { id: 'agents', title: 'Agents · roster', icon: Bot, color: 'var(--violet)' },
+];
 
 interface SpotItem {
   key: string;

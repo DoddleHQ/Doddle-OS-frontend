@@ -22,13 +22,13 @@ describe('MenuNotch', () => {
   it('renders workspace label and app/system buttons', () => {
     render(<MenuNotch />);
     expect(screen.getByTitle('Workspace')).toBeTruthy();
-    expect(screen.getByTitle('Home · ⌘1')).toBeTruthy();
-    expect(screen.getByTitle('Launchpad · ⌘2')).toBeTruthy();
-    expect(screen.getByTitle('Agents · ⌘3')).toBeTruthy();
-    expect(screen.getByTitle('Assignments · ⌘4')).toBeTruthy();
+    expect(screen.getByTitle('Home · full OS')).toBeTruthy();
+    expect(screen.getByTitle('Launchpad · define')).toBeTruthy();
+    expect(screen.getByTitle('Agents · roster')).toBeTruthy();
+    expect(screen.getByTitle('Assignments · track')).toBeTruthy();
     expect(screen.getByTitle('Spotlight · ⌘K')).toBeTruthy();
-    expect(screen.getByTitle('Triage · ⌘6')).toBeTruthy();
-    expect(screen.getByTitle('Tasks · ⌘7')).toBeTruthy();
+    expect(screen.getByTitle('Triage · review')).toBeTruthy();
+    expect(screen.getByTitle('Reports · progress')).toBeTruthy();
   });
 
   it('shows the current workspace name from the store', () => {
@@ -38,7 +38,7 @@ describe('MenuNotch', () => {
 
   it('clicking Home opens the home window in the store', () => {
     render(<MenuNotch />);
-    fireEvent.click(screen.getByTitle('Home · ⌘1'));
+    fireEvent.click(screen.getByTitle('Home · full OS'));
     expect(useV3OS.getState().windows.map((w) => w.id)).toContain('home');
   });
 
@@ -53,10 +53,10 @@ describe('MenuNotch', () => {
       sessionFeed: [{ id: 't9', title: 'fresh', agentKey: 'crawlability_audit', createdAt: null, updatedAt: new Date().toISOString() }],
     });
     const { rerender } = render(<MenuNotch />);
-    expect(screen.getByTitle('Triage · ⌘6').textContent).toContain('1');
+    expect(screen.getByTitle('Triage · review').textContent).toContain('1');
     useV3OS.setState({ sessionFeed: [] });
     rerender(<MenuNotch />);
-    expect(screen.getByTitle('Triage · ⌘6').textContent).not.toContain('1');
+    expect(screen.getByTitle('Triage · review').textContent).not.toContain('1');
   });
 
   it('clicking Workspace toggles the ws menu', () => {

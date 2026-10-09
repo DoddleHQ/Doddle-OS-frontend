@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import '@/components/v3/v3.css';
+import '@/components/v3/v13.css'; // exact-UI layer: reference values override our adaptations
 
 const inter = Inter({
   subsets: ['latin'],

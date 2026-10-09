@@ -82,7 +82,7 @@ describe('Dashboard (real power-agent data)', () => {
     mockedAgents.mockResolvedValue([agent({})]);
     useV3OS.setState({ sessionFeed: [session({})] });
     render(<Dashboard />);
-    const row = await screen.findByText(/@Crawlability · Crawler & Indexer/i);
+    const row = await screen.findByText('@Crawlability'); // v13 shape: handle bold, sub line separate
     fireEvent.click(row);
     expect(useV3OS.getState().windows.map((w) => w.id)).toContain('agents');
     expect(useV3OS.getState().selectedAgentKey).toBe('crawlability_audit');
