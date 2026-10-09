@@ -1,20 +1,23 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import '@/components/v3/v3.css';
 import '@/components/v3/v13.css'; // exact-UI layer: reference values override our adaptations
 
-const inter = Inter({
-  subsets: ['latin'],
+// Self-hosted (next/font/local): identical faces to the previous
+// next/font/google setup, but the build no longer fetches fonts.googleapis.com
+// at build time — docker builds succeed without network access to Google.
+// The woff2 files are the variable-weight cuts, so one file per family
+// covers every weight the UI uses.
+const inter = localFont({
   display: 'swap',
   variable: '--font-v3-inter',
-  weight: ['400', '500', '600', '700', '800'],
+  src: [{ path: './fonts/inter-var.woff2', style: 'normal' }],
 });
 
-const jet = JetBrains_Mono({
-  subsets: ['latin'],
+const jet = localFont({
   display: 'swap',
   variable: '--font-v3-jmono',
-  weight: ['400', '500', '700'],
+  src: [{ path: './fonts/jmono-var.woff2', style: 'normal' }],
 });
 
 export const metadata: Metadata = {
