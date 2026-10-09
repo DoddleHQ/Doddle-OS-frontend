@@ -1252,3 +1252,6 @@
   .v3-scope .scroll-cue,
   .v3-scope .rail-btn .dot { animation: none; }
 }
+
+/* v13 solo agents page: the AGENT PROFILES grid (3-col, 2-col, 1-col) */
+.v3-scope .agent-profile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 12px; }

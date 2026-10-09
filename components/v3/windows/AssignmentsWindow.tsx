@@ -6,7 +6,7 @@ import type { UIMessage } from 'ai';
 import { useV3OS } from '@/lib/v3/osStore';
 import { useV3Fetch, v3Ago, isV3SessionUnread, markThreadSeen } from '@/lib/v3/data';
 import { fetchV3PowerAgents, SUITE_TINT, v3AgentByKey } from '@/lib/v3/powerAgents';
-import { ChatFeed } from '@/components/v3/windows/AgentsWindow';
+import { ChatFeed } from '@/components/v3/windows/AgentsChatFeed';
 import type { V3Session } from '@/lib/v3/powerAgents';
 
 type Tab = 'gantt' | 'board' | 'review';
