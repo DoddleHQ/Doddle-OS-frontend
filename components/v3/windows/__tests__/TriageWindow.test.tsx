@@ -65,7 +65,7 @@ describe('TriageWindow · 3-pane on real unread sessions', () => {
     render(<TriageWindow />);
     expect((await screen.findAllByText('Q4 site audit')).length).toBeGreaterThanOrEqual(1); // queue row + details
     expect(screen.queryByText('already reviewed')).toBeNull();
-    expect(screen.getByText(/awaiting your review/i)).toBeTruthy();
+    expect(screen.getByText(/QUEUE · REVIEW — NOTHING SHIPS WITHOUT YOU/i)).toBeTruthy();
   });
 
   it('loads the selected run history into the conversation pane', async () => {
@@ -76,19 +76,19 @@ describe('TriageWindow · 3-pane on real unread sessions', () => {
     render(<TriageWindow />);
     await screen.findByText(/loading run…|crawl the sitemap/);
     await waitFor(() => expect(screen.getByText('crawl the sitemap')).toBeTruthy());
-    expect(screen.getByText(/Conversation · Q4 site audit/i)).toBeTruthy();
+    expect(screen.getByText('Q4 site audit', { selector: '.pane-label span' })).toBeTruthy();
   });
 
   it('Approve marks the run reviewed — it leaves the queue', async () => {
     render(<TriageWindow />);
-    fireEvent.click(await screen.findByRole('button', { name: /Approve — mark reviewed/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Approve$/i }));
     await waitFor(() => expect(screen.getByText(/All clear — finished runs wait here/i)).toBeTruthy());
     expect(window.localStorage.getItem('v3.seen.th.t1')).toBeTruthy();
   });
 
   it('Request changes deep-links the thread into the agents exec view', async () => {
     render(<TriageWindow />);
-    fireEvent.click(await screen.findByRole('button', { name: /Request changes — direct the agent/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Request changes$/i }));
     const st = useV3OS.getState();
     expect(st.selectedAgentKey).toBe('crawlability_audit');
     expect(st.selectedThreadKey).toBe('t1');
@@ -99,6 +99,6 @@ describe('TriageWindow · 3-pane on real unread sessions', () => {
     useV3OS.setState({ sessionFeed: [] });
     render(<TriageWindow />);
     expect(await screen.findByText(/All clear — finished runs wait here/i)).toBeTruthy();
-    expect(screen.getByText(/Nothing waiting/i)).toBeTruthy();
+    expect(screen.getByText(/0 waiting/i)).toBeTruthy();
   });
 });

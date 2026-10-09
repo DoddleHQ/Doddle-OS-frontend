@@ -152,9 +152,13 @@ function GanttTab({
                 </p>
               </div>
               <div className="gantt-track">
+                <span className="gantt-today" style={{ left: 'calc(100% - 2px)' }} aria-hidden="true" />
                 <span className="gantt-bar" role="img" aria-label={`${s.title} span, ${unread ? 'awaiting review' : 'reviewed'}`} style={{ left: `${left}%`, width: `${Math.max(right - left, 3)}%` }}>
                   <span className={`gantt-fill${unread ? ' st-attention' : ' st-done'}`} style={{ width: '100%' }} />
                 </span>
+                {unread && (
+                  <span className="gantt-mile" title="review gate" style={{ left: `calc(${Math.min(right, 97)}% - 7px)` }} />
+                )}
               </div>
             </button>
           );

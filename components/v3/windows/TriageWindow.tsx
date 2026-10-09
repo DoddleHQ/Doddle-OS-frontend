@@ -72,18 +72,19 @@ export function TriageWindow() {
   }
 
   return (
-    <div className="v3-triage">
+    <div className="triage-3col">
       {/* queue */}
-      <div className="widget v3-triage-queue">
-        <p className="font-mono text-[10px] tracking-[0.08em] uppercase" style={{ color: 'var(--muted)', marginBottom: 8 }}>
-          Queue · awaiting your review
+      <div className="pane v3-triage-queue">
+        <p className="pane-label">
+          QUEUE · REVIEW — NOTHING SHIPS WITHOUT YOU · <span>{queue.length} waiting</span>
         </p>
+        <div className="table-glass" style={{ marginTop: 8 }}>
         {feedError ? (
-          <p className="font-mono text-xs" style={{ color: 'var(--amber)' }}>
+          <p className="font-mono text-xs" style={{ color: 'var(--amber)', padding: 8 }}>
             session feed unavailable ({feedError})
           </p>
         ) : queue.length === 0 ? (
-          <p className="font-mono text-xs" style={{ color: 'var(--muted)' }}>
+          <p className="font-mono text-xs" style={{ color: 'var(--muted)', padding: 8 }}>
             All clear — finished runs wait here until you review them.
           </p>
         ) : (
@@ -109,14 +110,15 @@ export function TriageWindow() {
             );
           })
         )}
+        </div>
       </div>
 
       {/* conversation */}
-      <div className="widget v3-chat-wrap v3-triage-conv">
-        <p className="font-mono text-[10px] tracking-[0.08em] uppercase" style={{ color: 'var(--muted)', marginBottom: 8 }}>
-          Conversation {current ? `· ${current.title}` : ''}
+      <div className="pane v3-triage-conv">
+        <p className="pane-label">
+          CONVERSATION · <span>{current ? current.title : 'nothing selected'}</span>
         </p>
-        <div className="v3-chat" role="log" aria-live="polite">
+        <div className="v3-chat chat-list" role="log" aria-live="polite" style={{ marginTop: 10 }}>
           {!current ? (
             <p className="font-mono text-xs" style={{ color: 'var(--muted)', display: 'flex', gap: 6, alignItems: 'center' }}>
               <Inbox size={12} /> Select an item to read the run.
@@ -138,10 +140,8 @@ export function TriageWindow() {
       </div>
 
       {/* details + actions */}
-      <div className="widget v3-triage-detail">
-        <p className="font-mono text-[10px] tracking-[0.08em] uppercase" style={{ color: 'var(--muted)', marginBottom: 8 }}>
-          Details
-        </p>
+      <div className="pane v3-triage-detail">
+        <p className="pane-label">DETAILS · REVIEW DECISION</p>
         {!current ? (
           <p className="font-mono text-xs" style={{ color: 'var(--muted)' }}>
             Nothing waiting.
@@ -184,22 +184,22 @@ export function TriageWindow() {
             )}
             <div className="flex flex-col gap-2" style={{ marginTop: 12 }}>
               <button
-                className="btn-deploy"
+                className="btn-primary"
                 disabled={!current.agentKey}
                 onClick={() => current && acknowledge(current.id)}
               >
-                <Check size={12} /> Approve — mark reviewed
+                <Check size={12} /> Approve
               </button>
               <button
                 className="btn-ghost"
                 disabled={!current.agentKey}
                 onClick={() => current.agentKey && viewThread(current.agentKey, current.id)}
               >
-                <MessageSquareReply size={12} /> Request changes — direct the agent
+                <MessageSquareReply size={12} /> Request changes
               </button>
             </div>
             <p className="font-mono text-[10px] mt-3" style={{ color: 'var(--muted)' }}>
-              Nothing ships without you.
+              Nothing ships until you approve.
             </p>
           </>
         )}

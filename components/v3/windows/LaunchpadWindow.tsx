@@ -1,155 +1,163 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Search, ArrowUpRight, Sparkles } from 'lucide-react';
+import { Search, Code2, Database, PenTool, FolderArchive, Palette, Layers, Plus, Cpu } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
-import { V3_DOMAINS, V3_MODULES, v3ModuleHref, v3SuggestModules, type V3ModuleDomain } from '@/lib/v3/modules';
+import { V3_MODULES, v3ModuleHref, v3SuggestModules, type V3ModuleDomain } from '@/lib/v3/modules';
+import { v3Ago } from '@/lib/v3/data';
+import { Glide } from '@/components/v3/ui/Glide';
+import { COMPOSER_MODELS, COMPOSER_MODES } from '@/components/v3/ui/Composer';
+
+/** v13's six task categories, exact — each routes to a real module page. */
+const CATS: { cat: string; icon: typeof Search; color: string; label: string; title: string; sub: string; to: V3ModuleDomain }[] = [
+  { cat: 'research', icon: Search, color: 'var(--task-research)', label: 'Research', title: 'Research & articles', sub: 'Investigate, compare, summarize.', to: 'seo' },
+  { cat: 'code', icon: Code2, color: 'var(--task-code)', label: 'Code', title: 'Code review & PRs', sub: 'Review, audit, fix plans.', to: 'ops' },
+  { cat: 'data', icon: Database, color: 'var(--task-data)', label: 'Data', title: 'Data analysis & pipelines', sub: 'Connect, analyze, report.', to: 'analytics' },
+  { cat: 'writing', icon: PenTool, color: 'var(--task-writing)', label: 'Writing', title: 'Draft & content', sub: 'Outline, draft, polish.', to: 'content' },
+  { cat: 'admin', icon: FolderArchive, color: 'var(--task-admin)', label: 'Admin', title: 'Admin & organization', sub: 'Files, lists, tidy-ups.', to: 'brand' },
+  { cat: 'design', icon: Palette, color: 'var(--task-design)', label: 'Design', title: 'Design & assets', sub: 'Briefs, packs, reviews.', to: 'social' },
+];
 
 /**
- * Launchpad — define work, we suggest the module (the v13 vehicle picker),
- * then the real module catalog: every card links to a live route of this
- * app. No seeded activity, no fake counts.
+ * Launchpad — the v13 launcher view, exact DOM: centered hero, the composer
+ * (model + mode + blueprint glides, >_ start), the vehicle pane (matched
+ * blueprint + swarm + recent threads), and the six category cards.
  */
 export function LaunchpadWindow() {
   const workspaceId = useV3OS((s) => s.workspaceId);
+  const feed = useV3OS((s) => s.sessionFeed);
+  const { viewThread } = useV3OS.getState();
   const [brief, setBrief] = useState('');
-  const [q, setQ] = useState('');
-  const [domain, setDomain] = useState<V3ModuleDomain | 'all'>('all');
 
   const suggestions = useMemo(() => v3SuggestModules(brief), [brief]);
+  const best = suggestions[0]?.module ?? null;
+  const recent = feed.slice(0, 4);
 
-  const visible = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return V3_MODULES.filter((m) => {
-      if (domain !== 'all' && m.domain !== domain) return false;
-      if (!needle) return true;
-      return `${m.name} ${m.blurb} ${m.tags.join(' ')} ${V3_DOMAINS[m.domain]}`.toLowerCase().includes(needle);
-    });
-  }, [q, domain]);
-
-  const domains = useMemo(() => {
-    const by = new Map<V3ModuleDomain, number>();
-    V3_MODULES.forEach((m) => by.set(m.domain, (by.get(m.domain) ?? 0) + 1));
-    return [...by.entries()];
-  }, []);
+  function launch() {
+    if (!best) return;
+    window.open(v3ModuleHref(best.slug, workspaceId), '_blank');
+  }
 
   return (
-    <div>
-      <p className="font-mono text-[10px] tracking-[0.08em] uppercase" style={{ color: 'var(--muted)', marginBottom: 6 }}>
-        Define work — we pick the module
-      </p>
-      <div className="askbar" style={{ marginBottom: 10 }}>
-        <Search size={16} style={{ color: 'var(--muted)' }} />
-        <input
+    <div id="lp-launcher-view">
+      <div className="text-center" style={{ padding: '26px 0 18px' }}>
+        <h2 className="text-2xl font-bold">What are you working on?</h2>
+        <p className="text-sm font-mono mt-1" style={{ color: 'var(--muted)' }}>
+          Describe it — we match the blueprint + agent.
+        </p>
+      </div>
+
+      <div className="composer" style={{ marginBottom: 12 }} id="task-creator">
+        <textarea
+          className="composer-input"
+          rows={3}
+          placeholder="Describe the outcome… e.g. Research AI articles on recent vulnerabilities"
+          aria-label="Describe the outcome"
           value={brief}
           onChange={(e) => setBrief(e.target.value)}
-          placeholder="Describe the outcome… e.g. keyword cluster for winter tires, audit the checkout funnel"
-          aria-label="Describe the outcome"
         />
-      </div>
-
-      {/* vehicle picker: live ranked suggestions from the real catalog */}
-      {suggestions.length > 0 && (
-        <div className="v3-vehicle" role="list" aria-label="Suggested modules">
-          {suggestions.map(({ module: m, score }, i) => (
-            <a
-              key={m.slug}
-              role="listitem"
-              className="v3-vehicle-pick"
-              href={v3ModuleHref(m.slug, workspaceId)}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <span className="v3-vehicle-rank font-mono">{i === 0 ? 'best' : `#${i + 1}`}</span>
-              <m.icon size={16} />
-              <span className="min-w-0">
-                <span className="block font-mono font-bold text-xs truncate">{m.name}</span>
-                <span className="block font-mono text-[10px] truncate" style={{ color: 'var(--muted)' }}>
-                  {V3_DOMAINS[m.domain]} · match {score}
-                </span>
-              </span>
-              <ArrowUpRight size={12} className="ml-auto shrink-0" style={{ color: 'var(--muted)' }} />
-            </a>
-          ))}
-        </div>
-      )}
-
-      <div className="askbar" style={{ marginBottom: 10, marginTop: suggestions.length ? 10 : 0 }}>
-        <Search size={16} style={{ color: 'var(--muted)' }} />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search modules… try 'audit', 'email', 'launch'"
-          aria-label="Search modules"
-        />
-        <span className="chip font-mono">{visible.length}/{V3_MODULES.length}</span>
-      </div>
-      <div className="v3-fchips" role="group" aria-label="Filter modules by domain">
-        <button
-          type="button"
-          className={`fchip${domain === 'all' ? ' on' : ''}`}
-          aria-pressed={domain === 'all'}
-          onClick={() => setDomain('all')}
-        >
-          all · {V3_MODULES.length}
-        </button>
-        {domains.map(([d, n]) => (
-          <button
-            key={d}
-            type="button"
-            className={`fchip${domain === d ? ' on' : ''}`}
-            aria-pressed={domain === d}
-            onClick={() => setDomain(domain === d ? 'all' : d)}
-          >
-            {V3_DOMAINS[d].toLowerCase()} · {n}
+        <div className="composer-bar">
+          <button className="composer-icon" title="Attach files" aria-label="Attach files">
+            <Plus size={16} />
           </button>
-        ))}
+          <Glide value="GPT-5" options={COMPOSER_MODELS} icon={Cpu} ariaLabel="Model" onChange={() => {}} />
+          <Glide value="default" options={COMPOSER_MODES} ariaLabel="Mode" onChange={() => {}} />
+          <Glide
+            value={best?.slug ?? 'blueprint'}
+            options={V3_MODULES.map((m) => ({ value: m.slug, label: m.name }))}
+            icon={Layers}
+            ariaLabel="Pick a blueprint"
+            onChange={() => {}}
+          />
+          <button className="btn-deploy" style={{ marginLeft: 'auto' }} title="Start (⏎)" onClick={launch}>
+            &gt;_
+          </button>
+        </div>
       </div>
 
-      <div className="roster-grid v3-module-grid">
-        {visible.map((m) => (
-          <a
-            key={m.slug}
-            className="bento-item agent-card v3-module-card"
-            href={v3ModuleHref(m.slug, workspaceId)}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={`Open ${m.name} — ${m.blurb}`}
-          >
-            <span className="profile-banner" style={{ background: 'color-mix(in srgb, var(--accent) 10%, transparent)' }} aria-hidden="true">
-              <span className="profile-dot" style={{ background: 'var(--accent)' }} />
-            </span>
-            <span className="profile-avatar" aria-hidden="true">
-              <m.icon size={22} />
-            </span>
-            <span className="profile-id min-w-0">
-              <span className="block font-mono font-bold text-xs truncate">{m.name}</span>
-              <span className="block font-mono text-[11px] truncate" style={{ color: 'var(--muted)' }}>
-                {V3_DOMAINS[m.domain]} module
-              </span>
-            </span>
-            <span className="v3-module-blurb font-mono text-[11px]" style={{ color: 'var(--muted)' }}>
-              {m.blurb}
-            </span>
-            <span className="profile-stats font-mono">
-              <span>
-                <strong>{m.tags.slice(0, 3).join(' · ')}</strong>
-              </span>
-            </span>
-            <span className="btn-deploy profile-deploy" aria-hidden="true">
-              Open module <ArrowUpRight size={10} style={{ display: 'inline' }} />
-            </span>
-            <span className="back-link profile-open" aria-hidden="true">
-              live route ↗
-            </span>
-          </a>
-        ))}
+      {/* VEHICLE: matched blueprint + swarm + threads, below the input */}
+      <div id="lp-vehicle" className="pane" style={{ borderColor: 'rgba(29,78,216,.35)', marginBottom: 12 }}>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <p className="pane-label" style={{ margin: 0 }}>
+            LAUNCH CAMPAIGN · BLUEPRINT + SWARM
+          </p>
+          <button className="btn-deploy" id="vehicle-launch-btn" onClick={launch}>
+            Launch campaign →
+          </button>
+        </div>
+        <div className="space-y-2" style={{ marginTop: 10 }}>
+          {suggestions.length > 0 ? (
+            suggestions.map(({ module: m, score }, i) => (
+              <div key={m.slug} className="hrow" style={{ cursor: 'pointer' }} onClick={() => window.open(v3ModuleHref(m.slug, workspaceId), '_blank')}>
+                <div className="min-w-0" style={{ flex: 1 }}>
+                  <p className="font-mono font-bold text-xs">
+                    {i === 0 ? '◆ ' : ''}
+                    {m.name}
+                  </p>
+                  <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
+                    {m.blurb}
+                  </p>
+                </div>
+                <span className="task-category-badge" style={{ background: 'var(--accent)' }}>
+                  match {score}
+                </span>
+              </div>
+            ))
+          ) : (
+            <p className="font-mono text-[11px]" style={{ color: 'var(--muted)' }}>
+              Type above — the matched blueprint and its agent swarm appear here.
+            </p>
+          )}
+        </div>
+        <div className="table-glass" style={{ marginTop: 8 }}>
+          <div>
+            {recent.length > 0 ? (
+              recent.map((s) => (
+                <div key={s.id} className="hrow" style={{ cursor: 'pointer' }} onClick={() => s.agentKey && viewThread(s.agentKey, s.id)}>
+                  <div className="min-w-0" style={{ flex: 1 }}>
+                    <p className="font-mono font-bold text-xs" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {s.title}
+                    </p>
+                    <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
+                      session · {v3Ago(s.updatedAt ?? s.createdAt)}
+                    </p>
+                  </div>
+                  <span className="chip">open</span>
+                </div>
+              ))
+            ) : (
+              <p className="font-mono text-[10px]" style={{ color: 'var(--muted)', padding: 8 }}>
+                recent workspace threads land here
+              </p>
+            )}
+          </div>
+        </div>
       </div>
-      {visible.length === 0 && (
-        <p className="font-mono text-xs" style={{ color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Sparkles size={12} /> No module matches “{q}” — try the deploy prompt above or the agents roster.
-        </p>
-      )}
+
+      <div className="blueprint-grid cat-grid" id="lp-categories">
+        {CATS.map(({ cat, icon: Icon, color, label, title, sub, to }) => {
+          const target = V3_MODULES.find((m) => m.domain === to);
+          return (
+            <button
+              key={cat}
+              className="bento-item text-left cat-card"
+              data-cat={cat}
+              onClick={() => target && window.open(v3ModuleHref(target.slug, workspaceId), '_blank')}
+            >
+              <div className="flex items-center justify-between">
+                <Icon size={24} className="mb-3" style={{ color }} />
+                <span className="task-category-badge" style={{ background: color }}>
+                  {label}
+                </span>
+              </div>
+              <p className="font-bold">{title}</p>
+              <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
+                {sub}
+              </p>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

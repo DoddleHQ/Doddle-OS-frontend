@@ -31,11 +31,11 @@ describe('WindowsLayer', () => {
     expect(useV3OS.getState().windows[0].minimized).toBe(true);
   });
 
-  it('launchpad renders the real module catalog, not an empty state', () => {
+  it('launchpad renders the v13 launcher, not an empty state', () => {
     useV3OS.getState().openApp('launchpad');
     render(<WindowsLayer />);
-    expect(screen.getByLabelText('Describe the outcome')).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Open SEO Cluster/i })).toBeTruthy();
+    expect(screen.getByText('What are you working on?')).toBeTruthy();
+    expect(screen.getByText('Research & articles')).toBeTruthy();
   });
 
   it('renders an empty-state window for a later-screen app', () => {
@@ -47,7 +47,7 @@ describe('WindowsLayer', () => {
   it('reports renders the real triage queue, not an empty state', () => {
     useV3OS.getState().openApp('reports');
     render(<WindowsLayer />);
-    expect(screen.getByText(/Queue · awaiting your review/i)).toBeTruthy();
+    expect(screen.getByText(/QUEUE · REVIEW/i)).toBeTruthy();
   });
 
   it('renders the home window content (greeting + ask bar)', () => {

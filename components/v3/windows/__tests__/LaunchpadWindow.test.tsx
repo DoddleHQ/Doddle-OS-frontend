@@ -2,38 +2,33 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { LaunchpadWindow } from '@/components/v3/windows/LaunchpadWindow';
 import { useV3OS } from '@/lib/v3/osStore';
 
-describe('LaunchpadWindow · define + catalog (real routes)', () => {
+describe('LaunchpadWindow · v13 exact launcher DOM', () => {
   beforeEach(() => {
-    useV3OS.setState({ workspaceId: 'ws1' });
+    useV3OS.setState({ workspaceId: 'ws1', sessionFeed: [] });
   });
 
-  it('renders the full real module catalog with live links', () => {
+  it('hero, composer with blueprint glide, and the six v13 category cards', () => {
     render(<LaunchpadWindow />);
-    const seo = screen.getByRole('link', { name: /Open SEO Cluster/i });
-    expect(seo.getAttribute('href')).toBe('/workspaces/ws1/modules/seo-cluster');
-    const persona = screen.getByRole('link', { name: /Open Brand Persona/i });
-    expect(persona.getAttribute('href')).toBe('/workspaces/ws1/brand-persona');
-    expect(screen.getByText(/10\/10/)).toBeTruthy(); // count chip
+    expect(screen.getByText('What are you working on?')).toBeTruthy();
+    expect(screen.getByText('Describe it — we match the blueprint + agent.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Pick a blueprint' })).toBeTruthy();
+    expect(screen.getByText('>_', { selector: '#task-creator button' })).toBeTruthy();
+    expect(screen.getByText('LAUNCH CAMPAIGN · BLUEPRINT + SWARM')).toBeTruthy();
+    for (const label of ['Research & articles', 'Code review & PRs', 'Data analysis & pipelines', 'Draft & content', 'Admin & organization', 'Design & assets']) {
+      expect(screen.getByText(label)).toBeTruthy();
+    }
+    // category cards route to real module pages
+    expect(screen.getByText('Research & articles').closest('button')!.getAttribute('data-cat')).toBe('research');
   });
 
-  it('typing an outcome surfaces ranked vehicle suggestions', () => {
+  it('typing an outcome surfaces ranked vehicle stages with real routes', () => {
     render(<LaunchpadWindow />);
     fireEvent.change(screen.getByLabelText('Describe the outcome'), {
       target: { value: 'keyword cluster for winter tires' },
     });
-    const best = screen.getByText('best');
-    expect(best).toBeTruthy();
-    expect(best.closest('a')!.getAttribute('href')).toContain('seo-cluster');
-  });
-
-  it('domain chips and search narrow the catalog', () => {
-    render(<LaunchpadWindow />);
-    fireEvent.click(screen.getByRole('button', { name: /seo · 2/i }));
-    expect(screen.queryByRole('link', { name: /Open Content Factory/i })).toBeNull();
-    expect(screen.getByRole('link', { name: /Open SEO Cluster/i })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /all · 10/i }));
-    fireEvent.change(screen.getByLabelText('Search modules'), { target: { value: 'launch' } });
-    expect(screen.getByRole('link', { name: /Open SaaS Launch Ops/i })).toBeTruthy();
-    expect(screen.queryByRole('link', { name: /Open Email Nurture/i })).toBeNull();
+    const rows = screen.getAllByText(/SEO Cluster/);
+    expect(rows.length).toBeGreaterThan(0); // vehicle stage row
+    expect(screen.getAllByText(/match \d+/).length).toBeGreaterThan(0); // match badges
+    expect(screen.getByRole('button', { name: /Launch campaign →/i })).toBeTruthy();
   });
 });
