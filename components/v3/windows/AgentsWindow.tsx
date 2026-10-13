@@ -16,26 +16,49 @@ import { COMPOSER_MODELS, COMPOSER_MODES } from '@/components/v3/ui/Composer';
 /* Roster — v13 exact: deploy-prompt composer, ACTIVE/IDLE columns, dock */
 /* ------------------------------------------------------------------ */
 
+/** v13 category language for the roster badges + telemetry words. */
+const SUITE_CAT: Record<string, { cat: string; label: string; color: string }> = {
+  'SEO Audit Suite': { cat: 'research', label: 'Research', color: 'var(--task-research)' },
+  'Website Content Suite': { cat: 'writing', label: 'Writing', color: 'var(--task-writing)' },
+  'DevOps Suite': { cat: 'code', label: 'Code', color: 'var(--task-code)' },
+  'Shopify Suite': { cat: 'writing', label: 'Writing', color: 'var(--task-writing)' },
+  'WordPress Suite': { cat: 'code', label: 'Code', color: 'var(--task-code)' },
+  'GitOps Suite': { cat: 'code', label: 'Code', color: 'var(--task-code)' },
+};
+
+function demoProgress(id: string): number {
+  const h = [...id].reduce((a, c) => a + c.charCodeAt(0), 0);
+  return ((h * 31) % 19) * 5;
+}
+
 function RosterView() {
   const [q, setQ] = useState('');
   const { selectAgent } = useV3OS.getState();
+  const selected = useV3OS((s) => s.selectedAgentKey);
   const workspaceId = useV3OS((s) => s.workspaceId);
+  const workspaces = useV3OS((s) => s.workspaces);
   const agents = useV3Fetch(fetchV3PowerAgents, []);
-  const feed = useV3Fetch(() => (workspaceId ? fetchV3Sessions(workspaceId) : Promise.resolve([] as V3Session[])), [workspaceId]);
+  const feed = useV3OS((s) => s.sessionFeed);
+
+  const wsLabel = (workspaces.find((w) => w.id === workspaceId) ?? workspaces[0])?.name ?? 'workspace';
 
   const stats = useMemo(() => {
-    const by = new Map<string, { count: number; last: string | null; unread: number }>();
-    (feed.data ?? []).forEach((s) => {
+    const by = new Map<string, { carrying: number; done: number; unread: number; last: string | null }>();
+    feed.forEach((s) => {
       if (!s.agentKey) return;
-      const cur = by.get(s.agentKey) ?? { count: 0, last: null, unread: 0 };
-      cur.count += 1;
-      if (isV3SessionUnread(s)) cur.unread += 1;
+      const cur = by.get(s.agentKey) ?? { carrying: 0, done: 0, unread: 0, last: null };
+      if (isV3SessionUnread(s)) {
+        cur.carrying += 1;
+        cur.unread += 1;
+      } else {
+        cur.done += 1;
+      }
       const t = s.updatedAt ?? s.createdAt;
       if (t && (!cur.last || t > cur.last)) cur.last = t;
       by.set(s.agentKey, cur);
     });
     return by;
-  }, [feed.data]);
+  }, [feed]);
 
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -45,16 +68,15 @@ function RosterView() {
   }, [agents.data, q]);
 
   const { active, idle } = useMemo(() => {
-    const a = visible.filter((x) => (stats.get(x.key)?.count ?? 0) > 0);
-    const i = visible.filter((x) => (stats.get(x.key)?.count ?? 0) === 0);
+    const a = visible.filter((x) => (stats.get(x.key)?.carrying ?? 0) > 0).sort((x, y) => (stats.get(y.key)?.carrying ?? 0) - (stats.get(x.key)?.carrying ?? 0));
+    const i = visible.filter((x) => (stats.get(x.key)?.carrying ?? 0) === 0);
     return { active: a, idle: i };
   }, [visible, stats]);
 
-  /** v13 deployFromSearch: Enter / Deploy opens the best-scoring match. */
-  function deployBest() {
+  const best = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    if (!needle || visible.length === 0) return;
-    const best = visible
+    if (!needle || visible.length === 0) return null;
+    return visible
       .map((a) => {
         let s = 0;
         if (a.handle.toLowerCase().includes(needle)) s += 3;
@@ -64,8 +86,12 @@ function RosterView() {
         if (a.suite.toLowerCase().includes(needle)) s += 1;
         return [a, s] as const;
       })
-      .sort((x, y) => y[1] - x[1])[0];
-    if (best) selectAgent(best[0].key);
+      .sort((x, y) => y[1] - x[1])[0]?.[0];
+  }, [q, visible]);
+
+  /** v13 deployFromSearch: Enter / Deploy opens the best-scoring match. */
+  function deployBest() {
+    if (best) selectAgent(best.key);
   }
 
   if (agents.loading) {
@@ -88,37 +114,51 @@ function RosterView() {
 
   const card = (a: V3Agent) => {
     const tint = SUITE_TINT[a.suite];
+    const cat = SUITE_CAT[a.suite] ?? { cat: 'research', label: 'Research', color: 'var(--task-research)' };
     const st = stats.get(a.key);
+    const carrying = st?.carrying ?? 0;
+    const mine = feed.filter((s) => s.agentKey === a.key);
+    const pct = carrying ? Math.max(...mine.filter((s) => isV3SessionUnread(s)).map((s) => demoProgress(s.id))) : 0;
+    const dot = carrying ? 'var(--accent)' : '#10b981';
     return (
       <div
         key={a.key}
         className="bento-item agent-pick agent-card-v profile-card"
         data-agent={a.key}
-        style={{ cursor: 'pointer' }}
+        style={{ cursor: 'pointer', ...(selected === a.key ? { borderColor: 'var(--accent)' } : {}) }}
         onClick={() => selectAgent(a.key)}
       >
         <div className="profile-banner" style={{ background: tint.bg }}>
-          <span className={`profile-dot${st?.unread ? ' has-unread' : ''}`} />
+          <span className={`profile-dot${st?.unread ? ' has-unread' : ''}`} style={{ background: dot }} />
         </div>
         <div className="profile-avatar" style={{ background: tint.bg, color: tint.color }}>
           <a.icon size={26} />
         </div>
-        <p className="font-mono font-bold text-sm mt-2">{a.handle}</p>
+        <p className="font-mono font-bold text-sm mt-2">{a.name}</p>
         <p className="font-mono text-[11px]" style={{ color: 'var(--muted)' }}>
-          {a.role}
+          {`${a.handle} · ${cat.label}`}
         </p>
         <div className="flex gap-1 justify-center flex-wrap mt-2">
-          <span className="chip">{a.suite.replace(' Suite', '')}</span>
+          <span className="task-category-badge" style={{ background: cat.color }}>{cat.label}</span>
+          <span className="task-category-badge" style={{ background: tint.color }}>{a.suite.replace(' Suite', '')}</span>
         </div>
+        {carrying > 0 ? (
+          <p className="font-mono text-[11px] mt-1" style={{ color: 'var(--accent)' }}>{`● carrying ${carrying} · ${pct}%`}</p>
+        ) : (
+          <p className="font-mono text-[11px] mt-1" style={{ color: 'var(--muted)' }}>idle — unused</p>
+        )}
         <p className="agent-card-desc font-mono text-xs mt-2" style={{ color: 'var(--muted)' }}>
-          {a.name} — {a.suite}
+          {a.role} — {a.suite}
         </p>
         <div className="profile-stats">
           <span>
-            <strong>{st?.count ?? 0}</strong> sessions
+            <strong>{st?.carrying ?? 0}</strong> carrying
           </span>
           <span>
-            <strong>{st ? v3Ago(st.last) : '—'}</strong> last run
+            <strong>{st?.done ?? 0}</strong> done
+          </span>
+          <span>
+            <strong>{pct}%</strong> top
           </span>
         </div>
         <button
@@ -158,55 +198,69 @@ function RosterView() {
         />
         <div className="composer-bar">
           <button className="composer-icon" title="Attach files" aria-label="Attach files">
-            <Plus size={16} />
+            +
           </button>
           <RosterGlides />
           <button className="btn-deploy" style={{ marginLeft: 'auto' }} onClick={deployBest}>
             Deploy <kbd>⏎</kbd>
           </button>
         </div>
-        <p className="font-mono text-[11px] mt-2" style={{ color: 'var(--muted)' }}>
-          Type above — best match highlights below. Nothing runs until you hit Deploy.
+        <p className="font-mono text-[11px] mt-2" style={{ color: 'var(--muted)' }} id="agent-suggest-line">
+          {best ? `Best match: ${best.name} (${best.handle}) — hit Deploy to run it.` : 'Type above — best match highlights below. Nothing runs until you hit Deploy.'}
         </p>
       </div>
 
       <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-        <p className="pane-label" style={{ margin: 0 }}>
-          CONTEXTUAL AGENTS · PICK ONE TO DEPLOY
+        <p className="pane-label" style={{ margin: 0 }} id="roster-label">
+          {`CONTEXTUAL AGENTS · ${wsLabel.toUpperCase()} · ${active.length} ACTIVE / ${idle.length} IDLE`}
         </p>
-        <span className="chip font-mono">
-          {visible.length}/{agents.data?.length ?? 0}
-        </span>
+        <button className="back-link">show all / workspace</button>
       </div>
 
-      <div className="agent-colhead" style={{ marginBottom: 8 }}>
-        <span className="chip">AGENT PROFILES</span>
-        <span className="font-mono text-[11px]" style={{ color: 'var(--muted)' }}>
-          {visible.length} agent{visible.length === 1 ? '' : 's'}
-        </span>
-      </div>
-      <div id="agent-roster-active" className="agent-profile-grid">
-        {[...active, ...idle].map(card)}
+      <div className="agent-2col" id="agent-roster">
+        <div>
+          <div className="agent-colhead">
+            <span className="chip">ACTIVE / IN FLOW</span>
+            <span className="font-mono text-[11px]" style={{ color: 'var(--muted)' }} id="agent-active-n">
+              {active.length ? `${active.length} in flow` : 'none in flow'}
+            </span>
+          </div>
+          <div id="agent-roster-active" className="space-y-2">
+            {active.length > 0 ? active.map(card) : <p className="font-mono text-xs" style={{ color: 'var(--muted)' }}>None active. Deploy one below.</p>}
+          </div>
+        </div>
+        <div>
+          <div className="agent-colhead">
+            <span className="chip">IDLE / UNUSED</span>
+            <span className="font-mono text-[11px]" style={{ color: 'var(--muted)' }} id="agent-idle-n">
+              {idle.length ? `${idle.length} available` : 'none'}
+            </span>
+          </div>
+          <div id="agent-roster-idle" className="space-y-2">
+            {idle.length > 0 ? idle.map(card) : <p className="font-mono text-xs" style={{ color: 'var(--muted)' }}>All agents busy.</p>}
+          </div>
+        </div>
       </div>
 
       <p className="pane-label" style={{ margin: '14px 0 8px' }}>
-        QUICK SWITCH · WORKSPACE AGENTS
+        QUICK SWITCH · WORKSPACE DODDLES
       </p>
-      <div className="flex gap-2 flex-wrap">
-        {(agents.data ?? []).map((a) => {
-          const tint = SUITE_TINT[a.suite];
-          return (
+      <div id="agent-dock">
+        <div className="gdock scroll" role="toolbar">
+          {(agents.data ?? []).map((a) => (
             <button
               key={a.key}
-              className="rail-btn"
-              title={`${a.handle} — ${a.role}`}
+              className={`gseg${selected === a.key ? ' sel' : ''}`}
+              title={a.handle}
               onClick={() => selectAgent(a.key)}
-              style={{ border: '1px solid var(--glass-border)', background: tint.bg, color: tint.color }}
             >
-              <a.icon size={16} />
+              <span className="gchip">
+                <a.icon size={14} />
+              </span>
+              <span className="glabel">{a.name}</span>
             </button>
-          );
-        })}
+          ))}
+        </div>
       </div>
       {visible.length === 0 && (
         <p className="font-mono text-xs" style={{ color: 'var(--muted)' }}>
@@ -870,7 +924,24 @@ function TerminalFeed({ messages }: { messages: UIMessage[] }) {
 
 export function AgentsWindow() {
   const selected = useV3OS((s) => s.selectedAgentKey);
-  return selected ? <AgentExecView agentKey={selected} /> : <RosterView />;
+  return (
+    <section id="win-agents" className="os-window glass page" data-app="agents">
+      <div className="titlebar">
+        <div className="traffic">
+          <button className="t-close" onClick={() => useV3OS.getState().selectAgent(null)} aria-label="Close" />
+          <button className="t-min" aria-label="Minimize" />
+          <button className="t-max" aria-label="Maximize" />
+        </div>
+        <strong className="text-sm">Contextual Agents</strong>
+        <span className="chip" style={{ marginLeft: 'auto' }}>
+          active · idle · unused
+        </span>
+      </div>
+      <div className="win-body" id="agent-list">
+        {selected ? <AgentExecView agentKey={selected} /> : <RosterView />}
+      </div>
+    </section>
+  );
 }
 
 export { ChatFeed } from '@/components/v3/windows/AgentsChatFeed';

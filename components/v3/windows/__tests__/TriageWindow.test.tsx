@@ -87,13 +87,16 @@ describe('TriageWindow · 3-pane on real unread sessions', () => {
   it('Approve marks the run reviewed — it leaves the queue', async () => {
     render(<TriageWindow />);
     fireEvent.click(await screen.findByRole('button', { name: /^Approve$/i }));
-    await waitFor(() => expect(screen.getByText(/All clear — finished runs wait here/i)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/Inbox zero\. New agent results land here\./i)).toBeTruthy());
     expect(window.localStorage.getItem('v3.seen.th.t1')).toBeTruthy();
   });
 
-  it('Request changes deep-links the thread into the agents exec view', async () => {
+  it('Request changes reveals the feedback line; Send deep-links into the exec view', async () => {
     render(<TriageWindow />);
     fireEvent.click(await screen.findByRole('button', { name: /^Request changes$/i }));
+    const input = await screen.findByPlaceholderText('What should change?');
+    fireEvent.change(input, { target: { value: 'tighten the summary' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Send$/i }));
     const st = useV3OS.getState();
     expect(st.selectedAgentKey).toBe('crawlability_audit');
     expect(st.selectedThreadKey).toBe('t1');
@@ -102,7 +105,7 @@ describe('TriageWindow · 3-pane on real unread sessions', () => {
   it('an empty queue shows the honest all-clear state', async () => {
     useV3OS.setState({ sessionFeed: [] });
     render(<TriageWindow />);
-    expect(await screen.findByText(/All clear — finished runs wait here/i)).toBeTruthy();
-    expect(screen.getByText(/0 waiting/i)).toBeTruthy();
+    expect(await screen.findByText(/Inbox zero\. New agent results land here\./i)).toBeTruthy();
+    expect(screen.getAllByText(/inbox zero/i).length).toBeGreaterThan(0);
   });
 });

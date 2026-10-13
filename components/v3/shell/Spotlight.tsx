@@ -2,17 +2,17 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Play, Inbox, SunMoon, Building2, BarChart3, ListChecks, BookOpen } from 'lucide-react';
+import { Search, Play, Inbox, SunMoon, Building2, BarChart3, ListChecks, BookOpen, Activity } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useV3OS, type WindowId } from '@/lib/v3/osStore';
 import { LayoutDashboard, Terminal, Layers, Bot } from 'lucide-react';
 import { isV3SessionUnread, v3SessionStatus } from '@/lib/v3/data';
 
-const APP_BUTTONS: { id: WindowId; title: string; icon: typeof Bot; color: string }[] = [
-  { id: 'home', title: 'Home · full OS', icon: LayoutDashboard, color: '#1d4ed8' },
-  { id: 'launchpad', title: 'Launchpad · define', icon: Terminal, color: 'var(--cyan)' },
-  { id: 'assignments', title: 'Assignments · track', icon: Layers, color: 'var(--green)' },
-  { id: 'agents', title: 'Agents · roster', icon: Bot, color: 'var(--violet)' },
+const APP_BUTTONS: { id: WindowId; title: string; icon: typeof Bot; color: string; hint: string }[] = [
+  { id: 'home', title: 'Home', icon: LayoutDashboard, color: '#1d4ed8', hint: '1' },
+  { id: 'launchpad', title: 'Launchpad', icon: Terminal, color: 'var(--cyan)', hint: '2' },
+  { id: 'agents', title: 'Agents', icon: Bot, color: 'var(--violet)', hint: '3' },
+  { id: 'assignments', title: 'Assignments', icon: Layers, color: 'var(--green)', hint: '4' },
 ];
 
 interface SpotItem {
@@ -45,36 +45,47 @@ export function Spotlight() {
       tasks: 'tasks inventory route agent human',
       history: 'history all work search',
     };
+    const SUBTITLE: Record<string, string> = {
+      home: 'status & reviews',
+      launchpad: 'what to launch?',
+      agents: 'contextual roster',
+      assignments: 'in progress + review',
+    };
     const apps: SpotItem[] = APP_BUTTONS.map((b) => ({
       key: SPOT_KEYS[b.id],
-      label: `${b.title.split(' · ')[0]} — ${
-        b.id === 'home' ? 'status & reviews' : b.id === 'launchpad' ? 'what to launch?' : b.id === 'agents' ? 'contextual roster' : 'in progress + review'
-      }`,
+      label: `${b.title} — ${SUBTITLE[b.id]}`,
       icon: b.icon,
       color: b.color,
-      hint: b.title.split(' · ')[1],
-      run: go(b.id === 'home' ? '/v3' : `/v3/${b.id === 'assignments' ? 'assignments' : b.id}`),
+      hint: b.hint,
+      run: go(b.id === 'home' ? '/v3' : `/v3/${b.id}`),
     }));
     apps.push(
       {
         key: 'hub settings billing workspace agency',
         label: 'Agency Hub',
         icon: Building2,
-        hint: '⌘5',
+        hint: '5',
         run: () => {}, // hub stays a floating-window extra
       },
       {
-        key: 'report artefacts gallery analytics inbox',
-        label: 'Artefacts — gallery + analytics',
+        key: 'report analytics gallery board export',
+        label: 'Reports — gallery + analytics',
         icon: BarChart3,
-        hint: '⌘6',
-        run: go('/v3/triage'),
+        hint: '6',
+        run: go('/v3/reports'),
+      },
+      {
+        key: 'active execution everything in flight running live',
+        label: 'Active Execution — everything in flight',
+        icon: Activity,
+        color: 'var(--accent)',
+        run: go('/v3/assignments'),
       },
       {
         key: 'task assign agent human active inventory',
         label: 'Tasks — route to agent or human',
         icon: ListChecks,
-        hint: '⌘7',
+        hint: '7',
         run: go('/v3/assignments'),
       },
       {

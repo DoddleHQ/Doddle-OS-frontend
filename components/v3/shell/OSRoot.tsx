@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3Workspaces, useV3Fetch } from '@/lib/v3/data';
-import { fetchV3Sessions } from '@/lib/v3/powerAgents';
+import { fetchV3Sessions, type V3Session } from '@/lib/v3/powerAgents';
 import { Wallpaper } from './Wallpaper';
 import { MenuNotch } from './MenuNotch';
 import { NotchMenus } from './NotchMenus';
@@ -26,15 +26,22 @@ export function OSRoot({ children }: { children?: React.ReactNode }) {
   const setSessionFeed = useV3OS((s) => s.setSessionFeed);
   const workspaceId = useV3OS((s) => s.workspaceId);
   const workspaces = useV3Fetch(fetchV3Workspaces, []);
-  // the ONE workspace feed fetch — every consumer reads it from the store
-  const feed = useV3Fetch(() => (workspaceId ? fetchV3Sessions(workspaceId) : Promise.resolve([])), [workspaceId]);
+  // the ONE workspace feed fetch — every consumer reads it from the store.
+  // Before the workspace hydrates the placeholder stays pending: an empty
+  // array here would read as "loaded, empty queue" and trip the triage guard.
+  const feed = useV3Fetch(
+    () => (workspaceId ? fetchV3Sessions(workspaceId) : new Promise<V3Session[]>((resolve) => undefined)),
+    [workspaceId],
+  );
 
   useEffect(() => {
-    // stale-while-revalidate: a route remount restarts this hook at data=null —
-    // keep the previous feed in the store until the refetch resolves
-    if (feed.loading && feed.data === null && feed.error === null) return;
+    // workspace not hydrated yet → the feed hook resolves [] for it; and any
+    // in-flight refetch keeps stale data — neither is a real empty queue.
+    // Stale-while-revalidate: a route remount keeps the previous feed until
+    // the refetch resolves.
+    if (!workspaceId || feed.loading) return;
     setSessionFeed(feed.data ?? [], feed.error);
-  }, [feed.data, feed.error, feed.loading, setSessionFeed]);
+  }, [feed.data, feed.error, feed.loading, workspaceId, setSessionFeed]);
 
   useEffect(() => {
     hydrate();

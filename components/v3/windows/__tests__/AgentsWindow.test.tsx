@@ -90,19 +90,23 @@ describe('AgentsWindow · roster (v13 exact DOM)', () => {
       agent({ key: 'on_page_audit', name: 'On-Page', handle: '@On-Page', role: 'Meta & Content Elements' }),
       agent({ key: 'shopify_agent', name: 'Shopify', handle: '@Shopify', role: 'Store Manager & Content', suite: 'Shopify Suite', icon: ShoppingBag }),
     ]);
-    mockedFeed.mockResolvedValue([
-      session({ id: 'f1', agentKey: 'crawlability_audit', updatedAt: new Date().toISOString() }),
-    ]);
+    window.localStorage.setItem('v3.firstVisit', String(Date.now() - 24 * 3600_000));
+    useV3OS.setState({ sessionFeed: [session({ id: 'f1', agentKey: 'crawlability_audit', updatedAt: new Date().toISOString() })] });
     render(<AgentsWindow />);
     expect(await screen.findByText('DEPLOY PROMPT · DESCRIBE WORK → WE PICK THE AGENT')).toBeTruthy();
     expect(screen.getAllByRole('button', { name: /^Deploy/i }).length).toBeGreaterThanOrEqual(1); // composer + card buttons
     expect(screen.getByText('Nothing runs until you hit Deploy.', { exact: false })).toBeTruthy();
-    expect(screen.getByText('AGENT PROFILES')).toBeTruthy();
-    // crawlability has a session → active column; shopify none → idle
-    expect(screen.getByText('@Shopify').closest('.agent-profile-grid')!).toBeTruthy(); // all cards in one grid
+    expect(screen.getByText('ACTIVE / IN FLOW')).toBeTruthy();
+    expect(screen.getByText('IDLE / UNUSED')).toBeTruthy();
+    expect(screen.getByText('1 in flow')).toBeTruthy();
+    expect(screen.getByText('2 available')).toBeTruthy();
+    // crawlability carries a session → active column; shopify none → idle
+    expect(document.querySelector('#agent-roster-active')?.querySelectorAll('.agent-card-v').length).toBe(1);
+    expect(document.querySelector('#agent-roster-idle')?.querySelectorAll('.agent-card-v').length).toBe(2);
     const cards = document.querySelectorAll('.agent-card-v');
-    expect(cards.length).toBe(3);
     expect(cards[0].className).toContain('profile-card');
+    expect(screen.getByText('● carrying 1 · 35%')).toBeTruthy();
+    expect(screen.getAllByText('idle — unused').length).toBe(2);
     // search narrows; Enter deploys the best match
     fireEvent.change(screen.getByLabelText('Search power agents'), { target: { value: 'shopify' } });
     expect(screen.queryByText('@Crawlability')).toBeNull();
@@ -117,7 +121,7 @@ describe('AgentsWindow · roster (v13 exact DOM)', () => {
     expect(useV3OS.getState().selectedAgentKey).toBe('crawlability_audit');
     fireEvent.click(await screen.findByText(/← all agents/i));
     useV3OS.getState().selectAgent(null);
-    const dockBtn = await screen.findByTitle('@Crawlability — Crawler & Indexer');
+    const dockBtn = await screen.findByTitle('@Crawlability');
     fireEvent.click(dockBtn);
     expect(useV3OS.getState().selectedAgentKey).toBe('crawlability_audit');
   });

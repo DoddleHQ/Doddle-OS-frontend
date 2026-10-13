@@ -1,5 +1,5 @@
 import { OSRoot } from '@/components/v3/shell/OSRoot';
-import { HistoryWindow } from '@/components/v3/windows/HistoryWindow';
+import { ReportsWindow } from '@/components/v3/windows/HistoryWindow';
 
 /** /v3/reports — the artefacts gallery page. */
 export default function V3ReportsPage() {
@@ -7,7 +7,7 @@ export default function V3ReportsPage() {
     <OSRoot>
       <main className="v3-solo-main">
         <div className="v3-solo-inner">
-          <HistoryWindow />
+          <ReportsWindow />
         </div>
       </main>
     </OSRoot>
