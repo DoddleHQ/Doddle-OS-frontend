@@ -10,6 +10,7 @@
  */
 
 import type { LucideIcon } from 'lucide-react';
+import { DEMO_AGENTS, demoSessions } from '@/lib/v3/demoData';
 import {
   Bot,
   Server,
@@ -126,6 +127,8 @@ async function getJson<T>(url: string): Promise<T> {
 /** The live power-agent roster from the LangGraph server. */
 export async function fetchV3PowerAgents(): Promise<V3Agent[]> {
   const raw = await getJson<{ id: string; assistantId: string }[]>('/api/power-agents');
+  // demo roster until the workspace has real agents — see lib/v3/demoData.ts
+  if (raw.length === 0) return DEMO_AGENTS;
   return raw.map((a) => ({ key: a.id, assistantId: a.assistantId, ...powerAgentMeta(a.id) }));
 }
 
@@ -133,18 +136,20 @@ export function v3AgentByKey(agents: V3Agent[], key: string | null): V3Agent | u
   return key ? agents.find((a) => a.key === key) : undefined;
 }
 
-/** Workspace-wide session feed across all agents, newest first. */
+/** Workspace-wide session feed across all agents, newest first.
+ *  Empty real feed → demo seeds light up every surface until runs exist. */
 export async function fetchV3Sessions(workspaceId: string): Promise<V3Session[]> {
   const raw = await getJson<{ id: string; title: string; agentKey: string | null; createdAt: string | null; updatedAt: string | null }[]>(
     `/api/power-agents/feed?workspaceId=${encodeURIComponent(workspaceId)}`,
   );
-  return raw;
+  return raw.length > 0 ? raw : demoSessions();
 }
 
-/** One agent's sessions, newest first. */
+/** One agent's sessions, newest first (demo-filtered when the API is empty). */
 export async function fetchV3SessionsForAgent(workspaceId: string, agentKey: string): Promise<V3Session[]> {
   const raw = await getJson<{ id: string; title: string; createdAt: string | null; updatedAt: string | null }[]>(
     `/api/power-agents/threads?agentKey=${encodeURIComponent(agentKey)}&workspaceId=${encodeURIComponent(workspaceId)}`,
   );
-  return raw.map((r) => ({ ...r, agentKey }));
+  if (raw.length > 0) return raw.map((r) => ({ ...r, agentKey }));
+  return demoSessions().filter((s) => s.agentKey === agentKey);
 }

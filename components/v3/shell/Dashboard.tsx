@@ -107,6 +107,7 @@ export function Dashboard() {
   const activePct = active ? (v3SessionStatus(active) === 'done' ? 100 : demoProgress(active.id)) : 0;
   const activeAgent = v3AgentByKey(agents.data ?? [], active?.agentKey ?? null);
   const wsLabel = (workspaces.find((w) => w.id === workspaceId) ?? workspaces[0])?.name ?? '';
+  const allDemo = list.length > 0 && list.every((s) => s.id.startsWith('demo_'));
 
   // v13 semantics on real data: the newest session headlines ACTIVE_TASKS,
   // the rest fill the glass table; suite categories become the type words
@@ -205,7 +206,7 @@ export function Dashboard() {
               <h2 className="text-xl font-bold">System Telemetry</h2>
               <p className="font-mono text-xs mt-1" style={{ color: 'var(--muted)' }}>
                 <span aria-hidden="true" style={{ color: feedError ? '#ef4444' : '#10b981' }}>●</span>{' '}
-                {feedError ? 'session feed unavailable' : `${list.length} active · ${wsLabel}`}
+                {feedError ? 'session feed unavailable' : `${list.length} active · ${wsLabel}${allDemo ? ' · demo data' : ''}`}
               </p>
             </div>
             <div className="flex gap-2">
