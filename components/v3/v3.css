@@ -658,21 +658,8 @@
   .v3-scope .v3-vehicle-pick { flex: 1 1 100%; max-width: none; }
   .v3-scope .v3-module-blurb { display: none; }
 }
-/* v13 suite filter chips */
+/* v13 suite filter chips — .fchip colors live in v13.css (ink when on) */
 .v3-scope .v3-fchips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-.v3-scope .fchip {
-  font-family: var(--font-v3-jmono), 'JetBrains Mono', monospace;
-  font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--glass-border);
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-}
-.v3-scope .fchip:hover { color: var(--ink); border-color: var(--accent); }
-.v3-scope .fchip.on { background: var(--accent); color: #fff; border-color: transparent; }
-.v3-scope.dark .fchip.on { color: #071022; }
 
 /* v13 agent profile cards — suite-tinted banner, overlapping avatar, real
    per-agent stats from the workspace feed. The whole card is one button;

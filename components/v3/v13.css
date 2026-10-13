@@ -544,3 +544,4 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 .v3-scope .space-y-2 > * + * { margin-top: 0.5rem; }
 .v3-scope .mt-3 { margin-top: 0.75rem; }
 .v3-scope .shrink-0 { flex-shrink: 0; }
+.v3-scope .space-y-3 > * + * { margin-top: 0.75rem; }
