@@ -21,7 +21,7 @@ import { useV3OS } from '@/lib/v3/osStore';
 
 beforeEach(() => {
   useV3OS.setState({ windows: [], spotlightOpen: false, sessionFeed: [] });
-  try { window.localStorage.setItem('v3.firstVisit', String(Date.now() - 60_000)); } catch { /* ignore */ }
+  try { window.localStorage.setItem('v3.firstVisit', String(Date.now() - 24 * 3600_000)); } catch { /* ignore */ }
 });
 
 describe('WindowsLayer', () => {
@@ -59,7 +59,7 @@ describe('WindowsLayer', () => {
   });
 
   it('reports renders the triage view when the queue has items', () => {
-    useV3OS.setState({ sessionFeed: [{ id: 't9', title: 'fresh', agentKey: 'crawlability_audit', createdAt: null, updatedAt: new Date().toISOString() }] });
+    useV3OS.setState({ sessionFeed: [{ id: 't9', title: 'fresh', agentKey: 'crawlability_audit', createdAt: null, updatedAt: new Date(Date.now() - 2 * 3600_000).toISOString() }] });
     useV3OS.getState().openApp('reports');
     render(<WindowsLayer />);
     expect(screen.getByTestId('triage-stub')).toBeTruthy();

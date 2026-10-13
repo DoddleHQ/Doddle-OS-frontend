@@ -3,7 +3,7 @@
 import { ArrowRight, Bot, Inbox, Layers, Terminal, Zap } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 import { v3Data } from '@/lib/v3/adapter';
-import { useV3OperatorName, isV3SessionUnread } from '@/lib/v3/data';
+import { useV3OperatorName, v3SessionStatus } from '@/lib/v3/data';
 import { Sparkline } from '@/components/v3/ui/Sparkline';
 
 function greeting(): string {
@@ -17,7 +17,7 @@ function greeting(): string {
 export function HomeWindow() {
   const openApp = useV3OS((s) => s.openApp);
   const operator = useV3OperatorName();
-  const triage = useV3OS((s) => s.sessionFeed.filter((x) => isV3SessionUnread(x)).length);
+  const triage = useV3OS((s) => s.sessionFeed.filter((x) => v3SessionStatus(x) === 'attention').length);
 
   const cards = [
     { icon: Terminal, label: 'Launchpad', sub: 'Pick a graph, agent, or describe.', onClick: () => openApp('launchpad') },

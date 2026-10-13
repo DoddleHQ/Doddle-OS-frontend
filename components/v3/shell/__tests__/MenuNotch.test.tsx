@@ -51,12 +51,12 @@ describe('MenuNotch', () => {
   it('shows the triage badge from the real unread feed count', () => {
     try {
       window.localStorage.clear();
-      window.localStorage.setItem('v3.firstVisit', String(Date.now() - 60_000));
+      window.localStorage.setItem('v3.firstVisit', String(Date.now() - 24 * 3600_000));
     } catch {
       /* ignore */
     }
     useV3OS.setState({
-      sessionFeed: [{ id: 't9', title: 'fresh', agentKey: 'crawlability_audit', createdAt: null, updatedAt: new Date().toISOString() }],
+      sessionFeed: [{ id: 't9', title: 'fresh', agentKey: 'crawlability_audit', createdAt: null, updatedAt: new Date(Date.now() - 2 * 3600_000).toISOString() }],
     });
     const { rerender } = render(<MenuNotch />);
     expect(screen.getByTitle('Triage · review').textContent).toContain('1');

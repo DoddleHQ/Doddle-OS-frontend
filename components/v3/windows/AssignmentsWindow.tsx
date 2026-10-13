@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Search, Check, ArrowUpRight, Layers } from 'lucide-react';
 import type { UIMessage } from 'ai';
 import { useV3OS } from '@/lib/v3/osStore';
-import { useV3Fetch, v3Ago, isV3SessionUnread, markThreadSeen } from '@/lib/v3/data';
+import { useV3Fetch, v3Ago, markThreadSeen, v3SessionStatus } from '@/lib/v3/data';
 import { fetchV3PowerAgents, SUITE_TINT, v3AgentByKey } from '@/lib/v3/powerAgents';
 import { ChatFeed } from '@/components/v3/windows/AgentsChatFeed';
 import type { V3Agent, V3Session } from '@/lib/v3/powerAgents';
@@ -44,14 +44,14 @@ function hashOf(id: string, mod: number): number {
 interface Kid {
   id: string;
   title: string;
-  status: 'done' | 'attention';
+  status: 'running' | 'attention' | 'done';
   ts: number;
   pct: number;
 }
 interface Task {
   id: string;
   title: string;
-  status: 'attention' | 'done';
+  status: 'running' | 'attention' | 'done';
   ts: number;
   createdAt: number;
   agent: V3Agent | null;
@@ -93,23 +93,23 @@ export function AssignmentsWindow() {
     return feed.map((s) => {
       const agent = v3AgentByKey(agents.data ?? [], s.agentKey ?? null);
       const cat = agent ? SUITE_CAT[agent.suite] ?? 'research' : 'research';
-      const unread = isV3SessionUnread(s);
+      const status = v3SessionStatus(s);
       const created = new Date(s.createdAt ?? s.updatedAt ?? Date.now()).getTime();
       const updated = new Date(s.updatedAt ?? s.createdAt ?? Date.now()).getTime();
       const names = STAGES[cat] ?? STAGES.research;
       const span = Math.max(updated - created, DAY);
-      const doneStages = unread ? names.length - 1 : names.length;
+      const doneStages = status === 'done' ? names.length : names.length - 1;
       const kids: Kid[] = names.map((name, i) => ({
         id: `${s.id}:${i}`,
         title: name,
-        status: i < doneStages ? 'done' : 'attention',
+        status: i < doneStages ? 'done' : status,
         ts: created + Math.round(((i + 1) / names.length) * Math.min(span, DAY * 2)),
         pct: i < doneStages ? 100 : 30 + hashOf(`${s.id}:${i}`, 40),
       }));
       return {
         id: s.id,
         title: s.title,
-        status: unread ? 'attention' : 'done',
+        status,
         ts: updated,
         createdAt: created,
         agent: agent ?? null,
@@ -148,7 +148,7 @@ export function AssignmentsWindow() {
       : ganttFilter === 'proposed'
         ? false
         : ganttFilter === 'running'
-          ? false
+          ? t.status === 'running'
           : ganttFilter === 'review'
             ? t.status === 'attention'
             : t.status === 'done';
@@ -373,7 +373,7 @@ function Waterfall({
   const miles = tasks.filter((t) => t.status === 'attention').slice(0, 6);
 
   const barOf = (title: string, s: number, e: number, pct: number, st: string) => {
-    const fill = st === 'st-done' ? '#059669' : st === 'st-attention' ? '#dc2626' : st === 'st-proposed' ? '#d97706' : '#2f6bd8';
+    const fill = st === 'st-done' ? '#059669' : st === 'st-attention' ? '#dc2626' : st === 'st-proposed' ? '#d97706' : '#2f6bd8'; // running: blue, no st class — like the reference
     const l = pos(s);
     const r = pos(Math.max(e, s + DAY * 0.5));
     const w = Math.max(6, r - l);
@@ -410,7 +410,7 @@ function Waterfall({
       {tasks.slice(0, 8).map((t) => {
         const shut = !!collapsed[t.id];
         const { s, e } = spanOf(t.createdAt, t.status, t.kids.length, t.ts);
-        const st = t.status === 'attention' ? 'st-attention' : 'st-done';
+        const st = t.status === 'attention' ? 'st-attention' : t.status === 'done' ? 'st-done' : '';
         return (
           <div key={t.id}>
             <div className="gantt-row" style={{ cursor: 'pointer' }}>
@@ -436,7 +436,7 @@ function Waterfall({
             {!shut &&
               t.kids.map((k) => {
                 const ks = spanOf(k.ts - DAY, k.status, 0, k.ts);
-                const kst = k.status === 'attention' ? 'st-attention' : 'st-done';
+                const kst = k.status === 'attention' ? 'st-attention' : k.status === 'done' ? 'st-done' : '';
                 return (
                   <div key={k.id} className="gantt-row" style={{ cursor: 'pointer' }}>
                     <div className="gantt-label gantt-kid-label" style={{ paddingLeft: 48 }}>
@@ -477,7 +477,7 @@ function FizzyBoard({
 }) {
   const groups = [
     { key: 'proposed', title: 'PROPOSED', pill: '', items: tasks.filter((t) => false) },
-    { key: 'running', title: 'RUNNING', pill: 'blue', items: tasks.filter((t) => false) },
+    { key: 'running', title: 'RUNNING', pill: 'blue', items: tasks.filter((t) => t.status === 'running') },
     { key: 'review', title: 'NEEDS REVIEW', pill: 'lilac', items: tasks.filter((t) => t.status === 'attention') },
     { key: 'done', title: 'DONE', pill: 'grey', items: tasks.filter((t) => t.status === 'done').slice(0, 9) },
   ];

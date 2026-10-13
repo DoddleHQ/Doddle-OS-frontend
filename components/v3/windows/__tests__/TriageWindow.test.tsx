@@ -33,11 +33,11 @@ const agent = (over: Partial<V3Agent>): V3Agent => ({
 });
 
 function seedFeed() {
-  window.localStorage.setItem('v3.firstVisit', String(Date.now() - 60_000));
+  window.localStorage.setItem('v3.firstVisit', String(Date.now() - 24 * 3600_000));
   useV3OS.setState({
     workspaceId: 'w1',
     sessionFeed: [
-      { id: 't1', title: 'Q4 site audit', agentKey: 'crawlability_audit', createdAt: '2026-09-30T10:00:00Z', updatedAt: new Date().toISOString() },
+      { id: 't1', title: 'Q4 site audit', agentKey: 'crawlability_audit', createdAt: '2026-09-30T10:00:00Z', updatedAt: new Date(Date.now() - 2 * 3600_000).toISOString() },
       { id: 't2', title: 'already reviewed', agentKey: 'crawlability_audit', createdAt: '2026-09-30T09:00:00Z', updatedAt: '2026-09-30T09:30:00Z' },
     ],
     windows: [],

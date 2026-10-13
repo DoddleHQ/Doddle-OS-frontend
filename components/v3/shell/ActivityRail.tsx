@@ -3,7 +3,7 @@
 import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3PowerAgents, fetchV3Sessions, v3AgentByKey } from '@/lib/v3/powerAgents';
 import { useRouter } from 'next/navigation';
-import { useV3Fetch, v3Ago, isV3SessionUnread } from '@/lib/v3/data';
+import { useV3Fetch, v3Ago, v3SessionStatus } from '@/lib/v3/data';
 
 /** Deterministic 0–90 demo progress per session id (stable across reloads). */
 function demoProgress(id: string): number {
@@ -25,16 +25,16 @@ export function ActivityRail() {
   const sessions = useV3Fetch(() => (workspaceId ? fetchV3Sessions(workspaceId) : Promise.resolve([])), [workspaceId]);
   const recent = (sessions.data ?? []).slice(0, 5);
 
-  const railBtn = (s: (typeof recent)[number], done: boolean) => {
+  const railBtn = (s: (typeof recent)[number], status: 'running' | 'attention' | 'done') => {
     const agent = v3AgentByKey(agents.data ?? [], s.agentKey);
     const Icon = agent?.icon;
-    const pct = done ? 100 : demoProgress(s.id);
+    const pct = status === 'done' ? 100 : demoProgress(s.id);
     return (
       <button
         key={s.id}
-        className={`rail-btn ${done ? 'kind-agent st-done' : 'kind-review st-attention'}`}
+        className={`rail-btn ${status === 'attention' ? 'kind-review st-attention' : status === 'running' ? 'kind-agent st-running' : 'kind-agent st-done'}`}
         style={{ ['--p' as string]: pct }}
-        title={`${s.title} — ${done ? 'done' : 'attention'} · ${v3Ago(s.updatedAt ?? s.createdAt)}`}
+        title={`${s.title} — ${status === 'done' ? 'done' : status === 'running' ? `running ${pct}%` : 'attention'} · ${v3Ago(s.updatedAt ?? s.createdAt)}`}
         aria-label={`${s.title}. Opens the agent execution view.`}
         onClick={() => {
           router.push('/v3/agents');
@@ -47,8 +47,9 @@ export function ActivityRail() {
       </button>
     );
   };
-  const doing = recent.filter((s) => isV3SessionUnread(s));
-  const done = recent.filter((s) => !isV3SessionUnread(s)).slice(0, 4);
+  const byStatus = (s: (typeof recent)[number]) => v3SessionStatus(s);
+  const doing = recent.filter((s) => byStatus(s) !== 'done');
+  const done = recent.filter((s) => byStatus(s) === 'done').slice(0, 4);
 
   return (
     <>
@@ -61,12 +62,12 @@ export function ActivityRail() {
           ) : doing.length === 0 ? (
             <div className="rail-label">—</div>
           ) : (
-            doing.map((s) => railBtn(s, false))
+            doing.map((s) => railBtn(s, byStatus(s) as 'running' | 'attention'))
           )}
         </div>
         <div className="rail-sep" />
         <div id="rail-done" className="flex flex-col items-center gap-2">
-          {done.map((s) => railBtn(s, true))}
+          {done.map((s) => railBtn(s, 'done'))}
         </div>
       </aside>
     </>

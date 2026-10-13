@@ -165,3 +165,16 @@ export function isV3SessionUnread(s: { id: string; updatedAt?: string | null; cr
   const seenAt = readThreadSeenAt(s.id) || firstVisitMs();
   return ms > seenAt;
 }
+
+/** v13 status language: an unseen run updated moments ago reads live (blue
+ *  IN PROGRESS), older unseen runs await review (red), seen runs are done
+ *  (green). Design-forward until the API reports run state directly. */
+export type V3SessionStatus = 'running' | 'attention' | 'done';
+
+const V3_HOT_MS = 30 * 60_000;
+
+export function v3SessionStatus(s: { id: string; updatedAt?: string | null; createdAt?: string | null }): V3SessionStatus {
+  if (!isV3SessionUnread(s)) return 'done';
+  const t = new Date(s.updatedAt ?? s.createdAt ?? 0).getTime();
+  return Number.isFinite(t) && Date.now() - t < V3_HOT_MS ? 'running' : 'attention';
+}

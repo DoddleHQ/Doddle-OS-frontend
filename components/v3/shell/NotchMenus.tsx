@@ -2,7 +2,7 @@
 
 import { Building2, SlidersHorizontal, SunMoon, Briefcase } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
-import { isV3SessionUnread } from '@/lib/v3/data';
+import { v3SessionStatus } from '@/lib/v3/data';
 
 /** Workspace switcher + settings dropdowns hanging off the menu notch. */
 export function NotchMenus() {
@@ -15,7 +15,7 @@ export function NotchMenus() {
 
   if (menu === 'ws') {
     const sessions = sessionFeed;
-    const unread = sessions.filter((s) => isV3SessionUnread(s)).length;
+    const unread = sessions.filter((s) => v3SessionStatus(s) === 'attention').length;
     return (
       <div className="glass v3-ws-menu no-select" role="menu" aria-label="Workspace">
         {workspaces.length === 0 && (

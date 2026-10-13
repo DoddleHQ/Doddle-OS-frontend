@@ -13,7 +13,7 @@ describe('NotchMenus · workspace switcher (v13 entries, real metrics)', () => {
   });
 
   it('active workspace shows its live session metric; others show their real domain', async () => {
-    window.localStorage.setItem('v3.firstVisit', String(Date.now() - 60_000));
+    window.localStorage.setItem('v3.firstVisit', String(Date.now() - 24 * 3600_000));
     useV3OS.setState({
       menu: 'ws',
       workspaceId: 'w1',
@@ -22,7 +22,7 @@ describe('NotchMenus · workspace switcher (v13 entries, real metrics)', () => {
         { id: 'w2', name: 'Northwind', domain: 'northwind.io', orgName: 'Northwind' },
       ],
       sessionFeed: [
-        { id: 't1', title: 'Q4 crawl', agentKey: 'crawlability_audit', createdAt: null, updatedAt: new Date().toISOString() },
+        { id: 't1', title: 'Q4 crawl', agentKey: 'crawlability_audit', createdAt: null, updatedAt: new Date(Date.now() - 2 * 3600_000).toISOString() },
       ],
     });
     render(<NotchMenus />);

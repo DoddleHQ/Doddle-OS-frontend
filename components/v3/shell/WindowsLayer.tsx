@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { useV3OS, type V3WindowState } from '@/lib/v3/osStore';
 import { V3_APP_META } from '@/lib/v3/apps';
-import { isV3SessionUnread } from '@/lib/v3/data';
+import { v3SessionStatus } from '@/lib/v3/data';
 import { HomeWindow } from '@/components/v3/windows/HomeWindow';
 import { AgentsWindow } from '@/components/v3/windows/AgentsWindow';
 import { LaunchpadWindow } from '@/components/v3/windows/LaunchpadWindow';
@@ -15,7 +15,7 @@ import { EmptyWindow } from '@/components/v3/windows/EmptyWindow';
 
 /** v13 titlebar chips: the reference's per-window state, triage counts live. */
 function TitlebarChip({ id, mode }: { id: V3WindowState['id']; mode: V3WindowState['mode'] }) {
-  const unread = useV3OS((s) => (id === 'reports' ? s.sessionFeed.filter((x) => isV3SessionUnread(x)).length : 0));
+  const unread = useV3OS((s) => (id === 'reports' ? s.sessionFeed.filter((x) => v3SessionStatus(x) === 'attention').length : 0));
   const chip = id === 'reports' ? `${unread} waiting` : V3_APP_META[id].chip ?? (mode === 'page' ? 'page' : '⌘');
   return <span className="chip ml-auto">{chip}</span>;
 }

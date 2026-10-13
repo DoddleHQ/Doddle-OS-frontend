@@ -3,7 +3,7 @@
 import { Inbox } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useV3OS } from '@/lib/v3/osStore';
-import { useV3Fetch, isV3SessionUnread, markThreadSeen, v3Ago } from '@/lib/v3/data';
+import { useV3Fetch, isV3SessionUnread, markThreadSeen, v3Ago, v3SessionStatus } from '@/lib/v3/data';
 import { fetchV3PowerAgents } from '@/lib/v3/powerAgents';
 
 /** Triage panel: runs updated since your last view, waiting for the operator. */
@@ -15,7 +15,7 @@ export function Notifications() {
 
   if (!open) return null;
 
-  const queue = feed.filter((s) => isV3SessionUnread(s));
+  const queue = feed.filter((s) => v3SessionStatus(s) === 'attention');
 
   return (
     <div className="v3-notifs glass" role="dialog" aria-label="Triage queue">

@@ -6,7 +6,7 @@ import { Search, Play, Inbox, SunMoon, Building2, BarChart3, ListChecks, BookOpe
 import type { LucideIcon } from 'lucide-react';
 import { useV3OS, type WindowId } from '@/lib/v3/osStore';
 import { LayoutDashboard, Terminal, Layers, Bot } from 'lucide-react';
-import { isV3SessionUnread } from '@/lib/v3/data';
+import { isV3SessionUnread, v3SessionStatus } from '@/lib/v3/data';
 
 const APP_BUTTONS: { id: WindowId; title: string; icon: typeof Bot; color: string }[] = [
   { id: 'home', title: 'Home · full OS', icon: LayoutDashboard, color: '#1d4ed8' },
@@ -33,7 +33,7 @@ export function Spotlight() {
   const items = useMemo<SpotItem[]>(() => {
     const { toggleTheme } = useV3OS.getState();
     const go = (p: string) => () => router.push(p);
-    const unreadCount = useV3OS.getState().sessionFeed.filter((x) => isV3SessionUnread(x)).length;
+    const unreadCount = useV3OS.getState().sessionFeed.filter((x) => v3SessionStatus(x) === 'attention').length;
     const SPOT_KEYS: Record<WindowId, string> = {
       home: 'home dashboard status reviews',
       launchpad: 'launchpad choose graph agent describe outcome start',

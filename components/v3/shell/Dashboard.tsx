@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Layers, Bot, Activity, Inbox, ChevronDown } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
-import { useV3Fetch, useV3OperatorName, v3Ago, isV3SessionUnread } from '@/lib/v3/data';
+import { useV3Fetch, useV3OperatorName, v3Ago, isV3SessionUnread, v3SessionStatus } from '@/lib/v3/data';
 import { fetchV3PowerAgents, v3AgentByKey, SUITE_TINT, type V3Suite } from '@/lib/v3/powerAgents';
 import { MorphText } from '@/components/v3/ui/MorphText';
 import { Composer } from '@/components/v3/ui/Composer';
@@ -102,9 +102,9 @@ export function Dashboard() {
   const liveMention = mentioned(ask);
 
   const list = feed;
-  const reviewCount = list.filter((s) => isV3SessionUnread(s)).length;
+  const reviewCount = list.filter((s) => v3SessionStatus(s) === 'attention').length;
   const active = list[0] ?? null;
-  const activePct = active ? (isV3SessionUnread(active) ? demoProgress(active.id) : 100) : 0;
+  const activePct = active ? (v3SessionStatus(active) === 'done' ? 100 : demoProgress(active.id)) : 0;
   const activeAgent = v3AgentByKey(agents.data ?? [], active?.agentKey ?? null);
   const wsLabel = (workspaces.find((w) => w.id === workspaceId) ?? workspaces[0])?.name ?? '';
 
@@ -241,8 +241,7 @@ export function Dashboard() {
                   {taskRows.length > 0 ? (
                     taskRows.map((t) => {
                       const a = v3AgentByKey(agents.data ?? [], t.agentKey ?? null);
-                      const unread = isV3SessionUnread(t);
-                      const pct = unread ? demoProgress(t.id) : 100;
+                      const pct = v3SessionStatus(t) === 'done' ? 100 : demoProgress(t.id);
                       const sub = [
                         a ? SUITE_CAT[a.suite] : null,
                         a ? a.handle : null,

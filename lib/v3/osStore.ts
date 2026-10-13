@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import type { V3Workspace } from '@/lib/v3/data';
 import type { V3Session } from '@/lib/v3/powerAgents';
-import { isV3SessionUnread } from '@/lib/v3/data';
+import { v3SessionStatus } from '@/lib/v3/data';
 
 export type ThemeMode = 'light' | 'dark';
 export type Backdrop = 'aurora' | 'lattice' | 'halo' | 'calm';
@@ -176,7 +176,7 @@ export const useV3OS = create<V3OSState>((set, get) => ({
   // the others, exactly like navigating between the reference's HTML pages
   openApp: (id, opts) => {
     // v13's empty-triage guard: nothing waiting → land on assignments instead
-    if (id === 'reports' && !get().sessionFeed.some((s) => isV3SessionUnread(s))) {
+    if (id === 'reports' && !get().sessionFeed.some((s) => v3SessionStatus(s) === 'attention')) {
       id = 'assignments';
     }
     set((st) => {

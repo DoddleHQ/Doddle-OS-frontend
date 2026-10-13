@@ -65,15 +65,16 @@ describe('ActivityRail (reference #activity-rail DOM)', () => {
     expect(zone?.nextElementSibling).toBe(rail);
 
     const block = screen.getByRole('button', { name: /Q4 site audit/i });
-    expect(block.getAttribute('title')).toContain('Q4 site audit — attention');
+    expect(block.getAttribute('title')).toContain('Q4 site audit — running');
     expect(block.querySelector('.bar')).toBeTruthy();
-    expect(block.className).toContain('kind-review');
+    expect(block.className).toContain('kind-agent');
+        expect(block.className).toContain('st-running');
     fireEvent.click(block);
     expect(useV3OS.getState().selectedAgentKey).toBe('crawlability_audit');
     expect(pushes).toContain('/v3/agents');
   });
 
-  it('unread sessions sit in DOING (attention), read ones in DONE', async () => {
+  it('live runs sit in DOING (running), reviewed ones in DONE', async () => {
     mockedAgents.mockResolvedValue([agent({})]);
     mockedSessions.mockResolvedValue([
       session({ id: 'a', title: 'Fresh run' }),
@@ -81,7 +82,7 @@ describe('ActivityRail (reference #activity-rail DOM)', () => {
     ]);
     const { container } = render(<ActivityRail />);
     await waitFor(() => expect(container.querySelectorAll('.rail-btn').length).toBe(2));
-    expect(container.querySelector('#rail-doing')?.querySelectorAll('.rail-btn.st-attention').length).toBe(1);
+    expect(container.querySelector('#rail-doing')?.querySelectorAll('.rail-btn.st-running').length).toBe(1);
     expect(container.querySelector('#rail-done')?.querySelectorAll('.rail-btn.st-done').length).toBe(1);
   });
 

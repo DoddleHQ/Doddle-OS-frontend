@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Terminal, Layers, Bot, Inbox, BarChart3, Search, Settings, Briefcase } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
-import { isV3SessionUnread } from '@/lib/v3/data';
+import { v3SessionStatus } from '@/lib/v3/data';
 
 /** v13 notch, exact: brandmark + wordmark + ws button, five section links
  *  (triage carries the badge), and the reports/spotlight/settings island. */
@@ -19,7 +19,7 @@ export function MenuNotch() {
   const wsError = useV3OS((s) => s.workspacesError);
   const workspace = workspaces.find((w) => w.id === workspaceId) ?? workspaces[0];
   const workspaceLabel = workspace ? workspace.name : wsError ? 'offline' : '…';
-  const reviewCount = useV3OS((s) => s.sessionFeed.filter((x) => isV3SessionUnread(x)).length);
+  const reviewCount = useV3OS((s) => s.sessionFeed.filter((x) => v3SessionStatus(x) === 'attention').length);
   const isOn = (path: string) => (path === '/v3' ? pathname === '/v3' : pathname.startsWith(path));
 
   const NAV: { path: string; icon: typeof Bot; color: string; title: string }[] = [
