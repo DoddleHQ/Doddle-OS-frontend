@@ -1,6 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Spotlight } from '@/components/v3/shell/Spotlight';
 import { useV3OS } from '@/lib/v3/osStore';
+// path navigation: capture pushes
+const pushes: string[] = [];
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: (p: string) => pushes.push(p), replace: jest.fn() }),
+  usePathname: () => '/v3',
+}));
 
 beforeEach(() => useV3OS.setState({ spotlightOpen: true, theme: 'light', windows: [] }));
 
@@ -23,7 +29,8 @@ describe('Spotlight', () => {
     render(<Spotlight />);
     fireEvent.change(screen.getByPlaceholderText(/Spotlight/i), { target: { value: 'launch' } });
     fireEvent.keyDown(screen.getByPlaceholderText(/Spotlight/i), { key: 'Enter' });
-    expect(useV3OS.getState().windows.map((w) => w.id)).toContain('launchpad');
+    expect(pushes).toContain('/v3/launchpad');
+    // navigation is path-based now: the push above IS the launchpad open
     expect(useV3OS.getState().spotlightOpen).toBe(false);
   });
 

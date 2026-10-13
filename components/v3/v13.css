@@ -530,3 +530,7 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 .hrow.viewing{border-color:var(--accent)}
 #activity-rail{transform:translateY(-50%) translateX(calc(100% + 14px));opacity:0;pointer-events:none}
 #rail-hover-zone:hover + #activity-rail,#activity-rail:hover,#activity-rail:focus-within,#activity-rail.show{transform:translateY(-50%) translateX(0);opacity:1;pointer-events:auto}
+
+/* ---------- solo section pages (path navigation, from solo.css) ---------- */
+.v3-scope .v3-solo-main { position: fixed; inset: 76px 0 0 0; z-index: 10; overflow-y: auto; }
+.v3-scope .v3-solo-inner { max-width: 1200px; margin: 0 auto; padding: 22px 76px 60px 22px; }

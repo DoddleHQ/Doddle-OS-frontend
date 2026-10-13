@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import type { V3Workspace } from '@/lib/v3/data';
 import type { V3Session } from '@/lib/v3/powerAgents';
+import { isV3SessionUnread } from '@/lib/v3/data';
 
 export type ThemeMode = 'light' | 'dark';
 export type Backdrop = 'aurora' | 'lattice' | 'halo' | 'calm';
@@ -17,6 +18,9 @@ export type WindowId =
   | 'tasks'
   | 'history';
 export type WindowMode = 'window' | 'page';
+
+/** Section pages, the v13 navigation model: one visible at a time. */
+const SECTION_PAGES: WindowId[] = ['launchpad', 'blueprints', 'agents', 'assignments', 'reports', 'tasks', 'hub'];
 
 export interface V3WindowState {
   id: WindowId;
@@ -81,6 +85,8 @@ interface V3OSState {
    *  consumer (dashboard, notch menus + badge, triage, assignments). */
   sessionFeed: V3Session[];
   sessionFeedError: string | null;
+  /** true once a feed fetch has resolved — guards wait for this, never guess */
+  sessionFeedLoaded: boolean;
   hydrate(): void;
   setTheme(t: ThemeMode): void;
   toggleTheme(): void;
@@ -91,6 +97,7 @@ interface V3OSState {
   viewThread(agentKey: string, threadId: string): void;
   setSessionFeed(list: V3Session[], error?: string | null): void;
   openApp(id: WindowId, opts?: { mode?: WindowMode }): void;
+  goHome(): void;
   closeWin(id: WindowId): void;
   closeTopPage(): void;
   minWin(id: WindowId): void;
@@ -122,6 +129,7 @@ export const useV3OS = create<V3OSState>((set, get) => ({
   selectedThreadKey: null,
   sessionFeed: [],
   sessionFeedError: null,
+  sessionFeedLoaded: false,
 
   hydrate: () => {
     const theme = read('v3.theme');
@@ -159,23 +167,33 @@ export const useV3OS = create<V3OSState>((set, get) => ({
       workspaceId: list.some((w) => w.id === st.workspaceId) || list.length === 0 ? st.workspaceId : list[0].id,
     })),
   selectAgent: (slug) => set({ selectedAgentKey: slug, selectedThreadKey: null }),
-  /** Deep-link: open the agents exec view with a specific session loaded. */
+  /** Deep-link: select the agent + thread; the caller navigates to /v3/agents. */
   viewThread: (agentKey, threadId) => {
     set({ selectedAgentKey: agentKey, selectedThreadKey: threadId });
-    get().openApp('agents');
   },
-  setSessionFeed: (list, error = null) => set({ sessionFeed: list, sessionFeedError: error }),
-  openApp: (id, opts) =>
+  setSessionFeed: (list, error = null) => set({ sessionFeed: list, sessionFeedError: error, sessionFeedLoaded: true }),
+  // v13 navigation model: section pages are exclusive — opening one closes
+  // the others, exactly like navigating between the reference's HTML pages
+  openApp: (id, opts) => {
+    // v13's empty-triage guard: nothing waiting → land on assignments instead
+    if (id === 'reports' && !get().sessionFeed.some((s) => isV3SessionUnread(s))) {
+      id = 'assignments';
+    }
     set((st) => {
       const existing = st.windows.find((w) => w.id === id);
-      const rest = st.windows.filter((w) => w.id !== id);
+      // leaving a section page closes it, like a real page navigation
+      const rest = st.windows.filter((w) => w.id !== id && !(SECTION_PAGES.includes(w.id) && SECTION_PAGES.includes(id)));
       if (existing) {
         return { windows: [...rest, { ...existing, minimized: false, mode: opts?.mode ?? existing.mode }] };
       }
       return {
         windows: [...rest, { id, minimized: false, ...DEFAULT_GEOMETRY[id], ...(opts?.mode ? { mode: opts.mode } : {}) }],
       };
-    }),
+    });
+  },
+  /** v13 Home · full OS: back to the desktop — every section page closes. */
+  goHome: () =>
+    set((st) => ({ windows: st.windows.filter((w) => !SECTION_PAGES.includes(w.id)) })),
   closeWin: (id) => set((st) => ({ windows: st.windows.filter((w) => w.id !== id) })),
   closeTopPage: () => {
     const top = [...get().windows].reverse().find((w) => w.mode === 'page' && !w.minimized);

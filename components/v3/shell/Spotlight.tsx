@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, Play, Inbox, SunMoon, Building2, BarChart3, ListChecks, BookOpen } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useV3OS, type WindowId } from '@/lib/v3/osStore';
@@ -25,11 +26,13 @@ interface SpotItem {
 
 /** ⌘K spotlight: apps, actions, outcomes (reference #spot). */
 export function Spotlight() {
+  const router = useRouter();
   const open = useV3OS((s) => s.spotlightOpen);
   const [q, setQ] = useState('');
 
   const items = useMemo<SpotItem[]>(() => {
-    const { openApp, toggleTheme } = useV3OS.getState();
+    const { toggleTheme } = useV3OS.getState();
+    const go = (p: string) => () => router.push(p);
     const unreadCount = useV3OS.getState().sessionFeed.filter((x) => isV3SessionUnread(x)).length;
     const SPOT_KEYS: Record<WindowId, string> = {
       home: 'home dashboard status reviews',
@@ -50,7 +53,7 @@ export function Spotlight() {
       icon: b.icon,
       color: b.color,
       hint: b.title.split(' · ')[1],
-      run: () => openApp(b.id),
+      run: go(b.id === 'home' ? '/v3' : `/v3/${b.id === 'assignments' ? 'assignments' : b.id}`),
     }));
     apps.push(
       {
@@ -58,39 +61,39 @@ export function Spotlight() {
         label: 'Agency Hub',
         icon: Building2,
         hint: '⌘5',
-        run: () => openApp('hub'),
+        run: () => {}, // hub stays a floating-window extra
       },
       {
         key: 'report artefacts gallery analytics inbox',
         label: 'Artefacts — gallery + analytics',
         icon: BarChart3,
         hint: '⌘6',
-        run: () => openApp('reports'),
+        run: go('/v3/triage'),
       },
       {
         key: 'task assign agent human active inventory',
         label: 'Tasks — route to agent or human',
         icon: ListChecks,
         hint: '⌘7',
-        run: () => openApp('tasks'),
+        run: go('/v3/assignments'),
       },
       {
         key: 'run new execute campaign start',
         label: '/run — start execution',
         icon: Play,
-        run: () => openApp('launchpad'),
+        run: go('/v3/launchpad'),
       },
       {
         key: 'blueprints library layers strategy structure execution review sops playbooks docs',
         label: 'Blueprints — the layered library',
         icon: BookOpen,
-        run: () => openApp('blueprints'),
+        run: go('/v3/blueprints'),
       },
       {
         key: 'triage queue review approve inbox needs',
         label: `Triage Queue — ${unreadCount} needs you`,
         icon: Inbox,
-        run: () => openApp('reports'),
+        run: go('/v3/triage'),
       },
       {
         key: 'theme dark light appearance toggle',

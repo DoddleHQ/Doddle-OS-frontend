@@ -2,6 +2,11 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TriageWindow } from '@/components/v3/windows/TriageWindow';
 import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3PowerAgents, type V3Agent } from '@/lib/v3/powerAgents';
+// path navigation: router/pathname stubs
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
+  usePathname: () => '/v3',
+}));
 
 jest.mock('@/lib/v3/powerAgents', () => {
   const actual = jest.requireActual('@/lib/v3/powerAgents');
@@ -92,7 +97,6 @@ describe('TriageWindow · 3-pane on real unread sessions', () => {
     const st = useV3OS.getState();
     expect(st.selectedAgentKey).toBe('crawlability_audit');
     expect(st.selectedThreadKey).toBe('t1');
-    expect(st.windows.map((w) => w.id)).toContain('agents');
   });
 
   it('an empty queue shows the honest all-clear state', async () => {

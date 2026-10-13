@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Layers, Bot, Activity, Inbox, ChevronDown } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
-import { v3Data } from '@/lib/v3/adapter';
 import { useV3Fetch, useV3OperatorName, v3Ago, isV3SessionUnread } from '@/lib/v3/data';
-import { fetchV3PowerAgents, v3AgentByKey, SUITE_TINT } from '@/lib/v3/powerAgents';
+import { fetchV3PowerAgents, v3AgentByKey, SUITE_TINT, type V3Suite } from '@/lib/v3/powerAgents';
 import { MorphText } from '@/components/v3/ui/MorphText';
-import { Sparkline } from '@/components/v3/ui/Sparkline';
 import { Composer } from '@/components/v3/ui/Composer';
 
 function greeting(): string {
@@ -17,15 +17,34 @@ function greeting(): string {
   return 'Good evening';
 }
 
-/** The v13 index page, exact DOM: hero + composer + quick links + cards +
- *  telemetry (active-task rows with progress bars, agents in flow). */
+/** v13 suites → the dashboard category words (research · code · writing …). */
+const SUITE_CAT: Record<V3Suite, string> = {
+  'SEO Audit Suite': 'research',
+  'Website Content Suite': 'writing',
+  'DevOps Suite': 'code',
+  'Shopify Suite': 'writing',
+  'WordPress Suite': 'code',
+  'GitOps Suite': 'code',
+};
+
+/** Design-forward progress until the API reports run percentage: a stable
+ *  0–90 value per session id, so rows keep their bar between reloads. */
+function demoProgress(id: string): number {
+  const h = [...id].reduce((a, c) => a + c.charCodeAt(0), 0);
+  return ((h * 31) % 19) * 5;
+}
+
+/** The v13 index page, exact DOM + behaviour: hero + composer + quick links
+ *  (real hrefs) + bento cards + telemetry (active-task rows with progress
+ *  bars, agents in flow). All counts/content come from the live session feed. */
 export function Dashboard() {
   const windows = useV3OS((s) => s.windows);
   const feed = useV3OS((s) => s.sessionFeed);
   const feedError = useV3OS((s) => s.sessionFeedError);
   const workspaceId = useV3OS((s) => s.workspaceId);
   const workspaces = useV3OS((s) => s.workspaces);
-  const { openApp, selectAgent } = useV3OS.getState();
+  const { selectAgent } = useV3OS.getState();
+  const router = useRouter();
   const hidden = windows.some((w) => !w.minimized);
 
   const operator = useV3OperatorName();
@@ -74,9 +93,9 @@ export function Dashboard() {
     const target = mentioned(ask);
     if (target) {
       selectAgent(target.key);
-      openApp('agents');
+      router.push('/v3/agents');
     } else {
-      openApp('launchpad');
+      router.push('/v3/launchpad');
     }
     setAsk('');
   };
@@ -85,24 +104,18 @@ export function Dashboard() {
   const list = feed;
   const reviewCount = list.filter((s) => isV3SessionUnread(s)).length;
   const active = list[0] ?? null;
+  const activePct = active ? (isV3SessionUnread(active) ? demoProgress(active.id) : 100) : 0;
   const activeAgent = v3AgentByKey(agents.data ?? [], active?.agentKey ?? null);
   const wsLabel = (workspaces.find((w) => w.id === workspaceId) ?? workspaces[0])?.name ?? '';
 
-  // v13 semantics on real data: every session is a finished run (100%), the
-  // top one is the headline row, the rest fill the glass table
+  // v13 semantics on real data: the newest session headlines ACTIVE_TASKS,
+  // the rest fill the glass table; suite categories become the type words
   const taskRows = list.slice(1, 5);
-  const flowAgents = (() => {
-    const roster = agents.data ?? [];
-    const recentKeys = [...new Set(list.map((s) => s.agentKey).filter((k): k is string => !!k))];
-    const ordered = [...recentKeys.map((k) => v3AgentByKey(roster, k)), ...roster]
-      .filter((a): a is NonNullable<typeof a> => !!a)
-      .filter((a, i, arr) => arr.findIndex((x) => x.key === a.key) === i)
-      .slice(0, 2);
-    return ordered.map((a) => {
-      const mine = list.filter((s) => s.agentKey === a.key);
-      return { agent: a, last: mine[0], count: mine.length };
-    });
-  })();
+  const typeWords = [...new Set(list.map((s) => v3AgentByKey(agents.data ?? [], s.agentKey ?? null)).filter((a): a is NonNullable<typeof a> => !!a).map((a) => SUITE_CAT[a.suite]))];
+  // AGENTS_IN_FLOW mirrors v13: one row for the agent currently in flow
+  // (dynamic sub) + one idle row ("Waiting for a task")
+  const busyAgent = activeAgent;
+  const idleAgent = (agents.data ?? []).find((a) => !list.some((s) => s.agentKey === a.key)) ?? null;
 
   return (
     <section id="dashboard" className={`dashboard${hidden ? ' dash-hidden' : ''}`} aria-label="Dashboard">
@@ -128,7 +141,7 @@ export function Dashboard() {
             value={ask}
             onChange={setAsk}
             onSend={send}
-            placeholder="Describe what you're working on… e.g. research Q4 keywords, @Crawlability audit the blog"
+            placeholder="Describe what you're working on… e.g. research AI articles, review PR #42, organize Q3 files"
             ariaLabel="Describe what you're working on"
             model={model}
             onModel={pickModel}
@@ -142,50 +155,44 @@ export function Dashboard() {
           )}
 
           <div className="hero-quick">
-            <button onClick={() => openApp('launchpad')}>
-              ↗ Research task
-            </button>
-            <button onClick={() => openApp('agents')}>
-              ↗ Deploy research agent
-            </button>
-            <button onClick={() => openApp('reports')}>
-              ↗ Needs review ({reviewCount})
-            </button>
+            <Link href="/v3/launchpad?type=research">↗ Research task</Link>
+            <Link href="/v3/agents">↗ Deploy research agent</Link>
+            <Link href="/v3/triage">↗ Needs review (<span>{reviewCount}</span>)</Link>
           </div>
 
           <div className="dash-cards" style={{ marginTop: 20 }}>
-            <button className="bento-item text-left" onClick={() => openApp('assignments')}>
+            <Link className="bento-item text-left" href="/v3/assignments" style={{ textDecoration: 'none', color: 'inherit' }}>
               <Layers size={20} className="mb-2" style={{ color: 'var(--green)' }} />
               <p className="font-bold text-sm">Assignments</p>
               <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
                 Tasks by type, in-progress first.
               </p>
-            </button>
-            <button className="bento-item text-left" onClick={() => openApp('agents')}>
+            </Link>
+            <Link className="bento-item text-left" href="/v3/agents" style={{ textDecoration: 'none', color: 'inherit' }}>
               <Bot size={20} className="mb-2" style={{ color: 'var(--violet)' }} />
               <p className="font-bold text-sm">Agents</p>
               <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
                 Contextual agents. Pick one to run it.
               </p>
-            </button>
-            <button className="bento-item text-left" onClick={() => openApp('agents')}>
+            </Link>
+            <Link className="bento-item text-left" href="/v3/assignments" style={{ textDecoration: 'none', color: 'inherit' }}>
               <Activity size={20} className="mb-2" style={{ color: 'var(--accent)' }} />
               <p className="font-bold text-sm">
-                Active Execution {active ? <span className="font-mono text-xs" style={{ color: 'var(--muted)' }}>· session</span> : null}
+                Active Execution {active ? <span className="font-mono text-xs" style={{ color: 'var(--muted)' }}>· {list.length} active</span> : null}
               </p>
               <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
-                {active ? `${active.title}. Open Active Execution to follow it.` : 'No active project.'}
+                {active ? `${active.title} — ${activePct}%. Open Active Execution to follow it.` : 'No active project. Start a task to see progress.'}
               </p>
-            </button>
-            <button className="bento-item text-left" onClick={() => openApp('reports')}>
-              <Inbox size={20} className="mb-2" style={{ color: 'var(--amber)' }} />
+            </Link>
+            <Link className="bento-item text-left" href="/v3/triage" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <Inbox size={20} className="mb-2" style={{ color: '#f87171' }} />
               <p className="font-bold text-sm">
-                Triage Queue <span style={{ color: '#ef4444' }}>{reviewCount}</span>
+                Triage Queue <span style={{ color: '#f87171' }}>{reviewCount}</span>
               </p>
               <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
                 Items waiting for approval.
               </p>
-            </button>
+            </Link>
           </div>
           <div className="scroll-cue">
             <ChevronDown size={20} />
@@ -202,11 +209,11 @@ export function Dashboard() {
               </p>
             </div>
             <div className="flex gap-2">
-              <span className="chip">{wsLabel || '—'}</span>
+              <span className="chip">{list.length ? `active ${list.length}` : '—'}</span>
               <span className="chip">active</span>
-              <strong className="font-mono text-sm">{reviewCount}</strong>
+              <strong className="font-mono text-sm">{list.length}</strong>
               <span className="font-mono text-[10px] ml-1" style={{ color: 'var(--muted)' }}>
-                need review
+                {typeWords.length ? typeWords.join(' · ') : '—'}
               </span>
             </div>
           </div>
@@ -219,16 +226,14 @@ export function Dashboard() {
                 <div className="min-w-0" style={{ flex: 1 }}>
                   <p className="font-mono font-bold text-xs">{active ? active.title : 'No active project'}</p>
                   <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
-                    {active
-                      ? `session · ${v3Ago(active.updatedAt ?? active.createdAt)}${activeAgent ? ` · ${activeAgent.handle}` : ''}`
-                      : 'in-progress tasks appear here first'}
+                    in-progress tasks appear here first
                   </p>
                 </div>
                 <div className="pbar">
-                  <div style={{ width: active ? '100%' : '0%' }} />
+                  <div style={{ width: `${activePct}%` }} />
                 </div>
                 <span className="font-mono text-[11px]" style={{ color: 'var(--muted)' }}>
-                  {active ? '100%' : '0%'}
+                  {activePct}%
                 </span>
               </div>
               <div className="table-glass" style={{ marginTop: 12 }}>
@@ -237,6 +242,14 @@ export function Dashboard() {
                     taskRows.map((t) => {
                       const a = v3AgentByKey(agents.data ?? [], t.agentKey ?? null);
                       const unread = isV3SessionUnread(t);
+                      const pct = unread ? demoProgress(t.id) : 100;
+                      const sub = [
+                        a ? SUITE_CAT[a.suite] : null,
+                        a ? a.handle : null,
+                        v3Ago(t.updatedAt ?? t.createdAt),
+                      ]
+                        .filter(Boolean)
+                        .join(' · ');
                       return (
                         <div className="hrow" key={t.id}>
                           <div className="min-w-0" style={{ flex: 1 }}>
@@ -244,14 +257,14 @@ export function Dashboard() {
                               {t.title}
                             </p>
                             <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
-                              {`${unread ? 'awaiting review' : 'reviewed'}${a ? ` · ${a.handle}` : ''} · ${v3Ago(t.updatedAt ?? t.createdAt)}`}
+                              {sub}
                             </p>
                           </div>
                           <div className="pbar">
-                            <div style={{ width: unread ? '40%' : '100%', background: unread ? 'var(--amber)' : undefined }} />
+                            <div style={{ width: `${pct}%` }} />
                           </div>
                           <span className="font-mono text-[11px]" style={{ color: 'var(--muted)' }}>
-                            {unread ? '—' : '100%'}
+                            {pct}%
                           </span>
                         </div>
                       );
@@ -263,36 +276,36 @@ export function Dashboard() {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-3" style={{ marginTop: 12 }}>
-                <Sparkline series={v3Data.getSparkSeries()} />
-              </div>
             </div>
             <div className="bento-item">
               <p className="font-mono text-xs font-bold" style={{ marginBottom: 10 }}>
                 AGENTS_IN_FLOW
               </p>
-              {flowAgents.map(({ agent, last, count }) => (
-                <button
-                  key={agent.key}
-                  className="flex items-center gap-3 w-full text-left"
-                  style={{ padding: '8px 0' }}
-                  onClick={() => {
-                    openApp('agents');
-                    selectAgent(agent.key);
-                  }}
-                >
-                  <agent.icon size={16} style={{ color: SUITE_TINT[agent.suite]?.color ?? 'var(--violet)' }} />
+              {busyAgent && (
+                <div className="flex items-center gap-3" style={{ padding: '8px 0' }}>
+                  <busyAgent.icon size={16} style={{ color: SUITE_TINT[busyAgent.suite]?.color ?? 'var(--violet)' }} />
                   <div className="min-w-0">
-                    <p className="font-mono font-bold text-xs">{agent.handle}</p>
+                    <p className="font-mono font-bold text-xs">{busyAgent.handle}</p>
                     <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
-                      {last ? `${last.title} — ${v3Ago(last.updatedAt ?? last.createdAt)}${count > 1 ? ` · ${count} sessions` : ''}` : 'Waiting for a task'}
+                      {active ? `${active.title} — ${activePct}%` : 'Waiting for a task'}
                     </p>
                   </div>
-                </button>
-              ))}
-              <button className="btn-ghost w-full" style={{ marginTop: 8 }} onClick={() => openApp('agents')}>
+                </div>
+              )}
+              {idleAgent && (
+                <div className="flex items-center gap-3" style={{ padding: '8px 0' }}>
+                  <idleAgent.icon size={16} style={{ color: SUITE_TINT[idleAgent.suite]?.color ?? 'var(--violet)' }} />
+                  <div className="min-w-0">
+                    <p className="font-mono font-bold text-xs">{idleAgent.handle}</p>
+                    <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
+                      Waiting for a task
+                    </p>
+                  </div>
+                </div>
+              )}
+              <Link className="btn-ghost w-full" style={{ marginTop: 8, textDecoration: 'none' }} href="/v3/agents">
                 open agents
-              </button>
+              </Link>
             </div>
           </div>
         </div>

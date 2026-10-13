@@ -28,14 +28,13 @@ describe('v3 os store · windows', () => {
     expect(s().windows.find((w) => w.id === 'launchpad')?.mode).toBe('page');
   });
 
-  it('closeWin removes; closeTopPage closes the topmost non-minimized page window', () => {
+  it('closeWin removes; sections are exclusive — opening agents closed launchpad (v13 nav)', () => {
     s().openApp('home');
     s().openApp('launchpad');
-    s().openApp('agents');
+    s().openApp('agents'); // page navigation: launchpad is left behind
+    expect(s().windows.map((w) => w.id)).toEqual(['home', 'agents']);
     s().closeWin('agents');
-    expect(s().windows.map((w) => w.id)).toEqual(['home', 'launchpad']);
-    s().closeTopPage();
-    expect(s().windows.map((w) => w.id)).toEqual(['home']);
+    expect(s().windows.map((w) => w.id)).toEqual(['home']); // floating home survives
   });
 
   it('setWinPos and setMode mutate only the target window', () => {

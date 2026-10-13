@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { MessageSquare, Check, ArrowUpRight } from 'lucide-react';
 import type { UIMessage } from 'ai';
 import { useV3OS } from '@/lib/v3/osStore';
@@ -20,6 +21,7 @@ const DAY = 86_400_000;
  * and the v12 slide-over detail carrying the run's conversation.
  */
 export function AssignmentsWindow() {
+  const router = useRouter();
   const feed = useV3OS((s) => s.sessionFeed);
   const feedError = useV3OS((s) => s.sessionFeedError);
   const { viewThread } = useV3OS.getState();
@@ -89,7 +91,18 @@ export function AssignmentsWindow() {
         </p>
       )}
 
-      {open && <SlideOver session={open} agentOf={agentOf} onClose={() => setOpen(null)} onApprove={approve} onOpenExecution={viewThread} />}
+      {open && (
+        <SlideOver
+          session={open}
+          agentOf={agentOf}
+          onClose={() => setOpen(null)}
+          onApprove={approve}
+          onOpenExecution={(agentKey, threadId) => {
+            viewThread(agentKey, threadId);
+            router.push('/v3/agents');
+          }}
+        />
+      )}
     </div>
   );
 }

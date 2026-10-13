@@ -1,6 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { LaunchpadWindow } from '@/components/v3/windows/LaunchpadWindow';
 import { useV3OS } from '@/lib/v3/osStore';
+// path navigation: router/pathname stubs
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
+  usePathname: () => '/v3',
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 describe('LaunchpadWindow · v13 exact launcher DOM', () => {
   beforeEach(() => {

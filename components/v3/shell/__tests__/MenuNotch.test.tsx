@@ -1,6 +1,11 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MenuNotch } from '@/components/v3/shell/MenuNotch';
 import { useV3OS } from '@/lib/v3/osStore';
+// path navigation: router/pathname stubs
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
+  usePathname: () => '/v3',
+}));
 
 beforeEach(() =>
   useV3OS.setState({
@@ -36,10 +41,11 @@ describe('MenuNotch', () => {
     expect(screen.getByTitle('Workspace').textContent).toContain('Acme Marketing');
   });
 
-  it('clicking Home opens the home window in the store', () => {
+  it('Home is a real link to /v3 (v13 full-OS navigation)', () => {
     render(<MenuNotch />);
-    fireEvent.click(screen.getByTitle('Home · full OS'));
-    expect(useV3OS.getState().windows.map((w) => w.id)).toContain('home');
+    const home = screen.getByTitle('Home · full OS');
+    expect(home.getAttribute('href')).toBe('/v3');
+    expect(home.tagName).toBe('A');
   });
 
   it('shows the triage badge from the real unread feed count', () => {

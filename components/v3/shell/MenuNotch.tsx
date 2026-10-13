@@ -1,30 +1,32 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Terminal, Layers, Bot, Inbox, BarChart3, Search, Settings, Briefcase } from 'lucide-react';
-import { useV3OS, type WindowId } from '@/lib/v3/osStore';
+import { useV3OS } from '@/lib/v3/osStore';
 import { isV3SessionUnread } from '@/lib/v3/data';
 
 /** v13 notch, exact: brandmark + wordmark + ws button, five section links
  *  (triage carries the badge), and the reports/spotlight/settings island. */
 export function MenuNotch() {
-  const windows = useV3OS((s) => s.windows);
   const menu = useV3OS((s) => s.menu);
   const workspaceId = useV3OS((s) => s.workspaceId);
   const workspaces = useV3OS((s) => s.workspaces);
-  const { openApp, setMenu, toggleSpot } = useV3OS.getState();
+  const { setMenu, toggleSpot } = useV3OS.getState();
+  const pathname = usePathname();
 
   const wsError = useV3OS((s) => s.workspacesError);
   const workspace = workspaces.find((w) => w.id === workspaceId) ?? workspaces[0];
   const workspaceLabel = workspace ? workspace.name : wsError ? 'offline' : '…';
   const reviewCount = useV3OS((s) => s.sessionFeed.filter((x) => isV3SessionUnread(x)).length);
-  const isOpen = (id: WindowId) => windows.some((w) => w.id === id && !w.minimized);
+  const isOn = (path: string) => (path === '/v3' ? pathname === '/v3' : pathname.startsWith(path));
 
-  const NAV: { id: WindowId; icon: typeof Bot; color: string; title: string }[] = [
-    { id: 'home', icon: LayoutDashboard, color: '#1d4ed8', title: 'Home · full OS' },
-    { id: 'launchpad', icon: Terminal, color: 'var(--cyan)', title: 'Launchpad · define' },
-    { id: 'assignments', icon: Layers, color: 'var(--green)', title: 'Assignments · track' },
-    { id: 'agents', icon: Bot, color: 'var(--violet)', title: 'Agents · roster' },
+  const NAV: { path: string; icon: typeof Bot; color: string; title: string }[] = [
+    { path: '/v3', icon: LayoutDashboard, color: '#1d4ed8', title: 'Home · full OS' },
+    { path: '/v3/launchpad', icon: Terminal, color: 'var(--cyan)', title: 'Launchpad · define' },
+    { path: '/v3/assignments', icon: Layers, color: 'var(--green)', title: 'Assignments · track' },
+    { path: '/v3/agents', icon: Bot, color: 'var(--violet)', title: 'Agents · roster' },
   ];
 
   return (
@@ -45,20 +47,20 @@ export function MenuNotch() {
           <span>{workspaceLabel}</span>
         </button>
         <div className="notch-sep" />
-        {NAV.map(({ id, icon: Icon, color, title }) => (
-          <button key={id} className={`notch-btn${isOpen(id) ? ' active' : ''}`} title={title} onClick={() => openApp(id)}>
+        {NAV.map(({ path, icon: Icon, color, title }) => (
+          <Link key={path} className={`notch-btn${isOn(path) ? ' active' : ''}`} href={path} title={title}>
             <Icon size={20} style={{ color }} />
-          </button>
+          </Link>
         ))}
-        <button className={`notch-btn${isOpen('reports') ? ' active' : ''}`} title="Triage · review" onClick={() => openApp('reports')}>
+        <Link className={`notch-btn${isOn('/v3/triage') ? ' active' : ''}`} href="/v3/triage" title="Triage · review">
           <Inbox size={20} style={{ color: '#f87171' }} />
           {reviewCount > 0 && <span className="triage-badge">{reviewCount}</span>}
-        </button>
+        </Link>
       </nav>
       <nav id="notch-right" className="glass island-nav no-select" aria-label="System">
-        <button className={`notch-btn${isOpen('history') ? ' active' : ''}`} title="Reports · progress" onClick={() => openApp('history')}>
+        <Link className={`notch-btn${isOn('/v3/reports') ? ' active' : ''}`} href="/v3/reports" title="Reports · progress">
           <BarChart3 size={20} style={{ color: 'var(--accent)' }} />
-        </button>
+        </Link>
         <button className="notch-btn" title="Spotlight · ⌘K" onClick={() => toggleSpot(true)}>
           <Search size={20} />
         </button>

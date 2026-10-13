@@ -1,12 +1,14 @@
 'use client';
 
 import { Inbox } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useV3OS } from '@/lib/v3/osStore';
 import { useV3Fetch, isV3SessionUnread, markThreadSeen, v3Ago } from '@/lib/v3/data';
 import { fetchV3PowerAgents } from '@/lib/v3/powerAgents';
 
 /** Triage panel: runs updated since your last view, waiting for the operator. */
 export function Notifications() {
+  const router = useRouter();
   const open = useV3OS((s) => s.notifsOpen);
   const feed = useV3OS((s) => s.sessionFeed);
   const agents = useV3Fetch(fetchV3PowerAgents, []);
@@ -26,7 +28,7 @@ export function Notifications() {
             className="chip"
             onClick={() => {
               useV3OS.getState().toggleNotifs(false);
-              useV3OS.getState().openApp('reports');
+              router.push('/v3/triage');
             }}
           >
             open triage
@@ -52,7 +54,7 @@ export function Notifications() {
                 finished · {v3Ago(r.updatedAt ?? r.createdAt)} — awaiting your review
               </p>
               <div className="flex gap-2 mt-3">
-                <button className="btn-ghost flex-1" onClick={() => useV3OS.getState().viewThread(r.agentKey ?? '', r.id)}>
+                <button className="btn-ghost flex-1" onClick={() => { useV3OS.getState().viewThread(r.agentKey ?? '', r.id); router.push('/v3/agents'); }}>
                   review()
                 </button>
                 <button

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Plus, Cpu, Zap, Sparkles, Globe, TerminalSquare, X } from 'lucide-react';
+import { Cpu, Zap, Sparkles, Globe, X } from 'lucide-react';
 import { Glide } from '@/components/v3/ui/Glide';
 
 /** v13 model roster (design-ready — the chat API does not take these yet). */
@@ -83,27 +83,27 @@ export function Composer({
       )}
       <div className="composer-bar">
         <button type="button" className="composer-icon" title="Attach files" aria-label="Attach files" onClick={() => fileRef.current?.click()}>
-          <Plus size={16} />
+          +
         </button>
-        <input
-          ref={fileRef}
-          type="file"
-          multiple
-          hidden
-          aria-hidden="true"
-          tabIndex={-1}
-          onChange={(e) => {
-            const names = Array.from(e.target.files ?? []).map((f) => f.name);
-            if (names.length) setFiles((fs) => [...fs, ...names.filter((n) => !fs.includes(n))]);
-            e.target.value = '';
-          }}
-        />
         <Glide value={model} options={COMPOSER_MODELS} onChange={onModel} icon={Cpu} ariaLabel="Model" />
         <Glide value={mode} options={COMPOSER_MODES} onChange={onMode} ariaLabel="Mode" />
         <button type="button" className="btn-deploy" style={{ marginLeft: 'auto' }} onClick={onSend} title="Start (⌘⏎)">
-          <TerminalSquare size={12} /> Get started <kbd>⌘⏎</kbd>
+          &gt;_
         </button>
       </div>
+      <input
+        ref={fileRef}
+        type="file"
+        multiple
+        hidden
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={(e) => {
+          const names = Array.from(e.target.files ?? []).map((f) => f.name);
+          if (names.length) setFiles((fs) => [...fs, ...names.filter((n) => !fs.includes(n))]);
+          e.target.value = '';
+        }}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Search, Code2, Database, PenTool, FolderArchive, Palette, Layers, Plus, Cpu } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 import { V3_MODULES, v3ModuleHref, v3SuggestModules, type V3ModuleDomain } from '@/lib/v3/modules';
@@ -27,7 +28,9 @@ export function LaunchpadWindow() {
   const workspaceId = useV3OS((s) => s.workspaceId);
   const feed = useV3OS((s) => s.sessionFeed);
   const { viewThread } = useV3OS.getState();
-  const [brief, setBrief] = useState('');
+  // ?type=research (hero quick link) preselects that task flow, like v13
+  const deepType = useSearchParams().get('type');
+  const [brief, setBrief] = useState(() => (deepType ? CATS.find((c) => c.cat === deepType)?.title ?? '' : ''));
 
   const suggestions = useMemo(() => v3SuggestModules(brief), [brief]);
   const best = suggestions[0]?.module ?? null;
@@ -142,6 +145,7 @@ export function LaunchpadWindow() {
               key={cat}
               className="bento-item text-left cat-card"
               data-cat={cat}
+              style={deepType === cat ? { borderColor: color, boxShadow: `0 0 0 1px ${color}` } : undefined}
               onClick={() => target && window.open(v3ModuleHref(target.slug, workspaceId), '_blank')}
             >
               <div className="flex items-center justify-between">

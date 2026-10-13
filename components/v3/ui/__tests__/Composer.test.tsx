@@ -21,7 +21,7 @@ describe('Composer (v13 hero anatomy)', () => {
     expect(screen.getByLabelText('Attach files')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Model' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Mode' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Get started/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: />_/ })).toBeTruthy();
     expect(screen.getAllByText('Muse Spark 1.3 Free').length).toBeGreaterThan(0); // button label + menu entry
     expect(screen.getAllByText('Default').length).toBeGreaterThan(0); // button label + menu entry
   });
@@ -41,7 +41,7 @@ describe('Composer (v13 hero anatomy)', () => {
         onMode={() => {}}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: /Get started/i }));
+    fireEvent.click(screen.getByRole('button', { name: />_/ }));
     expect(onSend).toHaveBeenCalledTimes(1);
     rerender(
       <Composer

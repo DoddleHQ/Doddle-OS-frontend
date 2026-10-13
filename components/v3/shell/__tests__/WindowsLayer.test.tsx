@@ -1,3 +1,14 @@
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
+  usePathname: () => '/v3',
+  useSearchParams: () => new URLSearchParams(),
+}));
+jest.mock('@/components/v3/windows/TriageWindow', () => ({
+  TriageWindow: () => <div data-testid="triage-stub" />,
+}));
+jest.mock('@/components/v3/windows/AssignmentsWindow', () => ({
+  AssignmentsWindow: () => <div data-testid="assignments-stub" />,
+}));
 // the agents window pulls in the ai-sdk; jsdom lacks TransformStream, so mock it
 jest.mock('@ai-sdk/react', () => ({
   useChat: () => ({ messages: [], setMessages: jest.fn(), sendMessage: jest.fn(), status: 'ready', stop: jest.fn(), error: null }),
@@ -8,7 +19,10 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { WindowsLayer } from '@/components/v3/shell/WindowsLayer';
 import { useV3OS } from '@/lib/v3/osStore';
 
-beforeEach(() => useV3OS.setState({ windows: [], spotlightOpen: false }));
+beforeEach(() => {
+  useV3OS.setState({ windows: [], spotlightOpen: false, sessionFeed: [] });
+  try { window.localStorage.setItem('v3.firstVisit', String(Date.now() - 60_000)); } catch { /* ignore */ }
+});
 
 describe('WindowsLayer', () => {
   it('renders nothing when no windows are open', () => {
@@ -44,10 +58,11 @@ describe('WindowsLayer', () => {
     expect(screen.getByText(/Arriving in screen 7/i)).toBeTruthy();
   });
 
-  it('reports renders the real triage queue, not an empty state', () => {
+  it('reports renders the triage view when the queue has items', () => {
+    useV3OS.setState({ sessionFeed: [{ id: 't9', title: 'fresh', agentKey: 'crawlability_audit', createdAt: null, updatedAt: new Date().toISOString() }] });
     useV3OS.getState().openApp('reports');
     render(<WindowsLayer />);
-    expect(screen.getByText(/QUEUE · REVIEW/i)).toBeTruthy();
+    expect(screen.getByTestId('triage-stub')).toBeTruthy();
   });
 
   it('renders the home window content (greeting + ask bar)', () => {

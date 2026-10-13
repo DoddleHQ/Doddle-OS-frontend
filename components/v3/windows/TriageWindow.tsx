@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Check, MessageSquareReply, Copy, Inbox } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 import { useV3Fetch, v3Ago, isV3SessionUnread, markThreadSeen } from '@/lib/v3/data';
@@ -16,6 +17,7 @@ import type { UIMessage } from 'ai';
  * direct the next run. Nothing here is seeded.
  */
 export function TriageWindow() {
+  const router = useRouter();
   const feed = useV3OS((s) => s.sessionFeed);
   const feedError = useV3OS((s) => s.sessionFeedError);
   const { viewThread } = useV3OS.getState();
@@ -193,7 +195,7 @@ export function TriageWindow() {
               <button
                 className="btn-ghost"
                 disabled={!current.agentKey}
-                onClick={() => current.agentKey && viewThread(current.agentKey, current.id)}
+                onClick={() => { if (current.agentKey) { viewThread(current.agentKey, current.id); router.push('/v3/agents'); } }}
               >
                 <MessageSquareReply size={12} /> Request changes
               </button>

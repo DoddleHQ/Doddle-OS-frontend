@@ -1,24 +1,26 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useV3OS, type WindowId } from '@/lib/v3/osStore';
+import { useRouter } from 'next/navigation';
+import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3Workspaces, useV3Fetch } from '@/lib/v3/data';
 import { fetchV3Sessions } from '@/lib/v3/powerAgents';
 import { Wallpaper } from './Wallpaper';
 import { MenuNotch } from './MenuNotch';
 import { NotchMenus } from './NotchMenus';
-import { WindowsLayer } from './WindowsLayer';
 import { Dashboard } from './Dashboard';
 import { ActivityRail } from './ActivityRail';
 import { Spotlight } from './Spotlight';
 import { Notifications } from './Notifications';
 import { ControlCenter } from './ControlCenter';
 
-const SHORTCUT_APPS: WindowId[] = ['home', 'launchpad', 'agents', 'assignments', 'hub', 'reports', 'tasks'];
+// v13 page paths, in keyboard order (1-6)
+const SHORTCUT_PATHS = ['/v3', '/v3/launchpad', '/v3/agents', '/v3/assignments', '/v3/triage', '/v3/blueprints'];
 
 /** The v3 OS root: wallpaper, notch chrome, windows layer, dashboard, overlays. */
-export function OSRoot() {
+export function OSRoot({ children }: { children?: React.ReactNode }) {
   const theme = useV3OS((s) => s.theme);
+  const router = useRouter();
   const hydrate = useV3OS((s) => s.hydrate);
   const setWorkspaces = useV3OS((s) => s.setWorkspaces);
   const setSessionFeed = useV3OS((s) => s.setSessionFeed);
@@ -28,8 +30,11 @@ export function OSRoot() {
   const feed = useV3Fetch(() => (workspaceId ? fetchV3Sessions(workspaceId) : Promise.resolve([])), [workspaceId]);
 
   useEffect(() => {
+    // stale-while-revalidate: a route remount restarts this hook at data=null —
+    // keep the previous feed in the store until the refetch resolves
+    if (feed.loading && feed.data === null && feed.error === null) return;
     setSessionFeed(feed.data ?? [], feed.error);
-  }, [feed.data, feed.error, setSessionFeed]);
+  }, [feed.data, feed.error, feed.loading, setSessionFeed]);
 
   useEffect(() => {
     hydrate();
@@ -42,7 +47,7 @@ export function OSRoot() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const { toggleSpot, closeTopOverlay, openApp } = useV3OS.getState();
+      const { toggleSpot, closeTopOverlay } = useV3OS.getState();
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         toggleSpot(true);
@@ -56,7 +61,7 @@ export function OSRoot() {
       const tag = (e.target as HTMLElement).tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       const n = Number(e.key);
-      if (n >= 1 && n <= SHORTCUT_APPS.length) openApp(SHORTCUT_APPS[n - 1]);
+      if (n >= 1 && n <= SHORTCUT_PATHS.length) router.push(SHORTCUT_PATHS[n - 1]);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -67,8 +72,7 @@ export function OSRoot() {
       <Wallpaper />
       <MenuNotch />
       <NotchMenus />
-      <WindowsLayer />
-      <Dashboard />
+      {children ?? <Dashboard />}
       <ActivityRail />
       <Spotlight />
       <Notifications />
