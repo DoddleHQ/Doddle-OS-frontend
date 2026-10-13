@@ -4,9 +4,10 @@ import { AssignmentsWindow } from '@/components/v3/windows/AssignmentsWindow';
 import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3PowerAgents, type V3Agent } from '@/lib/v3/powerAgents';
 // path navigation: router/pathname stubs
+const pushes: string[] = [];
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
-  usePathname: () => '/v3',
+  useRouter: () => ({ push: (p: string) => pushes.push(p), replace: jest.fn() }),
+  usePathname: () => '/v3/assignments',
 }));
 
 jest.mock('@/lib/v3/powerAgents', () => {
@@ -39,10 +40,11 @@ function seedFeed(sessions: V3Session[]) {
   useV3OS.setState({ windows: [], workspaceId: 'w1', sessionFeed: sessions, sessionFeedError: null });
 }
 
-describe('AssignmentsWindow · v13 depth (gantt / board / review + slide-over)', () => {
+describe('AssignmentsWindow · v13 win-assignments (waterfall / board / review)', () => {
   const realFetch = global.fetch;
   beforeEach(() => {
     jest.clearAllMocks();
+    pushes.length = 0;
     try {
       window.localStorage.clear();
     } catch {
@@ -67,41 +69,88 @@ describe('AssignmentsWindow · v13 depth (gantt / board / review + slide-over)',
     { id: 't3', title: 'PDP refresh', agentKey: 'shopify_agent', createdAt: '2026-09-25T09:00:00Z', updatedAt: new Date().toISOString() },
   ];
 
-  it('gantt tab: sessions render as timeline rows with status fills', async () => {
-    seedFeed(sessions);
-    const { container } = render(<AssignmentsWindow />);
-    expect(await screen.findByText('Q4 site audit')).toBeTruthy();
-    const rows = container.querySelectorAll('.gantt-row');
-    expect(rows.length).toBe(3);
-    const fills = container.querySelectorAll('.gantt-fill');
-    expect(fills[0].className).toContain('st-attention'); // unread → amber
-    expect(fills[1].className).toContain('st-done'); // reviewed → green
-    expect(screen.getByText(/3 sessions · 2 awaiting review · 2 agents/i)).toBeTruthy();
-  });
-
-  it('board tab: fizzy status columns with counts and tags', async () => {
-    seedFeed(sessions);
-    const { container } = render(<AssignmentsWindow />);
-    fireEvent.click(await screen.findByRole('tab', { name: /^Board/i }));
-    expect(await screen.findByText('Awaiting review')).toBeTruthy();
-    expect(screen.getByText('Reviewed')).toBeTruthy();
-    expect(container.querySelectorAll('.fizzy-card').length).toBe(3);
-    expect(screen.getAllByText(/@Crawlability/).length).toBeGreaterThan(0); // fizzy tags carry the handle
-  });
-
-  it('review tab: inline approve clears the awaiting row', async () => {
+  it('renders the os-window page: titlebar, seg tabs, askbar', async () => {
     seedFeed(sessions);
     render(<AssignmentsWindow />);
-    fireEvent.click(await screen.findByRole('tab', { name: /Review/i }));
-    expect((await screen.findAllByText(/awaiting your review/i)).length).toBe(2);
-    const before = screen.getAllByRole('button', { name: /Approve /i }).length;
-    expect(before).toBe(2);
-    fireEvent.click(screen.getAllByRole('button', { name: /Approve /i })[0]);
-    expect(await waitFor(() => screen.getAllByRole('button', { name: /Approve /i }).length)).toBe(1);
+    expect(screen.getByText('Assignments & Tasks')).toBeTruthy();
+    expect(screen.getByText('fizzy board · ⌘4')).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Gantt' })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /^Board/ })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /Review · 2/ })).toBeTruthy();
+    expect(screen.getByPlaceholderText('Filter these cards... [F]')).toBeTruthy();
+  });
+
+  it('waterfall: 21-day window, week head, epic rows with pills, stages, fills', async () => {
+    seedFeed(sessions);
+    const { container } = render(<AssignmentsWindow />);
+    expect(screen.getByText('21-day window')).toBeTruthy();
+    expect(screen.getByText('EPIC · 21-DAY WINDOW')).toBeTruthy();
+    expect(container.querySelectorAll('.gantt-week').length).toBe(3);
+    expect((await screen.findAllByText('Q4 site audit')).length).toBeGreaterThan(0);
+    // 3 epics × (1 epic row + 3 stage rows), all expanded by default
+    expect(container.querySelectorAll('.gantt-row').length).toBe(12);
+    expect(container.querySelectorAll('.gantt-kid-label').length).toBe(9);
+    expect(screen.getAllByText('3 stages').length).toBe(3);
+    // unread → REVIEW pill + attention bar; reviewed → DONE
+    expect(screen.getAllByText('REVIEW').length).toBe(2);
+    expect(screen.getAllByText('DONE').length).toBeGreaterThan(0);
+    const bars = container.querySelectorAll('.gantt-bar');
+    expect(Array.from(bars).some((b) => b.className.includes('st-attention'))).toBe(true);
+    expect(Array.from(bars).some((b) => b.className.includes('st-done'))).toBe(true);
+    // today marker sits inside the window
+    expect(container.querySelectorAll('.gantt-today').length).toBe(12);
+    // review gates: attention tasks chart mile tags
+    expect(container.querySelectorAll('.gantt-mile-tag').length).toBe(2);
+  });
+
+  it('waterfall: chevron collapses stages, status filter narrows epics', async () => {
+    seedFeed(sessions);
+    const { container } = render(<AssignmentsWindow />);
+    fireEvent.click((await screen.findAllByText('3 stages'))[0]); // wait for render
+    fireEvent.click(container.querySelectorAll('.epic-chev')[0]);
+    expect(container.querySelectorAll('.gantt-row').length).toBe(9);
+    fireEvent.click(container.querySelectorAll('.epic-chev')[0]);
+    expect(container.querySelectorAll('.gantt-row').length).toBe(12);
+    fireEvent.click(screen.getByText('done', { selector: '#gantt-filters .fchip' }));
+    expect(container.querySelectorAll('.gantt-kid-label').length).toBe(3); // only the reviewed epic
+    fireEvent.click(screen.getByText('Clear', { selector: '#gantt-filters .btn-deploy' }));
+    expect(container.querySelectorAll('.gantt-kid-label').length).toBe(9);
+  });
+
+  it('askbar filters the gantt by title', async () => {
+    seedFeed(sessions);
+    const { container } = render(<AssignmentsWindow />);
+    fireEvent.change(screen.getByPlaceholderText('Filter these cards... [F]'), { target: { value: 'PDP' } });
+    await waitFor(() => expect(container.querySelectorAll('.gantt-kid-label').length).toBe(3));
+  });
+
+  it('board: fizzy columns — active column open, others as vpills', async () => {
+    seedFeed(sessions);
+    const { container } = render(<AssignmentsWindow />);
+    fireEvent.click(await screen.findByRole('tab', { name: /^Board/ }));
+    expect(await screen.findByText('NEEDS REVIEW')).toBeTruthy();
+    expect(container.querySelectorAll('.fizzy-card').length).toBe(2); // the two unread sessions
+    fireEvent.click(screen.getByTitle('Open DONE'));
+    expect(await screen.findByText(/ADDED /i)).toBeTruthy();
+    expect(container.querySelectorAll('.fizzy-card').length).toBe(1);
+    // proposed column is empty → reference "watching" state when opened
+    fireEvent.click(screen.getByTitle('Open PROPOSED'));
+    expect(await screen.findByText('WATCHING FOR NEW CARDS')).toBeTruthy();
+  });
+
+  it('review tab: rows list what waits, approve happens in the slide-over', async () => {
+    seedFeed(sessions);
+    render(<AssignmentsWindow />);
+    fireEvent.click(await screen.findByRole('tab', { name: /Review/ }));
+    expect((await screen.findAllByText(/waiting on you/i)).length).toBe(2);
+    fireEvent.click(screen.getAllByText('Open')[0]);
+    expect(await screen.findByRole('dialog', { name: /Q4 site audit details/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Approve/i }));
+    await waitFor(() => expect(screen.getAllByText(/waiting on you/i).length).toBe(1));
     expect(window.localStorage.getItem('v3.seen.th.t1')).toBeTruthy();
   });
 
-  it('slide-over opens from the gantt with conversation preview + deep-link', async () => {
+  it('slide-over opens from a gantt track with conversation preview + deep-link', async () => {
     seedFeed(sessions);
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
@@ -110,8 +159,9 @@ describe('AssignmentsWindow · v13 depth (gantt / board / review + slide-over)',
           messages: [{ id: 'u1', role: 'user', parts: [{ type: 'text', text: 'crawl the sitemap' }] }],
         }),
     }) as unknown as typeof fetch;
-    render(<AssignmentsWindow />);
-    fireEvent.click(await screen.findByText('Q4 site audit'));
+    const { container } = render(<AssignmentsWindow />);
+    await screen.findAllByText('Q4 site audit'); // wait for render
+    fireEvent.click(container.querySelectorAll('.gantt-track')[0]);
     expect(await screen.findByRole('dialog', { name: /Q4 site audit details/i })).toBeTruthy();
     await waitFor(() => expect(screen.getByText('crawl the sitemap')).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: /Open in execution/i }));
@@ -123,6 +173,6 @@ describe('AssignmentsWindow · v13 depth (gantt / board / review + slide-over)',
   it('empty feed and feed errors are honest', async () => {
     seedFeed([]);
     render(<AssignmentsWindow />);
-    expect(await screen.findByText(/No sessions yet — deploy a power agent/i)).toBeTruthy();
+    expect(await screen.findByText(/No tasks to chart. Start one from Board → Maybe./i)).toBeTruthy();
   });
 });

@@ -534,3 +534,13 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 /* ---------- solo section pages (path navigation, from solo.css) ---------- */
 .v3-scope .v3-solo-main { position: fixed; inset: 76px 0 0 0; z-index: 10; overflow-y: auto; }
 .v3-scope .v3-solo-inner { max-width: 1200px; margin: 0 auto; padding: 22px 76px 60px 22px; }
+
+/* ---------- solo section pages: os-window renders as a static full-bleed card (from solo.css) ---------- */
+.v3-scope .os-window{position:relative!important;right:auto!important;width:100%!important;max-width:1100px!important;margin:0 auto 18px!important;max-height:none!important;height:auto!important;opacity:1!important;pointer-events:auto!important}
+.v3-scope .os-window.page{width:100%!important;height:auto!important;border-radius:10px!important;border:1px solid var(--glass-border)!important;box-shadow:inset 0 1px 1px rgba(255,255,255,1),0 40px 100px -20px rgba(17,24,39,0.15)!important;background:var(--glass-tint)!important;backdrop-filter:blur(36px) saturate(180%)!important;-webkit-backdrop-filter:blur(36px) saturate(180%)!important;z-index:10!important}
+.v3-scope .os-window.page .titlebar{display:flex!important;cursor:grab!important}
+.v3-scope .traffic{display:flex!important}
+/* tailwind utilities the v13 markup leans on (CDN in the reference) */
+.v3-scope .space-y-2 > * + * { margin-top: 0.5rem; }
+.v3-scope .mt-3 { margin-top: 0.75rem; }
+.v3-scope .shrink-0 { flex-shrink: 0; }
