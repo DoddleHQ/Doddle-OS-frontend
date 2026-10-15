@@ -11,19 +11,20 @@ describe('Composer (v13 hero anatomy)', () => {
         onSend={() => {}}
         placeholder="Describe what you're working on"
         ariaLabel="Describe what you're working on"
-        model="Muse Spark 1.3"
-        onModel={() => {}}
         mode="default"
         onMode={() => {}}
+        blueprint={null}
+        blueprintLabel="Blueprint"
+        onBlueprint={() => {}}
       />,
     );
     expect(screen.getByLabelText("Describe what you're working on")).toBeTruthy();
     expect(screen.getByLabelText('Attach files')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Model' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Mode' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Pick a blueprint' })).toBeTruthy();
     expect(screen.getByRole('button', { name: />_/ })).toBeTruthy();
-    expect(screen.getAllByText('Muse Spark 1.3 Free').length).toBeGreaterThan(0); // button label + menu entry
-    expect(screen.getAllByText('Default').length).toBeGreaterThan(0); // button label + menu entry
+    expect(screen.getAllByText('Default').length).toBeGreaterThan(0); // mode button label + menu entry
+    expect(screen.getByText('Blueprint')).toBeTruthy(); // blueprint glide label
   });
 
   it('sends on the run button and clears the composer', () => {
@@ -35,10 +36,11 @@ describe('Composer (v13 hero anatomy)', () => {
         onSend={onSend}
         placeholder="p"
         ariaLabel="p"
-        model="GPT-5"
-        onModel={() => {}}
         mode="default"
         onMode={() => {}}
+        blueprint={null}
+        blueprintLabel="Blueprint"
+        onBlueprint={() => {}}
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: />_/ }));
@@ -50,10 +52,11 @@ describe('Composer (v13 hero anatomy)', () => {
         onSend={onSend}
         placeholder="p"
         ariaLabel="p"
-        model="GPT-5"
-        onModel={() => {}}
         mode="default"
         onMode={() => {}}
+        blueprint={null}
+        blueprintLabel="Blueprint"
+        onBlueprint={() => {}}
       />,
     );
   });

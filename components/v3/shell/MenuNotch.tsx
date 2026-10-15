@@ -7,8 +7,10 @@ import { LayoutDashboard, Terminal, Layers, Bot, Inbox, BarChart3, Search, Setti
 import { useV3OS } from '@/lib/v3/osStore';
 import { v3SessionStatus } from '@/lib/v3/data';
 
-/** v13 notch, exact: brandmark + wordmark + ws button, five section links
- *  (triage carries the badge), and the reports/spotlight/settings island. */
+/** v13 notch, exact (post launch-consolidation): sections island
+ *  (home/launchpad/assignments — agents lives in Spotlight only), the
+ *  centered ⌘K search island, and the system island (triage with badge,
+ *  reports, settings, clock). */
 export function MenuNotch() {
   const menu = useV3OS((s) => s.menu);
   const workspaceId = useV3OS((s) => s.workspaceId);
@@ -26,7 +28,6 @@ export function MenuNotch() {
     { path: '/v3', icon: LayoutDashboard, color: '#1d4ed8', title: 'Home · full OS' },
     { path: '/v3/launchpad', icon: Terminal, color: 'var(--cyan)', title: 'Launchpad · define' },
     { path: '/v3/assignments', icon: Layers, color: 'var(--green)', title: 'Assignments · track' },
-    { path: '/v3/agents', icon: Bot, color: 'var(--violet)', title: 'Agents · roster' },
   ];
 
   return (
@@ -52,18 +53,28 @@ export function MenuNotch() {
             <Icon size={20} style={{ color }} />
           </Link>
         ))}
+      </nav>
+      <nav className="glass island-nav no-select" aria-label="Search" style={{ flexShrink: 0 }}>
+        <button
+          className="notch-btn"
+          title="Spotlight · ⌘K"
+          onClick={() => toggleSpot(true)}
+          style={{ width: 'auto', padding: '0 12px', gap: 8 }}
+        >
+          <Search size={20} />
+          <span className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>
+            ⌘K
+          </span>
+        </button>
+      </nav>
+      <nav id="notch-right" className="glass island-nav no-select" aria-label="System">
         <Link className={`notch-btn${isOn('/v3/triage') ? ' active' : ''}`} href="/v3/triage" title="Triage · review">
           <Inbox size={20} style={{ color: '#f87171' }} />
           {reviewCount > 0 && <span className="triage-badge">{reviewCount}</span>}
         </Link>
-      </nav>
-      <nav id="notch-right" className="glass island-nav no-select" aria-label="System">
         <Link className={`notch-btn${isOn('/v3/reports') ? ' active' : ''}`} href="/v3/reports" title="Reports · progress">
           <BarChart3 size={20} style={{ color: 'var(--accent)' }} />
         </Link>
-        <button className="notch-btn" title="Spotlight · ⌘K" onClick={() => toggleSpot(true)}>
-          <Search size={20} />
-        </button>
         <div className="notch-sep" />
         <button className="notch-btn" title="Settings" onClick={() => setMenu(menu === 'settings' ? null : 'settings')}>
           <Settings size={20} />

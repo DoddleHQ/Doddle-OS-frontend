@@ -84,7 +84,7 @@ describe('AgentsWindow · roster (v13 exact DOM)', () => {
     mockedFeed.mockResolvedValue([]);
   });
 
-  it('deploy-prompt composer with Deploy button; Enter opens best match; ACTIVE/IDLE columns', async () => {
+  it('launcher parity: hero, mode + agent glides, Launch agent ⏎; ACTIVE/IDLE columns', async () => {
     mockedAgents.mockResolvedValue([
       agent({}),
       agent({ key: 'on_page_audit', name: 'On-Page', handle: '@On-Page', role: 'Meta & Content Elements' }),
@@ -93,9 +93,11 @@ describe('AgentsWindow · roster (v13 exact DOM)', () => {
     window.localStorage.setItem('v3.firstVisit', String(Date.now() - 24 * 3600_000));
     useV3OS.setState({ sessionFeed: [session({ id: 'f1', agentKey: 'crawlability_audit', updatedAt: new Date().toISOString() })] });
     render(<AgentsWindow />);
-    expect(await screen.findByText('DEPLOY PROMPT · DESCRIBE WORK → WE PICK THE AGENT')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: /^Deploy/i }).length).toBeGreaterThanOrEqual(1); // composer + card buttons
-    expect(screen.getByText('Nothing runs until you hit Deploy.', { exact: false })).toBeTruthy();
+    expect(await screen.findByText('Which agent does the work?')).toBeTruthy();
+    expect(screen.getByText('Describe it — we match the workspace agent, then it runs here.')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: /Launch agent/i }).length).toBeGreaterThanOrEqual(1); // composer + scope pane
+    expect(screen.getByRole('button', { name: 'Pick an agent' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Mode' })).toBeTruthy();
     expect(screen.getByText('ACTIVE / IN FLOW')).toBeTruthy();
     expect(screen.getByText('IDLE / UNUSED')).toBeTruthy();
     expect(screen.getByText('1 in flow')).toBeTruthy();
@@ -107,17 +109,18 @@ describe('AgentsWindow · roster (v13 exact DOM)', () => {
     expect(cards[0].className).toContain('profile-card');
     expect(screen.getByText('● carrying 1 · 35%')).toBeTruthy();
     expect(screen.getAllByText('idle — unused').length).toBe(2);
-    // search narrows; Enter deploys the best match
-    fireEvent.change(screen.getByLabelText('Search power agents'), { target: { value: 'shopify' } });
+    // search narrows; Enter launches the best match as a task here
+    fireEvent.change(screen.getByLabelText('Describe the work'), { target: { value: 'shopify' } });
     expect(screen.queryByText('@Crawlability')).toBeNull();
-    fireEvent.keyDown(screen.getByLabelText('Search power agents'), { key: 'Enter' });
+    fireEvent.keyDown(screen.getByLabelText('Describe the work'), { key: 'Enter' });
     expect(useV3OS.getState().selectedAgentKey).toBe('shopify_agent');
   });
 
   it('card Deploy button and quick-switch dock both open the execution view', async () => {
     mockedAgents.mockResolvedValue([agent({})]);
     render(<AgentsWindow />);
-    fireEvent.click((await screen.findAllByRole('button', { name: /^Deploy$/ }))[0]);
+    fireEvent.change(await screen.findByLabelText('Describe the work'), { target: { value: 'audit' } });
+    fireEvent.click((await screen.findAllByRole('button', { name: /^Launch agent ⏎$/i }))[0]);
     expect(useV3OS.getState().selectedAgentKey).toBe('crawlability_audit');
     fireEvent.click(await screen.findByText(/← all agents/i));
     useV3OS.getState().selectAgent(null);
@@ -383,6 +386,6 @@ describe('AgentsWindow · execution (v13 exact DOM)', () => {
     render(<AgentsWindow />);
     fireEvent.click(await screen.findByText(/← all agents/i));
     expect(useV3OS.getState().selectedAgentKey).toBeNull();
-    expect(await screen.findByLabelText('Search power agents')).toBeTruthy();
+    expect(await screen.findByLabelText('Describe the work')).toBeTruthy();
   });
 });

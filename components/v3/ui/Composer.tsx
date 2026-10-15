@@ -1,8 +1,9 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Cpu, Zap, Sparkles, Globe, X } from 'lucide-react';
+import { Zap, Sparkles, Globe, Layers, X } from 'lucide-react';
 import { Glide } from '@/components/v3/ui/Glide';
+import { V3_MODULES } from '@/lib/v3/modules';
 
 /** v13 model roster (design-ready — the chat API does not take these yet). */
 export const COMPOSER_MODELS = [
@@ -11,6 +12,9 @@ export const COMPOSER_MODELS = [
   { value: 'Claude 4', label: 'Claude 4', icon: Sparkles, hint: 'deep' },
   { value: 'Gemini 3', label: 'Gemini 3', icon: Globe, hint: 'broad' },
 ];
+
+const BLUEPRINT_OPTIONS = V3_MODULES.map((m) => ({ value: m.name, label: m.name }));
+const BLUEPRINT_SLUGS = new Map(V3_MODULES.map((m) => [m.name, m.slug] as const));
 
 /** v13 mode roster (Default auto-routes; the rest pre-steer the intent). */
 export const COMPOSER_MODES = [
@@ -33,20 +37,23 @@ export function Composer({
   onSend,
   placeholder,
   ariaLabel,
-  model,
-  onModel,
   mode,
   onMode,
+  blueprint,
+  blueprintLabel,
+  onBlueprint,
 }: {
   value: string;
   onChange: (v: string) => void;
   onSend: () => void;
   placeholder: string;
   ariaLabel: string;
-  model: string;
-  onModel: (v: string) => void;
   mode: string;
   onMode: (v: string) => void;
+  /** blueprint glide (launch consolidation): the model pick is silent */
+  blueprint: string | null;
+  blueprintLabel: string;
+  onBlueprint: (v: string | null) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<string[]>([]);
@@ -85,8 +92,14 @@ export function Composer({
         <button type="button" className="composer-icon" title="Attach files" aria-label="Attach files" onClick={() => fileRef.current?.click()}>
           +
         </button>
-        <Glide value={model} options={COMPOSER_MODELS} onChange={onModel} icon={Cpu} ariaLabel="Model" />
         <Glide value={mode} options={COMPOSER_MODES} onChange={onMode} ariaLabel="Mode" />
+        <Glide
+          value={blueprintLabel}
+          options={BLUEPRINT_OPTIONS}
+          icon={Layers}
+          ariaLabel="Pick a blueprint"
+          onChange={(name) => onBlueprint(BLUEPRINT_SLUGS.get(name) ?? null)}
+        />
         <button type="button" className="btn-deploy" style={{ marginLeft: 'auto' }} onClick={onSend} title="Start (⌘⏎)">
           &gt;_
         </button>

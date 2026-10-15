@@ -92,7 +92,7 @@ describe('ActivityRail (reference #activity-rail DOM)', () => {
       Array.from({ length: 7 }, (_, i) => session({ id: `s${i}`, title: `S${i}` })),
     );
     const { container } = render(<ActivityRail />);
-    await waitFor(() => expect(container.querySelectorAll('.rail-btn').length).toBe(5));
+    await waitFor(() => expect(container.querySelectorAll('#rail-doing .rail-btn, #rail-done .rail-btn').length).toBe(5));
   });
 
   it('shows the v13 idle marker when nothing is in flow', async () => {

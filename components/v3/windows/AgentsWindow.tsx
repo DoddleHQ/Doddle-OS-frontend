@@ -1,16 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Wrench, Pencil, Trash2, ChevronDown, Plus, Cpu } from 'lucide-react';
+import { Wrench, Pencil, Trash2, ChevronDown, Bot } from 'lucide-react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
 import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3PowerAgents, fetchV3Sessions, SUITE_TINT, v3AgentByKey, type V3Agent, type V3Session } from '@/lib/v3/powerAgents';
-import { useV3Fetch, v3Ago, isV3SessionUnread, markThreadSeen } from '@/lib/v3/data';
+import { useV3Fetch, v3Ago, isV3SessionUnread, markThreadSeen, v3SessionStatus } from '@/lib/v3/data';
 import { V3Markdown } from '@/components/v3/ui/V3Markdown';
 import { Glide } from '@/components/v3/ui/Glide';
-import { COMPOSER_MODELS, COMPOSER_MODES } from '@/components/v3/ui/Composer';
+import { COMPOSER_MODES } from '@/components/v3/ui/Composer';
 
 /* ------------------------------------------------------------------ */
 /* Roster — v13 exact: deploy-prompt composer, ACTIVE/IDLE columns, dock */
@@ -31,8 +31,10 @@ function demoProgress(id: string): number {
   return ((h * 31) % 19) * 5;
 }
 
-function RosterView() {
+function RosterView({ onLaunchTask }: { onLaunchTask: (text: string) => void }) {
   const [q, setQ] = useState('');
+  const [modeFilter, setModeFilter] = useState('default');
+  const [pickedKey, setPickedKey] = useState<string | null>(null);
   const { selectAgent } = useV3OS.getState();
   const selected = useV3OS((s) => s.selectedAgentKey);
   const workspaceId = useV3OS((s) => s.workspaceId);
@@ -63,9 +65,12 @@ function RosterView() {
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const roster = agents.data ?? [];
-    if (!needle) return roster;
-    return roster.filter((a) => `${a.name} ${a.role} ${a.suite} ${a.key} ${a.handle}`.toLowerCase().includes(needle));
-  }, [agents.data, q]);
+    return roster.filter((a) => {
+      if (modeFilter !== 'default' && (SUITE_CAT[a.suite]?.cat ?? 'research') !== modeFilter) return false;
+      if (!needle) return true;
+      return `${a.name} ${a.role} ${a.suite} ${a.key} ${a.handle}`.toLowerCase().includes(needle);
+    });
+  }, [agents.data, q, modeFilter]);
 
   const { active, idle } = useMemo(() => {
     const a = visible.filter((x) => (stats.get(x.key)?.carrying ?? 0) > 0).sort((x, y) => (stats.get(y.key)?.carrying ?? 0) - (stats.get(x.key)?.carrying ?? 0));
@@ -89,10 +94,18 @@ function RosterView() {
       .sort((x, y) => y[1] - x[1])[0]?.[0];
   }, [q, visible]);
 
-  /** v13 deployFromSearch: Enter / Deploy opens the best-scoring match. */
-  function deployBest() {
-    if (best) selectAgent(best.key);
+  /** v13 startAgentTask: the picked agent (or best match) runs here as a task. */
+  function launchAgent(target = pickedKey ?? best?.key ?? null) {
+    if (!target) return;
+    const desc = q.trim();
+    selectAgent(target);
+    if (desc) onLaunchTask(desc);
+    setQ('');
   }
+  const detail = useMemo(
+    () => (agents.data ?? []).find((a) => a.key === (pickedKey ?? (q.trim() ? best?.key ?? null : null))) ?? null,
+    [agents.data, pickedKey, q, best],
+  );
 
   if (agents.loading) {
     return (
@@ -185,36 +198,115 @@ function RosterView() {
 
   return (
     <div id="agent-roster-view">
-      <div className="composer" style={{ marginBottom: 12, borderColor: 'rgba(29,78,216,.35)' }}>
-        <p className="pane-label">DEPLOY PROMPT · DESCRIBE WORK → WE PICK THE AGENT</p>
-        <input
+      <div className="composer" id="agent-launcher" style={{ marginBottom: 12, borderColor: 'rgba(29,78,216,.35)' }}>
+        <div className="text-center" style={{ padding: '18px 0 12px' }}>
+          <h2 className="text-2xl font-bold">Which agent does the work?</h2>
+          <p className="text-sm font-mono mt-1" style={{ color: 'var(--muted)' }}>
+            Describe it — we match the workspace agent, then it runs here.
+          </p>
+        </div>
+        <textarea
+          id="agent-search"
           className="composer-input"
-          style={{ minHeight: 44 }}
+          rows={3}
           placeholder="What needs doing? e.g. 'audit tenant security' or 'draft launch email'"
-          aria-label="Search power agents"
+          aria-label="Describe the work"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && deployBest()}
+          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), launchAgent())}
         />
         <div className="composer-bar">
           <button className="composer-icon" title="Attach files" aria-label="Attach files">
             +
           </button>
-          <RosterGlides />
-          <button className="btn-deploy" style={{ marginLeft: 'auto' }} onClick={deployBest}>
-            Deploy <kbd>⏎</kbd>
+          <Glide
+            value={modeFilter.charAt(0).toUpperCase() + modeFilter.slice(1)}
+            options={COMPOSER_MODES}
+            ariaLabel="Mode"
+            onChange={(v) => setModeFilter(v)}
+          />
+          <Glide
+            value={detail?.name ?? 'Agent'}
+            options={(agents.data ?? []).map((a) => ({ value: a.name, label: a.name }))}
+            icon={Bot}
+            ariaLabel="Pick an agent"
+            onChange={(name) => {
+              const a = (agents.data ?? []).find((x) => x.name === name);
+              if (a) setPickedKey(a.key);
+            }}
+          />
+          <button className="btn-deploy" style={{ marginLeft: 'auto' }} onClick={() => launchAgent()} title="Launch agent (⏎)">
+            Launch agent <kbd>⏎</kbd>
           </button>
         </div>
         <p className="font-mono text-[11px] mt-2" style={{ color: 'var(--muted)' }} id="agent-suggest-line">
-          {best ? `Best match: ${best.name} (${best.handle}) — hit Deploy to run it.` : 'Type above — best match highlights below. Nothing runs until you hit Deploy.'}
+          {best ? `Best match: ${best.name} (${best.handle}) — Launch runs it here.` : 'Type above — best match highlights below. Launch runs it here as a task window.'}
         </p>
       </div>
+
+      {detail && (
+        <div id="agent-detail" className="pane" style={{ marginBottom: 12, borderColor: 'rgba(139,92,246,.35)' }}>
+          <div className="flex items-center gap-3">
+            <div className="profile-avatar" id="agent-detail-tile" style={{ background: SUITE_TINT[detail.suite].bg, color: SUITE_TINT[detail.suite].color }}>
+              <detail.icon size={20} />
+            </div>
+            <div className="min-w-0" style={{ flex: 1 }}>
+              <p className="font-mono font-bold text-sm" id="agent-detail-name">{detail.handle}</p>
+              <p className="font-mono text-xs" id="agent-detail-desc" style={{ color: 'var(--muted)' }}>
+                {detail.role} — {detail.suite}
+              </p>
+            </div>
+            <span className="chip">scope preview</span>
+          </div>
+          <div className="profile-stats" id="agent-detail-stats" style={{ marginTop: 10 }}>
+            <span><strong>{stats.get(detail.key)?.carrying ?? 0}</strong> carrying</span>
+            <span><strong>{stats.get(detail.key)?.done ?? 0}</strong> done</span>
+            <span><strong>{feed.filter((s) => s.agentKey === detail.key).length}</strong> sessions</span>
+          </div>
+          <p className="pane-label" style={{ margin: '10px 0 6px' }}>IN SCOPE · WHAT THIS AGENT DOES</p>
+          <div id="agent-detail-scope" className="flex gap-2 flex-wrap items-center">
+            <span className="task-category-badge" style={{ background: SUITE_CAT[detail.suite]?.color ?? 'var(--muted)' }}>
+              {SUITE_CAT[detail.suite]?.label ?? 'Research'}
+            </span>
+            <span className="chip">{detail.suite}</span>
+          </div>
+          <p className="pane-label" style={{ margin: '10px 0 6px' }}>THREADS · TASKS THIS AGENT IS CARRYING</p>
+          <div className="table-glass">
+            <div id="agent-detail-threads">
+              {feed.filter((s) => s.agentKey === detail.key).slice(0, 4).map((s) => (
+                <div className="hrow" key={s.id}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: v3SessionStatus(s) === 'done' ? '#10b981' : 'var(--accent)', flexShrink: 0 }} />
+                  <div className="meta">
+                    <p className="font-mono font-bold text-xs">{s.title}</p>
+                    <p className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>{`${v3SessionStatus(s)} · ${v3Ago(s.updatedAt ?? s.createdAt)}`}</p>
+                  </div>
+                </div>
+              ))}
+              {feed.filter((s) => s.agentKey === detail.key).length === 0 && (
+                <p className="font-mono text-[11px]" style={{ color: 'var(--muted)', padding: 8 }}>No threads yet — launch it to start the first.</p>
+              )}
+            </div>
+          </div>
+          <p className="pane-label" style={{ margin: '10px 0 6px' }}>OUTPUT · WHAT A RUN PRODUCES</p>
+          <div id="agent-detail-output" className="font-mono text-[11px]" style={{ color: 'var(--muted)' }}>
+            Markdown answers + tool trails stream into the conversation terminal; finished runs land in Triage for your approval.
+          </div>
+          <div className="flex gap-2 mt-3">
+            <button className="btn-deploy flex-1" onClick={() => launchAgent(detail.key)} title="Launch agent (⏎)">
+              Launch agent here <kbd>⏎</kbd>
+            </button>
+            <button className="btn-ghost flex-1" id="agent-detail-open" onClick={() => selectAgent(detail.key)}>
+              Open execution →
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
         <p className="pane-label" style={{ margin: 0 }} id="roster-label">
           {`CONTEXTUAL AGENTS · ${wsLabel.toUpperCase()} · ${active.length} ACTIVE / ${idle.length} IDLE`}
         </p>
-        <button className="back-link">show all / workspace</button>
+        <span className="chip" id="roster-scope">workspace only</span>
       </div>
 
       <div className="agent-2col" id="agent-roster">
@@ -271,61 +363,22 @@ function RosterView() {
   );
 }
 
-/** model/mode glides for the roster + exec composers (local, design-forward). */
-function RosterGlides() {
-  const [model, setModel] = useState(() => {
-    try {
-      return localStorage.getItem('v3.model') ?? 'GPT-5';
-    } catch {
-      return 'GPT-5';
-    }
-  });
-  const [mode, setMode] = useState(() => {
-    try {
-      return localStorage.getItem('v3.mode') ?? 'default';
-    } catch {
-      return 'default';
-    }
-  });
-  return (
-    <>
-      <Glide
-        value={model}
-        options={COMPOSER_MODELS}
-        icon={Cpu}
-        ariaLabel="Model"
-        onChange={(v) => {
-          setModel(v);
-          try {
-            localStorage.setItem('v3.model', v);
-          } catch {
-            /* private mode */
-          }
-        }}
-      />
-      <Glide
-        value={mode}
-        options={[...COMPOSER_MODES, { value: 'admin', label: 'Admin' }, { value: 'design', label: 'Design' }, { value: 'support', label: 'Support' }]}
-        ariaLabel="Mode"
-        onChange={(v) => {
-          setMode(v);
-          try {
-            localStorage.setItem('v3.mode', v);
-          } catch {
-            /* private mode */
-          }
-        }}
-      />
-    </>
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /* Exec view — v13 exact: centered head pane, terminal log, glass       */
 /* threads table, composer with Deploy ⌘⏎, sess-state line             */
 /* ------------------------------------------------------------------ */
 
-function AgentExecView({ agentKey }: { agentKey: string }) {
+function AgentExecView({
+  agentKey,
+  minimized,
+  pendingTask,
+  onConsumeTask,
+}: {
+  agentKey: string;
+  minimized: boolean;
+  pendingTask: string | null;
+  onConsumeTask: () => void;
+}) {
   const workspaceId = useV3OS((s) => s.workspaceId);
   const { selectAgent } = useV3OS.getState();
   const agents = useV3Fetch(fetchV3PowerAgents, []);
@@ -598,9 +651,23 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
     refreshSessions();
   }
 
+  const pendingConsumedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (pendingTask && pendingTask !== pendingConsumedRef.current) {
+      pendingConsumedRef.current = pendingTask;
+      void deployTaskText(pendingTask);
+      onConsumeTask();
+    }
+  }, [pendingTask]);
+
   async function deployTask() {
     if (!task.trim() || !agent || streaming) return;
-    const text = task.trim();
+    await deployTaskText(task.trim());
+  }
+
+  async function deployTaskText(plain: string) {
+    if (!plain.trim() || !agent || streaming) return;
+    const text = plain.trim();
     setTask('');
     if (!activeThreadRef.current) {
       try {
@@ -653,7 +720,8 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
   const mine = sessions.length;
 
   return (
-    <div id="agent-exec-view">
+    <div id="agent-exec-view" className={`task-window${minimized ? ' minimized' : ''}`}>
+      <div className="task-body">
       <div className="pane text-center" style={{ marginBottom: 12 }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
           <button className="back-link" onClick={() => selectAgent(null)}>
@@ -782,9 +850,8 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
             />
             <div className="composer-bar">
               <button className="composer-icon" title="Attach files" aria-label="Attach files">
-                <Plus size={16} />
+                +
               </button>
-              <RosterGlides />
               {streaming ? (
                 <button
                   className="btn-deploy"
@@ -808,6 +875,7 @@ function AgentExecView({ agentKey }: { agentKey: string }) {
             {sessState}
           </p>
         </div>
+      </div>
       </div>
     </div>
   );
@@ -924,21 +992,53 @@ function TerminalFeed({ messages }: { messages: UIMessage[] }) {
 
 export function AgentsWindow() {
   const selected = useV3OS((s) => s.selectedAgentKey);
+  const agents = useV3Fetch(fetchV3PowerAgents, []);
+  // task-takes-over-chrome: while the exec view runs, the window title is the
+  // agent and the browser-style traffic lives in the titlebar
+  const selectedAgent = v3AgentByKey(agents.data ?? [], selected);
+  const [taskMin, setTaskMin] = useState(false);
+  const [taskZoom, setTaskZoom] = useState(false);
+  const [pendingTask, setPendingTask] = useState<string | null>(null);
+  const deselect = () => {
+    useV3OS.getState().selectAgent(null);
+    setTaskMin(false);
+    setTaskZoom(false);
+  };
   return (
-    <section id="win-agents" className="os-window glass page" data-app="agents">
+    <section
+      id="win-agents"
+      className={`os-window glass page${selected ? ' task-active' : ''}${taskZoom ? ' task-zoom' : ''}`}
+      data-app="agents"
+    >
       <div className="titlebar">
         <div className="traffic">
-          <button className="t-close" onClick={() => useV3OS.getState().selectAgent(null)} aria-label="Close" />
+          <button className="t-close" onClick={deselect} aria-label="Close" />
           <button className="t-min" aria-label="Minimize" />
-          <button className="t-max" aria-label="Maximize" />
+          <button className="t-max" aria-label="Zoom" />
         </div>
-        <strong className="text-sm">Contextual Agents</strong>
+        <div className="traffic task-traffic">
+          <button className="t-close" onClick={deselect} aria-label="Close" />
+          <button className="t-min" onClick={() => setTaskMin((v) => !v)} aria-label="Minimize" />
+          <button className="t-max" onClick={() => setTaskZoom((v) => !v)} aria-label="Zoom" />
+        </div>
+        <strong className="text-sm" id="agent-win-title">
+          {selected ? selectedAgent?.name ?? 'Contextual Agents' : 'Contextual Agents'}
+        </strong>
         <span className="chip" style={{ marginLeft: 'auto' }}>
           active · idle · unused
         </span>
       </div>
       <div className="win-body" id="agent-list">
-        {selected ? <AgentExecView agentKey={selected} /> : <RosterView />}
+        {selected ? (
+          <AgentExecView
+            agentKey={selected}
+            minimized={taskMin}
+            pendingTask={pendingTask}
+            onConsumeTask={() => setPendingTask(null)}
+          />
+        ) : (
+          <RosterView onLaunchTask={(t) => setPendingTask(t)} />
+        )}
       </div>
     </section>
   );

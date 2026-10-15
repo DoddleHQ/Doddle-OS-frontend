@@ -52,7 +52,8 @@ html,.v3-scope{height:100%}
 .v3-scope.dark .glass{border-top:1px solid rgba(255,255,255,.16);border-left:1px solid rgba(255,255,255,.09);border-right:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(0,0,0,.5)}
 .glass-deep{background:var(--glass-tint);backdrop-filter:blur(48px) saturate(200%);-webkit-backdrop-filter:blur(48px) saturate(200%);border:1px solid var(--glass-border)}
 /* ---------- Top menu notch (v10: v9 dual-island, centered, apps vs system) ---------- */
-#menu-notch{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:80;display:flex;justify-content:space-between;gap:12px;padding:0 16px;pointer-events:none;width:100%;max-width:1400px;margin:0 auto}
+#menu-notch{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:80;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 16px;pointer-events:none;width:100%;max-width:1400px;margin:0 auto}
+#menu-notch>nav:nth-child(2){flex-shrink:0}
 .island-nav{pointer-events:auto;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px}
 .notch-btn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:8px;
   cursor:pointer;color:var(--muted);transition:all .2s cubic-bezier(0.16,1,0.3,1);background:transparent;border:1px solid transparent;position:relative;flex-shrink:0}
@@ -66,6 +67,7 @@ html,.v3-scope{height:100%}
 #activity-rail{position:fixed;right:12px;top:50%;transform:translateY(-50%) translateX(calc(100% - 16px));opacity:.6;z-index:70;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 8px;border-radius:8px;max-height:70vh;overflow-y:auto;transition:transform .25s ease,opacity .25s ease}
 #activity-rail:hover,#rail-hover-zone:hover + #activity-rail{transform:translateY(-50%) translateX(0);opacity:1}
 #activity-rail.pinned{transform:translateY(-50%) translateX(0);opacity:1}
+#rail-pin-btn.on{color:var(--accent);border-color:var(--accent)}
 /* ---------- Rail clearance: page + dashboard content never slides under the rail ---------- */
 .os-window.page .win-body,.dash-inner{padding-right:76px}
 .fizzy-board,.gantt{margin-right:8px}
@@ -190,7 +192,7 @@ html,.v3-scope{height:100%}
 .cat-card.on{border-color:var(--accent)!important;box-shadow:0 0 0 2px rgba(29,78,216,.25)}
 #triage-drawer{position:fixed;top:76px;right:0;bottom:0;width:min(460px,94vw);z-index:75;overflow-y:auto;padding:20px;border-radius:8px 0 0 8px;transform:translateX(105%);transition:transform .25s ease}
 #triage-drawer.open{transform:none}
-.rail-label{font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--muted)}
+.rail-label{font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--muted)}
 .rail-btn{width:40px;min-height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);background:transparent;border:1px solid transparent;position:relative;transition:.2s;overflow:hidden;flex-shrink:0}
 .rail-btn:hover{background:rgba(128,128,128,.1);color:var(--ink)}
 .rail-btn svg,.rail-btn i{width:18px;height:18px;position:relative;z-index:1}
@@ -301,6 +303,14 @@ html,.v3-scope{height:100%}
 .traffic button:hover{transform:scale(1.1)}
 .t-close{background:#ff5f57}.t-min{background:#febc2e}.t-max{background:#28c840}
 .win-body{flex:1;overflow:auto;padding:16px}
+/* ---------- Task windows: dynamic execution containers (agent/blueprint runs) ----------
+   Every task window keeps original min/close/expand behaviour. Static pages stay
+   chromeless (page mode + solo cards hide outer .traffic; see the solo block below). */
+.task-window{border:1px solid var(--glass-border);border-radius:10px;background:var(--glass-tint);overflow:hidden}
+.task-window>.titlebar{padding:10px 14px;cursor:grab}
+.task-window>.task-body{padding:12px}
+.task-window.minimized>.task-body{display:none}
+.task-window.expanded{position:fixed!important;inset:76px 12px 12px 12px!important;z-index:60;overflow:auto}
 /* Bento (from v8) */
 .bento-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .bento-item{border-radius:8px;padding:20px;background:var(--glass-tint);border:1px solid var(--glass-border);transition:all .2s cubic-bezier(0.16,1,0.3,1)}
@@ -336,7 +346,7 @@ html,.v3-scope{height:100%}
 .dag-node.t-admin.done{border-color:var(--task-admin)}
 .dag-node.t-design.done{border-color:var(--task-design)}
 .dag-node.t-support.done{border-color:var(--task-support)}
-.task-category-badge{color:#fff;padding:2px 6px;border-radius:5px;font-size:9px;margin-left:6px;font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;white-space:nowrap}
+.task-category-badge{color:#fff;padding:2px 6px;border-radius:5px;font-size:11px;margin-left:6px;font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;white-space:nowrap}
 .cat-card.on{border-color:var(--accent)!important;box-shadow:0 0 0 1px var(--accent)}
 .agent-pick.dim{opacity:.38;filter:grayscale(.6)}
 .dag-line.fill::after{width:100%}
@@ -419,7 +429,7 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 .split-canvas{flex:6;min-width:0;display:flex;flex-direction:column;gap:12px}
 .split-37 .split-input{flex:3}.split-37 .split-canvas{flex:7}
 .pane{border:1px solid var(--glass-border);border-radius:8px;background:var(--glass-tint);padding:14px;min-width:0}
-.pane-label{font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
+.pane-label{font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
 @media(max-width:900px){.split{flex-direction:column}}
 /* ---------- Engineer-grade input console ---------- */
 .eng{background:rgba(10,12,20,.92);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:10px 10px 8px;box-shadow:inset 0 2px 18px rgba(0,0,0,.5);flex:none!important}
@@ -539,7 +549,14 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 .v3-scope .os-window{position:relative!important;right:auto!important;width:100%!important;max-width:1100px!important;margin:0 auto 18px!important;max-height:none!important;height:auto!important;opacity:1!important;pointer-events:auto!important}
 .v3-scope .os-window.page{width:100%!important;height:auto!important;border-radius:10px!important;border:1px solid var(--glass-border)!important;box-shadow:inset 0 1px 1px rgba(255,255,255,1),0 40px 100px -20px rgba(17,24,39,0.15)!important;background:var(--glass-tint)!important;backdrop-filter:blur(36px) saturate(180%)!important;-webkit-backdrop-filter:blur(36px) saturate(180%)!important;z-index:10!important}
 .v3-scope .os-window.page .titlebar{display:flex!important;cursor:grab!important}
-.v3-scope .traffic{display:flex!important}
+/* Static solo cards stay chromeless — the launched task takes over the window
+   chrome instead: traffic + task name appear in the top titlebar (browser-pane
+   style), never nested within the page. */
+.v3-scope .os-window>.titlebar>.traffic{display:none!important}
+.v3-scope .os-window.task-active>.titlebar>.traffic.task-traffic{display:flex!important}
+.v3-scope .task-window>.titlebar>.traffic{display:flex!important}
+/* Zoomed task: the whole window fills the stage so its chrome stays visible. */
+.v3-scope .os-window.task-zoom{position:fixed!important;inset:76px 12px 12px 12px!important;z-index:60!important;width:auto!important;max-width:none!important;margin:0!important;max-height:none!important}
 /* tailwind utilities the v13 markup leans on (CDN in the reference) */
 .v3-scope .space-y-2 > * + * { margin-top: 0.5rem; }
 .v3-scope .mt-3 { margin-top: 0.75rem; }

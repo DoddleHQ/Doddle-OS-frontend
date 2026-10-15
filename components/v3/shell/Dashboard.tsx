@@ -9,6 +9,7 @@ import { useV3Fetch, useV3OperatorName, v3Ago, isV3SessionUnread, v3SessionStatu
 import { fetchV3PowerAgents, v3AgentByKey, SUITE_TINT, type V3Suite } from '@/lib/v3/powerAgents';
 import { MorphText } from '@/components/v3/ui/MorphText';
 import { Composer } from '@/components/v3/ui/Composer';
+import { V3_MODULES } from '@/lib/v3/modules';
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -50,15 +51,9 @@ export function Dashboard() {
   const operator = useV3OperatorName();
   const agents = useV3Fetch(fetchV3PowerAgents, []);
 
-  // composer state — model/mode are design-forward picks (persisted locally)
+  // composer state — mode + blueprint picks (persisted locally); the model
+  // pick went silent in the reference's launch consolidation
   const [ask, setAsk] = useState('');
-  const [model, setModel] = useState(() => {
-    try {
-      return localStorage.getItem('v3.model') ?? 'Muse Spark 1.3';
-    } catch {
-      return 'Muse Spark 1.3';
-    }
-  });
   const [mode, setMode] = useState(() => {
     try {
       return localStorage.getItem('v3.mode') ?? 'default';
@@ -66,18 +61,26 @@ export function Dashboard() {
       return 'default';
     }
   });
-  const pickModel = (v: string) => {
-    setModel(v);
+  const [blueprint, setBlueprint] = useState<string | null>(() => {
     try {
-      localStorage.setItem('v3.model', v);
+      return localStorage.getItem('v3.bp');
     } catch {
-      /* private mode */
+      return null;
     }
-  };
+  });
   const pickMode = (v: string) => {
     setMode(v);
     try {
       localStorage.setItem('v3.mode', v);
+    } catch {
+      /* private mode */
+    }
+  };
+  const pickBlueprint = (v: string | null) => {
+    setBlueprint(v);
+    try {
+      if (v) localStorage.setItem('v3.bp', v);
+      else localStorage.removeItem('v3.bp');
     } catch {
       /* private mode */
     }
@@ -144,10 +147,11 @@ export function Dashboard() {
             onSend={send}
             placeholder="Describe what you're working on… e.g. research AI articles, review PR #42, organize Q3 files"
             ariaLabel="Describe what you're working on"
-            model={model}
-            onModel={pickModel}
             mode={mode}
             onMode={pickMode}
+            blueprint={blueprint}
+            blueprintLabel={blueprint ? V3_MODULES.find((m) => m.slug === blueprint)?.name ?? 'Blueprint' : 'Blueprint'}
+            onBlueprint={pickBlueprint}
           />
           {liveMention && (
             <p className="font-mono text-[10px]" style={{ color: 'var(--accent)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>

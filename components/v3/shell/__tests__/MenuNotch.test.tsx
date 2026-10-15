@@ -29,8 +29,8 @@ describe('MenuNotch', () => {
     expect(screen.getByTitle('Workspace')).toBeTruthy();
     expect(screen.getByTitle('Home · full OS')).toBeTruthy();
     expect(screen.getByTitle('Launchpad · define')).toBeTruthy();
-    expect(screen.getByTitle('Agents · roster')).toBeTruthy();
     expect(screen.getByTitle('Assignments · track')).toBeTruthy();
+    expect(screen.queryByTitle('Agents · roster')).toBeNull(); // agents lives in Spotlight only
     expect(screen.getByTitle('Spotlight · ⌘K')).toBeTruthy();
     expect(screen.getByTitle('Triage · review')).toBeTruthy();
     expect(screen.getByTitle('Reports · progress')).toBeTruthy();

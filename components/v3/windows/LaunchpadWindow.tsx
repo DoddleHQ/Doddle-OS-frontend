@@ -2,14 +2,14 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Code2, Database, PenTool, FolderArchive, Palette, Layers, Cpu } from 'lucide-react';
+import { Search, Code2, Database, PenTool, FolderArchive, Palette, Layers } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 import { V3_MODULES, v3ModuleHref, v3SuggestModules, type V3ModuleDomain, type V3Module } from '@/lib/v3/modules';
 import { v3Ago, v3SessionStatus } from '@/lib/v3/data';
 import { fetchV3PowerAgents, v3AgentByKey, SUITE_TINT, type V3Suite } from '@/lib/v3/powerAgents';
 import { useV3Fetch } from '@/lib/v3/data';
 import { Glide } from '@/components/v3/ui/Glide';
-import { COMPOSER_MODELS, COMPOSER_MODES } from '@/components/v3/ui/Composer';
+import { COMPOSER_MODES } from '@/components/v3/ui/Composer';
 
 /** v13's six task categories, exact markup. */
 const CATS: { cat: string; icon: typeof Search; color: string; label: string; title: string; sub: string; to: V3ModuleDomain }[] = [
@@ -63,7 +63,6 @@ export function LaunchpadWindow() {
   // ?type=research (hero quick link) preselects that task flow, like v13
   const deepType = useSearchParams().get('type');
   const [brief, setBrief] = useState(() => (deepType ? CATS.find((c) => c.cat === deepType)?.title ?? '' : ''));
-  const [model, setModel] = useState('GPT-5');
   const [mode, setMode] = useState('default');
   const [pickedSlug, setPickedSlug] = useState<string | null>(null);
 
@@ -138,7 +137,6 @@ export function LaunchpadWindow() {
               <button type="button" className="composer-icon" title="Attach files" aria-label="Attach files">
                 +
               </button>
-              <Glide value={model} options={COMPOSER_MODELS} onChange={setModel} icon={Cpu} ariaLabel="Model" />
               <Glide value={mode} options={COMPOSER_MODES} onChange={setMode} ariaLabel="Mode" />
               <Glide
                 value={vehicle?.name ?? 'Blueprint'}

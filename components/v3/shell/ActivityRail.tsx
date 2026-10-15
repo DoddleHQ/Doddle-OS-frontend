@@ -4,6 +4,8 @@ import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3PowerAgents, fetchV3Sessions, v3AgentByKey } from '@/lib/v3/powerAgents';
 import { useRouter } from 'next/navigation';
 import { useV3Fetch, v3Ago, v3SessionStatus } from '@/lib/v3/data';
+import { Pin, History } from 'lucide-react';
+import { V3_APP_META } from '@/lib/v3/apps';
 
 /** Deterministic 0–90 demo progress per session id (stable across reloads). */
 function demoProgress(id: string): number {
@@ -18,6 +20,7 @@ function demoProgress(id: string): number {
 export function ActivityRail() {
   const router = useRouter();
   const railPinned = useV3OS((s) => s.railPinned);
+  const pinRail = useV3OS((s) => s.pinRail);
   const workspaceId = useV3OS((s) => s.workspaceId);
   const { selectAgent } = useV3OS.getState();
 
@@ -69,6 +72,25 @@ export function ActivityRail() {
         <div id="rail-done" className="flex flex-col items-center gap-2">
           {done.map((s) => railBtn(s, 'done'))}
         </div>
+        <div className="rail-sep" />
+        <button
+          className="rail-btn"
+          onClick={() => router.push('/v3/reports')}
+          title="History — all work, searchable"
+          aria-label="History. All work, searchable."
+        >
+          <History size={18} />
+        </button>
+        <button
+          className={`rail-btn${railPinned ? ' on' : ''}`}
+          id="rail-pin-btn"
+          onClick={() => pinRail(!railPinned)}
+          title="Pin rail open"
+          aria-label="Pin rail open"
+          aria-pressed={railPinned}
+        >
+          <Pin size={18} />
+        </button>
       </aside>
     </>
   );
