@@ -15,13 +15,16 @@ describe('Spotlight', () => {
     render(<Spotlight />);
     expect(screen.getByText(/Home — status & reviews/i)).toBeTruthy();
     expect(screen.getByText(/Launchpad — what to launch/i)).toBeTruthy();
-    expect(screen.getByText(/Toggle appearance/i)).toBeTruthy();
+    expect(screen.getByText('Blueprints — library')).toBeTruthy();
+    expect(screen.getByText(/Agents — contextual roster/i)).toBeTruthy();
+    expect(screen.getByText('Triage Queue (needs you)')).toBeTruthy();
+    expect(screen.getByText(/Reports — gallery \+ analytics/i)).toBeTruthy();
   });
 
   it('filters by keyword', () => {
     render(<Spotlight />);
-    fireEvent.change(screen.getByPlaceholderText(/Spotlight/i), { target: { value: 'appearance' } });
-    expect(screen.getByText(/Toggle appearance/i)).toBeTruthy();
+    fireEvent.change(screen.getByPlaceholderText(/Spotlight/i), { target: { value: 'triage' } });
+    expect(screen.getByText('Triage Queue (needs you)')).toBeTruthy();
     expect(screen.queryByText(/Home — status & reviews/i)).toBeNull();
   });
 

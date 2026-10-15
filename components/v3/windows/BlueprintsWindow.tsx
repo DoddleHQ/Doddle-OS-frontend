@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import {
   Search, ShieldCheck, BookOpen, FolderTree, GitBranch, ListChecks, LayoutTemplate, Siren,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useV3OS } from '@/lib/v3/osStore';
 import { V3_MODULES, v3ModuleHref, type V3Module, type V3ModuleDomain } from '@/lib/v3/modules';
 import { useV3Fetch, v3Ago, v3SessionStatus } from '@/lib/v3/data';
@@ -55,6 +56,7 @@ const DOMAIN_SUITES: Partial<Record<V3ModuleDomain, string[]>> = {
  * reference taxonomy.
  */
 export function BlueprintsWindow() {
+  const router = useRouter();
   const workspaceId = useV3OS((s) => s.workspaceId);
   const feed = useV3OS((s) => s.sessionFeed);
   const agents = useV3Fetch(fetchV3PowerAgents, []);
@@ -102,7 +104,7 @@ export function BlueprintsWindow() {
     <section id="win-library" className="os-window glass page" data-app="library">
       <div className="titlebar">
         <div className="traffic">
-          <button className="t-close" aria-label="Close" />
+          <button className="t-close" onClick={() => router.push('/v3')} aria-label="Close" />
         </div>
         <strong className="text-sm">Blueprints</strong>
         <span className="chip" style={{ marginLeft: 'auto' }}>

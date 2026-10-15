@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search, Copy, Check, Lock, UnlockKeyhole, Download, Layers } from 'lucide-react';
 import type { UIMessage } from 'ai';
+import { useRouter } from 'next/navigation';
 import { useV3OS } from '@/lib/v3/osStore';
 import { useV3Fetch, v3Ago, v3SessionStatus } from '@/lib/v3/data';
 import { fetchV3PowerAgents, v3AgentByKey, SUITE_TINT, type V3Suite } from '@/lib/v3/powerAgents';
@@ -44,6 +45,7 @@ function repDur(ms: number | null): string {
  * from the real session feed.
  */
 export function ReportsWindow() {
+  const router = useRouter();
   const feed = useV3OS((s) => s.sessionFeed);
   const feedError = useV3OS((s) => s.sessionFeedError);
   const workspaces = useV3OS((s) => s.workspaces);
@@ -169,7 +171,7 @@ export function ReportsWindow() {
     <section id="win-reports" className="os-window glass page" data-app="reports">
       <div className="titlebar">
         <div className="traffic">
-          <button className="t-close" aria-label="Close" />
+          <button className="t-close" onClick={() => router.push('/v3')} aria-label="Close" />
           <button className="t-min" aria-label="Minimize" />
           <button className="t-max" aria-label="Maximize" />
         </div>

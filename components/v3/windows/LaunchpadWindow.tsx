@@ -60,11 +60,16 @@ export function LaunchpadWindow() {
   const { viewThread, selectAgent } = useV3OS.getState();
   const agents = useV3Fetch(fetchV3PowerAgents, []);
 
-  // ?type=research (hero quick link) preselects that task flow, like v13
-  const deepType = useSearchParams().get('type');
-  const [brief, setBrief] = useState(() => (deepType ? CATS.find((c) => c.cat === deepType)?.title ?? '' : ''));
+  // deep links: ?type=research preselects a flow; ?ask= carries the dashboard
+  // brief (carryAsk); ?bp= the blueprint pick; ?agent= the solo-deploy pick
+  const searchParams = useSearchParams();
+  const deepType = searchParams.get('type');
+  const [brief, setBrief] = useState(
+    () => searchParams.get('ask') ?? (deepType ? CATS.find((c) => c.cat === deepType)?.title ?? '' : ''),
+  );
   const [mode, setMode] = useState('default');
-  const [pickedSlug, setPickedSlug] = useState<string | null>(null);
+  const [pickedSlug, setPickedSlug] = useState<string | null>(() => searchParams.get('bp'));
+  const [soloAgent, setSoloAgent] = useState<string | null>(() => searchParams.get('agent'));
 
   const suggestions = useMemo(() => v3SuggestModules(brief), [brief]);
   const vehicle: V3Module | null = useMemo(() => {
@@ -148,6 +153,11 @@ export function LaunchpadWindow() {
                   if (m) setPickedSlug(m.slug);
                 }}
               />
+              {soloAgent && (
+                <span id="lp-agent-chip" className="chip" style={{ borderColor: 'rgba(16,185,129,.5)' }}>
+                  {`@${soloAgent} · solo deploy`}
+                </span>
+              )}
               <button type="button" className="btn-deploy" style={{ marginLeft: 'auto' }} onClick={send} title="Start (⏎)">
                 &gt;_
               </button>

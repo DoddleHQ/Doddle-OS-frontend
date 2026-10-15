@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Zap, Sparkles, Globe, Layers, X } from 'lucide-react';
+import { Zap, Sparkles, Globe, Layers, Bot, X } from 'lucide-react';
 import { Glide } from '@/components/v3/ui/Glide';
 import { V3_MODULES } from '@/lib/v3/modules';
 
@@ -42,6 +42,9 @@ export function Composer({
   blueprint,
   blueprintLabel,
   onBlueprint,
+  agentPick,
+  agentOptions,
+  onAgentPick,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -54,12 +57,16 @@ export function Composer({
   blueprint: string | null;
   blueprintLabel: string;
   onBlueprint: (v: string | null) => void;
+  /** agent glide (dashboard parity): picking one rides the ask into launchpad */
+  agentPick?: string | null;
+  agentOptions?: { value: string; label: string }[];
+  onAgentPick?: (v: string | null) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<string[]>([]);
 
   return (
-    <div className="composer">
+    <div className="composer" id="dash-composer">
       <textarea
         className="composer-input"
         rows={3}
@@ -100,6 +107,15 @@ export function Composer({
           ariaLabel="Pick a blueprint"
           onChange={(name) => onBlueprint(BLUEPRINT_SLUGS.get(name) ?? null)}
         />
+        {agentOptions && onAgentPick && (
+          <Glide
+            value={agentPick ?? 'Agent'}
+            options={agentOptions}
+            icon={Bot}
+            ariaLabel="Pick an agent"
+            onChange={(name) => onAgentPick(name || null)}
+          />
+        )}
         <button type="button" className="btn-deploy" style={{ marginLeft: 'auto' }} onClick={onSend} title="Start (⌘⏎)">
           &gt;_
         </button>

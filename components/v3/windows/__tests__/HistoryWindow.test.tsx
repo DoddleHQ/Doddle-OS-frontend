@@ -1,6 +1,12 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ReportsWindow } from '@/components/v3/windows/HistoryWindow';
 import { useV3OS } from '@/lib/v3/osStore';
+// path navigation: router/pathname stubs
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
+  usePathname: () => '/v3',
+  useSearchParams: () => new URLSearchParams(),
+}));
 import { fetchV3PowerAgents, type V3Agent } from '@/lib/v3/powerAgents';
 
 jest.mock('@/lib/v3/powerAgents', () => {

@@ -2,18 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Play, Inbox, SunMoon, Building2, BarChart3, ListChecks, BookOpen, Activity } from 'lucide-react';
+import { Search, Play, Inbox, Building2, BarChart3, ListChecks, BookOpen, Activity } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useV3OS, type WindowId } from '@/lib/v3/osStore';
+import { useV3OS } from '@/lib/v3/osStore';
 import { LayoutDashboard, Terminal, Layers, Bot } from 'lucide-react';
-import { isV3SessionUnread, v3SessionStatus } from '@/lib/v3/data';
-
-const APP_BUTTONS: { id: WindowId; title: string; icon: typeof Bot; color: string; hint: string }[] = [
-  { id: 'home', title: 'Home', icon: LayoutDashboard, color: '#1d4ed8', hint: '1' },
-  { id: 'launchpad', title: 'Launchpad', icon: Terminal, color: 'var(--cyan)', hint: '2' },
-  { id: 'agents', title: 'Agents', icon: Bot, color: 'var(--violet)', hint: '3' },
-  { id: 'assignments', title: 'Assignments', icon: Layers, color: 'var(--green)', hint: '4' },
-];
 
 interface SpotItem {
   key: string;
@@ -30,90 +22,23 @@ export function Spotlight() {
   const open = useV3OS((s) => s.spotlightOpen);
   const [q, setQ] = useState('');
 
+  // the reference's unified spot list, identical on every page: page links
+  // with ?open= intents (ours map to the closest live route)
   const items = useMemo<SpotItem[]>(() => {
-    const { toggleTheme } = useV3OS.getState();
     const go = (p: string) => () => router.push(p);
-    const unreadCount = useV3OS.getState().sessionFeed.filter((x) => v3SessionStatus(x) === 'attention').length;
-    const SPOT_KEYS: Record<WindowId, string> = {
-      home: 'home dashboard status reviews',
-      launchpad: 'launchpad choose graph agent describe outcome start',
-      blueprints: 'blueprints library layers sops playbooks',
-      agents: 'agents contextual roster helper writer data',
-      assignments: 'assignments project task in progress review route',
-      hub: 'hub settings billing workspace',
-      reports: 'reports artefacts gallery analytics',
-      tasks: 'tasks inventory route agent human',
-      history: 'history all work search',
-    };
-    const SUBTITLE: Record<string, string> = {
-      home: 'status & reviews',
-      launchpad: 'what to launch?',
-      agents: 'contextual roster',
-      assignments: 'in progress + review',
-    };
-    const apps: SpotItem[] = APP_BUTTONS.map((b) => ({
-      key: SPOT_KEYS[b.id],
-      label: `${b.title} — ${SUBTITLE[b.id]}`,
-      icon: b.icon,
-      color: b.color,
-      hint: b.hint,
-      run: go(b.id === 'home' ? '/v3' : `/v3/${b.id}`),
-    }));
-    apps.push(
-      {
-        key: 'hub settings billing workspace agency',
-        label: 'Agency Hub',
-        icon: Building2,
-        hint: '5',
-        run: () => {}, // hub stays a floating-window extra
-      },
-      {
-        key: 'report analytics gallery board export',
-        label: 'Reports — gallery + analytics',
-        icon: BarChart3,
-        hint: '6',
-        run: go('/v3/reports'),
-      },
-      {
-        key: 'active execution everything in flight running live',
-        label: 'Active Execution — everything in flight',
-        icon: Activity,
-        color: 'var(--accent)',
-        run: go('/v3/assignments'),
-      },
-      {
-        key: 'task assign agent human active inventory',
-        label: 'Tasks — route to agent or human',
-        icon: ListChecks,
-        hint: '7',
-        run: go('/v3/assignments'),
-      },
-      {
-        key: 'run new execute campaign start',
-        label: '/run — start execution',
-        icon: Play,
-        run: go('/v3/launchpad'),
-      },
-      {
-        key: 'blueprints library layers strategy structure execution review sops playbooks docs',
-        label: 'Blueprints — the layered library',
-        icon: BookOpen,
-        run: go('/v3/blueprints'),
-      },
-      {
-        key: 'triage queue review approve inbox needs',
-        label: `Triage Queue — ${unreadCount} needs you`,
-        icon: Inbox,
-        run: go('/v3/triage'),
-      },
-      {
-        key: 'theme dark light appearance toggle',
-        label: 'Toggle appearance',
-        icon: SunMoon,
-        run: () => toggleTheme(),
-      },
-    );
-    return apps;
+    return [
+      { key: 'home dashboard status reviews', label: 'Home — status & reviews', icon: LayoutDashboard, color: '#1d4ed8', hint: '1', run: go('/v3') },
+      { key: 'launchpad choose graph agent describe outcome', label: 'Launchpad — what to launch?', icon: Terminal, color: 'var(--cyan)', hint: '2', run: go('/v3/launchpad') },
+      { key: 'blueprint library catalog playbook sop template', label: 'Blueprints — library', icon: BookOpen, color: 'var(--green)', run: go('/v3/blueprints') },
+      { key: 'agent contextual roster helper writer data', label: 'Agents — contextual roster', icon: Bot, color: 'var(--violet)', hint: '3', run: go('/v3/agents') },
+      { key: 'project task assignment review start', label: 'Assignments — in progress + review', icon: Layers, color: 'var(--green)', hint: '4', run: go('/v3/assignments') },
+      { key: 'hub settings billing workspace', label: 'Agency Hub', icon: Building2, color: 'var(--amber)', hint: '5', run: go('/v3?open=hub') },
+      { key: 'run new execute campaign', label: '/run — start execution', icon: Play, color: '#10b981', run: go('/v3/launchpad') },
+      { key: 'triage queue review approve inbox active execution', label: 'Active Execution — everything in flight', icon: Activity, color: 'var(--accent)', run: go('/v3/assignments') },
+      { key: 'triage queue review approve inbox', label: 'Triage Queue (needs you)', icon: Inbox, color: '#f87171', run: go('/v3/triage') },
+      { key: 'report analytics gallery board export', label: 'Reports — gallery + analytics', icon: BarChart3, color: 'var(--accent)', hint: '6', run: go('/v3/reports') },
+      { key: 'task assign agent human active inventory', label: 'Tasks — route to agent or human', icon: ListChecks, color: 'var(--violet)', hint: '7', run: go('/v3/assignments?open=assign') },
+    ];
   }, []);
 
   const visible = useMemo(() => {

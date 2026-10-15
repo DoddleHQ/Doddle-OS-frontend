@@ -46,7 +46,23 @@ export function Wallpaper() {
     window.addEventListener('resize', size);
 
     let raf = 0;
+    // reference throttle: pause the aurora when the tab is hidden or the
+    // operator has been idle for a minute (mouse/key/touch re-arms it)
+    let idleTimer: ReturnType<typeof setTimeout> | null = null;
+    let isIdle = false;
+    const armIdle = () => {
+      isIdle = false;
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        isIdle = true;
+      }, 60_000);
+    };
+    ['mousemove', 'keydown', 'mousedown', 'touchstart'].forEach((ev) =>
+      window.addEventListener(ev, armIdle, { passive: true }),
+    );
+    armIdle();
     const draw = () => {
+      if (!document.hidden && !isIdle) {
       ctx.clearRect(0, 0, cv.width, cv.height);
       blobs.forEach((b, i) => {
         b.p += 0.001;
@@ -62,11 +78,16 @@ export function Wallpaper() {
         ctx.arc(x, y, b.r * cv.width, 0, 7);
         ctx.fill();
       });
+      }
       raf = requestAnimationFrame(draw);
     };
     raf = requestAnimationFrame(draw);
     return () => {
       cancelAnimationFrame(raf);
+      if (idleTimer) clearTimeout(idleTimer);
+      ['mousemove', 'keydown', 'mousedown', 'touchstart'].forEach((ev) =>
+        window.removeEventListener(ev, armIdle),
+      );
       window.removeEventListener('resize', size);
     };
   }, [theme]);

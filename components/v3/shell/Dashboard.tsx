@@ -85,6 +85,22 @@ export function Dashboard() {
       /* private mode */
     }
   };
+  const [agentPick, setAgentPick] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('v3.agent');
+    } catch {
+      return null;
+    }
+  });
+  const pickAgent = (v: string | null) => {
+    setAgentPick(v);
+    try {
+      if (v) localStorage.setItem('v3.agent', v);
+      else localStorage.removeItem('v3.agent');
+    } catch {
+      /* private mode */
+    }
+  };
 
   // @mentions route to the real roster
   const mentioned = (text: string) => {
@@ -98,7 +114,12 @@ export function Dashboard() {
       selectAgent(target.key);
       router.push('/v3/agents');
     } else {
-      router.push('/v3/launchpad');
+      // v13 carryAsk: the typed brief + blueprint + agent picks ride into launchpad
+      const params = new URLSearchParams({ ask: ask.trim() });
+      if (blueprint) params.set('bp', blueprint);
+      const picked = (agents.data ?? []).find((a) => a.handle === agentPick || a.key === agentPick);
+      if (picked) params.set('agent', picked.key);
+      router.push(`/v3/launchpad?${params.toString()}`);
     }
     setAsk('');
   };
@@ -152,6 +173,9 @@ export function Dashboard() {
             blueprint={blueprint}
             blueprintLabel={blueprint ? V3_MODULES.find((m) => m.slug === blueprint)?.name ?? 'Blueprint' : 'Blueprint'}
             onBlueprint={pickBlueprint}
+            agentPick={agentPick}
+            agentOptions={(agents.data ?? []).map((a) => ({ value: a.handle, label: a.name }))}
+            onAgentPick={pickAgent}
           />
           {liveMention && (
             <p className="font-mono text-[10px]" style={{ color: 'var(--accent)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
