@@ -6,7 +6,6 @@ export interface AuditThread {
     id: string;
     workspaceId: string;
     moduleId: ModuleId;
-    /** LangGraph thread id (DB lang_id) — links a DB thread to its live run. */
     langId?: string | null;
     title: string;
     description: string;
@@ -18,7 +17,6 @@ export interface AuditThread {
 }
 
 export interface AuditArtifact {
-    /** Obfuscated artifactId string (current API) or legacy numeric id. */
     id: number | string;
     threadId: string;
     moduleId: ModuleId;

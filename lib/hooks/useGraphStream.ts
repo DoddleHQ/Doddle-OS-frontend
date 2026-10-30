@@ -1,32 +1,5 @@
 'use client';
 
-/**
- * useGraphStream — React hook for streaming LangGraph interactions.
- *
- * A lightweight wrapper around the SDK utilities in lib/utils/langgraph-sdk.ts
- * that manages React state for a graph conversation. Tracks messages, values,
- * interrupts, loading state, and errors.
- *
- * This is the v2 replacement for useLangGraphStream — uses the official
- * @langchain/langgraph-sdk instead of custom SSE parsing.
- *
- * @example
- * ```tsx
- * const {
- *   messages, values, interrupt, isRunning, error,
- *   start, respond, stop,
- * } = useGraphStream({ assistantId: 'brand_persona' });
- *
- * // Start the conversation
- * await start({ business_description: 'We are a SaaS...' });
- *
- * // Respond to an interrupt
- * if (interrupt) {
- *   await respond({ selected_goals: ['lead-gen', 'brand'] });
- * }
- * ```
- */
-
 import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   streamGraph,
@@ -44,28 +17,17 @@ export interface UseGraphStreamOptions {
 }
 
 export interface UseGraphStreamResult {
-  /** All messages collected from the stream */
   messages: BaseMessage[];
-  /** The latest graph state values */
   values: Record<string, unknown>;
-  /** Current interrupt if the graph is waiting for input */
   interrupt: InterruptInfo | null;
-  /** Whether a stream is actively running */
   isRunning: boolean;
-  /** Error from the last run, if any */
   error: string | null;
-  /** The thread ID for this conversation */
   threadId: string | null;
-  /** Whether the conversation has been completed */
   isComplete: boolean;
 
-  /** Start a new graph run with the given input */
   start: (input: Record<string, unknown>) => Promise<void>;
-  /** Resume an interrupted run with the user's response */
   respond: (response: unknown) => Promise<void>;
-  /** Stop the current stream (abort) */
   stop: () => void;
-  /** Reset all state */
   reset: () => void;
 }
 
@@ -82,7 +44,6 @@ export function useGraphStream(options: UseGraphStreamOptions): UseGraphStreamRe
 
   const abortRef = useRef<AbortController | null>(null);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => abortRef.current?.abort();
   }, []);
@@ -94,7 +55,6 @@ export function useGraphStream(options: UseGraphStreamOptions): UseGraphStreamRe
       for await (const event of generator) {
         if (abortRef.current?.signal.aborted) break;
 
-        // Set thread ID from first event
         if (!threadId && event.threadId) {
           setThreadId(event.threadId);
         }
@@ -103,7 +63,6 @@ export function useGraphStream(options: UseGraphStreamOptions): UseGraphStreamRe
           const data = event.data as Record<string, unknown>;
           setValues((prev) => ({ ...prev, ...data }));
 
-          // Extract messages from values if present
           if (Array.isArray(data.messages)) {
             const newMessages = (data.messages as any[])
               .filter((m) => m && (m.content || m._getType))
@@ -113,7 +72,6 @@ export function useGraphStream(options: UseGraphStreamOptions): UseGraphStreamRe
         } else if (event.type === 'messages' && event.data) {
           const msg = normalizeMessage(event.data);
           setMessages((prev) => {
-            // Dedupe by id if present
             if (msg.id && prev.some((m) => m.id === msg.id)) return prev;
             return [...prev, msg];
           });
@@ -136,7 +94,6 @@ export function useGraphStream(options: UseGraphStreamOptions): UseGraphStreamRe
 
     abortRef.current = new AbortController();
 
-    // Create a thread first
     const tid = await createThread();
     setThreadId(tid);
 
@@ -151,7 +108,6 @@ export function useGraphStream(options: UseGraphStreamOptions): UseGraphStreamRe
     await processStream(generator);
     setIsRunning(false);
 
-    // Check for interrupts after the run
     const interruptInfo = await checkForInterrupt(tid);
     if (interruptInfo) {
       setInterrupt(interruptInfo);
@@ -177,7 +133,6 @@ export function useGraphStream(options: UseGraphStreamOptions): UseGraphStreamRe
     await processStream(generator);
     setIsRunning(false);
 
-    // Check for further interrupts
     const interruptInfo = await checkForInterrupt(threadId);
     if (interruptInfo) {
       setInterrupt(interruptInfo);
@@ -217,7 +172,6 @@ export function useGraphStream(options: UseGraphStreamOptions): UseGraphStreamRe
   };
 }
 
-// Local copy of normalizeMessage (avoids circular import issues)
 function normalizeMessage(raw: any): BaseMessage {
   const type = raw?._getType?.() || raw?.type || raw?.role || 'system';
   const roleMap: Record<string, BaseMessage['role']> = {

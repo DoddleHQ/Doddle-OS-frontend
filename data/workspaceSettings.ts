@@ -1,5 +1,3 @@
-// Workspace Settings Mock Data
-
 export interface Integration {
   id: string;
   name: string;

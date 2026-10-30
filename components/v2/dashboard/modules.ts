@@ -4,23 +4,10 @@ import {
     type LucideIcon,
 } from 'lucide-react';
 
-/*
- * Canonical workspace module list.
- *
- * Both the InstrumentShell nav (sidebar) and the workspace landing grid
- * render this same set — previously they were two divergent copies that
- * drifted on icon choice and path casing. Centralizing guarantees a module
- * added here appears in both places.
- *
- * NOTE: `path` is relative to /workspaces/{workspaceId}/.
- */
-
 export interface WorkspaceModule {
     name: string;
     icon: LucideIcon;
-    /** Route segment relative to /workspaces/{workspaceId}/. */
     path: string;
-    /** Short description shown on the module grid. */
     desc: string;
 }
 

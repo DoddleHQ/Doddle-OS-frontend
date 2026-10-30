@@ -8,22 +8,6 @@ import { connectionService } from '@/lib/services/connectionService';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/*
- * MagentoGate — connection-gated start state for catalog-based agents (Mia).
- *
- * Replaces the generic workspace-domain chip on the welcome screen: Mia reads
- * the synced Magento catalog from the datalake, so what matters pre-flight is
- * the store connection — not the website domain.
- *
- * Three states:
- * - loading: breathing chip skeleton
- * - connected: store chip (sage status dot + mono base URL) + start button
- * - missing: dashed-rule card linking to Settings → Data Sync
- *
- * Operate mode: paper register, sage for the connected state, vermilion
- * reserved for the action. No border + shadow combos.
- */
-
 type GateStatus = 'loading' | 'connected' | 'missing';
 
 export function MagentoGate({
@@ -114,7 +98,6 @@ export function MagentoGate({
             transition={{ duration: 0.2, ease: EASE }}
             className="flex flex-col items-center gap-3"
         >
-            {/* Store chip — mirrors the domain chip used by other agents */}
             <div
                 className="flex items-center gap-2.5 px-4 py-2 rounded-[8px]"
                 style={{ border: '1px solid var(--v2-paper-rule)', background: 'rgba(255,255,255,0.3)' }}

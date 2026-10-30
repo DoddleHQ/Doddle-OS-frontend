@@ -10,19 +10,6 @@ import { Check, ChevronDown, ChevronLeft, ChevronRight, Code2, Copy as CopyIcon,
 import { DemoIcon } from '@/lib/demo/icons';
 import { useOS } from '@/lib/demo/osStore';
 
-/**
- * Power Agents — solo sessions, LIVE.
- *
- * Original agency/terminal design preserved exactly (feed rows, ink
- * avatars, CLI input, execution canvas). The setTimeout mock core is
- * replaced with the real stack: Vercel AI SDK useChat over the
- * /api/power-agents/chat bridge (LangGraph server, 12 power agents),
- * streaming tokens + inline collapsible tool-call rows in the same
- * visual language.
- */
-
-// ── live agent roster (fetched from the LangGraph server) ──────────────
-
 interface LiveAgent {
   id: string;
   assistantId: string;
@@ -65,23 +52,16 @@ const ROLES: Record<string, { name: string; role: string; icon: string }> = {
   gitops_agent: { name: 'GitOps', role: 'Repository Manager', icon: 'git-branch' },
 };
 
-
-// a 401 from our LangGraph proxies means the backend revoked the session
-// (single-session policy: another device logged in) — the JWT cookie can
-// still look valid to middleware, so send the user to re-login explicitly
 function redirectToLogin(): never {
   window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
   throw new Error('session expired');
 }
 
-// a part is "visibly active" when text is streaming or a tool input is
-// pending output — used to decide whether the working-dots bubble is needed
 const isPartActive = (p: unknown) => {
   const s = (p as { state?: string }).state;
   return s === 'streaming' || s === 'input-streaming' || s === 'input-available';
 };
 
-// suite membership by explicit map — robust before suite #4 arrives
 const SUITE_OF: Record<string, AgentMeta['suite']> = {
   _content: 'Website Content Suite',
   devops: 'DevOps Suite',
@@ -121,12 +101,7 @@ function agentMeta(id: string): AgentMeta {
   };
 }
 
-// ── tool row in the feed's visual language (accordion-controlled) ──────
-
-// Map tool names to human-friendly labels — the user is a store owner
-// or marketer, not a developer. Pattern-based so it covers all agents.
 const TOOL_LABELS: Record<string, string> = {
-  // common
   'read_file': 'reviewing approach',
   'ls': 'checking resources',
   'glob': 'finding references',
@@ -135,7 +110,6 @@ const TOOL_LABELS: Record<string, string> = {
   'scrape_page': 'reading page',
   'extract_page_structure': 'analyzing structure',
   'check_field_bands': 'validating content',
-  // seo audit
   'audit_robots_txt': 'checking robots.txt',
   'audit_llms_txt': 'checking AI guides',
   'audit_sitemaps': 'checking sitemaps',
@@ -160,7 +134,6 @@ const TOOL_LABELS: Record<string, string> = {
   'measure_core_web_vitals': 'measuring vitals',
   'run_lighthouse_audits': 'running diagnostics',
   'run_full_lighthouse_audit': 'running full diagnostics',
-  // devops
   'ssh_connect': 'connecting to server',
   'ssh_shell': 'running command',
   'ssh_read_file': 'reading file',
@@ -169,7 +142,6 @@ const TOOL_LABELS: Record<string, string> = {
   'ssh_service': 'managing service',
   'ssh_approve_action': 'recording approval',
   'ssh_disconnect': 'disconnecting',
-  // shopify (MCP)
   'get-products': 'browsing products',
   'get-product-by-id': 'reading product',
   'get-shop-info': 'checking store info',
@@ -213,7 +185,6 @@ const TOOL_LABELS: Record<string, string> = {
   'manage-customer-address': 'updating address',
   'get-price-lists': 'checking pricing',
   'get-product-variants-detailed': 'checking variants',
-  // wordpress (MCP)
   'wp_list_pages': 'browsing pages',
   'wp_get_page': 'reading page',
   'wp_create_page': 'creating page',
@@ -251,7 +222,6 @@ const TOOL_LABELS: Record<string, string> = {
   'wp_list_users': 'browsing users',
   'wp_list_comments': 'browsing comments',
   'download_file': 'downloading image',
-  // gitops (GitHub MCP)
   'get_me': 'checking profile',
   'get_file_contents': 'reading file',
   'list_branches': 'browsing branches',
@@ -403,10 +373,6 @@ function ToolRow({
   );
 }
 
-// ── report/long-message accordion row ──────────────────────────────────
-
-/** Derive a short title from report markdown: first heading, or first
- * sentence, or ellipsized body. */
 function reportTitle(text: string): string {
   const heading = text.match(/^#{1,3}\s+(.+)/m);
   if (heading) return heading[1].trim().slice(0, 60);
@@ -418,7 +384,6 @@ function reportTitle(text: string): string {
   return text.replace(/\s+/g, ' ').slice(0, 57) + '…';
 }
 
-// one artifact-card action button: distinct palette color + hover tooltip
 function ArtifactAction({
   tip,
   color,
@@ -476,7 +441,6 @@ function ReportRow({
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      /* clipboard unavailable (permissions/insecure ctx) — no-op */
     }
   };
 
@@ -520,8 +484,6 @@ function ReportRow({
       )}
       {isOpen && (
         <>
-          {/* artifact actions — copy, download, render/raw toggle; each with
-              its own palette color and a hover tooltip */}
           <div className="mt-2 flex items-center gap-1.5 text-[10px]">
             <ArtifactAction tip="Copy report markdown to clipboard" color="var(--line-cobalt)" onClick={copyBody}>
               {copied ? (
@@ -563,8 +525,6 @@ function ReportRow({
   );
 }
 
-// ── the solo session (design intact, engine real) ──────────────────────
-
 interface SessionChip {
   id: string;
   title: string;
@@ -577,20 +537,16 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
   const doneFiredRef = useRef(false);
   const titlePatchedRef = useRef<string | null>(null);
 
-  // ── multi-thread state: sessions list + active thread ──────────────
   const [sessions, setSessions] = useState<SessionChip[]>([]);
   const [activeThread, setActiveThread] = useState<string | undefined>(undefined);
   const activeThreadRef = useRef<string | undefined>(undefined);
   activeThreadRef.current = activeThread;
 
-  // accordion: only one canvas panel open at a time (tool or report)
   const [openId, setOpenId] = useState<string | null>(null);
 
-  // rename state: which session chip is being edited
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameText, setRenameText] = useState('');
 
-  // track which tool groups are expanded (to show individual pills)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   function startRename(s: SessionChip) {
@@ -611,7 +567,7 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title }),
       });
-    } catch { /* optimistic — server sync is best-effort */ }
+    } catch {}
   }
 
   const refreshSessions = async () => {
@@ -619,7 +575,7 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
       const res = await fetch(`/api/power-agents/threads?agentKey=${agent.id}&workspaceId=${workspaceId}`);
       if (res.status === 401) redirectToLogin();
       if (res.ok) setSessions(await res.json());
-    } catch { /* list is best-effort */ }
+    } catch {}
   };
 
   useEffect(() => {
@@ -647,7 +603,6 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
         },
       }),
     }),
-    // capture the thread id emitted as a data part by the bridge, auto-title
     onFinish: (options) => {
       const message = options.message;
       const part = message.parts?.find(
@@ -661,11 +616,9 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
           s.some((c) => c.id === id) ? s : [{ id, title: 'New session' }, ...s],
         );
       }
-      // first reply in an untitled session: auto-title from context
       const chip = sessions.find((c) => c.id === (id ?? activeThreadRef.current));
       if (chip && (chip.title === 'New session' || !chip.title) && titlePatchedRef.current !== chip.id) {
         titlePatchedRef.current = chip.id;
-        // prefer the agent's opening line (contextual), fallback to user text
         const agentLine = options.message.parts
           ?.filter((p: { type: string }) => p.type === 'text')
           .map((p: { type: string; text?: string }) => p.text ?? '')
@@ -695,7 +648,7 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
   });
 
   async function newSession() {
-    if (busy) stop(); // kill active stream before starting fresh
+    if (busy) stop();
     try {
       const res = await fetch('/api/power-agents/threads', {
         method: 'POST',
@@ -709,20 +662,17 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
         activeThreadRef.current = t.id;
         setMessages([]);
       }
-    } catch { /* keep current session on failure */ }
+    } catch {}
   }
 
   async function switchSession(id: string) {
     if (id === activeThread) return;
-    // kill any active stream to prevent old-session parts bleeding in
     if (busy) stop();
 
     try {
       const res = await fetch(`/api/power-agents/threads/${id}`);
       if (res.status === 401) redirectToLogin();
       if (res.status === 404) {
-        // session was deleted out from under this tab (another tab,
-        // backend cleanup) — drop the stale chip
         setSessions((s) => s.filter((c) => c.id !== id));
         return;
       }
@@ -735,15 +685,12 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
       activeThreadRef.current = id;
       setMessages(t.messages as any);
 
-      // if this thread has an active run, join its live stream
-      // for token-level resume
       if (t.busy) {
         joinActiveStream(id);
       }
-    } catch { /* stay on current */ }
+    } catch {}
   }
 
-  /** Attach to a running stream on a thread and feed parts into messages. */
   async function joinActiveStream(threadId: string) {
     try {
       const res = await fetch(`/api/power-agents/threads/${threadId}/join`);
@@ -773,14 +720,12 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
 
           if (part.type === 'text-delta') {
             joinedText += part.delta as string;
-            // update the last assistant message's text
             setMessages((prev) => {
               const next = [...prev];
               for (let i = next.length - 1; i >= 0; i--) {
                 if (next[i].role === 'assistant') {
                   const msg = { ...next[i] };
                   const parts = [...(msg.parts ?? [])];
-                  // find or create the streaming text part
                   const textIdx = parts.findIndex(
                     (p: { type: string }) => p.type === 'text',
                   );
@@ -802,7 +747,6 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
               return next;
             });
           } else if (part.type === 'finish') {
-            // mark the text part as done
             setMessages((prev) => {
               const next = [...prev];
               for (let i = next.length - 1; i >= 0; i--) {
@@ -822,20 +766,19 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
             return;
           }
  else if (part.type === 'data-no-active-run') {
-            return; // run finished between our check and the join
+            return;
           }
         }
       }
     } catch {
-      /* join is best-effort */
     }
   }
 
   async function deleteSession(id: string) {
-    if (busy) stop(); // kill active stream before deleting
+    if (busy) stop();
     try {
       const res = await fetch(`/api/power-agents/threads/${id}`, { method: 'DELETE' });
-      if (!res.ok && res.status !== 404) return; // 404 = already gone, proceed
+      if (!res.ok && res.status !== 404) return;
     } catch { return; }
     setSessions((s) => s.filter((c) => c.id !== id));
     if (id === activeThread) {
@@ -847,10 +790,6 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
 
   const busy = status === 'submitted' || status === 'streaming';
 
-  // avatar+dots working row: shows whenever the turn is busy and nothing is
-  // visibly streaming — before the first assistant row, and mid-turn during
-  // model thinking or collapsed tool runs. Active text (cursor) and visible
-  // tool spinners suppress it.
   const lastMsg = messages[messages.length - 1];
   const showWorkingRow =
     busy &&
@@ -861,8 +800,6 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
     return last?.parts?.map((p) => (p.type === 'text' ? p.text : '')).join('') ?? '';
   }, [messages]);
 
-  // tool execution trace, in order, across all assistant turns —
-  // rendered in the execution_canvas (not the chat feed)
   const toolTrace = useMemo(() => {
     const trace: Array<{
       key: string; toolName: string; state: 'running' | 'complete' | 'failed';
@@ -876,8 +813,6 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
           type: string; toolCallId: string; state: string;
           input?: unknown; output?: unknown;
         };
-        // AI SDK 5 tool parts encode the name in the type ("tool-read_file");
-        // there is no separate toolName field
         const partToolName = tp.type.slice('tool-'.length) || 'tool';
         trace.push({
           key: `${m.id}:${tp.toolCallId}`,
@@ -896,7 +831,6 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
     return trace;
   }, [messages]);
 
-  // all long assistant messages → report accordions for the canvas
   const reportAccordions = useMemo(() => {
     const reports: Array<{ key: string; title: string; body: string }> = [];
     for (let i = 0; i < messages.length; i++) {
@@ -936,9 +870,6 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
     await sendMessage({ text });
   }
 
-  // sending clears the text but the onChange auto-grow leaves a stale inline
-  // height — collapse back to the resting single-line style whenever the
-  // composer is empty
   const taskInputRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     if (!task && taskInputRef.current) {
@@ -960,7 +891,6 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
           <span className="ml-auto text-[10px] font-mono opacity-50 shrink-0">{busy ? 'streaming…' : 'online'}</span>
         </div>
 
-        {/* sessions strip: switch context / new / delete (per-agent threads) */}
         <div className="flex-wrap sm:flex-nowrap flex items-center gap-1.5 px-3 sm:px-4 py-2 border-b agency-border overflow-x-auto shrink-0">
           <button
             type="button"
@@ -1051,7 +981,6 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
                 </span>
                 <div className="flex-1 min-w-0 space-y-2">
                   {(() => {
-                    // pre-group consecutive tool parts for compact rendering
                     type ToolInfo = { idx: number; name: string; state: string };
                     const items: Array<
                       | { kind: 'text'; idx: number; part: unknown }
@@ -1063,12 +992,10 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
                       if (toolRun.length === 0) return;
                       const key = `grp-${m.id}-${toolRun[0].idx}`;
                       if (toolRun.length <= 3) {
-                        // small run: render individually
                         for (const t of toolRun) {
                           items.push({ kind: 'tool', ...t });
                         }
                       } else {
-                        // large run: collapse into a group
                         items.push({ kind: 'toolgroup', key, tools: [...toolRun] });
                       }
                       toolRun = [];
@@ -1144,7 +1071,6 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
                         );
                       }
 
-                      // toolgroup: slim row + count badge for 4+ consecutive tool calls
                       const isExpanded = expandedGroups.has(item.key);
                       const allSameName = item.tools.every((t) => t.name === item.tools[0].name);
                       const anyRunning = item.tools.some(
@@ -1221,8 +1147,6 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
             ) : null,
           )}
 
-          {/* working row — agent avatar + typing dots; one rule for both
-              pre-first-part and mid-turn thinking gaps */}
           {showWorkingRow && (
             <div className="feed-row">
               <span className="feed-avatar" style={{ borderColor: meta.ink }}>
@@ -1297,7 +1221,6 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
         <div className="flex-1 p-3 sm:p-4 md:p-5 overflow-y-auto">
           {reportAccordions.length > 0 ? (
             <div className="space-y-2">
-              {/* reports only — tool calls live in the conversation feed */}
               {reportAccordions.map((r) => (
                 <ReportRow
                   key={r.key}
@@ -1322,8 +1245,6 @@ function SoloSession({ agent, workspaceId, onDone }: { agent: LiveAgent; workspa
     </>
   );
 }
-
-// ── page shell (unchanged layout; roster is live) ──────────────────────
 
 export default function DemoPowerAgentsPage() {
   const params = useParams();
@@ -1351,8 +1272,6 @@ export default function DemoPowerAgentsPage() {
 
   return (
     <div className="absolute inset-0 flex flex-col z-20 fade-in">
-      {/* full-bleed on desktop — the execution canvas (flex-1) absorbs the
-          extra width; the sidebar and feed keep their fixed sizes */}
       <div className="flex flex-col flex-1 min-h-0 w-full">
       <header className="flex justify-between items-end px-4 sm:px-8 md:px-10 py-3 sm:py-5 shrink-0 border-b agency-border">
         <div className="min-w-0">
@@ -1370,7 +1289,6 @@ export default function DemoPowerAgentsPage() {
 
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-y-auto lg:overflow-hidden">
 
-        {/* Mobile agent picker — visible below lg where the sidebar is hidden */}
         <div className="lg:hidden px-3 py-2 border-b agency-border shrink-0 flex items-center gap-2 overflow-x-auto">
           <select
             value={selectedId}
@@ -1390,7 +1308,6 @@ export default function DemoPowerAgentsPage() {
             sidebarCollapsed ? 'lg:w-[56px]' : 'lg:w-64'
           }`}
         >
-          {/* header with collapse toggle */}
           <div className="hidden lg:flex h-14 border-b agency-border items-center shrink-0 px-3">
             {!sidebarCollapsed && <p className="label-rule flex-1 truncate">Power Agents</p>}
             <button

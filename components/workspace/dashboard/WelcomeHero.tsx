@@ -66,9 +66,6 @@ function useDashboardData(workspaceId: string) {
   return { data, loading };
 }
 
-// ---------------------------------------------------------------------------
-// Stats Row
-// ---------------------------------------------------------------------------
 function StatsRow({ data }: { data: DashboardData }) {
   const running = data.threads.filter((t) => t.status === 'running').length;
   const completed = data.threads.filter((t) => t.status === 'complete').length;
@@ -99,9 +96,6 @@ function StatsRow({ data }: { data: DashboardData }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Quick Start
-// ---------------------------------------------------------------------------
 function QuickStart({ workspaceId }: { workspaceId: string }) {
   const [prompt, setPrompt] = useState('');
   const [selectedAgent, setSelectedAgent] = useState(AGENT_LIST[0]?.slug ?? '');
@@ -152,9 +146,6 @@ function QuickStart({ workspaceId }: { workspaceId: string }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Pending Approvals
-// ---------------------------------------------------------------------------
 function PendingApprovals({ threads, workspaceId }: { threads: AuditThread[]; workspaceId: string }) {
   const pending = threads.filter((t) => t.status === 'running' || t.status === 'error');
   if (pending.length === 0) return null;
@@ -182,9 +173,6 @@ function PendingApprovals({ threads, workspaceId }: { threads: AuditThread[]; wo
   );
 }
 
-// ---------------------------------------------------------------------------
-// Recent Artifacts
-// ---------------------------------------------------------------------------
 function RecentArtifacts({ artifacts }: { artifacts: AuditArtifact[]; workspaceId: string }) {
   if (artifacts.length === 0) return null;
 
@@ -209,9 +197,6 @@ function RecentArtifacts({ artifacts }: { artifacts: AuditArtifact[]; workspaceI
   );
 }
 
-// ---------------------------------------------------------------------------
-// Power Agents
-// ---------------------------------------------------------------------------
 const ROLE_PRESETS: Record<string, { name: string; role: string; desc: string; icon: string }> = {
   crawlability_audit: { name: 'Crawlability', role: 'Crawler & Indexer', desc: 'Audits crawler access and indexation', icon: 'bot' },
   technical_foundations_audit: { name: 'Tech Foundations', role: 'Infra & Security', desc: 'Checks SSL, headers, and server infrastructure', icon: 'server' },
@@ -336,9 +321,6 @@ function AgentDirectory({ workspaceId }: { workspaceId: string; magentoConnected
   );
 }
 
-// ---------------------------------------------------------------------------
-// Activity Feed
-// ---------------------------------------------------------------------------
 function ActivityFeed({ threads, workspaceId }: { threads: AuditThread[]; workspaceId: string }) {
   const feed = threads.slice(0, 8);
 
@@ -376,9 +358,6 @@ function ActivityFeed({ threads, workspaceId }: { threads: AuditThread[]; worksp
   );
 }
 
-// ---------------------------------------------------------------------------
-// Team Section
-// ---------------------------------------------------------------------------
 function TeamSection({ workspaceId }: { workspaceId: string }) {
   const [members, setMembers] = useState<{ name: string; email: string; role: string }[]>([]);
 
@@ -418,9 +397,6 @@ function TeamSection({ workspaceId }: { workspaceId: string }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Main Dashboard
-// ---------------------------------------------------------------------------
 export function WelcomeHero({ workspaceId }: { workspaceId: string }) {
   const { user } = useAuth();
   const displayName = user?.name || 'Operator';
@@ -428,7 +404,6 @@ export function WelcomeHero({ workspaceId }: { workspaceId: string }) {
 
   return (
     <div className="w-full flex flex-col pb-6">
-      {/* Greeting */}
       <div className="flex flex-col items-center text-center mb-4 md:mb-6 rise">
         <BrandMark className="w-10 h-10 md:w-12 md:h-12 mb-2 md:mb-3" />
         <h2 className="text-xl md:text-2xl font-bold tracking-tight mb-1 md:mb-1.5 text-[var(--ink)]">
@@ -437,13 +412,10 @@ export function WelcomeHero({ workspaceId }: { workspaceId: string }) {
         <p className="text-[var(--ink-dim)] text-xs md:text-[13px]">What are we working on today?</p>
       </div>
 
-      {/* Stats */}
       {!loading && <StatsRow data={data} />}
 
-      {/* Quick Start */}
       <QuickStart workspaceId={workspaceId} />
 
-      {/* Main content: stacked on mobile, side-by-side on lg */}
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="flex-1 flex flex-col min-w-0">
           {!data.hasPersona && (

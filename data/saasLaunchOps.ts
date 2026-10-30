@@ -1,5 +1,3 @@
-// SaaS Launch Ops specific types and data
-
 export interface LaunchAgent {
   id: string;
   name: string;

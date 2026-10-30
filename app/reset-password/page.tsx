@@ -75,7 +75,6 @@ function ResetPasswordContent() {
         <div className="v2-scope">
             <AuthLayout positioning="Set a new password to regain access to your autonomous agent workspaces.">
                 <AnimatePresence mode="wait">
-                    {/* Validating */}
                     {pageState === 'validating' && (
                         <motion.div key="validating" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
                             <div className="w-8 h-8 mx-auto rounded-full border-2 border-current border-t-transparent animate-spin mb-4" style={{ color: 'var(--v2-vermilion)' }} />
@@ -83,7 +82,6 @@ function ResetPasswordContent() {
                         </motion.div>
                     )}
 
-                    {/* Invalid token */}
                     {pageState === 'invalid_token' && (
                         <motion.div key="invalid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
                             <motion.div className="w-14 h-14 mx-auto mb-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(200,50,27,0.08)' }} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
@@ -98,7 +96,6 @@ function ResetPasswordContent() {
                         </motion.div>
                     )}
 
-                    {/* Success */}
                     {pageState === 'success' && (
                         <motion.div key="success" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
                             <motion.div className="w-14 h-14 mx-auto mb-5 rounded-full flex items-center justify-center" style={{ background: 'var(--v2-vermilion)' }} initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
@@ -112,7 +109,6 @@ function ResetPasswordContent() {
                         </motion.div>
                     )}
 
-                    {/* Form + error states */}
                     {(pageState === 'reset_form' || pageState === 'error') && (
                         <motion.form key="form" onSubmit={handleSubmit} noValidate initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08, delayChildren: 0.15 } } }}>
                             <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="mb-7">
@@ -131,7 +127,6 @@ function ResetPasswordContent() {
                                     trailing={<button type="button" onClick={() => setShowPassword((s) => !s)} className="p-1 hover:opacity-70" aria-label={showPassword ? 'Hide password' : 'Show password'} style={{ color: 'var(--v2-paper-ink-2)' }}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>} />
                             </motion.div>
 
-                            {/* Strength meter */}
                             <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="mb-7">
                                 <AnimatePresence>
                                     {password.length > 0 && (
@@ -183,7 +178,6 @@ function ResetPasswordContent() {
     );
 }
 
-// Wrapper for useSearchParams (needs Suspense)
 function useSearchParamsWrapper() {
     return useSearchParams();
 }

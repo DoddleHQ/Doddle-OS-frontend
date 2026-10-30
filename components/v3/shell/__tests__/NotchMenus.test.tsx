@@ -6,9 +6,8 @@ describe('NotchMenus · workspace switcher (v13 entries, real metrics)', () => {
   beforeEach(() => {
     useV3OS.setState({ menu: null });
     try {
-      window.localStorage.clear(); // unread baseline is persisted
+      window.localStorage.clear();
     } catch {
-      /* ignore */
     }
   });
 
@@ -26,8 +25,8 @@ describe('NotchMenus · workspace switcher (v13 entries, real metrics)', () => {
       ],
     });
     render(<NotchMenus />);
-    expect(screen.getByText('1 session · 1 new')).toBeTruthy(); // live metric carries unread
-    expect(screen.getByText('northwind.io')).toBeTruthy(); // real domain — never a fake metric
+    expect(screen.getByText('1 session · 1 new')).toBeTruthy();
+    expect(screen.getByText('northwind.io')).toBeTruthy();
     expect(screen.getByText('on')).toBeTruthy();
   });
 

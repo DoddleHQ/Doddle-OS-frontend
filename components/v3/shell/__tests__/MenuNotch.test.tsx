@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MenuNotch } from '@/components/v3/shell/MenuNotch';
 import { useV3OS } from '@/lib/v3/osStore';
-// path navigation: router/pathname stubs
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
   usePathname: () => '/v3',
@@ -30,7 +29,7 @@ describe('MenuNotch', () => {
     expect(screen.getByTitle('Home · full OS')).toBeTruthy();
     expect(screen.getByTitle('Launchpad · define')).toBeTruthy();
     expect(screen.getByTitle('Assignments · track')).toBeTruthy();
-    expect(screen.queryByTitle('Agents · roster')).toBeNull(); // agents lives in Spotlight only
+    expect(screen.queryByTitle('Agents · roster')).toBeNull();
     expect(screen.getByTitle('Spotlight · ⌘K')).toBeTruthy();
     expect(screen.getByTitle('Triage · review')).toBeTruthy();
     expect(screen.getByTitle('Reports · progress')).toBeTruthy();
@@ -53,7 +52,6 @@ describe('MenuNotch', () => {
       window.localStorage.clear();
       window.localStorage.setItem('v3.firstVisit', String(Date.now() - 24 * 3600_000));
     } catch {
-      /* ignore */
     }
     useV3OS.setState({
       sessionFeed: [{ id: 't9', title: 'fresh', agentKey: 'crawlability_audit', createdAt: null, updatedAt: new Date(Date.now() - 2 * 3600_000).toISOString() }],

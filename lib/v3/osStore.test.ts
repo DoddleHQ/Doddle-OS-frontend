@@ -24,17 +24,17 @@ describe('v3 os store · windows', () => {
     s().openApp('home');
     const home = s().windows.find((w) => w.id === 'home')!;
     expect(home.minimized).toBe(false);
-    expect(s().windows[s().windows.length - 1].id).toBe('home'); // raised to top
+    expect(s().windows[s().windows.length - 1].id).toBe('home');
     expect(s().windows.find((w) => w.id === 'launchpad')?.mode).toBe('page');
   });
 
   it('closeWin removes; sections are exclusive — opening agents closed launchpad (v13 nav)', () => {
     s().openApp('home');
     s().openApp('launchpad');
-    s().openApp('agents'); // page navigation: launchpad is left behind
+    s().openApp('agents');
     expect(s().windows.map((w) => w.id)).toEqual(['home', 'agents']);
     s().closeWin('agents');
-    expect(s().windows.map((w) => w.id)).toEqual(['home']); // floating home survives
+    expect(s().windows.map((w) => w.id)).toEqual(['home']);
   });
 
   it('setWinPos and setMode mutate only the target window', () => {
@@ -48,7 +48,7 @@ describe('v3 os store · windows', () => {
   });
 
   it('zooming a page-default app back to window mode gives it a sane width', () => {
-    s().openApp('agents'); // page mode, width 0
+    s().openApp('agents');
     s().setMode('agents', 'window');
     const w = s().windows[0];
     expect(w.mode).toBe('window');
@@ -74,7 +74,7 @@ describe('v3 os store · workspaces + agent selection', () => {
     expect(s().workspaces).toHaveLength(2);
     s().setWorkspace('w2');
     s().setWorkspaces([{ id: 'w1', name: 'One' }, { id: 'w2', name: 'Two' }]);
-    expect(s().workspaceId).toBe('w2'); // valid selection preserved
+    expect(s().workspaceId).toBe('w2');
   });
 
   it('selectAgent switches between roster and an agent', () => {
@@ -113,6 +113,6 @@ describe('v3 os store · overlays + theme', () => {
     expect(localStorage.getItem('v3.theme')).toBe('dark');
     useV3OS.setState({ theme: 'light' });
     useV3OS.getState().hydrate();
-    expect(s().theme).toBe('dark'); // rehydrated from storage
+    expect(s().theme).toBe('dark');
   });
 });

@@ -3,7 +3,6 @@ import { Dashboard } from '@/components/v3/shell/Dashboard';
 import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3PowerAgents, type V3Agent, type V3Session } from '@/lib/v3/powerAgents';
 import { useV3OperatorName } from '@/lib/v3/data';
-// path navigation: capture pushes
 const pushes: string[] = [];
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: (p: string) => pushes.push(p), replace: jest.fn() }),
@@ -64,8 +63,6 @@ describe('Dashboard (real power-agent data)', () => {
     useV3OS.setState({ sessionFeed: [session({})] });
     render(<Dashboard />);
     expect(screen.getByText(/Good (morning|afternoon|evening), Alex/i)).toBeTruthy();
-    // headline session appears in the Active Execution card and telemetry; the
-    // v13 sub line is the static hint
     await waitFor(() => expect(screen.getAllByText('Q4 site audit').length).toBeGreaterThan(0));
     expect(screen.getAllByText('in-progress tasks appear here first').length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Q4 site audit — \d+%/i).length).toBeGreaterThan(0);
@@ -92,7 +89,6 @@ describe('Dashboard (real power-agent data)', () => {
     expect(screen.getByRole('link', { name: /↗ Research task/i }).getAttribute('href')).toBe('/v3/launchpad?type=research');
     expect(screen.getByRole('link', { name: /↗ Deploy research agent/i }).getAttribute('href')).toBe('/v3/agents');
     expect(screen.getByRole('link', { name: /Needs review/ }).getAttribute('href')).toBe('/v3/triage');
-    // cards: assignments, agents, active execution → assignments, triage
     expect(screen.getByRole('link', { name: /Assignments/i }).getAttribute('href')).toBe('/v3/assignments');
     expect(screen.getByRole('link', { name: /^Agents/i }).getAttribute('href')).toBe('/v3/agents');
     expect(screen.getByRole('link', { name: /Active Execution/i }).getAttribute('href')).toBe('/v3/assignments');

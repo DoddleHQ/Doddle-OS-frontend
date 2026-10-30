@@ -9,10 +9,6 @@ const displayFont = Instrument_Serif({
   subsets: ['latin'],
   display: 'swap',
   variable: '--v2-display',
-  // Instrument Serif has unusual vertical metrics that next/font's automatic
-  // fallback-metric calculator can't handle (causes the "Failed to find font
-  // override values" warning). Disable the auto-adjustment — the CSS already
-  // provides a proper serif fallback stack, so FOUT is minimal.
   adjustFontFallback: false,
 });
 

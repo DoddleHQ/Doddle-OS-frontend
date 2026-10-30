@@ -67,7 +67,6 @@ export default function ForgotPasswordPage() {
                 <p className="text-[14px]" style={{ color: 'var(--v2-paper-ink-2)' }}>Enter your email and we&rsquo;ll send you a password reset link.</p>
               </motion.div>
 
-              {/* Impeccable design error alert container */}
               {apiError && (
                 <motion.div
                   initial={{ opacity: 0, y: -6 }}

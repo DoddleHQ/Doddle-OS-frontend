@@ -19,14 +19,6 @@ import { PREMIUM_EASE } from '@/components/v2/motion';
 import { extractArtifactMarkdown } from '@/components/content-factory/chat/artifacts/artifactContentUtils';
 import type { ArtifactPayload } from '@/lib/types/graph-events.types';
 
-/*
- * Extract workspace name + domain from the graph's completion payload.
- *
- * Priority:
- *   1. completeEvent.summary  (cleanest — emitted with the complete event)
- *   2. report artifact metadata  (fallback if summary absent)
- *   3. ''  (let the API create an unnamed workspace; user can rename later)
- */
 function extractWorkspaceMeta(
   summary: Record<string, unknown> | undefined,
   artifacts: ArtifactPayload[],
@@ -46,7 +38,6 @@ function extractWorkspaceMeta(
     return { workspaceName: name, domain: domain || undefined };
   }
 
-  // Fallback: scan report artifacts for metadata
   for (const a of artifacts) {
     const meta = a.metadata as Record<string, unknown> | undefined;
     const mName =
@@ -64,31 +55,10 @@ function extractWorkspaceMeta(
   return { workspaceName: '', domain: undefined };
 }
 
-/*
- * OnboardingDesk — "The Agent's Desk" onboarding experience.
- *
- * TWO STATES:
- * 1. LANDING — a full-screen animated hero with FlowingThreads background,
- *    "Brand Persona Setup" heading, and a "Begin" button. The graph does
- *    NOT start until the user clicks.
- * 2. CONVERSATION — the streaming chat interface (same v2 design as before).
- *
- * Design (3 skills applied):
- * IMPPECCABLE: first viewport is a thesis — the heading, a single CTA, nothing
- * else competes. No chrome. Depth from spacing + hairlines.
- * MOTION DESIGN (Premium archetype): FlowingThreads ambient background (sine
- * wave breath), heading materializes with stagger, CTA has hover anticipation.
- * CLAUDE DESIGN SKILLS: the landing IS the product — a specimen book page
- * that comes alive when you engage.
- */
-
 export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
   const router = useRouter();
   const { createWorkspace } = useWorkspaces();
   const { refresh: refreshAuth } = useAuth();
-  // When workspaceId is provided, we're in "brand persona setup" mode inside
-  // an existing workspace — we save the persona via PUT instead of creating
-  // a new workspace.
   const isWorkspaceScoped = !!workspaceId;
   const chatRef = useRef<HTMLDivElement>(null);
   const [started, setStarted] = useState(false);
@@ -118,29 +88,22 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
     },
   });
 
-  // Derive the workspace name + domain from the complete event (with artifact fallback)
   const { workspaceName, domain } = extractWorkspaceMeta(
     completeEvent?.summary as Record<string, unknown> | undefined,
     artifacts,
   );
 
-  // Extract the brand persona markdown from the report artifact.
-  // Uses the same extractor as V2ArtifactCard so what we persist matches what
-  // the user saw. Falls back to '' if no artifact/content is present.
   const personaMarkdown = (() => {
     const reportArtifact = artifacts.find((a) => a.artifactType === 'report') || artifacts[0];
     if (!reportArtifact) return '';
     const md = extractArtifactMarkdown(reportArtifact);
-    // extractArtifactMarkdown may return '{}' / '' for empty content — treat as none
     return md && md.trim() !== '{}' && md.trim() !== '' ? md : '';
   })();
 
   const isListening = !isRunning && !isHITLPending && !isComplete && messages.length > 0;
 
-  // Start the graph ONLY when user clicks the Begin button
   const handleBegin = useCallback(() => {
     setStarted(true);
-    // Small delay for the transition animation
     setTimeout(() => startStream({ human_input: '' }), 300);
   }, [startStream]);
 
@@ -161,24 +124,16 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
     }
   }, [streamState.pendingHITL, respondToHITL]);
 
-  // Create the workspace from the persona graph's extracted name + domain +
-  // brand persona markdown, then navigate the user into it. Falls back
-  // gracefully if the graph didn't surface a name.
-  //
-  // WORKSPACE-SCOPED MODE: when workspaceId is provided, skip workspace
-  // creation and instead save the persona via PUT /workspaces/{id}/persona.
   const handleEnterOS = useCallback(async () => {
     if (isCreatingWorkspace) return;
     setWorkspaceError(null);
     setIsCreatingWorkspace(true);
     try {
       if (isWorkspaceScoped && workspaceId) {
-        // Brand persona setup mode — save persona to existing workspace
         const { workspaceService } = await import('@/lib/services/workspaceService');
         await workspaceService.upsertPersona(workspaceId, personaMarkdown || '');
         router.replace(`/workspaces/${workspaceId}`);
       } else {
-        // Workspace creation mode (legacy standalone)
         const ws = await createWorkspace(
           workspaceName || '',
           domain || undefined,
@@ -188,7 +143,6 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
         try {
           await refreshAuth();
         } catch {
-          /* swallow — navigate regardless */
         }
 
         router.replace(`/workspaces/${ws.workspaceId}`);
@@ -200,7 +154,6 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
     }
   }, [isCreatingWorkspace, isWorkspaceScoped, workspaceId, createWorkspace, workspaceName, domain, personaMarkdown, refreshAuth, router]);
 
-  // Auto-scroll
   useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTo({ top: chatRef.current.scrollHeight, behavior: 'smooth' });
@@ -210,16 +163,13 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
   const showHITLCard = isHITLPending && !!streamState.pendingHITL;
   const showChatInput = !isRunning && !isComplete && !isHITLPending && started;
 
-  // === LANDING STATE ===
   if (!started) {
     return (
       <div className="v2-scope min-h-screen flex flex-col relative overflow-hidden" style={{ background: 'var(--v2-paper-ground)' }}>
-        {/* Ambient layer — FlowingThreads */}
         <div className="fixed inset-0 pointer-events-none" style={{ opacity: 0.4 }}>
           <FlowingThreads />
         </div>
 
-        {/* Ambient glow */}
         <motion.div
           className="absolute pointer-events-none rounded-full"
           style={{ top: '-15%', right: '-10%', width: '40vw', height: '40vh', background: 'var(--v2-vermilion)', filter: 'blur(140px)' }}
@@ -227,7 +177,6 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
         />
 
-        {/* Wordmark */}
         <header className="flex-shrink-0 px-6 md:px-10 pt-8 relative z-10">
           <div className="max-w-[720px] mx-auto">
             <Link href="/" className="v2-display text-[1.125rem]" style={{ color: 'var(--v2-paper-ink)' }}>
@@ -236,10 +185,8 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
           </div>
         </header>
 
-        {/* Hero center */}
         <div className="flex-1 flex items-center justify-center px-6 md:px-10 relative z-10">
           <div className="max-w-[640px] w-full text-center">
-            {/* Headline — materializes with stagger */}
             <motion.div
               initial="hidden"
               animate="show"
@@ -273,7 +220,6 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
                 Takes about 2 minutes
               </motion.p>
 
-              {/* CTA — anticipation on hover, tap scale */}
               <motion.div
                 variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }}
                 transition={{ duration: 0.5, delay: 0.3, ease: PREMIUM_EASE }}
@@ -306,15 +252,12 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
     );
   }
 
-  // === CONVERSATION STATE ===
   return (
     <div className="v2-scope min-h-screen flex flex-col relative overflow-hidden" style={{ background: 'var(--v2-paper-ground)' }}>
-      {/* Ambient layer */}
       <div className="fixed inset-0 pointer-events-none" style={{ opacity: 0.3 }}>
         <FlowingThreads />
       </div>
 
-      {/* Ambient glow */}
       <motion.div
         className="absolute pointer-events-none rounded-full"
         style={{ top: '-15%', right: '-10%', width: '40vw', height: '40vh', background: 'var(--v2-vermilion)', filter: 'blur(140px)' }}
@@ -322,7 +265,6 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
         transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      {/* Wordmark */}
       <header className="flex-shrink-0 px-6 md:px-10 pt-8 pb-2 relative z-10">
         <div className="max-w-[720px] mx-auto flex items-center justify-between">
           <Link href="/" className="v2-display text-[1.125rem]" style={{ color: 'var(--v2-paper-ink)' }}>
@@ -348,10 +290,8 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
         </div>
       </header>
 
-      {/* Chat area */}
       <div ref={chatRef} className="flex-1 overflow-y-auto px-6 md:px-10 relative z-10">
         <div className="max-w-[720px] mx-auto flex flex-col py-4">
-          {/* Error */}
           {error && !isRunning && (
             <div className="mb-4 p-3 rounded-[8px] v2-mono text-[12px]" style={{ background: 'rgba(200,50,27,0.04)', border: '1px solid var(--v2-vermilion)', color: 'var(--v2-vermilion)' }}>
               {error.message}
@@ -359,16 +299,7 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
             </div>
           )}
 
-          {/* Messages */}
           {(() => {
-            // The most recent HITL message is the one rendered as the live,
-            // interactive V2HITLCard below. Only that one is suppressed inline;
-            // every earlier (already-answered) HITL is shown as the agent's
-            // question so the conversation reads as Q→A pairs in history.
-            // NOTE: we match by message identity, not requestId — the backend
-            // reuses the same interrupt node across interview rounds, so the
-            // requestId/taskId is identical for every round and would suppress
-            // the entire history if compared.
             const lastHitlId = streamState.pendingHITL
               ? messages.filter((m) => m.type === 'hitl').slice(-1)[0]?.id
               : null;
@@ -394,11 +325,9 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
                 }
               }
               if (msg.type === 'hitl') {
-                // Only the live (last) HITL renders below as V2HITLCard — skip it.
                 if (msg.id === lastHitlId) {
                   return null;
                 }
-                // A past (already-answered) HITL — render the agent's question.
                 return (
                   <DeskCard key={msg.id} variant="agent">
                     <V2Markdown content={msg.content} />
@@ -409,17 +338,14 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
             });
           })()}
 
-          {/* HITL card */}
           {showHITLCard && streamState.pendingHITL && (
             <V2HITLCard request={streamState.pendingHITL} onRespond={handleHITLRespond} />
           )}
 
-          {/* Agent typing */}
           <AnimatePresence>
             {isRunning && !isHITLPending && <AgentTyping />}
           </AnimatePresence>
 
-          {/* Completion */}
           {isComplete && (
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 20 }}
@@ -434,7 +360,6 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
                 {isWorkspaceScoped ? 'Ready to save to your workspace.' : 'Your workspace is ready.'}
               </p>
 
-              {/* Detected workspace identity */}
               {(workspaceName || domain) && (
                 <div className="mb-5 inline-flex flex-col gap-1 px-4 py-2.5 rounded-[10px] text-left" style={{ background: 'rgba(255,255,255,0.45)', border: '1px solid var(--v2-paper-rule)' }}>
                   {workspaceName && (
@@ -484,7 +409,6 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
         </div>
       </div>
 
-      {/* Chat input */}
       <div className="flex-shrink-0 px-6 md:px-10 pb-6 pt-2 relative z-10">
         <div className="max-w-[720px] mx-auto">
           {showChatInput && !isComplete && (

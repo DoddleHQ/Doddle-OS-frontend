@@ -29,7 +29,6 @@ function VaultCard({ artifact }: { artifact: VaultArtifact }) {
   );
 }
 
-/** Artifact Vault — real artifacts from recent threads, pulled from the threads API. */
 export function VaultPanel({ workspaceId }: { workspaceId: string }) {
   const open = useOS((s) => s.vaultOpen);
   const setOverlay = useOS((s) => s.setOverlay);

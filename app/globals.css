@@ -3,10 +3,9 @@
 @tailwind utilities;
 
 :root {
-  --background: #f8fafc; /* Slate 50 */
-  --foreground: #0f172a; /* Slate 900 */
+  --background: #f8fafc;
+  --foreground: #0f172a;
 
-  /* Workspace design tokens */
   --net-ground: #f7f5ee;
   --net-panel: #f7f5ee;
   --net-panel-2: #efede4;
@@ -33,7 +32,6 @@
   --warn: var(--line-amber);
   --danger: var(--line-scarlet);
 
-  /* Scrollbar */
   --st-track: #efe7d6;
   --st-thumb: #c2b495;
   --st-thumb-hover: #c8321b;
@@ -42,7 +40,7 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: inherit; /* Inherit from next/font */
+  font-family: inherit;
 }
 
 @layer utilities {
@@ -51,7 +49,6 @@ body {
   }
 }
 
-/* Chat message markdown styling */
 .system-message-markdown .prose,
 .agent-message-markdown .prose {
   margin: 0;
@@ -73,7 +70,6 @@ body {
   margin-bottom: 0;
 }
 
-/* Inline markdown in system messages */
 .system-message-markdown .prose strong {
   color: theme('colors.slate.700');
 }
@@ -82,7 +78,6 @@ body {
   font-style: italic;
 }
 
-/* Agent message markdown enhancements */
 .agent-message-markdown .prose strong {
   color: theme('colors.slate.900');
 }
@@ -94,31 +89,17 @@ body {
   font-size: 0.75rem;
 }
 
-/* ---------------------------------------------------------------
- * Custom scrollbar — follows the surface it sits on.
- * The track matches the page ground (so the bar reads as belonging
- * to the surface, not overlaid on it), and the thumb is a quiet
- * tinted element that only asserts itself on hover. Per-register
- * variables make it match both the warm-paper ground and the
- * tinted-ink terminal without a seam.
- * --------------------------------------------------------------- */
-
-/* Defaults = warm paper ground (v1 light + v2 paper sections). */
-
-/* Dark (ink-terminal) sections flip the whole palette. */
 .v2-ink {
-  --st-track: #141210;      /* matches --v2-ink-ground */
-  --st-thumb: #3a342e;      /* ink-rule-strong tint */
-  --st-thumb-hover: #e8442e;/* vermilion lift */
+  --st-track: #141210;
+  --st-thumb: #3a342e;
+  --st-thumb-hover: #e8442e;
 }
 
-/* Firefox — thumb over track, both from the surface. */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--st-thumb, #c2b495) var(--st-track, #efe7d6);
 }
 
-/* WebKit (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -128,8 +109,6 @@ body {
 }
 ::-webkit-scrollbar-thumb {
   background: var(--st-thumb, #c2b495);
-  /* The border uses the TRACK color (not transparent) so there's no gap
-   * artifact where a mismatched background bleeds through. */
   border: 2px solid var(--st-track, #efe7d6);
   border-radius: 9999px;
   background-clip: padding-box;
@@ -143,13 +122,6 @@ body {
 ::-webkit-scrollbar-corner {
   background: var(--st-track, #efe7d6);
 }
-
-/* ===============================================================
- * V2 — Specimen Terminal design system (scoped to .v2-scope)
- * Two registers: paper (warm press paper) and ink (tinted near-black).
- * All v2 tokens, type, motion, and component styles live here, scoped
- * so they never bleed into v1-styled routes.
- * =============================================================== */
 
 .v2-scope {
   --v2-paper-ground: #efe7d6;
@@ -222,24 +194,14 @@ body {
 .v2-scope :focus-visible { outline: 2px solid var(--v2-vermilion); outline-offset: 3px; border-radius: 1px; }
 .v2-scope ::selection { background: var(--v2-vermilion); color: var(--v2-vermilion-ink); }
 
-/* Auth inputs */
 .v2-auth-input::placeholder { color: var(--v2-paper-ink-2); opacity: 0.5; }
 .v2-auth-input:focus { border-color: var(--v2-vermilion); box-shadow: 0 0 0 3px rgba(200,50,27,0.12); }
 
-/* Icon rail — home (navigation) tile hover. Distinct from workspace tiles:
-   solidifies toward vermilion on hover to signal it's an action, not a workspace. */
 .v2-rail-home:hover {
   background: rgba(232,68,46,0.22) !important;
   border-color: rgba(232,68,46,0.4) !important;
 }
 
-/* ===============================================================
- * Workspace Design System
- * Tokens, typography, components, motion, and markdown styling
- * for the main workspace UI.
- * =============================================================== */
-
-/* ===== typography ===== */
 .font-mono, code, pre, kbd {
     font-family: var(--font-fragment), 'Fragment Mono', ui-monospace, monospace;
 }
@@ -255,26 +217,22 @@ body {
 }
 .tnum { font-variant-numeric: tabular-nums; }
 
-/* ===== selection, caret, focus ===== */
 ::selection { background: rgba(36, 71, 216, 0.2); }
 .cli-input, input { caret-color: var(--line-scarlet); }
 input:focus-visible,
 textarea:focus-visible { outline: none; }
 :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 4px; }
 
-/* ===== base-map (decorative linework, currently disabled) ===== */
 .base-map {
     background-image: none;
     opacity: 0;
 }
 
-/* ===== skeleton loading ===== */
 .skeleton {
     background: color-mix(in srgb, var(--ink) 8%, transparent);
     animation: v2-pulse-dot 1.5s ease-in-out infinite;
 }
 
-/* ===== windows & plates ===== */
 .agency-window {
     background: var(--net-panel);
     border: 1px solid var(--hairline);
@@ -291,7 +249,6 @@ textarea:focus-visible { outline: none; }
     transition: border-color 0.18s, background-color 0.18s;
 }
 
-/* interactive plate — hairline brightens, never a shadow */
 .agency-card {
     background: var(--net-panel);
     border: 1px solid var(--hairline);
@@ -314,7 +271,6 @@ textarea:focus-visible { outline: none; }
 .dense-row:hover { background: var(--net-panel-2); }
 .dense-row:last-child { border-bottom: none; }
 
-/* ===== line utilities ===== */
 .line-dot {
     width: 8px; height: 8px; border-radius: 999px; flex: none;
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--dot, var(--ink)) 18%, transparent);
@@ -322,7 +278,6 @@ textarea:focus-visible { outline: none; }
 }
 .line-rule { height: 3px; border-radius: 999px; background: var(--dot, var(--ink)); }
 
-/* hatch = suspended segment */
 .hatch {
     background: repeating-linear-gradient(
         45deg,
@@ -331,7 +286,6 @@ textarea:focus-visible { outline: none; }
     );
 }
 
-/* ===== status chips ===== */
 .service-chip {
     display: inline-flex;
     align-items: center;
@@ -349,7 +303,6 @@ textarea:focus-visible { outline: none; }
     white-space: nowrap;
 }
 
-/* ===== status badges ===== */
 .agent-badge {
     display: inline-flex;
     align-items: center;
@@ -367,7 +320,6 @@ textarea:focus-visible { outline: none; }
 .status-triage { color: var(--line-amber); border-color: color-mix(in srgb, var(--line-amber) 45%, transparent); background: color-mix(in srgb, var(--line-amber) 10%, transparent); }
 .status-done { color: var(--line-green); border-color: color-mix(in srgb, var(--line-green) 45%, transparent); background: color-mix(in srgb, var(--line-green) 10%, transparent); }
 
-/* ===== search pill ===== */
 .search-pill {
     background: var(--net-panel);
     border: 1px solid var(--hairline);
@@ -378,7 +330,6 @@ textarea:focus-visible { outline: none; }
     box-shadow: 0 0 0 3px rgba(36, 71, 216, 0.12);
 }
 
-/* ===== dock ===== */
 .dock-icon {
     border-radius: 10px;
     border: 1px solid transparent;
@@ -394,7 +345,6 @@ textarea:focus-visible { outline: none; }
     box-shadow: inset 0 0 0 1px var(--hairline-strong);
 }
 
-/* ===== buttons ===== */
 .btn-primary {
     background: var(--line-scarlet);
     color: #fff;
@@ -435,7 +385,6 @@ textarea:focus-visible { outline: none; }
 }
 .btn-outline:hover { border-color: var(--line-scarlet); color: var(--line-scarlet); }
 
-/* ===== tunnel (stdout / code previews) ===== */
 .terminal-container {
     position: relative;
     background: var(--net-tunnel);
@@ -454,7 +403,6 @@ textarea:focus-visible { outline: none; }
 .text-warn { color: var(--line-amber); }
 .text-error { color: var(--line-scarlet); }
 
-/* ===== inputs ===== */
 .cli-input-wrapper {
     background: var(--net-panel);
     border: 1px solid var(--hairline);
@@ -482,7 +430,6 @@ textarea:focus-visible { outline: none; }
 }
 .cli-input::placeholder { color: var(--ink-faint); }
 
-/* ===== slide-in panels ===== */
 .side-panel {
     transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
     transform: translateX(105%);
@@ -499,7 +446,6 @@ textarea:focus-visible { outline: none; }
 }
 .user-menu.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
 
-/* ===== keyframes & animations ===== */
 @keyframes trainPulse {
     0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--train, var(--ink)) 45%, transparent); }
     50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--train, var(--ink)) 0%, transparent); }
@@ -524,7 +470,6 @@ textarea:focus-visible { outline: none; }
 .typing-dot:nth-child(1) { animation-delay: -0.32s; }
 .typing-dot:nth-child(2) { animation-delay: -0.16s; }
 
-/* ===== toasts ===== */
 .toast {
     display: flex;
     align-items: center;
@@ -543,20 +488,17 @@ textarea:focus-visible { outline: none; }
 .toast svg { color: var(--tone, var(--ink-dim)); }
 .toast.out { animation: netToastOut 0.25s ease forwards; }
 
-/* ===== command palette ===== */
 .cmdk-item.sel {
     background: var(--net-panel-2);
     box-shadow: inset 0 0 0 1px var(--hairline-strong);
 }
 .cmdk-item.sel svg { color: var(--ink); }
 
-/* ===== reduced motion ===== */
 @media (prefers-reduced-motion: reduce) {
     .rise, .slide-in, .fade-in { animation: none; opacity: 1; }
     .side-panel { transition: none; }
 }
 
-/* ===== thread blocks ===== */
 .thread-block {
     background: var(--net-panel);
     border: 1px solid var(--hairline);
@@ -575,7 +517,6 @@ textarea:focus-visible { outline: none; }
 .thread-block.is-aborted { border-color: color-mix(in srgb, var(--line-amber) 45%, transparent); }
 .thread-block.is-active { border-color: var(--hairline-strong); box-shadow: inset 0 0 0 1px var(--hairline-strong); }
 
-/* ===== feed ===== */
 .feed-row { display: flex; gap: 0.85rem; animation: netSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
 .feed-avatar {
     width: 30px; height: 30px; border-radius: 8px; flex: none;
@@ -591,7 +532,6 @@ textarea:focus-visible { outline: none; }
     line-height: 1.6;
 }
 
-/* ===== terminal copy ===== */
 .term-copy {
     position: absolute; top: 0.45rem; right: 0.45rem;
     color: var(--ink-dim);
@@ -608,7 +548,6 @@ textarea:focus-visible { outline: none; }
 .term-wrap:hover .term-copy { opacity: 1; }
 .term-copy:hover { color: var(--line-cobalt); border-color: var(--hairline-strong); }
 
-/* ===== hub tabs (settings) ===== */
 .hub-tab {
     border-radius: 7px;
     border: 1px solid transparent;
@@ -625,10 +564,8 @@ textarea:focus-visible { outline: none; }
     box-shadow: inset 2px 0 0 var(--line-cobalt);
 }
 
-/* ===== timeline (gantt) ===== */
 .tl-live { animation: netPulseOp 1.1s ease-in-out infinite; }
 
-/* ===== markdown (agent bubbles & canvas) ===== */
 .md { overflow-wrap: break-word; word-break: break-word; }
 .md > :first-child { margin-top: 0; }
 .md > :last-child { margin-bottom: 0; }
@@ -694,7 +631,6 @@ textarea:focus-visible { outline: none; }
 .md strong { font-weight: 700; }
 .md em { font-style: italic; }
 
-/* ===== markdown-body (brand persona, rendered docs) ===== */
 .markdown-body h1 {
     font-size: 1.25rem;
     font-weight: 700;

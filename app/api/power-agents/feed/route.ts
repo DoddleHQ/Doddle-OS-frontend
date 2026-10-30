@@ -3,13 +3,6 @@ import { getLangGraphApiUrl, langgraphAuthHeaders } from '@/lib/config/langgraph
 
 export const dynamic = 'force-dynamic';
 
-/**
- * GET /api/power-agents/feed?workspaceId=…
- * Workspace-wide session feed across ALL power agents, newest first —
- * the per-agent /threads route requires an agentKey; the v3 OS rail and
- * telemetry need the whole workspace in one call.
- */
-
 interface ThreadRow {
   thread_id: string;
   metadata?: Record<string, unknown>;

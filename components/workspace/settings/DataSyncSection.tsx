@@ -12,10 +12,6 @@ import type {
 } from '@/lib/types/connection.types';
 import type { SyncFrequency as CronSyncFrequency } from '@/lib/utils/cron';
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 interface SourceConfig {
   type: DataSourceType;
   label: string;
@@ -51,10 +47,6 @@ const SOURCES: SourceConfig[] = [
 
 const field = 'w-full bg-transparent border border-[var(--hairline)] focus:border-[var(--hairline-strong)] outline-none rounded-[5px] px-3 py-2 text-xs font-mono text-[var(--ink)] transition-colors placeholder-[var(--ink-faint)]';
 
-// ---------------------------------------------------------------------------
-// Sync health row
-// ---------------------------------------------------------------------------
-
 function SyncStateRow({ state }: { state: SyncState }) {
   const ok = state.lastSyncStatus === 'success';
   const failed = state.lastSyncStatus === 'failed';
@@ -82,10 +74,6 @@ function SyncStateRow({ state }: { state: SyncState }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Per-source panel
-// ---------------------------------------------------------------------------
-
 function SourcePanel({ workspaceId, config }: { workspaceId: string; config: SourceConfig }) {
   const [connection, setConnection] = useState<DataSourceConnection | null>(null);
   const [syncStates, setSyncStates] = useState<SyncState[]>([]);
@@ -109,7 +97,6 @@ function SourcePanel({ workspaceId, config }: { workspaceId: string; config: Sou
         setSyncStates(states);
       }
     } catch {
-      // Source not connected yet — that's fine
     } finally {
       setLoading(false);
     }
@@ -171,7 +158,6 @@ function SourcePanel({ workspaceId, config }: { workspaceId: string; config: Sou
     try {
       const result = await connectionService.triggerSync(workspaceId, config.type);
       notify(`Sync started — ${result.jobIds.length} job(s) queued`, 'success');
-      // Refresh states after a short delay
       setTimeout(() => load(), 2000);
     } catch (err) {
       notify(err instanceof Error ? err.message : 'Failed to trigger sync', 'error');
@@ -182,7 +168,6 @@ function SourcePanel({ workspaceId, config }: { workspaceId: string; config: Sou
 
   return (
     <div className="agency-card !cursor-default" style={connected ? { borderColor: 'color-mix(in srgb, var(--line-green) 20%, transparent)' } : undefined}>
-      {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b agency-border">
         <div className="flex items-center gap-3">
           <span className="w-8 h-8 rounded-[6px] border flex items-center justify-center shrink-0" style={{ borderColor: connected ? 'var(--line-green)' : 'var(--hairline-strong)' }}>
@@ -219,7 +204,6 @@ function SourcePanel({ workspaceId, config }: { workspaceId: string; config: Sou
         </div>
       </div>
 
-      {/* Sync health (when connected) */}
       {connected && syncStates.length > 0 && (
         <div className="border-b agency-border">
           {syncStates.slice(0, 5).map((s) => (
@@ -228,7 +212,6 @@ function SourcePanel({ workspaceId, config }: { workspaceId: string; config: Sou
         </div>
       )}
 
-      {/* Schedule (when connected) */}
       {connected && (
         <div className="px-5 py-3.5 flex items-center justify-between">
           <span className="label-rule !gap-2 !text-[9px]">Sync Frequency</span>
@@ -239,7 +222,6 @@ function SourcePanel({ workspaceId, config }: { workspaceId: string; config: Sou
               setFrequency(newFreq);
               const opt = FREQUENCY_OPTIONS.find((o) => o.value === newFreq);
               try {
-                // Update schedule via the appropriate update endpoint
                 if (config.type === 'magento') {
                   await connectionService.updateMagento(workspaceId, { schedule: { syncCron: opt?.cron ?? null } });
                 } else if (config.type === 'gsc') {
@@ -259,7 +241,6 @@ function SourcePanel({ workspaceId, config }: { workspaceId: string; config: Sou
         </div>
       )}
 
-      {/* Connect form (when not connected) */}
       {showForm && !connected && (
         <div className="p-5 space-y-3">
           {config.fields.map((f) => (
@@ -302,10 +283,6 @@ function SourcePanel({ workspaceId, config }: { workspaceId: string; config: Sou
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Main DataSync component
-// ---------------------------------------------------------------------------
 
 export function DataSyncSection({ workspaceId }: { workspaceId: string }) {
   const groups = [...new Set(SOURCES.map((s) => s.group))];

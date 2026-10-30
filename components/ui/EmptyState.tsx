@@ -12,8 +12,8 @@ export interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
     onClick: () => void
     variant?: "default" | "outline" | "ghost" | "link" | "destructive" | "secondary" | "primary"
   }
-  variant?: string // Allow variant formatting prop (even if unused, to suppress errors)
-  actions?: React.ReactNode // Alias for action or multiple actions
+  variant?: string
+  actions?: React.ReactNode
   size?: "sm" | "md" | "lg"
 }
 

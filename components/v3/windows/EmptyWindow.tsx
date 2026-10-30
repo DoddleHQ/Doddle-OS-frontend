@@ -2,7 +2,6 @@
 
 import type { V3AppMeta } from '@/lib/v3/apps';
 
-/** Placeholder body for apps whose screen hasn't shipped yet. */
 export function EmptyWindow({ app }: { app: V3AppMeta }) {
   return (
     <div className="flex flex-col items-center justify-center text-center" style={{ minHeight: 320 }}>

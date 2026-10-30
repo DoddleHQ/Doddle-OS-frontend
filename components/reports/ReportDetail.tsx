@@ -8,13 +8,6 @@ import { Badge } from '@/components/ui/Badge';
 import { ReportData, ReportSection, ReportMetric, ReportChart, ReportTable, ReportStatus, REPORT_STATUS_LABELS, REPORT_STATUS_COLORS, ExportFormat, EXPORT_FORMAT_LABELS } from './types/reports.types';
 import { ArrowLeft, Download, Share2, Printer, RefreshCw, FileText, BarChart3, Table } from 'lucide-react';
 
-/**
- * ReportDetail Component
- *
- * Displays a detailed report with sections, metrics, charts, and tables.
- *
- * @component
- */
 export interface ReportDetailProps {
     report: ReportData | null;
     sections: ReportSection[];
@@ -107,7 +100,6 @@ export const ReportDetail: React.FC<ReportDetailProps> = ({
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
                     <Button
@@ -168,7 +160,6 @@ export const ReportDetail: React.FC<ReportDetailProps> = ({
                 </div>
             </div>
 
-            {/* Metrics Grid */}
             {metrics.length > 0 && (
                 <Card>
                     <CardHeader>
@@ -209,7 +200,6 @@ export const ReportDetail: React.FC<ReportDetailProps> = ({
                 </Card>
             )}
 
-            {/* Charts */}
             {charts.length > 0 && (
                 <Card>
                     <CardHeader>
@@ -244,7 +234,6 @@ export const ReportDetail: React.FC<ReportDetailProps> = ({
                 </Card>
             )}
 
-            {/* Tables */}
             {tables.length > 0 && (
                 <Card>
                     <CardHeader>
@@ -314,7 +303,6 @@ export const ReportDetail: React.FC<ReportDetailProps> = ({
                 </Card>
             )}
 
-            {/* Sections */}
             {sections.length > 0 && (
                 <Card>
                     <CardHeader>
@@ -349,7 +337,6 @@ export const ReportDetail: React.FC<ReportDetailProps> = ({
                                         </div>
                                     </button>
 
-                                    {/* Expanded Content */}
                                     {expandedSection.has(section.id) && (
                                         <div className="mt-2 p-4 bg-white border border-neutral-200 rounded-lg">
                                             {section.content}
@@ -362,7 +349,6 @@ export const ReportDetail: React.FC<ReportDetailProps> = ({
                 </Card>
             )}
 
-            {/* Export Section */}
             <Card>
                 <CardHeader>
                     <CardTitle>Export Report</CardTitle>

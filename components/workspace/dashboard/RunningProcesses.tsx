@@ -7,7 +7,6 @@ import { threadService } from '@/lib/services/threadService';
 import type { AuditThread } from '@/lib/types/thread.types';
 import { SwarmBadge } from '../primitives';
 
-/** Real threads from the thread service — replaces the fabricated process list. */
 export function RunningProcesses({ workspaceId }: { workspaceId: string }) {
   const [threads, setThreads] = useState<AuditThread[]>([]);
   const [loading, setLoading] = useState(true);

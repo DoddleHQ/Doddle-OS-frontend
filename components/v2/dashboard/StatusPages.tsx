@@ -5,14 +5,6 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/*
- * v2 shared status components for error.tsx and loading.tsx files.
- *
- * Used across all workspace module routes to provide consistent v2
- * Specimen Terminal loading and error states without legacy Card/Button.
- */
-
-/** Error state — centered, vermilion alert icon + message + retry button */
 export function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => void }) {
     return (
         <motion.div
@@ -42,15 +34,12 @@ export function ErrorState({ message, onRetry }: { message?: string; onRetry?: (
     );
 }
 
-/** Loading state — skeleton blocks matching typical page layout */
 export function LoadingState({ lines = 4 }: { lines?: number }) {
     return (
         <div className="p-5 md:p-6 max-w-[640px] mx-auto space-y-4">
-            {/* Header skeleton */}
             <div className="flex items-center gap-2">
                 <div className="h-7 rounded" style={{ width: '40%', background: 'var(--v2-paper-rule)', opacity: 0.5, animation: 'v2-metric-breath 1.4s ease-in-out infinite' }} />
             </div>
-            {/* Content skeletons */}
             {[...Array(lines)].map((_, i) => (
                 <div key={i} className="h-12 rounded-[8px]" style={{ background: 'var(--v2-paper-rule)', opacity: 0.4, animation: 'v2-metric-breath 1.4s ease-in-out infinite' }} />
             ))}
@@ -58,7 +47,6 @@ export function LoadingState({ lines = 4 }: { lines?: number }) {
     );
 }
 
-/** Full-screen loading (for layout-level loading.tsx) */
 export function FullScreenLoading() {
     return (
         <div className="v2-scope min-h-screen flex items-center justify-center" style={{ background: 'var(--v2-paper-ground)' }}>
@@ -72,7 +60,6 @@ export function FullScreenLoading() {
     );
 }
 
-/** Coming soon placeholder for modules not yet implemented */
 export function ComingSoon({ moduleName }: { moduleName: string }) {
     return (
         <div className="p-5 md:p-6 max-w-[640px] mx-auto">

@@ -8,10 +8,6 @@ import { getLangGraphApiUrl } from '@/lib/config/langgraph.config';
 import MarkdownRenderer from '@/components/content-factory/chat/artifacts/MarkdownRenderer';
 import Notification from '@/components/ui/Notification';
 
-// ============================================================================
-// Types
-// ============================================================================
-
 interface ChatMessage {
     id: string;
     role: 'user' | 'assistant' | 'system' | 'tool_call' | 'tool_result';
@@ -33,30 +29,8 @@ interface StreamState {
     phase: AgentPhase;
 }
 
-// ============================================================================
-// Constants
-// ============================================================================
-
 const ASSISTANT_ID = 'merchant_analyst';
 
-// ============================================================================
-// New Analysis Page
-// ============================================================================
-
-/**
- * New Analysis Page - Continuous Chat Interface for Merchant Analyst
- *
- * Uses LangGraph messages protocol with full streaming (identical to Google Analyst):
- * - Input: { messages: [{ role: "user", content: "..." }] }
- * - Stream mode: ["messages", "updates"]
- * - Events: messages/partial, messages/complete, updates
- *
- * Phase-based state machine:
- *   reasoning → tool_calling → tool_executing → tool_result → reasoning (repeat) → answering → done
- *
- * Each agent response is automatically saved as a 'report' artifact.
- * Assistant messages include Copy and Download action buttons.
- */
 export default function NewAnalysisPage() {
     const params = useParams();
     const router = useRouter();
@@ -420,7 +394,6 @@ export default function NewAnalysisPage() {
                             }
                         }
                     } catch {
-                        // Not valid JSON, skip
                     }
                 }
             }
@@ -609,10 +582,6 @@ export default function NewAnalysisPage() {
     );
 }
 
-// ============================================================================
-// Message Bubble Component
-// ============================================================================
-
 interface MessageBubbleProps {
     message: ChatMessage;
     copiedMessageId: string | null;
@@ -706,7 +675,6 @@ function MessageBubble({ message, copiedMessageId, onCopy, onDownload }: Message
         );
     }
 
-    // Assistant messages
     const isCopied = copiedMessageId === message.id;
     const isFinalized = !message.isStreaming && message.content.length > 0;
 
@@ -759,10 +727,6 @@ function MessageBubble({ message, copiedMessageId, onCopy, onDownload }: Message
         </div>
     );
 }
-
-// ============================================================================
-// Chat Input Component
-// ============================================================================
 
 interface ChatInputProps {
     onSend: (message: string) => void;

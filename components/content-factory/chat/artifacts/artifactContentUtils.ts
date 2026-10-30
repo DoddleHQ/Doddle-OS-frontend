@@ -1,8 +1,5 @@
 import { ArtifactPayload } from '@/lib/types/graph-events.types';
 
-/**
- * Preprocess markdown content by removing code block markers and formatting
- */
 export function preprocessMarkdown(content: string): string {
     let result = content;
     const fencedMatch = result.match(/^```(?:markdown)?\s*\n([\s\S]*?)\n```\s*$/);
@@ -13,9 +10,6 @@ export function preprocessMarkdown(content: string): string {
     return result.trim();
 }
 
-/**
- * Convert data table content to markdown format
- */
 export function convertDataTableToMarkdown(artifact: ArtifactPayload): string {
     const content = typeof artifact.content === 'string'
         ? (() => {
@@ -32,14 +26,11 @@ export function convertDataTableToMarkdown(artifact: ArtifactPayload): string {
 
     let markdown = `# ${title}\n\n`;
 
-    // Site Context
     if (stepId === 'site_context' || title.toLowerCase().includes('site context')) {
-        // Business persona reports with rich markdown content
         if (typeof content.reportContent === 'string') {
             return preprocessMarkdown(content.reportContent as string);
         }
 
-        // Simple site context (key-value format)
         markdown += `## Site Context\n\n`;
         if (content.business_name) markdown += `**Business:** ${content.business_name}\n\n`;
         if (content.niche) markdown += `**Niche:** ${content.niche}\n\n`;
@@ -70,7 +61,6 @@ export function convertDataTableToMarkdown(artifact: ArtifactPayload): string {
             markdown += '\n';
         }
     }
-    // Tech Stack
     else if (stepId === 'tech_research' || title.toLowerCase().includes('tech stack')) {
         markdown += `## Tech Stack\n\n`;
         if (content.stack) markdown += `**Stack:** ${content.stack}\n\n`;
@@ -95,7 +85,6 @@ export function convertDataTableToMarkdown(artifact: ArtifactPayload): string {
             markdown += '\n';
         }
     }
-    // Home Page
     else if (stepId === 'home_scraping' || title.toLowerCase().includes('home page') ||
         'meta_title' in content || 'headings' in content || 'content_stats' in content) {
         markdown += `## Home Page Analysis\n\n`;
@@ -129,7 +118,6 @@ export function convertDataTableToMarkdown(artifact: ArtifactPayload): string {
             });
         }
     }
-    // Generic Data View
     else {
         markdown += `## Data\n\n`;
         Object.entries(content).forEach(([key, value]) => {
@@ -141,9 +129,6 @@ export function convertDataTableToMarkdown(artifact: ArtifactPayload): string {
     return preprocessMarkdown(markdown);
 }
 
-/**
- * Convert link list content to markdown format
- */
 export function convertLinkListToMarkdown(artifact: ArtifactPayload): string {
     const content = typeof artifact.content === 'string'
         ? (() => {
@@ -193,9 +178,6 @@ export function convertLinkListToMarkdown(artifact: ArtifactPayload): string {
     return preprocessMarkdown(markdown);
 }
 
-/**
- * Convert generic artifact content to markdown format
- */
 export function convertGenericToMarkdown(artifact: ArtifactPayload): string {
     const title = artifact.title;
     const description = artifact.description || '';
@@ -212,14 +194,9 @@ export function convertGenericToMarkdown(artifact: ArtifactPayload): string {
     return preprocessMarkdown(markdown);
 }
 
-/**
- * Extract markdown content from any artifact type
- * This is the main function that should be used for copy/download operations
- */
 export function extractArtifactMarkdown(artifact: ArtifactPayload): string {
     const artifactType = artifact.artifactType;
 
-    // Markdown-based artifacts (report, blueprint, content)
     if (['report', 'pre_run_report', 'pre_run_audit', 'pre_run_audit_summary', 'blueprint', 'content'].includes(artifactType)) {
         const content = typeof artifact.content === 'string'
             ? (() => {
@@ -258,16 +235,13 @@ export function extractArtifactMarkdown(artifact: ArtifactPayload): string {
         return preprocessMarkdown(fallbackContent);
     }
 
-    // Data table artifacts (including site_context and tech_stack)
     if (artifactType === 'data_table' || artifactType === 'site_context' || artifactType === 'tech_stack') {
         return convertDataTableToMarkdown(artifact);
     }
 
-    // Link list artifacts
     if (artifactType === 'link_list') {
         return convertLinkListToMarkdown(artifact);
     }
 
-    // Generic artifacts
     return convertGenericToMarkdown(artifact);
 }

@@ -39,9 +39,6 @@ type TabId = (typeof TABS)[number]['items'][number]['id'];
 
 const field = 'w-full bg-transparent border border-[var(--hairline)] focus:border-[var(--hairline-strong)] outline-none rounded-[5px] px-3 py-2 text-xs font-mono text-[var(--ink)] transition-colors';
 
-// ---------------------------------------------------------------------------
-// Profile tab — real account data, editable via PATCH /user/edit-profile
-// ---------------------------------------------------------------------------
 function ProfileTab() {
   const { user } = useAuth();
   const [name, setName] = useState(user?.name || '');
@@ -53,7 +50,6 @@ function ProfileTab() {
     setSaving(true);
     try {
       await editProfile(name.trim());
-      // Propagate the new name to every component reading useAuth()
       const store = useAuthStore.getState();
       if (store.user) {
         store.setAuthState({ status: 'authenticated', user: { ...store.user, name: name.trim() } });
@@ -111,9 +107,6 @@ function ProfileTab() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Workspace tab — real workspace data, editable name, immutable domain
-// ---------------------------------------------------------------------------
 function WorkspaceTab({ workspaceId }: { workspaceId: string }) {
   const { workspace } = useCurrentWorkspace(workspaceId);
   const { refresh: refreshWorkspaceList } = useWorkspaces();
@@ -191,9 +184,6 @@ function WorkspaceTab({ workspaceId }: { workspaceId: string }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Members tab — real member list with role management
-// ---------------------------------------------------------------------------
 function MembersTab({ workspaceId }: { workspaceId: string }) {
   const { user } = useAuth();
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
@@ -307,9 +297,6 @@ function MembersTab({ workspaceId }: { workspaceId: string }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Invite links tab — create, copy, regenerate, revoke
-// ---------------------------------------------------------------------------
 function InvitesTab({ workspaceId }: { workspaceId: string }) {
   const [links, setLinks] = useState<InviteLink[]>([]);
   const [loading, setLoading] = useState(true);
@@ -438,9 +425,6 @@ function InvitesTab({ workspaceId }: { workspaceId: string }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Main page — tabs + static demo tabs (billing, guardrails, analytics, integrations)
-// ---------------------------------------------------------------------------
 export default function DemoSettingsPage() {
   const params = useParams();
   const workspaceId = params.workspaceId as string;

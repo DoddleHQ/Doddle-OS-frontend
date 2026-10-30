@@ -54,7 +54,6 @@ function detectArtifactType(artifact: AuditArtifact): ArtifactType {
     if (pageName.includes('link')) return 'link_list';
     if (pageName.includes('analysis')) return 'report';
 
-    // If content is a plain string (not parseable JSON), treat as report/markdown
     if (typeof artifact.content === 'string') {
         try {
             JSON.parse(artifact.content);
@@ -72,7 +71,6 @@ export function toArtifactPayload(artifact: AuditArtifact): ArtifactPayload {
         try {
             content = JSON.parse(content);
         } catch {
-            // keep as string
         }
     }
 

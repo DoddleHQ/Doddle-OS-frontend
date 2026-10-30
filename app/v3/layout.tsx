@@ -1,13 +1,8 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import '@/components/v3/v3.css';
-import '@/components/v3/v13.css'; // exact-UI layer: reference values override our adaptations
+import '@/components/v3/v13.css';
 
-// Self-hosted (next/font/local): identical faces to the previous
-// next/font/google setup, but the build no longer fetches fonts.googleapis.com
-// at build time — docker builds succeed without network access to Google.
-// The woff2 files are the variable-weight cuts, so one file per family
-// covers every weight the UI uses.
 const inter = localFont({
   display: 'swap',
   variable: '--font-v3-inter',
@@ -38,7 +33,6 @@ const CONTRACT = [
 export default function V3Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className={`${inter.variable} ${jet.variable}`}>
-      {/* Direction contract — survives the production build as a real comment node */}
       <aside hidden dangerouslySetInnerHTML={{ __html: `<!--\n${CONTRACT}\n-->` }} />
       {children}
     </div>

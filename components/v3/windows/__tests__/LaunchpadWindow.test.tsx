@@ -2,7 +2,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { LaunchpadWindow } from '@/components/v3/windows/LaunchpadWindow';
 import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3PowerAgents } from '@/lib/v3/powerAgents';
-// path navigation: router/pathname stubs
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
   usePathname: () => '/v3',
@@ -35,7 +34,6 @@ describe('LaunchpadWindow · v13 exact launcher DOM', () => {
     for (const label of ['Research & articles', 'Code review & PRs', 'Data analysis & pipelines', 'Draft & content', 'Admin & organization', 'Design & assets']) {
       expect(screen.getByText(label)).toBeTruthy();
     }
-    // category cards route to real module pages
     expect(screen.getByText('Research & articles').closest('button')!.getAttribute('data-cat')).toBe('research');
   });
 
@@ -45,13 +43,12 @@ describe('LaunchpadWindow · v13 exact launcher DOM', () => {
       target: { value: 'keyword cluster for winter tires' },
     });
     const rows = screen.getAllByText(/SEO Cluster/);
-    expect(rows.length).toBeGreaterThan(0); // full-run row + matched-blueprint head
+    expect(rows.length).toBeGreaterThan(0);
     expect(screen.getByText(/MATCHED BLUEPRINT · SEO CLUSTER/i)).toBeTruthy();
     expect(screen.getByText('Full run — SEO Cluster')).toBeTruthy();
-    expect(screen.getByText('keyword clusters')).toBeTruthy(); // stage row
+    expect(screen.getByText('keyword clusters')).toBeTruthy();
     expect(await screen.findByText('Swarm:')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Launch campaign →/i })).toBeTruthy();
-    // the state chip reports the match, like the reference lp-state
     expect(screen.getByText('matched · SEO Cluster')).toBeTruthy();
   });
 });

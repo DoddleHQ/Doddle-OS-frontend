@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AgentsWindow } from '@/components/v3/windows/AgentsWindow';
 import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3PowerAgents, fetchV3Sessions, fetchV3SessionsForAgent, type V3Agent, type V3Session } from '@/lib/v3/powerAgents';
-// path navigation: router/pathname stubs
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
   usePathname: () => '/v3',
@@ -23,7 +22,6 @@ const mockedAgents = fetchV3PowerAgents as jest.MockedFunction<typeof fetchV3Pow
 const mockedFeed = fetchV3Sessions as jest.MockedFunction<typeof fetchV3Sessions>;
 const mockedSessions = fetchV3SessionsForAgent as jest.MockedFunction<typeof fetchV3SessionsForAgent>;
 
-// the same streaming utils the real exec view uses — mocked for tests
 const chatState: { messages: UIMessageLike[]; status: string; error: { message: string } | null } = {
   messages: [],
   status: 'ready',
@@ -38,7 +36,6 @@ jest.mock('@ai-sdk/react', () => ({
 }));
 jest.mock('ai', () => ({ DefaultChatTransport: jest.fn().mockImplementation(() => ({})) }));
 
-// jsdom omits the Web codecs; the join path decodes SSE in the browser
 if (typeof global.TextDecoder === 'undefined') {
   (global as Record<string, unknown>).TextDecoder = TextDecoder;
   (global as Record<string, unknown>).TextEncoder = TextEncoder;
@@ -70,9 +67,8 @@ const session = (over: Partial<V3Session>): V3Session => ({
 function setup() {
   useV3OS.setState({ windows: [], workspaceId: 'w1', selectedAgentKey: null });
   try {
-    window.localStorage.clear(); // unread state is per-thread, persisted
+    window.localStorage.clear();
   } catch {
-    /* ignore */
   }
 }
 
@@ -95,21 +91,19 @@ describe('AgentsWindow · roster (v13 exact DOM)', () => {
     render(<AgentsWindow />);
     expect(await screen.findByText('Which agent does the work?')).toBeTruthy();
     expect(screen.getByText('Describe it — we match the workspace agent, then it runs here.')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: /Launch agent/i }).length).toBeGreaterThanOrEqual(1); // composer + scope pane
+    expect(screen.getAllByRole('button', { name: /Launch agent/i }).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('button', { name: 'Pick an agent' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Mode' })).toBeTruthy();
     expect(screen.getByText('ACTIVE / IN FLOW')).toBeTruthy();
     expect(screen.getByText('IDLE / UNUSED')).toBeTruthy();
     expect(screen.getByText('1 in flow')).toBeTruthy();
     expect(screen.getByText('2 available')).toBeTruthy();
-    // crawlability carries a session → active column; shopify none → idle
     expect(document.querySelector('#agent-roster-active')?.querySelectorAll('.agent-card-v').length).toBe(1);
     expect(document.querySelector('#agent-roster-idle')?.querySelectorAll('.agent-card-v').length).toBe(2);
     const cards = document.querySelectorAll('.agent-card-v');
     expect(cards[0].className).toContain('profile-card');
     expect(screen.getByText('● carrying 1 · 35%')).toBeTruthy();
     expect(screen.getAllByText('idle — unused').length).toBe(2);
-    // search narrows; Enter launches the best match as a task here
     fireEvent.change(screen.getByLabelText('Describe the work'), { target: { value: 'shopify' } });
     expect(screen.queryByText('@Crawlability')).toBeNull();
     fireEvent.keyDown(screen.getByLabelText('Describe the work'), { key: 'Enter' });
@@ -167,7 +161,7 @@ describe('AgentsWindow · execution (v13 exact DOM)', () => {
       { id: 't1', title: 'Q4 site audit', agentKey: 'crawlability_audit', createdAt: '2026-09-30T10:00:00Z', updatedAt: '2026-09-30T11:00:00Z' },
     ]);
     render(<AgentsWindow />);
-    expect((await screen.findAllByText('@Crawlability')).length).toBeGreaterThanOrEqual(1); // head (text-lg) + CONVERSATION label
+    expect((await screen.findAllByText('@Crawlability')).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('THREADS · TASKS THIS AGENT IS CARRYING')).toBeTruthy();
     expect(await screen.findByText('Q4 site audit')).toBeTruthy();
   });

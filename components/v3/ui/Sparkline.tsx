@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react';
 
-/** Small accent polyline. Null-context safe (jsdom/tests). */
 export function Sparkline({ series, height = 34 }: { series: number[]; height?: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {

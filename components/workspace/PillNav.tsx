@@ -10,16 +10,10 @@ import { DemoIcon } from '@/lib/demo/icons';
 import { BrandMark } from './primitives';
 import { buildDemoRoutes } from './routes';
 
-/** Hide the pill after this long without pointer, wheel, touch, or keyboard activity. */
 const IDLE_MS = 3000;
 
-/** Shared easing with the rest of the workspace (see ThreadDetail). */
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/**
- * Floating pill header for non-dashboard pages. Replaces the left dock there:
- * appears while the user is active, fades out after a period of stillness.
- */
 export function PillNav({ workspaceId }: { workspaceId: string }) {
   const pathname = usePathname();
   const { user } = useAuth();
@@ -53,7 +47,6 @@ export function PillNav({ workspaceId }: { workspaceId: string }) {
     };
   }, [scheduleHide]);
 
-  // resting the pointer on the pill keeps it open — restart the countdown on leave
   useEffect(() => {
     if (hovered && timer.current) clearTimeout(timer.current);
   }, [hovered]);

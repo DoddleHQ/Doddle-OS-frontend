@@ -2,50 +2,21 @@ import { FileText, Globe, Store } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ModuleId } from '@/lib/types/thread.types';
 
-/*
- * Agent config registry — single source of truth for all content factory agents.
- *
- * Each agent has a human name and personality to make the interaction feel like
- * talking to a real colleague, not operating a tool. Inspired by the
- * "named worker" UX pattern (e.g. EnrichLabs' "Helena").
- *
- * Agents operate on the CURRENT workspace's domain — no external URLs.
- * The workspace's websiteDomain (set at creation, immutable) is the input.
- *
- * Each agent is identified by its URL slug. The config drives:
- * - The v2 landing page (agent cards)
- * - The streaming page (graphId + input builder)
- * - The thread list page (moduleId for API calls)
- */
-
 export interface AgentConfig {
     slug: string;
     graphId: string;
     moduleId: ModuleId;
-    /** Human-facing name (shown to user, not the graphId) */
     name: string;
-    /** Role/position */
     role: string;
     subtitle: string;
     icon: LucideIcon;
-    /** Initials for avatar */
     initials: string;
-    /** Greeting shown when the conversation starts */
     greeting: string;
-    /** What this agent says when they start working */
     workingStatus: string;
-    /** Builds the graph input payload from user-provided URL + extras + workspaceId */
     inputBuilder: (url: string, extras?: Record<string, unknown>, workspaceId?: string) => Record<string, unknown>;
-    /** Placeholder text for the URL input */
     inputPlaceholder: string;
-    /**
-     * Data-source connection this agent requires. When set, the welcome
-     * screen checks the connection and gates the start button on it.
-     */
     connectionSource?: 'magento';
-    /** Start button label (default "Start Analysis") */
     startLabel?: string;
-    /** User message posted when the start button is clicked (default "Analyze {domain}") */
     startMessage?: string;
 }
 
@@ -67,9 +38,6 @@ export const AGENTS: Record<string, AgentConfig> = {
         }),
         inputPlaceholder: 'Workspace domain is used automatically…',
     },
-    // 'magento-content-writer' (Maya, v1) retired from the v2 roster —
-    // replaced by 'magento-content' (Mia, datalake-driven). The v1 launch
-    // page still exists for old threads.
     'magento-content': {
         slug: 'magento-content',
         graphId: 'magento_content',

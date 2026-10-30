@@ -17,11 +17,9 @@ export interface V3AppMeta {
   arrivesScreen: number;
   blurb: string;
   icon: LucideIcon;
-  /** v13 titlebar chip (right side), when the reference has one. */
   chip?: string;
 }
 
-/** Window/app registry — names, icons, blurbs, and the screen where each app's real content lands. */
 export const V3_APP_META: Record<WindowId, V3AppMeta> = {
   home: { name: 'Home', arrivesScreen: 1, blurb: 'Status & quick starts.', icon: LayoutDashboard },
   launchpad: { name: 'Launchpad', arrivesScreen: 2, blurb: 'Pick a category or agent, or describe the task.', icon: TerminalSquare, chip: 'choose to begin' },

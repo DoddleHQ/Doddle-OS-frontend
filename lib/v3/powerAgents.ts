@@ -1,14 +1,5 @@
 'use client';
 
-/*
- * v3 power-agents data layer.
- *
- * The roster and sessions come from the live power-agents API
- * (LangGraph assistants + workspace-scoped session threads) — the same
- * source the /power-agents page uses. Display meta mirrors the page's
- * ROLES/suite tables (kept in sync by hand until it graduates to a lib).
- */
-
 import type { LucideIcon } from 'lucide-react';
 import { DEMO_AGENTS, demoSessions } from '@/lib/v3/demoData';
 import {
@@ -32,7 +23,6 @@ import {
 export type V3Suite = 'SEO Audit Suite' | 'Website Content Suite' | 'DevOps Suite' | 'Shopify Suite' | 'WordPress Suite' | 'GitOps Suite';
 
 export interface V3Agent {
-  /** LangGraph agent key, e.g. crawlability_audit */
   key: string;
   assistantId: string;
   name: string;
@@ -50,7 +40,6 @@ export interface V3Session {
   updatedAt: string | null;
 }
 
-// mirrors app/workspaces/[workspaceId]/power-agents/page.tsx ROLES
 const ROLES: Record<string, { name: string; role: string; icon: LucideIcon }> = {
   crawlability_audit: { name: 'Crawlability', role: 'Crawler & Indexer', icon: Bot },
   technical_foundations_audit: { name: 'Tech Foundations', role: 'Infra & Security', icon: Server },
@@ -78,8 +67,6 @@ const SUITE_OF: Partial<Record<V3Suite, string>> & Record<string, V3Suite> = {
   gitops: 'GitOps Suite',
 } as Record<string, V3Suite>;
 
-/** One accent per suite — the v13 profile-card tint (banner + avatar tile),
- *  shared by the roster cards and the execution header. */
 export const SUITE_TINT: Record<V3Suite, { color: string; bg: string }> = {
   'SEO Audit Suite': { color: 'var(--violet)', bg: 'color-mix(in srgb, var(--violet) 16%, transparent)' },
   'Website Content Suite': { color: 'var(--pink)', bg: 'color-mix(in srgb, var(--pink) 16%, transparent)' },
@@ -110,10 +97,6 @@ export function powerAgentMeta(key: string): { name: string; role: string; suite
   };
 }
 
-// ---------------------------------------------------------------------------
-// API fetchers (same-origin Next routes; cookies ride along)
-// ---------------------------------------------------------------------------
-
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
   if (res.status === 401) {
@@ -124,10 +107,8 @@ async function getJson<T>(url: string): Promise<T> {
   return (await res.json()) as T;
 }
 
-/** The live power-agent roster from the LangGraph server. */
 export async function fetchV3PowerAgents(): Promise<V3Agent[]> {
   const raw = await getJson<{ id: string; assistantId: string }[]>('/api/power-agents');
-  // demo roster until the workspace has real agents — see lib/v3/demoData.ts
   if (raw.length === 0) return DEMO_AGENTS;
   return raw.map((a) => ({ key: a.id, assistantId: a.assistantId, ...powerAgentMeta(a.id) }));
 }
@@ -136,8 +117,6 @@ export function v3AgentByKey(agents: V3Agent[], key: string | null): V3Agent | u
   return key ? agents.find((a) => a.key === key) : undefined;
 }
 
-/** Workspace-wide session feed across all agents, newest first.
- *  Empty real feed → demo seeds light up every surface until runs exist. */
 export async function fetchV3Sessions(workspaceId: string): Promise<V3Session[]> {
   const raw = await getJson<{ id: string; title: string; agentKey: string | null; createdAt: string | null; updatedAt: string | null }[]>(
     `/api/power-agents/feed?workspaceId=${encodeURIComponent(workspaceId)}`,
@@ -145,7 +124,6 @@ export async function fetchV3Sessions(workspaceId: string): Promise<V3Session[]>
   return raw.length > 0 ? raw : demoSessions();
 }
 
-/** One agent's sessions, newest first (demo-filtered when the API is empty). */
 export async function fetchV3SessionsForAgent(workspaceId: string, agentKey: string): Promise<V3Session[]> {
   const raw = await getJson<{ id: string; title: string; createdAt: string | null; updatedAt: string | null }[]>(
     `/api/power-agents/threads?agentKey=${encodeURIComponent(agentKey)}&workspaceId=${encodeURIComponent(workspaceId)}`,

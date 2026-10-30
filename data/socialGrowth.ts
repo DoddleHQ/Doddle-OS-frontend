@@ -1,6 +1,5 @@
 import { Thread, Metric, Agent } from './mockData';
 
-// Mock agents for social growth
 const socialAgents: Agent[] = [
   {
     id: 'agent-social-1',

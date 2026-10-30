@@ -2,18 +2,6 @@
 
 import { create } from 'zustand';
 
-/*
- * Notification store — lightweight v2 replacement for react-toastify.
- *
- * Usage:
- *   import { notify } from '@/lib/stores/notificationStore';
- *   notify('Workspace created', 'success');
- *   notify('Failed to save', 'error');
- *
- * The <Notifications /> component (mounted once in providers) renders
- * the active notifications and auto-dismisses them after 4s.
- */
-
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
 export interface Notification {
@@ -36,7 +24,6 @@ export const useNotificationStore = create<NotificationState>((set) => ({
         set((prev) => ({
             notifications: [...prev.notifications, { id, message, type }],
         }));
-        // Auto-dismiss after 4s
         setTimeout(() => {
             set((prev) => ({
                 notifications: prev.notifications.filter((n) => n.id !== id),
@@ -51,7 +38,6 @@ export const useNotificationStore = create<NotificationState>((set) => ({
     },
 }));
 
-/** Convenience function for imperative use outside React components */
 export const notify = (message: string, type: NotificationType = 'info') => {
     useNotificationStore.getState().notify(message, type);
 };

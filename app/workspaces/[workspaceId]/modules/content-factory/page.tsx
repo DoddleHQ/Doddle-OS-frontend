@@ -68,7 +68,6 @@ export default function ContentFactoryPage() {
                 <p className="text-muted-foreground">Choose a graph tool to start creating content</p>
             </div>
 
-            {/* Graph Tool Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {graphTools.map((tool) => (
                     <Link

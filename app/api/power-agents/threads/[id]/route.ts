@@ -3,12 +3,6 @@ import { getLangGraphApiUrl, langgraphAuthHeaders } from '@/lib/config/langgraph
 
 export const dynamic = 'force-dynamic';
 
-/**
- * GET    /api/power-agents/threads/:id  — restore: thread state → UIMessage[]
- * PATCH  /api/power-agents/threads/:id  — rename (metadata.title)
- * DELETE /api/power-agents/threads/:id  — delete the session
- */
-
 interface LGMessage {
   type?: string;
   content?: string | Array<{ type: string; text?: string }>;
@@ -27,9 +21,6 @@ function textOf(content: unknown): string {
   return '';
 }
 
-/** Map LangGraph thread state messages into AI SDK UIMessage[] so a
- * restored session renders identically to a live one (text parts in the
- * feed, tool parts in the execution canvas). */
 function toUIMessages(messages: LGMessage[]): Array<Record<string, unknown>> {
   const out: Array<Record<string, unknown>> = [];
   const outputs = new Map<string, string>();
@@ -84,8 +75,6 @@ export async function GET(
     headers: langgraphAuthHeaders(req),
   });
   if (res.status === 404) {
-    // thread is gone (deleted elsewhere) — say so distinctly so the
-    // frontend can drop the stale chip instead of showing a server error
     return NextResponse.json({ error: 'thread not found' }, { status: 404 });
   }
   if (!res.ok) {
@@ -99,7 +88,6 @@ export async function GET(
     metadata?: Record<string, unknown>;
   };
 
-  // check if the thread has an active run (for stream-join on switch-back)
   const runsRes = await fetch(`${getLangGraphApiUrl()}/threads/${id}/runs`, {
     headers: langgraphAuthHeaders(req),
   });
@@ -151,7 +139,6 @@ export async function DELETE(
     headers: langgraphAuthHeaders(req),
   });
   if (res.status === 404) {
-    // already gone — treat as success so client cleanup proceeds
     return NextResponse.json({ ok: true });
   }
   if (!res.ok) {

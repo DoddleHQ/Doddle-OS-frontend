@@ -6,7 +6,6 @@ describe('demoData — versatile seeds until real data exists', () => {
     try {
       window.localStorage.clear();
     } catch {
-      /* ignore */
     }
   });
 
@@ -27,9 +26,9 @@ describe('demoData — versatile seeds until real data exists', () => {
   it('spreads runs across the 21-day window and covers most agents', () => {
     const list = demoSessions();
     const days = new Set(list.map((s) => new Date(s.updatedAt ?? 0).toDateString()));
-    expect(days.size).toBeGreaterThanOrEqual(9); // throughput trend has bars
+    expect(days.size).toBeGreaterThanOrEqual(9);
     const agents = new Set(list.map((s) => s.agentKey));
-    expect(agents.size).toBeGreaterThanOrEqual(8); // utilization spread
+    expect(agents.size).toBeGreaterThanOrEqual(8);
     expect(list.every((s) => s.id.startsWith('demo_'))).toBe(true);
   });
 

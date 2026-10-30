@@ -11,7 +11,6 @@ import { ChatFeed } from '@/components/v3/windows/AgentsChatFeed';
 
 const DAY = 86_400_000;
 
-/** v13 category language for badges and type bars. */
 const CAT: Record<string, { label: string; color: string }> = {
   research: { label: 'Research', color: 'var(--task-research)' },
   code: { label: 'Code', color: 'var(--task-code)' },
@@ -37,13 +36,6 @@ function repDur(ms: number | null): string {
   return `${Math.floor(h / 24)}d ${h % 24}h`;
 }
 
-/**
- * Reports — the v13 win-reports page, exact DOM: search + kind chips, the
- * analytics pane (stat tiles, workspace progress, throughput trend, output
- * by type, agent utilization), the artefact gallery of completed runs with
- * export/seal/copy, project reports and the lifecycle board. All computed
- * from the real session feed.
- */
 export function ReportsWindow() {
   const router = useRouter();
   const feed = useV3OS((s) => s.sessionFeed);
@@ -328,7 +320,6 @@ export function ReportsWindow() {
                             setCopied(s.id);
                             setTimeout(() => setCopied(null), 1500);
                           } catch {
-                            /* clipboard unavailable */
                           }
                         }}
                       >

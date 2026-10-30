@@ -10,17 +10,6 @@ import { V2Markdown } from '@/components/v2/onboarding/V2Markdown';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/*
- * StreamArtifact — v2 artifact card for streaming chat.
- *
- * Renders artifacts emitted by the graph during a stream (reports, data
- * tables, link lists, blueprints). Uses v2 tokens: paper-register card with
- * vermilion header accent, copy + download actions.
- *
- * Content → markdown resolution lives in ./artifactMarkdown (pure, testable,
- * shared with the thread detail page).
- */
-
 export function StreamArtifact({ artifact }: { artifact: ArtifactPayload }) {
     const [copied, setCopied] = useState(false);
 
@@ -60,7 +49,6 @@ export function StreamArtifact({ artifact }: { artifact: ArtifactPayload }) {
                     border: '1px solid var(--v2-paper-rule-strong)',
                 }}
             >
-                {/* Header */}
                 <div
                     className="flex items-center justify-between px-4 py-2.5"
                     style={{ borderBottom: '1px solid var(--v2-paper-rule)' }}
@@ -96,7 +84,6 @@ export function StreamArtifact({ artifact }: { artifact: ArtifactPayload }) {
                     </div>
                 </div>
 
-                {/* Content */}
                 <div className="px-4 py-3 max-h-[400px] overflow-y-auto">
                     {markdown ? (
                         <V2Markdown content={markdown} />

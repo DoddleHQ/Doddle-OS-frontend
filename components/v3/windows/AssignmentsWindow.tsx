@@ -12,7 +12,6 @@ import type { V3Agent, V3Session } from '@/lib/v3/powerAgents';
 
 const DAY = 86_400_000;
 
-/** v13 category language (data.js CAT_LABEL/CAT_COLOR, subset we can derive). */
 const CAT_LABEL: Record<string, string> = {
   research: 'Research', code: 'Code', data: 'Data', writing: 'Writing', admin: 'Admin', design: 'Design',
 };
@@ -20,12 +19,10 @@ const CAT_COLOR: Record<string, string> = {
   research: 'var(--task-research)', code: 'var(--task-code)', data: 'var(--task-data)',
   writing: 'var(--task-writing)', admin: 'var(--task-admin)', design: 'var(--task-design)',
 };
-/** Suite → task category, shared with the dashboard telemetry words. */
 const SUITE_CAT: Record<string, string> = {
   'SEO Audit Suite': 'research', 'Website Content Suite': 'writing', 'DevOps Suite': 'code',
   'Shopify Suite': 'writing', 'WordPress Suite': 'code', 'GitOps Suite': 'code',
 };
-/** Design-forward stages: each session charts as an epic with child stages. */
 const STAGES: Record<string, string[]> = {
   research: ['scan sources', 'read & extract', 'synthesize'],
   code: ['checkout', 'patch', 'verify'],
@@ -35,7 +32,6 @@ const STAGES: Record<string, string[]> = {
   design: ['brief', 'draft', 'review'],
 };
 
-/** Stable 0–N demo value per id — progress and comment counts stay put. */
 function hashOf(id: string, mod: number): number {
   const h = [...id].reduce((a, c) => a + c.charCodeAt(0), 0);
   return (h * 31) % mod;
@@ -60,13 +56,6 @@ interface Task {
   progress: number;
 }
 
-/**
- * Assignments — the v13 win-assignments page, exact DOM: fizzy board chrome
- * (seg tabs + askbar filter), the 21-day epic waterfall (weeks, review-gate
- * miles, status pills, expandable stage rows), the fizzy status board and
- * the review inbox. Sessions become epics; suites pick the category;
- * stages are design-forward until the API reports real steps.
- */
 export function AssignmentsWindow() {
   const router = useRouter();
   const feed = useV3OS((s) => s.sessionFeed);
@@ -87,7 +76,6 @@ export function AssignmentsWindow() {
 
   const wsLabel = (workspaces.find((w) => w.id === workspaceId) ?? workspaces[0])?.name ?? 'DODDLEHQ';
 
-  // sessions → v13 task shape (status from read/unread, stages synthesized)
   const tasks: Task[] = useMemo(() => {
     void seenTick;
     return feed.map((s) => {
@@ -122,7 +110,6 @@ export function AssignmentsWindow() {
 
   const reviewList = tasks.filter((t) => t.status === 'attention');
 
-  // the [F] hotkey focuses the askbar, like the reference
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
@@ -329,8 +316,6 @@ export function AssignmentsWindow() {
   );
 }
 
-/* ---------------- Waterfall: the 21-day epic gantt ---------------- */
-
 function ganttPill(status: string) {
   if (status === 'done') return <span className="st-pill done">DONE</span>;
   if (status === 'attention') return <span className="st-pill attn">REVIEW</span>;
@@ -373,7 +358,7 @@ function Waterfall({
   const miles = tasks.filter((t) => t.status === 'attention').slice(0, 6);
 
   const barOf = (title: string, s: number, e: number, pct: number, st: string) => {
-    const fill = st === 'st-done' ? '#059669' : st === 'st-attention' ? '#dc2626' : st === 'st-proposed' ? '#d97706' : '#2f6bd8'; // running: blue, no st class — like the reference
+    const fill = st === 'st-done' ? '#059669' : st === 'st-attention' ? '#dc2626' : st === 'st-proposed' ? '#d97706' : '#2f6bd8';
     const l = pos(s);
     const r = pos(Math.max(e, s + DAY * 0.5));
     const w = Math.max(6, r - l);
@@ -457,8 +442,6 @@ function Waterfall({
     </>
   );
 }
-
-/* ---------------- Board: fizzy status columns ---------------- */
 
 function FizzyBoard({
   tasks,
@@ -554,8 +537,6 @@ function FizzyCard({ task: t, num, ws, onOpen }: { task: Task; num: number; ws: 
     </button>
   );
 }
-
-/* ---------------- Slide-over: session detail + conversation preview ---------------- */
 
 function SlideOver({
   session,

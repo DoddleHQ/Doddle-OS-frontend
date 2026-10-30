@@ -8,14 +8,6 @@ import { extractArtifactMarkdown } from '@/components/content-factory/chat/artif
 import { V2Markdown } from './V2Markdown';
 import { PREMIUM_EASE } from '@/components/v2/motion';
 
-/*
- * V2ArtifactCard — Specimen Terminal artifact display.
- *
- * Renders the brand persona report (or any artifact) in v2 style:
- * paper-register card, vermilion accents, hairline borders.
- * Copy + download actions.
- */
-
 interface V2ArtifactCardProps {
   artifact: ArtifactPayload;
   onCopy?: (artifact: ArtifactPayload) => void;
@@ -55,22 +47,18 @@ export function V2ArtifactCard({ artifact, onCopy, onDownload, copied }: V2Artif
     const extracted = extractArtifactMarkdown(artifact);
     if (extracted && extracted.trim() !== '{}' && extracted.trim() !== '') return extracted;
 
-    // Fallback: try common content paths for brand persona
     const content = typeof artifact.content === 'string'
       ? (() => { try { return JSON.parse(artifact.content); } catch { return null; } })()
       : artifact.content;
 
     if (content && typeof content === 'object') {
-      // Try reportContent, personaData.reportContent, or the full content as markdown
       if (typeof content.reportContent === 'string') return content.reportContent;
       if (content.personaData?.reportContent) return content.personaData.reportContent;
-      // Last resort: if the content has a markdown-like structure, render it
     }
 
     return '';
   })();
 
-  // If no markdown could be extracted, render the raw content as formatted text
   const displayContent = markdown || (typeof artifact.content === 'string'
     ? artifact.content
     : '');
@@ -89,7 +77,6 @@ export function V2ArtifactCard({ artifact, onCopy, onDownload, copied }: V2Artif
           border: '1px solid var(--v2-paper-rule-strong)',
         }}
       >
-        {/* Header */}
         <div
           className="flex items-center justify-between px-4 py-3"
           style={{ borderBottom: '1px solid var(--v2-paper-rule)' }}
@@ -120,7 +107,6 @@ export function V2ArtifactCard({ artifact, onCopy, onDownload, copied }: V2Artif
           </div>
         </div>
 
-        {/* Content */}
         <div className="px-4 py-3 max-h-[400px] overflow-y-auto">
           {displayContent
             ? <V2Markdown content={displayContent} />

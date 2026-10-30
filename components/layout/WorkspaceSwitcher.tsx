@@ -29,7 +29,6 @@ export function WorkspaceSwitcher() {
     return (
         <TooltipProvider delayDuration={0}>
             <aside className="w-[72px] flex flex-col items-center py-3 gap-2 bg-neutral-900 h-screen border-r border-neutral-800">
-                {/* Home/Dashboard Button */}
                 <Link href="/">
                     <WorkspaceButton
                         icon={<Zap className="w-6 h-6" />}
@@ -39,7 +38,6 @@ export function WorkspaceSwitcher() {
                 </Link>
                 <div className="w-8 h-[2px] bg-neutral-800 rounded-full mx-auto my-1" />
 
-                {/* Workspaces List */}
                 {isLoading ? (
                     <div className="flex items-center justify-center py-4">
                         <Loader2 className="w-5 h-5 text-neutral-500 animate-spin" />
@@ -72,7 +70,6 @@ export function WorkspaceSwitcher() {
                     ))
                 )}
 
-                {/* Action Buttons */}
                 <div className="mt-auto flex flex-col gap-2 pb-2">
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -97,7 +94,6 @@ export function WorkspaceSwitcher() {
                 </div>
             </aside>
 
-            {/* Create Workspace Modal */}
             <CreateWorkspaceModal
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
@@ -123,7 +119,6 @@ function WorkspaceButton({
         <Tooltip>
             <TooltipTrigger asChild>
                 <div className="relative flex items-center group cursor-pointer">
-                    {/* Active Indicator */}
                     <div className={cn(
                         "absolute -left-3 w-1 bg-white rounded-r-full transition-all duration-200",
                         isActive ? "h-10" : "h-0 group-hover:h-5"

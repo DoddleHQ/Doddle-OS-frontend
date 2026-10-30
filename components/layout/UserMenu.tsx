@@ -5,20 +5,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { LogOut, Loader2, User as UserIcon, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 
-/*
- * UserMenu — account trigger + dropdown, v2 token system.
- *
- * Replaces the legacy primary-500 / neutral-100 styling with the Specimen
- * Terminal tokens so it reads as part of the same product family as the
- * InstrumentShell. Honors the impeccable Operate rules: single sans
- * (Hanken Grotesk), accent reserved for state, complete hover/focus states,
- * 150-250ms functional motion.
- *
- * variant:
- *   - "light" (default): sits on the paper dashboard top bar
- *   - "dark": sits on the ink landing-page surface
- */
-
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 export function UserMenu({ variant = 'light' }: { variant?: 'light' | 'dark' }) {
@@ -29,7 +15,6 @@ export function UserMenu({ variant = 'light' }: { variant?: 'light' | 'dark' }) 
     const user = auth.status === 'authenticated' ? auth.user : undefined;
     const isDark = variant === 'dark';
 
-    // Colors resolved per register
     const c = {
         triggerHover: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
         avatarBg: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(200,50,27,0.08)',
@@ -45,7 +30,6 @@ export function UserMenu({ variant = 'light' }: { variant?: 'light' | 'dark' }) 
         muted: isDark ? 'var(--v2-ink-text-2)' : 'var(--v2-paper-ink-2)',
     };
 
-    // Close on outside click / Escape
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
             if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -65,7 +49,6 @@ export function UserMenu({ variant = 'light' }: { variant?: 'light' | 'dark' }) 
         };
     }, [open]);
 
-    // Initials from user name
     const initials = user?.name
         ? user.name
               .split(/\s+/)
@@ -77,7 +60,6 @@ export function UserMenu({ variant = 'light' }: { variant?: 'light' | 'dark' }) 
 
     return (
         <div ref={menuRef} className="relative">
-            {/* Trigger */}
             <button
                 type="button"
                 onClick={() => setOpen((prev) => !prev)}
@@ -119,7 +101,6 @@ export function UserMenu({ variant = 'light' }: { variant?: 'light' | 'dark' }) 
                 />
             </button>
 
-            {/* Dropdown */}
             <AnimatePresence>
                 {open && (
                     <motion.div
@@ -144,7 +125,6 @@ export function UserMenu({ variant = 'light' }: { variant?: 'light' | 'dark' }) 
                             </div>
                         ) : auth.status === 'authenticated' && user ? (
                             <>
-                                {/* Identity */}
                                 <div className="px-4 py-3" style={{ borderBottom: `1px solid ${c.menuBorder}` }}>
                                     <p
                                         className="truncate"
@@ -166,7 +146,6 @@ export function UserMenu({ variant = 'light' }: { variant?: 'light' | 'dark' }) 
                                     </p>
                                 </div>
 
-                                {/* Actions */}
                                 <div className="p-1.5">
                                     <button
                                         type="button"
@@ -190,7 +169,6 @@ export function UserMenu({ variant = 'light' }: { variant?: 'light' | 'dark' }) 
                                 </div>
                             </>
                         ) : (
-                            /* Unauthenticated */
                             <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: `1px solid ${c.menuBorder}` }}>
                                 <UserIcon className="h-4 w-4" style={{ color: c.muted }} />
                                 <p style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.78rem', color: c.muted }}>

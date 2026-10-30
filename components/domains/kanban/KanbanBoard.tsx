@@ -12,8 +12,6 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({ columns, items = [] }: KanbanBoardProps) {
   const safeItems = items || [];
-  // State for the currently expanded column (null means all collapsed, though typically one is open)
-  // Defaulting to the first column if available
   const [expandedColumnId, setExpandedColumnId] = useState<string | null>(columns[0]?.id || null);
 
   const toggleColumn = (id: string) => {
@@ -26,7 +24,6 @@ export function KanbanBoard({ columns, items = [] }: KanbanBoardProps) {
         const columnItems = safeItems.filter((item) => item.status === column.id);
         const isCollapsed = expandedColumnId !== column.id;
 
-        // Column specific styles
         const getColumnStyles = (id: string) => {
           switch (id) {
             case 'inbox': return { header: 'border-t-blue-500', bg: 'bg-slate-50/50' };
@@ -49,7 +46,6 @@ export function KanbanBoard({ columns, items = [] }: KanbanBoardProps) {
               isCollapsed ? "w-12" : "w-80"
             )}
           >
-            {/* Column Header */}
             <div
               className={cn(
                 "flex items-center bg-white/50 border-slate-200/60",
@@ -84,7 +80,6 @@ export function KanbanBoard({ columns, items = [] }: KanbanBoardProps) {
               )}
             </div>
 
-            {/* Column Items - Only show if not collapsed */}
             {!isCollapsed && (
               <div className="flex-1 overflow-y-auto p-3 space-y-3">
                 {columnItems.length === 0 ? (

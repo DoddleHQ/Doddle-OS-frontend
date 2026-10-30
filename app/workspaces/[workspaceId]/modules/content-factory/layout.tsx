@@ -11,8 +11,6 @@ export default function ContentFactoryLayout({
 }) {
     return (
         <ThreadProvider>
-            {/* Run containers mount here — above the routes — so agent runs
-                survive navigation anywhere inside the content factory. */}
             <RunRegistryProvider>
                 {children}
                 <RunNotifications />

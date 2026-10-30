@@ -19,7 +19,6 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
     const isDisabled = disabled || isSubmitted;
     const [pageFeedback, setPageFeedback] = useState<Record<string, string>>({});
 
-    // Structured field values for data_input with fields
     const fields = Array.isArray(request.data?.fields)
         ? request.data.fields as Array<{ key: string; label: string; type: string; placeholder?: string; required?: boolean }>
         : null;
@@ -57,21 +56,15 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
         if (selectedOptions.length === 0) return;
         setIsSubmitting(true);
         if (isMulti) {
-            // For multi-select, append comma-separated values to chat input
             const selectedValues = request.options
                 ?.filter(opt => selectedOptions.includes(opt.value))
                 .map(opt => String(opt.value)) || [];
             if (onAppendToInput) {
                 onAppendToInput(selectedValues.join(', '));
             } else {
-                // Send both 'value' and 'selected' keys — different backend graphs
-                // check different keys (content_architect niche selection checks
-                // 'selected', while other graphs use extract_user_response which
-                // checks 'value'). Sending both ensures compatibility.
                 onRespond({ value: selectedOptions, selected: selectedOptions });
             }
         } else {
-            // Single select — send both 'value' and 'selected' for the same reason.
             onRespond({ value: selectedOptions[0], selected: selectedOptions[0] });
         }
         setIsSubmitted(true);
@@ -86,13 +79,11 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
 
     const handleFieldSubmit = () => {
         if (!fields) return;
-        // Check all required fields are filled
         const allRequiredFilled = fields
             .filter(f => f.required !== false)
             .every(f => fieldValues[f.key]?.trim());
         if (!allRequiredFilled) return;
         setIsSubmitting(true);
-        // Send response as an object with field keys matching backend expectations
         const response: Record<string, unknown> = {};
         for (const field of fields) {
             response[field.key] = fieldValues[field.key].trim();
@@ -319,7 +310,6 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
     }
 
     if (request.requestType === 'data_input') {
-        // Structured fields mode — render individual form fields
         if (fields) {
             const allRequiredFilled = fields
                 .filter(f => f.required !== false)
@@ -372,7 +362,6 @@ export default function HITLMessageCard({ request, onRespond, onAppendToInput, d
             );
         }
 
-        // Freeform textarea mode (fallback when no structured fields)
         return (
             <div className="bg-white border border-teal-200 rounded-2xl p-6 max-w-md shadow-sm hover:shadow-md transition-shadow relative overflow-hidden animate-in zoom-in-95 duration-300">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-teal-500"></div>

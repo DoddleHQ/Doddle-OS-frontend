@@ -3,23 +3,6 @@
 import { type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 
-/*
- * AuthInput — standard, accessible, industry-conventional.
- *
- * Per impeccable's Operate guidance: "earned familiarity," "same form-control
- * vocabulary," "don't reinvent standard affordances." So this is a textbook
- * input — the kind a fluent user trusts immediately:
- *
- *   - Label ABOVE the field (always visible, sans, not mono/display)
- *   - Standard box input with a clear 1px border
- *   - Placeholder inside the field
- *   - Focus: 2px vermilion ring with offset (focus-visible for keyboard)
- *   - Error: vermilion text below the field
- *   - Trailing slot for eye-toggle etc
- *
- * No floating labels, no inset glows, no invented affordances.
- */
-
 interface AuthInputProps {
   id: string;
   label: string;
@@ -45,7 +28,6 @@ export function AuthInput({
 }: AuthInputProps) {
   return (
     <div>
-      {/* Label — above the field, standard sans */}
       <label
         htmlFor={id}
         className="block text-[13px] font-medium mb-1.5"
@@ -54,7 +36,6 @@ export function AuthInput({
         {label}
       </label>
 
-      {/* Input box */}
       <div className="relative">
         <input
           id={id}
@@ -78,7 +59,6 @@ export function AuthInput({
         )}
       </div>
 
-      {/* Error — below the field */}
       <AnimatePresence>
         {error && (
           <motion.p

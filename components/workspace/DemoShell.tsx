@@ -26,7 +26,6 @@ export function DemoShell({ children, workspaceId }: DemoShellProps) {
   const gTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const basePath = `/workspaces/${workspaceId}`;
 
-  // The dock lives on the dashboard only; every other page gets the floating pill.
   const showDock = pathname === basePath;
 
   useEffect(() => {
@@ -64,7 +63,6 @@ export function DemoShell({ children, workspaceId }: DemoShellProps) {
       className="h-screen w-screen relative flex flex-col overflow-x-hidden overflow-y-hidden antialiased"
       style={{ background: 'var(--net-ground)', color: 'var(--ink)', fontFamily: "var(--font-archivo), 'Archivo', system-ui, sans-serif", textRendering: 'optimizeLegibility' }}
     >
-      {/* base-map linework beneath the board */}
       <div className="base-map absolute inset-0 pointer-events-none" aria-hidden="true" />
       <div className="flex-1 flex overflow-hidden relative z-10">
         {showDock && <Dock workspaceId={workspaceId} />}

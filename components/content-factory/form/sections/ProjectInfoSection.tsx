@@ -15,13 +15,11 @@ export const ProjectInfoSection: React.FC<FormSectionProps> = ({
     onBlur,
     disabled = false,
 }) => {
-    // Debounced URL validation
     const debouncedUrlValidation = React.useMemo(
         () =>
             debounce((url: string) => {
                 const error = validateField('websiteUrl', url);
                 onChange('websiteUrl', url);
-                // Note: Error state is managed by parent component
             }, 500),
         [onChange]
     );
@@ -39,7 +37,6 @@ export const ProjectInfoSection: React.FC<FormSectionProps> = ({
 
     return (
         <div className="space-y-5" data-testid="project-info-section">
-            {/* Section Header */}
             <div>
                 <h3 className="text-lg font-semibold text-neutral-900 mb-1">
                     Project Information
@@ -49,7 +46,6 @@ export const ProjectInfoSection: React.FC<FormSectionProps> = ({
                 </p>
             </div>
 
-            {/* Project Name */}
             <FormField
                 label="Project Name"
                 required
@@ -67,7 +63,6 @@ export const ProjectInfoSection: React.FC<FormSectionProps> = ({
                 />
             </FormField>
 
-            {/* Project Description */}
             <FormField
                 label="Project Description"
                 error={errors.projectDescription}
@@ -92,7 +87,6 @@ export const ProjectInfoSection: React.FC<FormSectionProps> = ({
                 </div>
             </FormField>
 
-            {/* Website URL */}
             <FormField
                 label="Website URL"
                 required

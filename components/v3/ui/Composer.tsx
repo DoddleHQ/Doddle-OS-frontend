@@ -5,7 +5,6 @@ import { Zap, Sparkles, Globe, Layers, Bot, X } from 'lucide-react';
 import { Glide } from '@/components/v3/ui/Glide';
 import { V3_MODULES } from '@/lib/v3/modules';
 
-/** v13 model roster (design-ready — the chat API does not take these yet). */
 export const COMPOSER_MODELS = [
   { value: 'Muse Spark 1.3', label: 'Muse Spark 1.3 Free', icon: Zap, hint: 'default' },
   { value: 'GPT-5', label: 'GPT-5', icon: Zap, hint: 'fast' },
@@ -16,7 +15,6 @@ export const COMPOSER_MODELS = [
 const BLUEPRINT_OPTIONS = V3_MODULES.map((m) => ({ value: m.name, label: m.name }));
 const BLUEPRINT_SLUGS = new Map(V3_MODULES.map((m) => [m.name, m.slug] as const));
 
-/** v13 mode roster (Default auto-routes; the rest pre-steer the intent). */
 export const COMPOSER_MODES = [
   { value: 'default', label: 'Default', hint: 'auto' },
   { value: 'research', label: 'Research' },
@@ -25,12 +23,6 @@ export const COMPOSER_MODES = [
   { value: 'writing', label: 'Writing' },
 ];
 
-/**
- * The v13 hero composer: glass textarea with an action bar — attach,
- * model glide, mode glide, and the >_ run button. Attachments and
- * model/mode picks are design-forward state (persisted locally); the
- * send action and @mention routing are real.
- */
 export function Composer({
   value,
   onChange,
@@ -53,11 +45,9 @@ export function Composer({
   ariaLabel: string;
   mode: string;
   onMode: (v: string) => void;
-  /** blueprint glide (launch consolidation): the model pick is silent */
   blueprint: string | null;
   blueprintLabel: string;
   onBlueprint: (v: string | null) => void;
-  /** agent glide (dashboard parity): picking one rides the ask into launchpad */
   agentPick?: string | null;
   agentOptions?: { value: string; label: string }[];
   onAgentPick?: (v: string | null) => void;

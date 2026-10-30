@@ -15,11 +15,6 @@ import type { ArtifactPayload } from '@/lib/types/graph-events.types';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/*
- * v2 Thread detail — shows saved artifacts from a completed thread.
- * Accessible at /workspaces/{id}/modules/content-factory/v2/{agentSlug}/{threadId}
- */
-
 export default function ThreadDetail() {
     const params = useParams();
     const router = useRouter();
@@ -31,8 +26,6 @@ export default function ThreadDetail() {
     const { currentThread, currentArtifacts, isLoading, error, fetchThread, fetchArtifacts, deleteThread } = useThread();
     const [deleting, setDeleting] = useState(false);
 
-    // Live-run takeover: if this DB thread's LangGraph thread is running in
-    // the registry, the live view replaces the static detail page.
     const liveRun = useRunRegistry((s) => {
         const langId = currentThread?.langId;
         if (!langId) return undefined;
@@ -90,7 +83,6 @@ export default function ThreadDetail() {
 
     return (
         <div className="p-5 md:p-6 max-w-[720px] mx-auto">
-            {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -103,7 +95,6 @@ export default function ThreadDetail() {
                 <h2 style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '1rem', fontWeight: 600, color: 'var(--v2-paper-ink)' }}>
                     {currentThread.title || 'Untitled'}
                 </h2>
-                {/* Delete button */}
                 <button
                     onClick={handleDelete}
                     disabled={deleting}
@@ -118,14 +109,12 @@ export default function ThreadDetail() {
                 </button>
             </motion.div>
 
-            {/* Thread description */}
             {currentThread.description && (
                 <p style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.8rem', color: 'var(--v2-paper-ink-2)', marginBottom: '1.5rem' }}>
                     {currentThread.description}
                 </p>
             )}
 
-            {/* Artifacts */}
             {currentArtifacts.length === 0 ? (
                 <p className="v2-mono" style={{ fontSize: '0.72rem', color: 'var(--v2-paper-ink-2)' }}>
                     No artifacts saved in this thread.
@@ -133,11 +122,6 @@ export default function ThreadDetail() {
             ) : (
                 <div className="space-y-4">
                     {(() => {
-                        // Reconstruct ArtifactPayloads, derive a truthful type
-                        // from the content shape, and show only the newest
-                        // version of each page title (QC revisions re-emit
-                        // content artifacts under the same title — older
-                        // versions stay persisted as history).
                         const payloads = currentArtifacts.map((artifact) => {
                             const base: ArtifactPayload = {
                                 artifactId: String(artifact.id),

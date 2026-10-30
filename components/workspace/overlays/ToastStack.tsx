@@ -18,7 +18,6 @@ const TONE: Record<ToastType, string> = {
   info: 'var(--line-cobalt)',
 };
 
-/** Service announcements. */
 export function ToastStack() {
   const toasts = useOS((s) => s.toasts);
   const dismissToast = useOS((s) => s.dismissToast);

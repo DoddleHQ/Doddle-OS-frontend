@@ -8,7 +8,6 @@ import remarkGfm from 'remark-gfm';
 import { workspaceService } from '@/lib/services/workspaceService';
 import { notify } from '@/lib/stores/notificationStore';
 
-/** Styled markdown renderer — CSS-based styling, no custom components needed. */
 function Markdown({ content }: { content: string }) {
   return (
     <div className="markdown-body">
@@ -17,10 +16,6 @@ function Markdown({ content }: { content: string }) {
   );
 }
 
-/**
- * Brand persona — renders as markdown, edits in a popup modal.
- * Persists via workspaceService.getPersona/upsertPersona.
- */
 export function BrandPersonaEditor({ workspaceId }: { workspaceId: string }) {
   const [content, setContent] = useState('');
   const [draft, setDraft] = useState('');
@@ -84,7 +79,6 @@ export function BrandPersonaEditor({ workspaceId }: { workspaceId: string }) {
 
   return (
     <div className="max-w-3xl slide-in">
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-lg font-bold font-mono">Brand Persona</h3>
@@ -105,7 +99,6 @@ export function BrandPersonaEditor({ workspaceId }: { workspaceId: string }) {
         </div>
       </div>
 
-      {/* Status banner */}
       {!hasPersona && (
         <div
           className="plate p-4 mb-4"
@@ -118,7 +111,6 @@ export function BrandPersonaEditor({ workspaceId }: { workspaceId: string }) {
         </div>
       )}
 
-      {/* Rendered markdown */}
       {hasPersona ? (
         <div className="plate p-6">
           <Markdown content={content} />
@@ -133,13 +125,11 @@ export function BrandPersonaEditor({ workspaceId }: { workspaceId: string }) {
         </div>
       )}
 
-      {/* Edit modal — portaled to document.body to escape overflow-clipped parents */}
       {modalOpen && <PersonaModal draft={draft} setDraft={setDraft} saving={saving} save={save} close={() => setModalOpen(false)} />}
     </div>
   );
 }
 
-/** Portaled modal — renders at document.body so the backdrop covers the full viewport */
 function PersonaModal({ draft, setDraft, saving, save, close }: {
   draft: string;
   setDraft: (v: string) => void;
@@ -147,14 +137,12 @@ function PersonaModal({ draft, setDraft, saving, save, close }: {
   save: () => void;
   close: () => void;
 }) {
-  // Lock body scroll while open
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = prev; };
   }, []);
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') close();

@@ -19,17 +19,14 @@ export type WindowId =
   | 'history';
 export type WindowMode = 'window' | 'page';
 
-/** Section pages, the v13 navigation model: one visible at a time. */
 const SECTION_PAGES: WindowId[] = ['launchpad', 'blueprints', 'agents', 'assignments', 'reports', 'tasks', 'hub'];
 
 export interface V3WindowState {
   id: WindowId;
   mode: WindowMode;
   minimized: boolean;
-  /** px offsets inside the windows layer (window mode only) */
   x: number;
   y: number;
-  /** px width (window mode only) */
   width: number;
 }
 
@@ -56,7 +53,6 @@ const write = (k: string, v: string) => {
   try {
     localStorage.setItem(k, v);
   } catch {
-    /* private mode */
   }
 };
 
@@ -64,7 +60,6 @@ interface V3OSState {
   theme: ThemeMode;
   backdrop: Backdrop;
   workspaceId: string;
-  /** render order = z-order (last = top) */
   windows: V3WindowState[];
   spotlightOpen: boolean;
   notifsOpen: boolean;
@@ -72,20 +67,12 @@ interface V3OSState {
   menu: 'ws' | 'settings' | null;
   railPinned: boolean;
   hydrated: boolean;
-  /** Real workspace list (fetched once, kept for the switcher + guards). */
   workspaces: V3Workspace[];
-  /** Non-null when the workspace list fetch failed (shown in the switcher). */
   workspacesError: string | null;
-  /** Selected agent in the Agents window; null = roster view. */
   selectedAgentKey: string | null;
-  /** Deep-linked thread: set by triage/assignments, consumed (and cleared)
-   *  by the exec view on mount — opens that session's history. */
   selectedThreadKey: string | null;
-  /** Workspace-wide session feed, fetched once by the shell for every
-   *  consumer (dashboard, notch menus + badge, triage, assignments). */
   sessionFeed: V3Session[];
   sessionFeedError: string | null;
-  /** true once a feed fetch has resolved — guards wait for this, never guess */
   sessionFeedLoaded: boolean;
   hydrate(): void;
   setTheme(t: ThemeMode): void;
@@ -163,25 +150,19 @@ export const useV3OS = create<V3OSState>((set, get) => ({
     set((st) => ({
       workspaces: list,
       workspacesError: error,
-      // guard: a stored selection that no longer exists falls back to the first real workspace
       workspaceId: list.some((w) => w.id === st.workspaceId) || list.length === 0 ? st.workspaceId : list[0].id,
     })),
   selectAgent: (slug) => set({ selectedAgentKey: slug, selectedThreadKey: null }),
-  /** Deep-link: select the agent + thread; the caller navigates to /v3/agents. */
   viewThread: (agentKey, threadId) => {
     set({ selectedAgentKey: agentKey, selectedThreadKey: threadId });
   },
   setSessionFeed: (list, error = null) => set({ sessionFeed: list, sessionFeedError: error, sessionFeedLoaded: true }),
-  // v13 navigation model: section pages are exclusive — opening one closes
-  // the others, exactly like navigating between the reference's HTML pages
   openApp: (id, opts) => {
-    // v13's empty-triage guard: nothing waiting → land on assignments instead
     if (id === 'reports' && !get().sessionFeed.some((s) => v3SessionStatus(s) === 'attention')) {
       id = 'assignments';
     }
     set((st) => {
       const existing = st.windows.find((w) => w.id === id);
-      // leaving a section page closes it, like a real page navigation
       const rest = st.windows.filter((w) => w.id !== id && !(SECTION_PAGES.includes(w.id) && SECTION_PAGES.includes(id)));
       if (existing) {
         return { windows: [...rest, { ...existing, minimized: false, mode: opts?.mode ?? existing.mode }] };
@@ -191,7 +172,6 @@ export const useV3OS = create<V3OSState>((set, get) => ({
       };
     });
   },
-  /** v13 Home · full OS: back to the desktop — every section page closes. */
   goHome: () =>
     set((st) => ({ windows: st.windows.filter((w) => !SECTION_PAGES.includes(w.id)) })),
   closeWin: (id) => set((st) => ({ windows: st.windows.filter((w) => w.id !== id) })),
@@ -213,8 +193,6 @@ export const useV3OS = create<V3OSState>((set, get) => ({
     set((st) => ({
       windows: st.windows.map((w) => {
         if (w.id !== id) return w;
-        // apps that default to page mode carry width 0 — give them a sane
-        // floating width when zoomed back out to window mode
         if (mode === 'window' && w.width === 0) return { ...w, mode, width: 560, x: w.x || 56, y: w.y || 16 };
         return { ...w, mode };
       }),

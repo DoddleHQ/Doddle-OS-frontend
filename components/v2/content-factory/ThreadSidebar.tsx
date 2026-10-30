@@ -13,16 +13,6 @@ import type { AuditThread } from '@/lib/types/thread.types';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/*
- * ThreadSidebar — Discord-like second column showing threads within an agent.
- *
- * Layout position: between the module nav (column 1) and the content area (column 3).
- * Discord-inspired: compact rows, section header, sub-thread indention,
- * active state via solid fill, hash icon prefix.
- *
- * Operate mode: paper register, vermilion active fill, 200ms expand/collapse.
- */
-
 export function ThreadSidebar({
     agent,
     workspaceId,
@@ -59,15 +49,12 @@ export function ThreadSidebar({
         }
     };
 
-    // Split: roots (no parentId) and children (has parentId)
-    // When backend adds parentId, children will group under parents automatically.
     const rootThreads = threads.filter((t) => !(t as any).parentId);
     const allChildren = threads.filter((t) => !!(t as any).parentId);
 
     return (
         <AnimatePresence initial={false} mode="wait">
             {collapsed ? (
-                /* === Collapsed: thin strip with expand button === */
                 <motion.aside
                     key="collapsed"
                     initial={{ width: 0 }}
@@ -86,7 +73,6 @@ export function ThreadSidebar({
                     >
                         <ChevronRight className="w-4 h-4" />
                     </button>
-                    {/* Agent initial as compact indicator */}
                     <div
                         className="mt-2 w-6 h-6 rounded-full flex items-center justify-center"
                         style={{
@@ -102,7 +88,6 @@ export function ThreadSidebar({
                     </div>
                 </motion.aside>
             ) : (
-                /* === Expanded: full thread sidebar === */
                 <motion.aside
                     key="expanded"
                     initial={{ width: 0 }}
@@ -112,7 +97,6 @@ export function ThreadSidebar({
                     className="hidden lg:flex flex-col flex-shrink-0 h-full overflow-hidden"
                     style={{ background: 'var(--v2-paper-ground)', borderRight: '1px solid var(--v2-paper-rule)' }}
                 >
-            {/* Section header — like Discord's channel category header */}
             <div
                 className="flex items-center justify-between px-3 pt-3 pb-1.5 flex-shrink-0"
             >
@@ -152,10 +136,8 @@ export function ThreadSidebar({
                 </div>
             </div>
 
-            {/* Live registry runs — streams that survive navigation */}
             <LiveRunSection agentSlug={agent.slug} workspaceId={workspaceId} />
 
-            {/* Thread list */}
             <nav className="flex-1 overflow-y-auto px-2 pb-3 space-y-0.5">
                 {isLoading ? (
                     [...Array(4)].map((_, i) => (
@@ -200,7 +182,6 @@ export function ThreadSidebar({
     );
 }
 
-/* === Live registry runs — switch between in-flight agent runs === */
 function LiveRunSection({ agentSlug, workspaceId }: { agentSlug: string; workspaceId: string }) {
     const router = useRouter();
     const order = useRunRegistry((s) => s.order);
@@ -261,7 +242,6 @@ function LiveRunSection({ agentSlug, workspaceId }: { agentSlug: string; workspa
     );
 }
 
-/* === Thread row (parent + expandable children) === */
 function ThreadRow({
     thread,
     isActive,
@@ -291,7 +271,6 @@ function ThreadRow({
 
     return (
         <div>
-            {/* Parent thread row */}
             <div
                 className="group flex items-center gap-0.5 px-2 py-1.5 rounded-[6px] transition-colors cursor-pointer"
                 style={{ background: isActive ? activeBg : 'transparent' }}
@@ -301,7 +280,6 @@ function ThreadRow({
                     if (hasChildren) onToggle();
                 }}
             >
-                {/* Chevron or spacer */}
                 {hasChildren ? (
                     <span className="flex-shrink-0 p-0.5" style={{ color: 'var(--v2-paper-ink-2)' }}>
                         {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -312,7 +290,6 @@ function ThreadRow({
                     </span>
                 )}
 
-                {/* Title link */}
                 <Link
                     href={href}
                     className="flex-1 flex items-center gap-1.5 min-w-0"
@@ -329,7 +306,6 @@ function ThreadRow({
                     >
                         {thread.title || 'Untitled'}
                     </span>
-                    {/* Running indicator */}
                     {isRunning && (
                         <motion.span
                             className="w-1.5 h-1.5 rounded-full flex-shrink-0"
@@ -338,7 +314,6 @@ function ThreadRow({
                             transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
                         />
                     )}
-                    {/* Doc count */}
                     {thread.docCount > 0 && (
                         <span
                             className="v2-mono ml-auto flex-shrink-0 text-[0.58rem]"
@@ -349,7 +324,6 @@ function ThreadRow({
                     )}
                 </Link>
 
-                {/* Delete button (visible on hover) */}
                 <button
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(); }}
                     className="flex-shrink-0 p-1 rounded-[4px] opacity-0 group-hover:opacity-100 transition-opacity"
@@ -360,7 +334,6 @@ function ThreadRow({
                     <Trash2 className="w-3 h-3" />
                 </button>
 
-                {/* Add sub-thread (visible on hover) */}
                 {hasChildren && (
                     <Link
                         href={`/workspaces/${workspaceId}/modules/content-factory/v2/${agentSlug}/new?parent=${thread.id}`}
@@ -375,7 +348,6 @@ function ThreadRow({
                 )}
             </div>
 
-            {/* Children (sub-threads) */}
             <AnimatePresence initial={false}>
                 {hasChildren && isExpanded && (
                     <motion.div

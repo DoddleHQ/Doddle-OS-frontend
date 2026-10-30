@@ -7,14 +7,6 @@ import { useGSAP } from '@gsap/react';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-/*
- * RegisterTransition — the paper→ink shift is the product promise, so it earns
- * a choreographed beat. A thin full-bleed vermilion hairline sweeps down the
- * viewport right as the ink board enters, marking the moment strategy becomes
- * live execution. Pure atmosphere; never blocks content or scroll.
- *
- * No-motion: the layer stays transparent, never shown.
- */
 export function RegisterTransition() {
   const root = useRef<HTMLDivElement>(null);
   const line = useRef<HTMLDivElement>(null);

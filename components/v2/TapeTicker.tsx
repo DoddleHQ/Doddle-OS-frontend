@@ -1,16 +1,5 @@
 import { TAPE_EVENTS, type TapeEvent, type TapeTone } from './content';
 
-/*
- * TapeTicker — the terminal's heartbeat.
- * A continuous mono event stream of real agent-to-agent handoffs, drawn from
- * the project's own thread + activity data (content.ts). Lives in both
- * registers: paper (muted) above the fold, ink (live vermilion) below.
- *
- * HYDRATION SAFETY: pure/stateless server component (no 'use client', no
- * useState/useEffect) — renders identical static output on server and client,
- * so it can never cause a hydration mismatch.
- */
-
 export function toneColor(tone: TapeTone, onInk?: boolean) {
   if (tone === 'conflict') return onInk ? 'var(--v2-vermilion-lift)' : 'var(--v2-vermilion)';
   if (tone === 'complete') return 'var(--v2-sage)';
@@ -39,7 +28,6 @@ interface TapeTickerProps {
 }
 
 export function TapeTicker({ onInk, className = '' }: TapeTickerProps) {
-  // Marquee — pure, stateless, identical on server and client.
   const loop = [...TAPE_EVENTS, ...TAPE_EVENTS];
   return (
     <div

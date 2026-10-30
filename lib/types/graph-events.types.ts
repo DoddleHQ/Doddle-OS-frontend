@@ -1,63 +1,31 @@
-/**
- * LangGraph Unified Event System - TypeScript Types
- *
- * This file defines the types for streaming LangGraph workflow events.
- * Designed to support multiple graph types through a singular, consistent event format.
- *
- * @see docs/langgraph-unified-event-system.md
- * @see docs/langgraph-event-migration-plan.md
- */
-
-// ============================================
-// Core Event Types
-// ============================================
-
-/**
- * All possible event types in the system
- */
 export type GraphEventType =
-    | 'step_start'       // Step started
-    | 'step_complete'    // Step completed
-    | 'system'           // System messages (status, info)
-    | 'agent_message'    // AI agent text response
-    | 'artifact'         // Rich content (files, blueprints, code)
-    | 'progress'         // Progress updates
-    | 'hitl_request'     // Human-in-the-loop input needed
-    | 'error'            // Error occurred
-    | 'complete';        // Workflow completed
+    | 'step_start'
+    | 'step_complete'
+    | 'system'
+    | 'agent_message'
+    | 'artifact'
+    | 'progress'
+    | 'hitl_request'
+    | 'error'
+    | 'complete';
 
-/**
- * Base event structure that all events extend
- * 
- * Note: Properties use camelCase to match JSON from backend.
- * The backend should emit events with camelCase keys.
- */
 export interface BaseGraphEvent {
-    // Event identification
     id: string;
     type: GraphEventType;
-    timestamp: string;             // ISO 8601 format
+    timestamp: string;
 
-    // Graph context
-    graphId: string;               // e.g., "browsing-architect", "content-factory"
-    threadId: string;              // Thread/run ID for this workflow instance
+    graphId: string;
+    threadId: string;
 
-    // Protocol version
-    version: string;               // Protocol version for backward compatibility
+    version: string;
 
-    // Step context
     stepId?: string;
     stepName?: string;
-    stepNumber?: number;           // 1-based
+    stepNumber?: number;
     totalSteps?: number;
 
-    // Node context
     nodeId?: string;
 }
-
-// ============================================
-// Step Events
-// ============================================
 
 export interface StepStartPayload {
     stepId: string;
@@ -78,19 +46,15 @@ export interface StepCompletePayload {
     stepNumber: number;
     totalSteps: number;
     status: 'success' | 'skipped' | 'partial' | 'failed';
-    duration?: number;             // Seconds
+    duration?: number;
     summary?: string;
-    artifacts?: string[];          // IDs of artifacts produced
+    artifacts?: string[];
 }
 
 export interface StepCompleteEvent extends BaseGraphEvent {
     type: 'step_complete';
     payload: StepCompletePayload;
 }
-
-// ============================================
-// System Event
-// ============================================
 
 export type SystemLevel = 'info' | 'warning' | 'success';
 export type SystemSubType = 'phase_start' | 'phase_complete' | 'node_enter' | 'node_exit' | 'custom';
@@ -107,12 +71,8 @@ export interface SystemEvent extends BaseGraphEvent {
     payload: SystemPayload;
 }
 
-// ============================================
-// Agent Message Event
-// ============================================
-
 export interface AgentMessagePayload {
-    content: string;               // Markdown-supported
+    content: string;
     sender?: string;
     metadata?: {
         model?: string;
@@ -126,24 +86,20 @@ export interface AgentMessageEvent extends BaseGraphEvent {
     payload: AgentMessagePayload;
 }
 
-// ============================================
-// Artifact Event
-// ============================================
-
 export type ArtifactType =
-    | 'blueprint'        // Page blueprint
-    | 'content'          // Generated content
-    | 'code'             // Code block
-    | 'file'             // Generic file
-    | 'image'            // Image
-    | 'report'           // Analysis report
-    | 'data_table'       // Structured data
-    | 'link_list'        // List of links
-    | 'pre_run_report'   // Pre-run summary report
-    | 'pre_run_audit'    // Pre-run audit report
-    | 'pre_run_audit_summary' // Pre-run audit summary report
-    | 'site_context'     // Site context data
-    | 'tech_stack';      // Tech stack data
+    | 'blueprint'
+    | 'content'
+    | 'code'
+    | 'file'
+    | 'image'
+    | 'report'
+    | 'data_table'
+    | 'link_list'
+    | 'pre_run_report'
+    | 'pre_run_audit'
+    | 'pre_run_audit_summary'
+    | 'site_context'
+    | 'tech_stack';
 
 export interface ArtifactAction {
     id: string;
@@ -171,13 +127,6 @@ export interface ArtifactEvent extends BaseGraphEvent {
     payload: ArtifactPayload;
 }
 
-// ============================================
-// Artifact Content Types
-// ============================================
-
-/**
- * Headings data structure for scraped pages
- */
 export interface HeadingsData {
     h1?: string[];
     h2?: string[];
@@ -187,19 +136,12 @@ export interface HeadingsData {
     h6?: string[];
 }
 
-/**
- * Content statistics for scraped pages
- */
 export interface ContentStats {
     paragraphs_count?: number;
     word_count?: number;
     links_count?: number;
 }
 
-/**
- * Home page scraped data structure
- * Used for 'home_scraping' artifacts
- */
 export interface HomePageData {
     url?: string;
     meta_title?: string;
@@ -209,10 +151,6 @@ export interface HomePageData {
     headings?: HeadingsData;
     scrape_method?: string;
 }
-
-// ============================================
-// Progress Event
-// ============================================
 
 export type ProgressStatus = 'pending' | 'in_progress' | 'complete' | 'error';
 
@@ -236,37 +174,19 @@ export interface ProgressEvent extends BaseGraphEvent {
     payload: ProgressPayload;
 }
 
-// ============================================
-// HITL Events
-// ============================================
-
-// ============================================
-// New HITL Protocol Types (Native Interrupt-Based)
-// ============================================
-
-/**
- * Priority levels for HITL interrupts
- */
 export type Priority = 'low' | 'normal' | 'high' | 'critical';
 
-/**
- * Standardized HITL types matching backend enum
- */
 export type HITLType =
-    | 'content_review'   // Review generated content
-    | 'url_selection'    // Select from list of URLs
-    | 'topic_input'      // Provide topic/question
-    | 'confirmation'     // Yes/No confirmation
-    | 'selection'        // Single option selection
-    | 'multi_selection'  // Multiple options selection
-    | 'feedback'         // User feedback on content
-    | 'data_input'       // Free text/data input
-    | 'per_page_feedback'; // Feedback on multiple pages
+    | 'content_review'
+    | 'url_selection'
+    | 'topic_input'
+    | 'confirmation'
+    | 'selection'
+    | 'multi_selection'
+    | 'feedback'
+    | 'data_input'
+    | 'per_page_feedback';
 
-/**
- * Option structure for HITL requests
- * Matches backend HITLOption model exactly
- */
 export interface HITLOption {
     id: string;
     label: string;
@@ -274,14 +194,10 @@ export interface HITLOption {
     description?: string;
 }
 
-/**
- * Payload structure from LangGraph interrupt (snake_case from backend)
- * Matches backend HITLInterruptPayload Pydantic model exactly
- */
 export interface HITLInterruptPayload {
     version: number;
-    type: 'hitl_request';  // Always "hitl_request"
-    hitl_type: HITLType;   // The actual HITL interaction type
+    type: 'hitl_request';
+    hitl_type: HITLType;
     message: string;
     request_id?: string;
     options?: HITLOption[];
@@ -292,37 +208,23 @@ export interface HITLInterruptPayload {
     priority: Priority;
 }
 
-/**
- * Frontend-friendly version (camelCase)
- * Converts from backend snake_case HITLInterruptPayload
- *
- * New code should use: requestType, message, options (with id/label/value)
- * Legacy fields kept for backward compatibility
- */
 export interface HITLRequestPayload {
     requestId: string;
-    // New fields (interrupt-based protocol)
     requestType?: HITLType;
     message?: string;
     allowFreeInput?: boolean;
     data?: Record<string, unknown>;
     timeoutSeconds?: number;
     priority?: Priority;
-    // Legacy fields (for backward compatibility)
     prompt?: string;
     inputType?: HITLInputType;
     required?: boolean;
-    // Shared fields (work with both protocols)
     options?: HITLOption[];
     default?: unknown;
     defaultValue?: unknown;
     timeout?: number;
 }
 
-/**
- * Converts a HITLInterruptPayload (from backend interrupt) to
- * HITLRequestPayload (frontend-friendly camelCase)
- */
 export function convertInterruptToHITLRequest(
     interrupt: HITLInterruptPayload,
     taskId: string
@@ -337,7 +239,6 @@ export function convertInterruptToHITLRequest(
         data: interrupt.data,
         timeoutSeconds: interrupt.timeout_seconds,
         priority: interrupt.priority,
-        // Legacy fields for backward compatibility
         prompt: interrupt.message,
         inputType: interrupt.hitl_type as any,
         defaultValue: interrupt.default,
@@ -345,23 +246,13 @@ export function convertInterruptToHITLRequest(
     };
 }
 
-// ============================================
-// Legacy HITL Types (kept for backward compatibility)
-// ============================================
-
-/**
- * @deprecated Use HITLType instead
- */
 export type HITLInputType =
-    | 'confirmation'     // Yes/No confirmation
-    | 'single_select'    // Select one option
-    | 'multi_select'     // Select multiple options
-    | 'text_input'       // Free text input
-    | 'file_upload';     // File upload
+    | 'confirmation'
+    | 'single_select'
+    | 'multi_select'
+    | 'text_input'
+    | 'file_upload';
 
-/**
- * @deprecated Use HITLOption with id/label/value instead
- */
 export interface HITLOptionLegacy {
     id: string;
     label: string;
@@ -370,9 +261,6 @@ export interface HITLOptionLegacy {
     selected?: boolean;
 }
 
-/**
- * @deprecated Use HITLRequestPayload with new structure
- */
 export interface HITLRequestPayloadLegacy {
     requestId: string;
     prompt: string;
@@ -380,22 +268,13 @@ export interface HITLRequestPayloadLegacy {
     options?: HITLOptionLegacy[];
     defaultValue?: unknown;
     required?: boolean;
-    timeout?: number;              // Seconds
+    timeout?: number;
 }
 
-/**
- * @deprecated The backend no longer emits hitl_request events.
- * HITL is now detected via thread state polling for interrupt payloads.
- * Kept for backward compatibility only.
- */
 export interface HITLRequestEvent extends BaseGraphEvent {
     type: 'hitl_request';
     payload: HITLRequestPayload;
 }
-
-// ============================================
-// Error Event
-// ============================================
 
 export interface ErrorPayload {
     code: string;
@@ -410,16 +289,12 @@ export interface ErrorEvent extends BaseGraphEvent {
     payload: ErrorPayload;
 }
 
-// ============================================
-// Complete Event
-// ============================================
-
 export type CompleteStatus = 'success' | 'completed' | 'partial' | 'failed';
 
 export interface CompleteSummary {
     itemsProcessed?: number;
     artifactsGenerated?: number;
-    duration?: number;             // Seconds
+    duration?: number;
     [key: string]: unknown;
 }
 
@@ -435,13 +310,6 @@ export interface CompleteEvent extends BaseGraphEvent {
     payload: CompletePayload;
 }
 
-// ============================================
-// Union Types
-// ============================================
-
-/**
- * All possible graph events
- */
 export type GraphEvent =
     | StepStartEvent
     | StepCompleteEvent
@@ -453,43 +321,28 @@ export type GraphEvent =
     | ErrorEvent
     | CompleteEvent;
 
-// ============================================
-// Stream State
-// ============================================
-
 export type StreamStatus = 'idle' | 'connecting' | 'running' | 'hitl_pending' | 'complete' | 'error';
 
 export interface GraphStreamState {
-    // Connection state
     isConnected: boolean;
     threadId: string | null;
     graphId: string | null;
 
-    // Current step
     currentStep: StepStartPayload | null;
     completedSteps: StepCompletePayload[];
 
-    // Messages (for chat display)
     messages: ChatMessage[];
 
-    // Artifacts
     artifacts: Map<string, ArtifactPayload>;
 
-    // Progress
     progress: ProgressPayload | null;
 
-    // HITL
     pendingHITL: HITLRequestPayload | null;
 
-    // Status
     status: StreamStatus;
     error: ErrorPayload | null;
     completeEvent: CompletePayload | null;
 }
-
-// ============================================
-// Chat Message (for UI display)
-// ============================================
 
 export type ChatMessageType = 'user' | 'system' | 'agent' | 'hitl' | 'artifact' | 'step';
 
@@ -509,10 +362,6 @@ export interface ChatMessage {
         [key: string]: unknown;
     };
 }
-
-// ============================================
-// API Types
-// ============================================
 
 export interface StartGraphRequest {
     graphId: string;
@@ -542,13 +391,6 @@ export interface HITLResponseResult {
     message?: string;
 }
 
-// ============================================
-// Graph-Specific Step Definitions
-// ============================================
-
-/**
- * Browsing Architect step definitions
- */
 export const BROWSING_ARCHITECT_STEPS = [
     { id: 'url_validation', name: 'URL Validation', description: 'Validate and normalize the website URL' },
     { id: 'home_scraping', name: 'Home Page Scraping', description: 'Scrape and analyze the home page' },
@@ -566,9 +408,6 @@ export const BROWSING_ARCHITECT_STEPS = [
 
 export type BrowsingArchitectStepId = typeof BROWSING_ARCHITECT_STEPS[number]['id'];
 
-/**
- * Helper to get step info by ID
- */
 export function getStepInfo(stepId: string, graphId: string) {
     if (graphId === 'content_architect') {
         return BROWSING_ARCHITECT_STEPS.find(s => s.id === stepId);
@@ -579,9 +418,6 @@ export function getStepInfo(stepId: string, graphId: string) {
     return undefined;
 }
 
-/**
- * Helper to calculate overall progress percentage
- */
 export function calculateOverallProgress(
     stepNumber: number,
     totalSteps: number,
@@ -591,10 +427,6 @@ export function calculateOverallProgress(
     const stepContribution = stepProgress ? (stepProgress / totalSteps) : 0;
     return Math.round(baseProgress + stepContribution);
 }
-
-// ============================================
-// Event Type Guards
-// ============================================
 
 export function isStepStartEvent(event: GraphEvent): event is StepStartEvent {
     return event.type === 'step_start';

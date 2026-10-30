@@ -3,7 +3,6 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 
-// Define the variant type explicitly
 export type TagVariant = 'default' | 'primary' | 'success' | 'warning' | 'error' | 'outline';
 
 const tagVariants = cva(

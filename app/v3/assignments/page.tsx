@@ -1,7 +1,6 @@
 import { OSRoot } from '@/components/v3/shell/OSRoot';
 import { AssignmentsWindow } from '@/components/v3/windows/AssignmentsWindow';
 
-/** /v3/assignments — the v13 assignments page, full-bleed under the shared shell. */
 export default function V3Page() {
   return (
     <OSRoot>

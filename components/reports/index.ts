@@ -1,11 +1,3 @@
-/**
- * Reusable Reports/Workflows System Components
- *
- * A generic system that can display various types of reports and workflows,
- * designed to be used across different functionalities.
- */
-
-// Main Components
 export { ReportCard } from './ReportCard';
 export type { ReportCardProps } from './ReportCard';
 
@@ -15,7 +7,6 @@ export type { ReportListProps } from './ReportList';
 export { ReportDetail } from './ReportDetail';
 export type { ReportDetailProps } from './ReportDetail';
 
-// Types
 export type {
     ReportType,
     ReportStatus,

@@ -10,16 +10,6 @@ import { useThread } from '@/lib/contexts/ThreadContext';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/*
- * v2 Agent view — three-column Discord-like layout.
- *
- * Column 1: Module nav (from InstrumentShell — already present)
- * Column 2: ThreadSidebar (threads within this agent)
- * Column 3: Content area (thread list preview or active thread)
- *
- * Accessible at /workspaces/{id}/modules/content-factory/v2/{agentSlug}/
- */
-
 function formatRelativeTime(ts: string): string {
     const diff = Date.now() - new Date(ts).getTime();
     const min = Math.floor(diff / 60000);
@@ -42,10 +32,8 @@ export default function AgentView() {
 
     return (
         <div className="flex h-full">
-            {/* Column 2: Thread sidebar */}
             <ThreadSidebar agent={agent} workspaceId={workspaceId} />
 
-            {/* Column 3: Content area */}
             <div className="flex-1 overflow-y-auto">
                 <div className="p-5 md:p-8 max-w-[680px]">
                     {isLoading ? (
@@ -55,7 +43,6 @@ export default function AgentView() {
                             ))}
                         </div>
                     ) : threads.length === 0 ? (
-                        /* Empty state */
                         <div className="flex flex-col items-center justify-center py-20 text-center">
                             <div
                                 className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
@@ -86,7 +73,6 @@ export default function AgentView() {
                             </Link>
                         </div>
                     ) : (
-                        /* Thread cards in content area */
                         <div>
                             <motion.div
                                 initial={{ opacity: 0, y: 4 }}

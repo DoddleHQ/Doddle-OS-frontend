@@ -18,7 +18,6 @@ function greeting(): string {
   return 'Good evening';
 }
 
-/** v13 suites → the dashboard category words (research · code · writing …). */
 const SUITE_CAT: Record<V3Suite, string> = {
   'SEO Audit Suite': 'research',
   'Website Content Suite': 'writing',
@@ -28,16 +27,11 @@ const SUITE_CAT: Record<V3Suite, string> = {
   'GitOps Suite': 'code',
 };
 
-/** Design-forward progress until the API reports run percentage: a stable
- *  0–90 value per session id, so rows keep their bar between reloads. */
 function demoProgress(id: string): number {
   const h = [...id].reduce((a, c) => a + c.charCodeAt(0), 0);
   return ((h * 31) % 19) * 5;
 }
 
-/** The v13 index page, exact DOM + behaviour: hero + composer + quick links
- *  (real hrefs) + bento cards + telemetry (active-task rows with progress
- *  bars, agents in flow). All counts/content come from the live session feed. */
 export function Dashboard() {
   const windows = useV3OS((s) => s.windows);
   const feed = useV3OS((s) => s.sessionFeed);
@@ -51,8 +45,6 @@ export function Dashboard() {
   const operator = useV3OperatorName();
   const agents = useV3Fetch(fetchV3PowerAgents, []);
 
-  // composer state — mode + blueprint picks (persisted locally); the model
-  // pick went silent in the reference's launch consolidation
   const [ask, setAsk] = useState('');
   const [mode, setMode] = useState(() => {
     try {
@@ -73,7 +65,6 @@ export function Dashboard() {
     try {
       localStorage.setItem('v3.mode', v);
     } catch {
-      /* private mode */
     }
   };
   const pickBlueprint = (v: string | null) => {
@@ -82,7 +73,6 @@ export function Dashboard() {
       if (v) localStorage.setItem('v3.bp', v);
       else localStorage.removeItem('v3.bp');
     } catch {
-      /* private mode */
     }
   };
   const [agentPick, setAgentPick] = useState<string | null>(() => {
@@ -98,11 +88,9 @@ export function Dashboard() {
       if (v) localStorage.setItem('v3.agent', v);
       else localStorage.removeItem('v3.agent');
     } catch {
-      /* private mode */
     }
   };
 
-  // @mentions route to the real roster
   const mentioned = (text: string) => {
     const handles = [...text.matchAll(/@([A-Za-z0-9_]+)/g)].map((m) => '@' + m[1].toLowerCase());
     return (agents.data ?? []).find((a) => handles.includes(a.handle.toLowerCase()));
@@ -114,7 +102,6 @@ export function Dashboard() {
       selectAgent(target.key);
       router.push('/v3/agents');
     } else {
-      // v13 carryAsk: the typed brief + blueprint + agent picks ride into launchpad
       const params = new URLSearchParams({ ask: ask.trim() });
       if (blueprint) params.set('bp', blueprint);
       const picked = (agents.data ?? []).find((a) => a.handle === agentPick || a.key === agentPick);
@@ -133,12 +120,8 @@ export function Dashboard() {
   const wsLabel = (workspaces.find((w) => w.id === workspaceId) ?? workspaces[0])?.name ?? '';
   const allDemo = list.length > 0 && list.every((s) => s.id.startsWith('demo_'));
 
-  // v13 semantics on real data: the newest session headlines ACTIVE_TASKS,
-  // the rest fill the glass table; suite categories become the type words
   const taskRows = list.slice(1, 5);
   const typeWords = [...new Set(list.map((s) => v3AgentByKey(agents.data ?? [], s.agentKey ?? null)).filter((a): a is NonNullable<typeof a> => !!a).map((a) => SUITE_CAT[a.suite]))];
-  // AGENTS_IN_FLOW mirrors v13: one row for the agent currently in flow
-  // (dynamic sub) + one idle row ("Waiting for a task")
   const busyAgent = activeAgent;
   const idleAgent = (agents.data ?? []).find((a) => !list.some((s) => s.agentKey === a.key)) ?? null;
 

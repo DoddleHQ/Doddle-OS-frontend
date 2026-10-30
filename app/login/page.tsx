@@ -21,9 +21,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
-  // Forward the return URL (e.g. an invite link) to signup so the new-user
-  // flow can return to it after email verification. Set in an effect — the
-  // state initializer would only run during SSR and never on hydration.
   const [signupHref, setSignupHref] = useState('/signup');
   useEffect(() => {
     const next = new URLSearchParams(window.location.search).get('next');
@@ -36,7 +33,6 @@ export default function LoginPage() {
   const [activeSession, setActiveSession] = useState(false);
   const [emailNotVerified, setEmailNotVerified] = useState(false);
 
-  // Resend verification flow state
   const [resendStatus, setResendStatus] = useState<'idle' | 'loading' | 'sent' | 'error'>('idle');
   const [cooldown, setCooldown] = useState(0);
 
@@ -95,8 +91,6 @@ export default function LoginPage() {
 
       let next = new URLSearchParams(window.location.search).get('next');
       if (!next) {
-        // Signup stashed an invite return URL here — the email verification
-        // round trip drops query params, so it's recovered at login instead.
         try {
           next = sessionStorage.getItem('pendingNext');
           if (next) sessionStorage.removeItem('pendingNext');
@@ -115,13 +109,11 @@ export default function LoginPage() {
               router.push(`/workspaces/${firstWorkspace.workspaceId}`);
             }, 1200);
           } else {
-            // No workspaces — go to workspace list (shows create CTA)
             setTimeout(() => {
               router.push('/workspaces');
             }, 1200);
           }
         } catch (err) {
-          // Can't fetch workspaces — try the workspace list anyway
           setTimeout(() => {
             router.push('/workspaces');
           }, 1200);
@@ -173,7 +165,6 @@ export default function LoginPage() {
                 <p className="text-[14px]" style={{ color: 'var(--v2-paper-ink-2)' }}>Access your autonomous agent workspaces.</p>
               </motion.div>
 
-              {/* Impeccable design error alert container */}
               {apiError && (
                 <motion.div
                   initial={{ opacity: 0, y: -6 }}

@@ -4,11 +4,6 @@ import { useParams } from 'next/navigation';
 import { getAgent } from '@/components/v2/content-factory/agents';
 import { AgentStream } from '@/components/v2/content-factory/AgentStream';
 
-/*
- * v2 Agent streaming page — renders the shared AgentStream component.
- * Accessible at /workspaces/{id}/modules/content-factory/v2/{agentSlug}/new
- */
-
 export default function AgentStreamPage() {
     const params = useParams();
     const workspaceId = params.workspaceId as string;

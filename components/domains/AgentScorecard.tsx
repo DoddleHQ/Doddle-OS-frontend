@@ -63,9 +63,6 @@ export function AgentScorecard({ agent, isActive = false }: AgentScorecardProps)
   );
 }
 
-/**
- * AgentScorecardList - Displays multiple agent scorecards in a list
- */
 export interface AgentScorecardListProps {
   agents: AgentScorecardProps["agent"][];
   title?: string;

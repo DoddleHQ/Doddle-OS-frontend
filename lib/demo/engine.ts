@@ -2,18 +2,8 @@ import { useOS } from './osStore';
 import { SQL_ARTIFACT } from './data';
 import type { TriageItem } from './types';
 
-/**
- * Simulated execution engine for the Doddle OS demo.
- * Port of the HTML sample's run loop: infra + sec run in parallel, data waits
- * for both handshakes, then a human-in-the-loop approval gate (rendered as a
- * triage card) decides whether the metric stream is allowed to commit.
- *
- * The Launchpad feed UI (later phase) will consume the same store updates.
- */
-
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Abort flags — wired to abort_all / kill controls when Launchpad lands. */
 const engine = { abortAll: false };
 const killRequested = new Set<string>();
 
@@ -26,7 +16,6 @@ async function guard(threadId: string, ms: number) {
   chk(threadId);
 }
 
-/** Human-in-the-loop gate: parks an approval card in triage until resolved. */
 function requestWriteScope(): Promise<boolean> {
   return new Promise((resolve) => {
     const s = useOS.getState();
@@ -40,7 +29,6 @@ function requestWriteScope(): Promise<boolean> {
       onApprove: () => resolve(true),
       onReject: () => resolve(false),
     };
-    // Live gates announce themselves; addTriage toasts only for breakers.
     useOS.setState({ triage: [item, ...s.triage] });
     s.pushToast('@Sec_Sentinel needs your approval', 'warn');
     useOS.getState().pushFeed({
@@ -130,7 +118,6 @@ async function runData(infraRun: Promise<void>, secRun: Promise<void>) {
   }
 }
 
-/** Kick off a full swarm run. No-op while one is already executing. */
 export async function startRun(prompt: string) {
   const s = useOS.getState();
   if (s.runActive) return;
@@ -176,7 +163,6 @@ export async function startRun(prompt: string) {
   });
 }
 
-/** Operator controls (armed-confirm handled by the UI). */
 export function abortRun() {
   if (!useOS.getState().runActive) return;
   engine.abortAll = true;

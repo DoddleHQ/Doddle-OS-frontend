@@ -1,18 +1,5 @@
 'use client';
 
-/*
- * RunNotifications — announces BACKGROUND run state changes.
- *
- * A run the user is currently watching already renders its HITL card and
- * completion inline; the dangerous case is the run they navigated away
- * from. This component watches the registry and toasts when a non-viewed
- * run (a) pauses for input or (b) completes or fails.
- *
- * Toasts are deliberately minimal and v2-styled: completion toasts
- * auto-dismiss; HITL toasts persist (with a subtle pulse) until visited
- * or dismissed — missing an interrupt silently stalls the run forever.
- */
-
 import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
@@ -29,8 +16,6 @@ interface Toast {
     kind: 'hitl' | 'complete' | 'error';
     title: string;
     detail: string;
-    /** Timestamp when the condition appeared — used to ignore pre-existing
-     * states on mount (only transitions toast). */
     at: number;
 }
 
@@ -49,15 +34,12 @@ export function RunNotifications() {
     const mountedRef = useRef(false);
     const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
-    // Which run is the user currently watching? Pathname carries /live/{runId}
     const watchedRunId = (() => {
         const m = pathname?.match(/\/live\/(run-[0-9]+-[0-9]+)/);
         return m ? m[1] : null;
     })();
 
     useEffect(() => {
-        // Skip states that existed before this mount: only live transitions
-        // deserve a toast.
         if (!mountedRef.current) {
             mountedRef.current = true;
             for (const runId of order) {
@@ -77,13 +59,13 @@ export function RunNotifications() {
             const fire = (kind: Toast['kind'], key: string, title: string, detail: string) => {
                 if (seenRef.current.has(key)) return;
                 seenRef.current.add(key);
-                if (runId === watchedRunId) return; // watching it: inline UI covers it
+                if (runId === watchedRunId) return;
                 setToasts((prev) => {
                     if (prev.some((t) => t.id === key)) return prev;
                     const next = [...prev, {
                         id: key, runId, kind, title, detail, at: Date.now(),
                     }];
-                    return next.slice(-4); // cap: 4 visible toasts
+                    return next.slice(-4);
                 });
                 if (kind !== 'hitl') {
                     const timer = setTimeout(() => dismiss(key), TOAST_MS);
@@ -105,7 +87,6 @@ export function RunNotifications() {
         }
     }, [order, runs, watchedRunId]);
 
-    // Cleanup timers on unmount
     useEffect(() => () => {
         for (const timer of timersRef.current.values()) clearTimeout(timer);
     }, []);

@@ -41,7 +41,6 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-/** lucide-react icon name → component, for data-driven mock entities. */
 export const ICONS: Record<string, LucideIcon> = {
   activity: Activity,
   'alert-triangle': AlertTriangle,

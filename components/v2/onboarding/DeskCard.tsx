@@ -3,21 +3,6 @@
 import { motion } from 'motion/react';
 import { PREMIUM_EASE } from '@/components/v2/motion';
 
-/*
- * DeskCard — the animated paper card for the Agent's Desk onboarding.
- *
- * Each card materializes with Motion Design's Premium archetype choreography:
- *   1. Anticipation: slight pull-back (y: -5px, 100ms)
- *   2. Arc entry: rise with 10px perpendicular offset + fade (350ms, cubic-bezier)
- *   3. Settle: drop to final position with shadow expand (secondary action, 50ms after)
- *
- * Variants:
- *   - agent: paper card, ink text, left-aligned (the brand strategist speaks)
- *   - user: vermilion-tinted card, right-aligned (your answer)
- *   - system: centered pill, mono text (status messages)
- *   - summary: full-width card with markdown-like formatted content
- */
-
 export type CardVariant = 'agent' | 'user' | 'system' | 'summary';
 
 interface DeskCardProps {
@@ -81,7 +66,6 @@ export function DeskCard({ variant = 'agent', children, delay = 0 }: DeskCardPro
 
   return (
     <motion.div
-      // Anticipation → Arc entry → Settle choreography
       initial={{ opacity: 0, y: 24, x: variant === 'user' ? 10 : -10, rotate: variant === 'user' ? 1 : -0.5 }}
       animate={{ opacity: 1, y: 0, x: 0, rotate: 0 }}
       transition={{
@@ -100,7 +84,6 @@ export function DeskCard({ variant = 'agent', children, delay = 0 }: DeskCardPro
           borderRadius: s.radius,
           maxWidth: s.maxWidth,
         }}
-        // Secondary action: shadow settles 50ms after the card arrives
         initial={{ boxShadow: '0 0 0 0 rgba(0,0,0,0)' }}
         animate={{ boxShadow: '0 2px 12px 0 rgba(0,0,0,0.04)' }}
         transition={{ duration: 0.3, delay: delay + 0.15, ease: PREMIUM_EASE }}
@@ -118,10 +101,6 @@ export function DeskCard({ variant = 'agent', children, delay = 0 }: DeskCardPro
   );
 }
 
-/*
- * AgentTyping — the ambient pulse indicator shown while the agent "thinks".
- * Motion Design: ambient continuous pattern, sine ease-in-out, 1.4s loop.
- */
 export function AgentTyping() {
   return (
     <motion.div

@@ -65,10 +65,8 @@ const MetricStat = React.forwardRef<HTMLDivElement, MetricStatProps>(
     },
     ref
   ) => {
-    // If a intent is provided but no variant, default to 'card'
     const finalVariant = variant || (intent && intent !== 'default' ? 'card' : 'default');
 
-    // Parse change value: handle string (e.g. "+15%") or number
     const numericChange = typeof change === 'number' ? change : parseFloat(change as string);
     const hasChange = change !== undefined && change !== null && !isNaN(numericChange);
     const isPositive = hasChange && numericChange > 0;

@@ -33,12 +33,6 @@ function getLangGraphBaseUrl(): string {
             return process.env.NEXT_PUBLIC_LANGGRAPH_TUNNEL_URL || 'https://localhost:2024';
 
         case 'production':
-            // LANGGRAPH_API_URL (no NEXT_PUBLIC_ prefix) is read from
-            // process.env at RUNTIME in server routes — the right knob for
-            // deployments where the frontend container talks to the LangGraph
-            // container over a shared Docker network. NEXT_PUBLIC_* vars are
-            // inlined by Next at BUILD time, so they can't be changed per
-            // deploy and are kept only as a build-time fallback.
             return process.env.LANGGRAPH_API_URL || process.env.NEXT_PUBLIC_LANGGRAPH_PRODUCTION_URL || '';
 
         case 'local':
@@ -119,11 +113,6 @@ export function validateLangGraphConfig(): { valid: boolean; errors: string[] } 
 
 export const langGraphConfig = getLangGraphConfig();
 
-/**
- * Forward the caller's Doddle access token to the LangGraph server as a
- * Bearer header. The browser-to-Next hop rides cookies; this converts for
- * the Next-to-LangGraph hop (auth.py accepts Bearer or the cookie).
- */
 export function langgraphAuthHeaders(
     req: import('next/server').NextRequest,
 ): Record<string, string> {

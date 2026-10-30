@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-/** Cycles through options with the reference's rise-and-fade morph. Still under reduced motion. */
 export function MorphText({ options, intervalMs = 2600 }: { options: string[]; intervalMs?: number }) {
   const [i, setI] = useState(0);
   useEffect(() => {

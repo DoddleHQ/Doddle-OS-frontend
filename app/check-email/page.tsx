@@ -35,7 +35,6 @@ function CheckEmailContent() {
         <div className="v2-scope">
             <AuthLayout positioning="Check your inbox for a verification link to activate your account.">
                 <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.09, delayChildren: 0.15 } } }}>
-                    {/* Icon */}
                     <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="text-center mb-6">
                         <motion.div className="w-14 h-14 mx-auto mb-5 rounded-full flex items-center justify-center" style={{ background: 'var(--v2-vermilion)' }} initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
                             <Mail className="w-7 h-7" style={{ color: 'var(--v2-vermilion-ink)' }} strokeWidth={1.5} />
@@ -44,7 +43,6 @@ function CheckEmailContent() {
                         <p className="text-[14px]" style={{ color: 'var(--v2-paper-ink-2)' }}>We&rsquo;ve sent a verification link to activate your account.</p>
                     </motion.div>
 
-                    {/* Email display with copy */}
                     {email && (
                         <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="mb-6">
                             <span className="v2-label text-[9px] block mb-1.5" style={{ color: 'var(--v2-paper-ink-2)' }}>Sent to</span>
@@ -57,7 +55,6 @@ function CheckEmailContent() {
                         </motion.div>
                     )}
 
-                    {/* Tips */}
                     <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="mb-6">
                         <div className="space-y-2">
                             <div className="flex items-start gap-2 text-[13px]" style={{ color: 'var(--v2-paper-ink-2)' }}>
@@ -71,7 +68,6 @@ function CheckEmailContent() {
                         </div>
                     </motion.div>
 
-                    {/* Resend */}
                     {email && (
                         <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="mb-6">
                             <p className="text-[13px] mb-3" style={{ color: 'var(--v2-paper-ink-2)' }}>Didn&rsquo;t receive the email?</p>
@@ -79,10 +75,8 @@ function CheckEmailContent() {
                         </motion.div>
                     )}
 
-                    {/* Divider */}
                     <div className="border-t mb-6" style={{ borderColor: 'var(--v2-paper-rule)' }} />
 
-                    {/* Actions */}
                     <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }} className="space-y-3">
                         <Link href="/login" className="w-full flex items-center justify-center gap-2 px-6 py-3.5 v2-label text-[11px] rounded-[10px]" style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)', boxShadow: '0 4px 14px rgba(200,50,27,0.2)' }}>
                             <ArrowLeft className="w-4 h-4" /> Back to login

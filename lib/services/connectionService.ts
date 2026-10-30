@@ -1,16 +1,3 @@
-/**
- * Connection Service
- *
- * Client-side service for workspace data-source connections (Magento, GSC).
- * Handles connect/disconnect/update, manual sync triggers, and sync-state polling.
- * Uses the apiClient wrapper which handles auth token refresh automatically.
- *
- * Backend returns snake_case; mappers convert to the camelCase types in
- * lib/types/connection.types.ts.
- *
- * @see /api/v1/workspaces/{workspaceId}/connections
- */
-
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/services/apiClient';
 import type {
     CreateMagentoConnectionReq,
@@ -34,18 +21,10 @@ import type {
     SyncLoadMode,
 } from '@/lib/types/connection.types';
 
-// ---------------------------------------------------------------------------
-// URL helper
-// ---------------------------------------------------------------------------
-
 function connectionsUrl(workspaceId: string, ...segments: string[]): string {
     const base = `/api/v1/workspaces/${workspaceId}/connections`;
     return segments.length > 0 ? `${base}/${segments.join('/')}` : base;
 }
-
-// ---------------------------------------------------------------------------
-// Snake_case → camelCase mappers
-// ---------------------------------------------------------------------------
 
 function toMagentoCredentials(raw: Record<string, unknown>): MagentoCredentialsResponse {
     return {
@@ -121,10 +100,6 @@ function toSyncState(raw: Record<string, unknown>): SyncState {
     };
 }
 
-// ---------------------------------------------------------------------------
-// Request body builders (camelCase → snake_case)
-// ---------------------------------------------------------------------------
-
 function buildScheduleBody(schedule?: CreateMagentoConnectionReq['schedule']): Record<string, unknown> | undefined {
     if (!schedule) return undefined;
     const body: Record<string, unknown> = {};
@@ -147,33 +122,17 @@ function buildMagentoPullSettingsBody(
     return body;
 }
 
-// ---------------------------------------------------------------------------
-// Service
-// ---------------------------------------------------------------------------
-
 export const connectionService = {
-    /**
-     * GET /api/v1/workspaces/{workspaceId}/connections
-     * List all active data-source connections for a workspace.
-     */
     async listConnections(workspaceId: string): Promise<DataSourceConnection[]> {
         const raw = (await apiGet(connectionsUrl(workspaceId))) as Record<string, unknown>[];
         return raw.map(toConnection);
     },
 
-    /**
-     * GET /api/v1/workspaces/{workspaceId}/connections/{sourceType}
-     * Get the active connection for a specific source type.
-     */
     async getConnection(workspaceId: string, sourceType: DataSourceType): Promise<DataSourceConnection> {
         const raw = (await apiGet(connectionsUrl(workspaceId, sourceType))) as Record<string, unknown>;
         return toConnection(raw);
     },
 
-    /**
-     * POST /api/v1/workspaces/{workspaceId}/connections/magento
-     * Connect a Magento store. Admin only.
-     */
     async connectMagento(workspaceId: string, req: CreateMagentoConnectionReq): Promise<DataSourceConnection> {
         const body: Record<string, unknown> = {
             credentials: {
@@ -190,10 +149,6 @@ export const connectionService = {
         return toConnection(raw);
     },
 
-    /**
-     * POST /api/v1/workspaces/{workspaceId}/connections/gsc
-     * Connect a Google Search Console property. Admin only.
-     */
     async connectGsc(workspaceId: string, req: CreateGscConnectionReq): Promise<DataSourceConnection> {
         const body: Record<string, unknown> = {
             credentials: {
@@ -210,10 +165,6 @@ export const connectionService = {
         return toConnection(raw);
     },
 
-    /**
-     * PATCH /api/v1/workspaces/{workspaceId}/connections/magento
-     * Update Magento credentials, pull settings, or schedule. Admin only.
-     */
     async updateMagento(workspaceId: string, req: UpdateMagentoConnectionReq): Promise<DataSourceConnection> {
         const body: Record<string, unknown> = {};
         if (req.baseUrl !== undefined) body.base_url = req.baseUrl;
@@ -227,10 +178,6 @@ export const connectionService = {
         return toConnection(raw);
     },
 
-    /**
-     * PATCH /api/v1/workspaces/{workspaceId}/connections/gsc
-     * Update GSC credentials or schedule. Admin only.
-     */
     async updateGsc(workspaceId: string, req: UpdateGscConnectionReq): Promise<DataSourceConnection> {
         const body: Record<string, unknown> = {};
         if (req.siteUrl !== undefined) body.site_url = req.siteUrl;
@@ -244,18 +191,10 @@ export const connectionService = {
         return toConnection(raw);
     },
 
-    /**
-     * DELETE /api/v1/workspaces/{workspaceId}/connections/{sourceType}
-     * Disconnect a data source. Admin only.
-     */
     async disconnect(workspaceId: string, sourceType: DataSourceType): Promise<void> {
         await apiDelete(connectionsUrl(workspaceId, sourceType));
     },
 
-    /**
-     * POST /api/v1/workspaces/{workspaceId}/connections/gmc
-     * Connect a Google Merchant Center account. Admin only.
-     */
     async connectGmc(workspaceId: string, req: CreateGmcConnectionReq): Promise<DataSourceConnection> {
         const body: Record<string, unknown> = {
             credentials: {
@@ -272,10 +211,6 @@ export const connectionService = {
         return toConnection(raw);
     },
 
-    /**
-     * PATCH /api/v1/workspaces/{workspaceId}/connections/gmc
-     * Update GMC credentials or schedule. Admin only.
-     */
     async updateGmc(workspaceId: string, req: UpdateGmcConnectionReq): Promise<DataSourceConnection> {
         const body: Record<string, unknown> = {};
         if (req.merchantId !== undefined) body.merchant_id = req.merchantId;
@@ -289,10 +224,6 @@ export const connectionService = {
         return toConnection(raw);
     },
 
-    /**
-     * POST /api/v1/workspaces/{workspaceId}/connections/ga4
-     * Connect a Google Analytics 4 property. Admin only.
-     */
     async connectGa4(workspaceId: string, req: CreateGa4ConnectionReq): Promise<DataSourceConnection> {
         const body: Record<string, unknown> = {
             credentials: {
@@ -309,10 +240,6 @@ export const connectionService = {
         return toConnection(raw);
     },
 
-    /**
-     * PATCH /api/v1/workspaces/{workspaceId}/connections/ga4
-     * Update GA4 credentials or schedule. Admin only.
-     */
     async updateGa4(workspaceId: string, req: UpdateGa4ConnectionReq): Promise<DataSourceConnection> {
         const body: Record<string, unknown> = {};
         if (req.propertyId !== undefined) body.property_id = req.propertyId;
@@ -326,10 +253,6 @@ export const connectionService = {
         return toConnection(raw);
     },
 
-    /**
-     * POST /api/v1/workspaces/{workspaceId}/connections/{sourceType}/sync
-     * Manually trigger a sync. Returns immediately with job IDs (202).
-     */
     async triggerSync(
         workspaceId: string,
         sourceType: DataSourceType,
@@ -347,10 +270,6 @@ export const connectionService = {
         };
     },
 
-    /**
-     * GET /api/v1/workspaces/{workspaceId}/connections/{sourceType}/sync-states
-     * Get per-entity sync health for a connection.
-     */
     async getSyncStates(workspaceId: string, sourceType: DataSourceType): Promise<SyncState[]> {
         const raw = (await apiGet(connectionsUrl(workspaceId, sourceType, 'sync-states'))) as Record<string, unknown>[];
         return raw.map(toSyncState);

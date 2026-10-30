@@ -1,19 +1,8 @@
 'use client';
 
-/*
- * v3 real data layer — workspaces, operator, fetch plumbing.
- * Power agents + sessions live in lib/v3/powerAgents.ts.
- * Loading, empty, and error states are surfaced honestly — no seeded
- * substitutes for real entities.
- */
-
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { workspaceService } from '@/lib/services/workspaceService';
 import { getMe } from '@/lib/services/authService';
-
-// ---------------------------------------------------------------------------
-// Workspaces
-// ---------------------------------------------------------------------------
 
 export interface V3Workspace {
   id: string;
@@ -32,11 +21,6 @@ export async function fetchV3Workspaces(): Promise<V3Workspace[]> {
   }));
 }
 
-// ---------------------------------------------------------------------------
-// Operator
-// ---------------------------------------------------------------------------
-
-/** Operator display name for the greeting; null keeps the greeting generic. */
 export async function fetchV3OperatorName(): Promise<string | null> {
   try {
     const me = await getMe();
@@ -48,15 +32,10 @@ export async function fetchV3OperatorName(): Promise<string | null> {
 
 let operatorNamePromise: Promise<string | null> | null = null;
 
-/** Greeting name, fetched once per session and shared by all consumers. */
 export function useV3OperatorName(): string | null {
   const { data } = useV3Fetch(() => (operatorNamePromise ??= fetchV3OperatorName()), []);
   return data;
 }
-
-// ---------------------------------------------------------------------------
-// Fetch hook — loading / error / retry, no silent fake data
-// ---------------------------------------------------------------------------
 
 export interface V3Fetch<T> {
   data: T | null;
@@ -101,7 +80,6 @@ export function useV3Fetch<T>(fn: () => Promise<T>, deps: unknown[]): V3Fetch<T>
   return { data, loading, error, reload };
 }
 
-/** Relative "x ago" from an ISO timestamp, mono-short ("14m", "2h", "3d"). */
 export function v3Ago(iso: string | null): string {
   if (!iso) return '—';
   const ms = Date.now() - new Date(iso).getTime();
@@ -114,14 +92,8 @@ export function v3Ago(iso: string | null): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-// ---------------------------------------------------------------------------
-// Unread tracking — a thread is unread while it has been updated (updatedAt)
-// more recently than the operator last viewed it. Per-thread, persisted.
-// ---------------------------------------------------------------------------
-
 const THREAD_SEEN_PREFIX = 'v3.seen.th.';
 
-/** Epoch ms of the last view of a thread; 0 when never viewed. */
 export function readThreadSeenAt(threadId: string): number {
   try {
     const v = localStorage.getItem(THREAD_SEEN_PREFIX + threadId);
@@ -135,12 +107,9 @@ export function markThreadSeen(threadId: string): void {
   try {
     localStorage.setItem(THREAD_SEEN_PREFIX + threadId, String(Date.now()));
   } catch {
-    /* private mode */
   }
 }
 
-/** Epoch ms of the operator's first v3 visit — stamped once. Activity from
- *  before you ever used the OS is never "new"; only updates since. */
 function firstVisitMs(): number {
   try {
     const k = 'v3.firstVisit';
@@ -155,8 +124,6 @@ function firstVisitMs(): number {
   }
 }
 
-/** A session row is unread when its latest activity beats the last view
- *  (or the first-visit baseline for threads never viewed). */
 export function isV3SessionUnread(s: { id: string; updatedAt?: string | null; createdAt?: string | null }): boolean {
   const t = s.updatedAt ?? s.createdAt;
   if (!t) return false;
@@ -166,9 +133,6 @@ export function isV3SessionUnread(s: { id: string; updatedAt?: string | null; cr
   return ms > seenAt;
 }
 
-/** v13 status language: an unseen run updated moments ago reads live (blue
- *  IN PROGRESS), older unseen runs await review (red), seen runs are done
- *  (green). Design-forward until the API reports run state directly. */
 export type V3SessionStatus = 'running' | 'attention' | 'done';
 
 const V3_HOT_MS = 30 * 60_000;

@@ -4,7 +4,6 @@ import { Building2, SlidersHorizontal, SunMoon, Briefcase } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 import { v3SessionStatus } from '@/lib/v3/data';
 
-/** Workspace switcher + settings dropdowns hanging off the menu notch. */
 export function NotchMenus() {
   const menu = useV3OS((s) => s.menu);
   const workspaceId = useV3OS((s) => s.workspaceId);

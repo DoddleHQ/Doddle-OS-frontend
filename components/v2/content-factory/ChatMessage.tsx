@@ -5,24 +5,6 @@ import { motion } from 'motion/react';
 import type { ChatMessage as ChatMessageType } from '@/lib/types/graph-events.types';
 import { V2Markdown } from '@/components/v2/onboarding/V2Markdown';
 
-/*
- * ChatMessage — v2 Specimen Terminal message bubble.
- *
- * Variants match the graph event system:
- * - agent: paper-register bubble, left-aligned, "Agent" label
- * - user: vermilion-tinted bubble, right-aligned
- * - system: centered pill, mono text
- * - step: hairline-separated status line
- *
- * Performance: memoized because long QC-heavy runs mount dozens of messages —
- * without memo every new message re-rendered the entire transcript. System/step
- * chips are the highest-frequency element (QC chatter) and render without
- * framer-motion wrappers; motion stays on the low-frequency agent/user bubbles.
- *
- * Operate mode: single sans, accent reserved for the agent label + user bubble,
- * border OR shadow (never both), 150ms entry.
- */
-
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 export const ChatMessage = memo(function ChatMessage({ message, agentName, agentInitials }: { message: ChatMessageType; agentName?: string; agentInitials?: string }) {
@@ -51,9 +33,6 @@ export const ChatMessage = memo(function ChatMessage({ message, agentName, agent
     }
 
     if (message.type === 'system' || message.type === 'step') {
-        // Warnings (QC failures, fallbacks) get a vermilion tint so trouble
-        // reads at a glance; info stays a quiet paper pill. No motion wrapper
-        // — these are the highest-frequency messages in QC-heavy runs.
         const isWarning = (message.metadata as { level?: string } | undefined)?.level === 'warning';
         return (
             <div className="flex justify-center my-2">
@@ -79,7 +58,6 @@ export const ChatMessage = memo(function ChatMessage({ message, agentName, agent
                 transition={{ duration: 0.18, ease: EASE }}
                 className="flex justify-start mb-3 w-full gap-2.5"
             >
-                {/* Avatar */}
                 <div
                     className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
                     style={{
@@ -94,7 +72,6 @@ export const ChatMessage = memo(function ChatMessage({ message, agentName, agent
                     {agentInitials || 'A'}
                 </div>
                 <div className="flex-1 min-w-0">
-                    {/* Name */}
                     <div className="mb-1">
                         <span style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.72rem', fontWeight: 600, color: 'var(--v2-paper-ink)' }}>
                             {agentName || 'Agent'}
@@ -120,9 +97,6 @@ export const ChatMessage = memo(function ChatMessage({ message, agentName, agent
     return null;
 });
 
-/*
- * TypingIndicator — ambient pulse shown while the agent is working.
- */
 export function TypingIndicator({ agentName = 'Agent', agentInitials = 'A' }: { agentName?: string; agentInitials?: string }) {
     return (
         <motion.div
@@ -132,7 +106,6 @@ export function TypingIndicator({ agentName = 'Agent', agentInitials = 'A' }: { 
             transition={{ duration: 0.15 }}
             className="flex justify-start mb-3 gap-2.5"
         >
-            {/* Avatar */}
             <div
                 className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
                 style={{

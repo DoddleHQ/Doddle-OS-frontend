@@ -3,7 +3,6 @@ import type { V3Session } from '@/lib/v3/powerAgents';
 import { AssignmentsWindow } from '@/components/v3/windows/AssignmentsWindow';
 import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3PowerAgents, type V3Agent } from '@/lib/v3/powerAgents';
-// path navigation: router/pathname stubs
 const pushes: string[] = [];
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: (p: string) => pushes.push(p), replace: jest.fn() }),
@@ -16,7 +15,6 @@ jest.mock('@/lib/v3/powerAgents', () => {
 });
 const mockedAgents = fetchV3PowerAgents as jest.MockedFunction<typeof fetchV3PowerAgents>;
 
-// the exec view's chat transport isn't under test here
 jest.mock('@ai-sdk/react', () => ({
   useChat: () => ({ messages: [], setMessages: jest.fn(), sendMessage: jest.fn(), status: 'ready', stop: jest.fn(), error: null }),
 }));
@@ -48,7 +46,6 @@ describe('AssignmentsWindow · v13 win-assignments (waterfall / board / review)'
     try {
       window.localStorage.clear();
     } catch {
-      /* ignore */
     }
     mockedAgents.mockResolvedValue([
       agent({}),
@@ -89,35 +86,31 @@ describe('AssignmentsWindow · v13 win-assignments (waterfall / board / review)'
     expect(screen.getByText('EPIC · 21-DAY WINDOW')).toBeTruthy();
     expect(container.querySelectorAll('.gantt-week').length).toBe(3);
     expect((await screen.findAllByText('Q4 site audit')).length).toBeGreaterThan(0);
-    // 3 epics × (1 epic row + 3 stage rows), all expanded by default
     expect(container.querySelectorAll('.gantt-row').length).toBe(16);
     expect(container.querySelectorAll('.gantt-kid-label').length).toBe(12);
     expect(screen.getAllByText('3 stages').length).toBe(4);
-    // the v13 mix: live run → IN PROGRESS, older unseen → REVIEW, seen → DONE
     expect(screen.getAllByText('IN PROGRESS').length).toBe(1);
     expect(screen.getAllByText('REVIEW').length).toBe(2);
     expect(screen.getAllByText('DONE').length).toBeGreaterThan(0);
     const bars = container.querySelectorAll('.gantt-bar');
     expect(Array.from(bars).some((b) => b.className.includes('st-attention'))).toBe(true);
     expect(Array.from(bars).some((b) => b.className.includes('st-done'))).toBe(true);
-    // today marker sits inside the window
     expect(container.querySelectorAll('.gantt-today').length).toBe(16);
-    // review gates: attention tasks chart mile tags
     expect(container.querySelectorAll('.gantt-mile-tag').length).toBe(2);
   });
 
   it('waterfall: chevron collapses stages, status filter narrows epics', async () => {
     seedFeed(sessions);
     const { container } = render(<AssignmentsWindow />);
-    fireEvent.click((await screen.findAllByText('3 stages'))[0]); // wait for render
+    fireEvent.click((await screen.findAllByText('3 stages'))[0]);
     fireEvent.click(container.querySelectorAll('.epic-chev')[0]);
     expect(container.querySelectorAll('.gantt-row').length).toBe(13);
     fireEvent.click(container.querySelectorAll('.epic-chev')[0]);
     expect(container.querySelectorAll('.gantt-row').length).toBe(16);
     fireEvent.click(screen.getByText('done', { selector: '#gantt-filters .fchip' }));
-    expect(container.querySelectorAll('.gantt-kid-label').length).toBe(3); // only the reviewed epic
+    expect(container.querySelectorAll('.gantt-kid-label').length).toBe(3);
     fireEvent.click(screen.getByText('running', { selector: '#gantt-filters .fchip' }));
-    expect(container.querySelectorAll('.gantt-kid-label').length).toBe(3); // the live run
+    expect(container.querySelectorAll('.gantt-kid-label').length).toBe(3);
     fireEvent.click(screen.getByText('Clear', { selector: '#gantt-filters .btn-deploy' }));
     expect(container.querySelectorAll('.gantt-kid-label').length).toBe(12);
   });
@@ -134,11 +127,10 @@ describe('AssignmentsWindow · v13 win-assignments (waterfall / board / review)'
     const { container } = render(<AssignmentsWindow />);
     fireEvent.click(await screen.findByRole('tab', { name: /^Board/ }));
     expect(await screen.findByText('NEEDS REVIEW')).toBeTruthy();
-    expect(container.querySelectorAll('.fizzy-card').length).toBe(2); // the two attention sessions
+    expect(container.querySelectorAll('.fizzy-card').length).toBe(2);
     fireEvent.click(screen.getByTitle('Open DONE'));
     expect(await screen.findByText(/ADDED /i)).toBeTruthy();
     expect(container.querySelectorAll('.fizzy-card').length).toBe(1);
-    // proposed column is empty → reference "watching" state when opened
     fireEvent.click(screen.getByTitle('Open PROPOSED'));
     expect(await screen.findByText('WATCHING FOR NEW CARDS')).toBeTruthy();
   });
@@ -165,7 +157,7 @@ describe('AssignmentsWindow · v13 win-assignments (waterfall / board / review)'
         }),
     }) as unknown as typeof fetch;
     const { container } = render(<AssignmentsWindow />);
-    await screen.findAllByText('Q4 site audit'); // wait for render
+    await screen.findAllByText('Q4 site audit');
     fireEvent.click(container.querySelectorAll('.gantt-track')[0]);
     expect(await screen.findByRole('dialog', { name: /Q4 site audit details/i })).toBeTruthy();
     await waitFor(() => expect(screen.getByText('crawl the sitemap')).toBeTruthy());

@@ -8,10 +8,6 @@ import { getLangGraphApiUrl } from '@/lib/config/langgraph.config';
 import MarkdownRenderer from '@/components/content-factory/chat/artifacts/MarkdownRenderer';
 import Notification from '@/components/ui/Notification';
 
-// ============================================================================
-// Types
-// ============================================================================
-
 interface ChatMessage {
     id: string;
     role: 'user' | 'assistant' | 'system' | 'tool_call' | 'tool_result';
@@ -20,52 +16,21 @@ interface ChatMessage {
     toolName?: string;
     toolArgs?: Record<string, unknown>;
     isStreaming?: boolean;
-    toolCallId?: string;  // Links tool_call to tool_result for completion tracking
-    isComplete?: boolean; // For tool_call: true when tool_result has arrived
+    toolCallId?: string;
+    isComplete?: boolean;
 }
 
-/**
- * Agent execution phases — tracks the model ↔ tools loop.
- *
- * Flow: reasoning → tool_calling → tool_executing → tool_result → reasoning (repeat) → answering → done
- * For turns without tools: reasoning → answering → done
- */
 type AgentPhase = 'reasoning' | 'tool_calling' | 'tool_executing' | 'tool_result' | 'answering' | 'done';
 
 interface StreamState {
     status: 'idle' | 'connecting' | 'streaming' | 'error';
     error: string | null;
-    activeNode: string | null;  // Current graph node (model, tools, etc.)
-    phase: AgentPhase;          // Current phase of the agent execution loop
+    activeNode: string | null;
+    phase: AgentPhase;
 }
-
-// ============================================================================
-// Constants
-// ============================================================================
 
 const ASSISTANT_ID = 'google_analyst';
 
-// ============================================================================
-// New Analysis Page
-// ============================================================================
-
-/**
- * New Analysis Page - Continuous Chat Interface for Google Analyst
- *
- * Uses LangGraph messages protocol with full streaming:
- * - Input: { messages: [{ role: "user", content: "..." }] }
- * - Stream mode: ["messages", "updates"]
- * - Events: messages/partial (token-by-token), messages/complete (tool results),
- *           updates (node-level progress)
- *
- * Phase-based state machine tracks the agent loop:
- *   reasoning → tool_calling → tool_executing → tool_result → reasoning (repeat) → answering → done
- *
- * Each agent response is automatically saved as a 'report' artifact in the backend.
- * Assistant messages include Copy and Download action buttons.
- *
- * Supports continuous multi-turn conversation on a single thread.
- */
 export default function NewAnalysisPage() {
     const params = useParams();
     const router = useRouter();
@@ -94,21 +59,18 @@ export default function NewAnalysisPage() {
     const messageHistoryRef = useRef<Array<{ role: string; content: string }>>([]);
     const savedArtifactIdsRef = useRef<Set<string>>(new Set());
 
-    // Redirect if workspaceId is not available
     useEffect(() => {
         if (!workspaceId || workspaceId === 'undefined') {
             router.push('/workspaces');
         }
     }, [workspaceId, router]);
 
-    // Auto-scroll to bottom when new messages arrive or phase changes
     useEffect(() => {
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
     }, [messages, streamState.phase]);
 
-    // Create thread in database once we have a LangGraph thread ID
     useEffect(() => {
         if (threadIdRef.current && !dbThreadIdRef.current && sentMessageRef.current) {
             const message = sentMessageRef.current;
@@ -133,7 +95,6 @@ export default function NewAnalysisPage() {
         }
     }, [threadIdRef.current, createThreadFromStream, workspaceId]);
 
-    // Replace URL with thread-based URL once DB thread is created
     useEffect(() => {
         if (dbThreadIdRef.current) {
             const newUrl = `/workspaces/${workspaceId}/modules/analytics-action/google-analyst/${dbThreadIdRef.current}`;
@@ -141,17 +102,12 @@ export default function NewAnalysisPage() {
         }
     }, [dbThreadIdRef.current, workspaceId]);
 
-    /**
-     * Save an agent response as a 'report' artifact in the backend.
-     * Uses the ThreadContext's saveArtifact which queues and retries.
-     */
     const saveResponseAsArtifact = useCallback((content: string, messageId: string) => {
         if (!content.trim() || !dbThreadIdRef.current) return;
         if (savedArtifactIdsRef.current.has(messageId)) return;
 
         savedArtifactIdsRef.current.add(messageId);
 
-        // Extract a title from the first line of the response
         const firstLine = content.split('\n').find(line => line.trim().length > 0) || 'Analysis Response';
         const title = firstLine.replace(/^#+\s*/, '').substring(0, 100);
 
@@ -163,7 +119,6 @@ export default function NewAnalysisPage() {
         });
     }, [workspaceId, saveArtifact]);
 
-    // Copy message content to clipboard
     const handleCopyMessage = useCallback(async (message: ChatMessage) => {
         try {
             await navigator.clipboard.writeText(message.content);
@@ -174,7 +129,6 @@ export default function NewAnalysisPage() {
         }
     }, []);
 
-    // Download message content as markdown file
     const handleDownloadMessage = useCallback((message: ChatMessage) => {
         try {
             const blob = new Blob([message.content], { type: 'text/markdown' });
@@ -191,18 +145,12 @@ export default function NewAnalysisPage() {
         }
     }, []);
 
-    /**
-     * Send a message to the Google Analyst graph.
-     * Uses stream_mode: ["messages", "updates"] for token-by-token streaming
-     * with tool call visibility and node-level progress.
-     */
     const handleSendMessage = useCallback(async (message: string) => {
         if (!message.trim()) return;
 
         setChatInputValue('');
         sentMessageRef.current = message;
 
-        // Add user message to UI
         const userMsg: ChatMessage = {
             id: `msg-${Date.now()}-user`,
             role: 'user',
@@ -211,19 +159,16 @@ export default function NewAnalysisPage() {
         };
         setMessages(prev => [...prev, userMsg]);
 
-        // Add to message history for subsequent turns
         messageHistoryRef.current.push({ role: 'user', content: message });
 
         try {
             setStreamState({ status: 'connecting', error: null, activeNode: null, phase: 'reasoning' });
 
-            // Create abort controller
             abortControllerRef.current = new AbortController();
             const signal = abortControllerRef.current.signal;
 
             const baseUrl = getLangGraphApiUrl();
 
-            // Step 1: Create a thread if we don't have one yet
             let threadId = threadIdRef.current;
             if (!threadId) {
                 const threadRes = await fetch(`${baseUrl}/threads`, {
@@ -240,7 +185,6 @@ export default function NewAnalysisPage() {
                 threadIdRef.current = threadId;
             }
 
-            // Step 2: Stream the agent response with messages + updates
             setStreamState({ status: 'streaming', error: null, activeNode: null, phase: 'reasoning' });
 
             const runRes = await fetch(`${baseUrl}/threads/${threadId}/runs/stream`, {
@@ -277,44 +221,22 @@ export default function NewAnalysisPage() {
                 throw new Error('No response body available for streaming');
             }
 
-            // ================================================================
-            // Step 3: Parse SSE stream with phase-based state machine
-            // ================================================================
-            //
-            // The LangGraph create_agent graph alternates between two nodes:
-            //   model (LLM call) and tools (tool execution)
-            //
-            // Event sequence per turn:
-            //   PHASE 1 (reasoning):  messages/partial ×N (content="") → messages/partial (content + tool_calls) → updates {"model":...}
-            //   PHASE 2 (execution):  messages/complete (type="tool") → updates {"tools":...}
-            //   PHASE 3 (answer):     messages/partial ×N (content streaming) → updates {"model":...}
-            //
-            // For chained tool calls, phases 1-2 repeat before phase 3.
-            //
-            // Key: GLM sends CUMULATIVE content, not deltas.
-
             const reader = runRes.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
             let currentEvent = '';
 
-            // Phase tracking
             let phase: AgentPhase = 'reasoning';
 
-            // Content tracking (cumulative from GLM)
             let currentContent = '';
 
-            // Thinking indicator message ID (shown/hidden during reasoning)
             let thinkingMsgId: string | null = null;
 
-            // Final answer streaming message ID
             let answeringMsgId: string | null = null;
 
-            // Tool call tracking
             let lastToolCalls: Array<{ name: string; args: Record<string, unknown>; id: string }> = [];
-            const toolCallIdMap = new Map<string, string>(); // toolName -> message id
+            const toolCallIdMap = new Map<string, string>();
 
-            // Helper: show "Thinking..." indicator
             const showThinking = () => {
                 if (!thinkingMsgId) {
                     const id = `msg-${Date.now()}-thinking`;
@@ -328,7 +250,6 @@ export default function NewAnalysisPage() {
                 }
             };
 
-            // Helper: hide "Thinking..." indicator
             const hideThinking = () => {
                 if (thinkingMsgId) {
                     const idToRemove = thinkingMsgId;
@@ -349,7 +270,6 @@ export default function NewAnalysisPage() {
                     const trimmedLine = line.trim();
                     if (!trimmedLine || trimmedLine === ': heartbeat') continue;
 
-                    // Track SSE event type
                     if (trimmedLine.startsWith('event: ')) {
                         currentEvent = trimmedLine.slice(7).trim();
                         continue;
@@ -363,21 +283,17 @@ export default function NewAnalysisPage() {
 
                         const data = JSON.parse(jsonStr);
 
-                        // ─── Handle messages/partial ───
                         if (currentEvent === 'messages/partial') {
-                            const msg = data[0]; // First message in the array
+                            const msg = data[0];
 
-                            // PHASE: Tool call detected — model decided to use tools
                             if (msg?.tool_calls && msg.tool_calls.length > 0) {
                                 if (phase !== 'tool_calling') {
                                     phase = 'tool_calling';
                                     setStreamState(prev => ({ ...prev, phase: 'tool_calling' }));
 
-                                    // Hide thinking indicator
                                     hideThinking();
                                 }
 
-                                // Add new tool call messages (dedup by name)
                                 const newToolCalls = msg.tool_calls.filter(
                                     (tc: { name: string; args: Record<string, unknown>; id?: string }) =>
                                         !lastToolCalls.some(ltc => ltc.name === tc.name)
@@ -400,9 +316,7 @@ export default function NewAnalysisPage() {
                                 }
                             }
 
-                            // PHASE: Final answer — content streaming with no tool_calls
                             else if (msg?.content && typeof msg.content === 'string' && msg.content.length > 0) {
-                                // GLM sends cumulative content — compute delta
                                 if (msg.content !== currentContent) {
                                     currentContent = msg.content;
 
@@ -410,10 +324,8 @@ export default function NewAnalysisPage() {
                                         phase = 'answering';
                                         setStreamState(prev => ({ ...prev, phase: 'answering' }));
 
-                                        // Hide thinking indicator
                                         hideThinking();
 
-                                        // Create the answer streaming message
                                         const newAnswerId = `msg-${Date.now()}-answer`;
                                         answeringMsgId = newAnswerId;
                                         setMessages(prev => [...prev, {
@@ -424,7 +336,6 @@ export default function NewAnalysisPage() {
                                             isStreaming: true,
                                         }]);
                                     } else if (answeringMsgId) {
-                                        // Update existing answer message with cumulative content
                                         setMessages(prev => prev.map(m =>
                                             m.id === answeringMsgId
                                                 ? { ...m, content: currentContent }
@@ -434,20 +345,17 @@ export default function NewAnalysisPage() {
                                 }
                             }
 
-                            // PHASE: Reasoning — empty content, no tool calls
                             else if (phase === 'reasoning') {
                                 showThinking();
                             }
                         }
 
-                        // ─── Handle messages/complete (tool results) ───
                         if (currentEvent === 'messages/complete') {
                             const msg = data[0];
                             if (msg?.type === 'tool') {
                                 phase = 'tool_result';
                                 setStreamState(prev => ({ ...prev, phase: 'tool_result' }));
 
-                                // Mark the corresponding tool_call as complete (stop spinner)
                                 const toolCallMsgId = toolCallIdMap.get(msg.name);
                                 if (toolCallMsgId) {
                                     setMessages(prev => prev.map(m =>
@@ -457,7 +365,6 @@ export default function NewAnalysisPage() {
                                     ));
                                 }
 
-                                // Add tool result message
                                 const toolResultMsg: ChatMessage = {
                                     id: `msg-${Date.now()}-toolresult-${msg.name}`,
                                     role: 'tool_result',
@@ -471,43 +378,36 @@ export default function NewAnalysisPage() {
                             }
                         }
 
-                        // ─── Handle updates (node transitions) ───
                         if (currentEvent === 'updates') {
                             const nodeName = Object.keys(data)[0];
                             if (nodeName) {
                                 setStreamState(prev => ({ ...prev, activeNode: nodeName }));
 
                                 if (nodeName === 'model') {
-                                    // Model node finished
                                     if (phase === 'tool_calling') {
-                                        // Model produced tool calls → tools will now execute
                                         phase = 'tool_executing';
                                         setStreamState(prev => ({ ...prev, phase: 'tool_executing' }));
                                     } else if (phase === 'answering') {
-                                        // Model produced final answer → agent is done
                                         phase = 'done';
                                         setStreamState(prev => ({ ...prev, phase: 'done' }));
                                     }
                                 }
 
                                 if (nodeName === 'tools') {
-                                    // Tools node finished → next phase will be model (reasoning or answering)
                                     phase = 'reasoning';
-                                    currentContent = ''; // Reset content tracker for next model turn
+                                    currentContent = '';
                                     setStreamState(prev => ({ ...prev, phase: 'reasoning' }));
-                                    showThinking(); // Show thinking for next model turn
+                                    showThinking();
                                 }
                             }
                         }
                     } catch {
-                        // Not valid JSON, skip
                     }
                 }
             }
 
             reader.releaseLock();
 
-            // Finalize: mark the answer streaming message as complete
             if (answeringMsgId) {
                 const finalMsgId = answeringMsgId;
                 const finalContent = currentContent;
@@ -518,19 +418,15 @@ export default function NewAnalysisPage() {
                         : m
                 ));
 
-                // Add to message history for subsequent turns
                 if (finalContent) {
                     messageHistoryRef.current.push({ role: 'assistant', content: finalContent });
 
-                    // Save the response as an artifact in the backend
                     saveResponseAsArtifact(finalContent, finalMsgId);
                 }
             }
 
-            // Hide thinking indicator if still showing
             hideThinking();
 
-            // Reset to idle — ready for next message
             setStreamState({ status: 'idle', error: null, activeNode: null, phase: 'reasoning' });
 
         } catch (error) {
@@ -545,19 +441,16 @@ export default function NewAnalysisPage() {
         }
     }, [workspaceId, createThreadFromStream, saveArtifact, saveResponseAsArtifact]);
 
-    // Clear error
     const clearError = useCallback(() => {
         setStreamState(prev => ({ ...prev, error: null, status: prev.status === 'error' ? 'idle' : prev.status }));
     }, []);
 
-    // Don't render if workspaceId is not available
     if (!workspaceId || workspaceId === 'undefined') {
         return null;
     }
 
     const isRunning = streamState.status === 'connecting' || streamState.status === 'streaming';
 
-    // Phase-specific status text for the top bar
     const getPhaseStatusText = () => {
         if (streamState.status === 'connecting') return 'Connecting to Google Analyst...';
         switch (streamState.phase) {
@@ -571,7 +464,6 @@ export default function NewAnalysisPage() {
         }
     };
 
-    // Phase-specific text for the inline typing indicator
     const getPhaseIndicatorText = () => {
         if (streamState.status === 'connecting') return 'Connecting...';
         switch (streamState.phase) {
@@ -586,7 +478,6 @@ export default function NewAnalysisPage() {
 
     return (
         <div className="flex flex-col h-full bg-slate-50 min-h-[calc(100vh-100px)] lg:rounded-2xl lg:border lg:border-slate-200 lg:shadow-sm overflow-hidden relative">
-            {/* Error notification */}
             <Notification
                 message={streamState.error || ''}
                 variant="error"
@@ -594,7 +485,6 @@ export default function NewAnalysisPage() {
                 onClose={clearError}
             />
 
-            {/* Status indicator when running */}
             {isRunning && (
                 <div className={`flex-shrink-0 backdrop-blur border-b px-6 py-2.5 sticky top-0 z-10 transition-all ${
                     streamState.phase === 'tool_calling' || streamState.phase === 'tool_executing'
@@ -618,13 +508,11 @@ export default function NewAnalysisPage() {
                 </div>
             )}
 
-            {/* Chat Messages Area */}
             <div
                 ref={chatContainerRef}
                 className="flex-1 overflow-y-auto px-4 sm:px-6 py-8 scroll-smooth"
             >
                 <div className="w-full space-y-6">
-                    {/* Welcome message if no messages yet */}
                     {messages.length === 0 && (
                         <div className="flex flex-col items-center justify-center h-full min-h-[50vh] text-center px-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
                             <div className="w-20 h-20 bg-gradient-to-tr from-orange-500 to-red-500 rounded-2xl shadow-xl shadow-orange-500/20 flex items-center justify-center mb-6 transform transition-transform hover:scale-105">
@@ -655,7 +543,6 @@ export default function NewAnalysisPage() {
                         </div>
                     )}
 
-                    {/* Chat messages */}
                     {messages.map((message) => (
                         <MessageBubble
                             key={message.id}
@@ -666,7 +553,6 @@ export default function NewAnalysisPage() {
                         />
                     ))}
 
-                    {/* Inline typing indicator — shown when streaming but no visible streaming message */}
                     {isRunning && !messages.some(m => m.isStreaming) && !messages.some(m => m.id.includes('-thinking')) && (
                         <div className="flex justify-start my-4 animate-in fade-in slide-in-from-bottom-2">
                             <div className="bg-white border border-slate-200 px-5 py-4 rounded-2xl rounded-bl-sm shadow-sm">
@@ -689,7 +575,6 @@ export default function NewAnalysisPage() {
                 </div>
             </div>
 
-            {/* Chat Input */}
             <div className="border-t border-slate-200/80 bg-white/80 backdrop-blur-sm">
                 <ChatInput
                     onSend={handleSendMessage}
@@ -707,10 +592,6 @@ export default function NewAnalysisPage() {
     );
 }
 
-// ============================================================================
-// Message Bubble Component
-// ============================================================================
-
 interface MessageBubbleProps {
     message: ChatMessage;
     copiedMessageId: string | null;
@@ -719,7 +600,6 @@ interface MessageBubbleProps {
 }
 
 function MessageBubble({ message, copiedMessageId, onCopy, onDownload }: MessageBubbleProps) {
-    // User messages — right aligned, orange
     if (message.role === 'user') {
         return (
             <div className="flex justify-end my-4">
@@ -730,7 +610,6 @@ function MessageBubble({ message, copiedMessageId, onCopy, onDownload }: Message
         );
     }
 
-    // System messages — center aligned, small (used for "Thinking..." indicator)
     if (message.role === 'system') {
         return (
             <div className="flex justify-center my-2 animate-in fade-in slide-in-from-bottom-1 duration-300">
@@ -742,7 +621,6 @@ function MessageBubble({ message, copiedMessageId, onCopy, onDownload }: Message
         );
     }
 
-    // Tool call indicator — shows when agent decides to call a tool
     if (message.role === 'tool_call') {
         return (
             <div className="flex justify-start my-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -787,7 +665,6 @@ function MessageBubble({ message, copiedMessageId, onCopy, onDownload }: Message
         );
     }
 
-    // Tool result — shows tool execution results
     if (message.role === 'tool_result') {
         return (
             <div className="flex justify-start my-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -808,7 +685,6 @@ function MessageBubble({ message, copiedMessageId, onCopy, onDownload }: Message
         );
     }
 
-    // Assistant messages — left aligned with avatar + artifact action buttons
     const isCopied = copiedMessageId === message.id;
     const isFinalized = !message.isStreaming && message.content.length > 0;
 
@@ -834,7 +710,6 @@ function MessageBubble({ message, copiedMessageId, onCopy, onDownload }: Message
                         )}
                     </div>
 
-                    {/* Action buttons — shown only for finalized (non-streaming) assistant messages */}
                     {isFinalized && (
                         <div className="flex items-center gap-1 px-3 py-2 border-t border-slate-100 bg-slate-50/50">
                             <button
@@ -862,10 +737,6 @@ function MessageBubble({ message, copiedMessageId, onCopy, onDownload }: Message
         </div>
     );
 }
-
-// ============================================================================
-// Chat Input Component
-// ============================================================================
 
 interface ChatInputProps {
     onSend: (message: string) => void;

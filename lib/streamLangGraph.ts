@@ -1,25 +1,16 @@
-/**
- * Generic Streaming Utility for LangGraph Workflow Execution
- * 
- * Provides a reusable, flexible SSE (Server-Sent Events) streaming interface
- * for LangGraph workflow execution with proper error handling and callbacks.
- * 
- * Supports both threadless runs and thread-based runs for HITL (Human-in-the-Loop) resumption.
- */
-
 import { getLangGraphApiUrl, getLangGraphConfig } from './config/langgraph.config';
 import { debugLog } from './utils/debugLog';
 
 export interface StreamOptions {
     assistantId: string;
     input?: Record<string, any>;
-    threadId?: string;  // If provided, uses thread-based run for HITL resumption
+    threadId?: string;
     command?: {
         goto?: {
             node: string;
             input?: Record<string, any>;
         };
-        resume?: any;  // Value to resume after interrupt
+        resume?: any;
     };
     signal?: AbortSignal;
     onEvent?: (event: any) => void;
@@ -30,8 +21,8 @@ export interface StreamOptions {
 export interface StreamResponse<T> {
     success: boolean;
     data?: T;
-    threadId?: string;  // Returns thread ID for later resumption
-    interrupts?: any[];  // Pending interrupts from LangGraph's interrupt()
+    threadId?: string;
+    interrupts?: any[];
     error?: string;
 }
 
@@ -51,19 +42,10 @@ export interface ThreadState {
     checkpoint?: Record<string, any>;
 }
 
-/**
- * Get the LangGraph API base URL based on environment configuration
- * @deprecated Use getLangGraphApiUrl() from lib/config/langgraph.config.ts directly
- */
 export function getLangGraphBaseUrl(): string {
     return getLangGraphApiUrl();
 }
 
-/**
- * Create a new thread for LangGraph workflow execution
- * 
- * @returns Promise with thread ID
- */
 export async function createThread(metadata?: Record<string, any>): Promise<string> {
     const baseUrl = getLangGraphBaseUrl();
 
@@ -85,12 +67,6 @@ export async function createThread(metadata?: Record<string, any>): Promise<stri
     return data.thread_id;
 }
 
-/**
- * Get the current state of a thread, including any pending interrupts
- * 
- * @param threadId - The thread ID to check
- * @returns Promise with thread state
- */
 export async function getThreadState(threadId: string): Promise<ThreadState | null> {
     const baseUrl = getLangGraphBaseUrl();
 
@@ -114,38 +90,6 @@ export async function getThreadState(threadId: string): Promise<ThreadState | nu
     }
 }
 
-/**
- * Streams events from LangGraph SSE endpoint with flexible configuration
- * 
- * @param options - Stream configuration options
- * @returns Promise that resolves with StreamResponse when streaming completes
- * 
- * @example
- * // Threadless run (simple, no HITL resumption)
- * const result = await streamLangGraphEvents({
- *     assistantId: "technical_seo_auditor",
- *     input: { webpage_url: "https://example.com" },
- *     onEvent: (event) => console.log('Event:', event),
- * });
- * 
- * @example
- * // Thread-based run with HITL resumption
- * const result = await streamLangGraphEvents({
- *     assistantId: "content_architect",
- *     input: { website_url: "https://example.com" },
- *     threadId: "existing-thread-id", // or omit to create new thread
- *     onEvent: (event) => console.log('Event:', event),
- * });
- * 
- * @example
- * // Resume after HITL interrupt
- * const result = await streamLangGraphEvents({
- *     assistantId: "content_architect",
- *     threadId: "same-thread-id-as-before",
- *     command: { resume: { approved: true, selected_pages: [...] } },
- *     onEvent: (event) => console.log('Event:', event),
- * });
- */
 export async function streamLangGraphEvents<T = any>(options: StreamOptions): Promise<StreamResponse<T>> {
     const { assistantId, input, threadId, command, signal, onEvent, onError, onComplete } = options;
 
@@ -153,14 +97,12 @@ export async function streamLangGraphEvents<T = any>(options: StreamOptions): Pr
     let currentThreadId = threadId;
 
     try {
-        // If no thread ID provided and we have input, create a new thread
         if (!currentThreadId && input) {
             currentThreadId = await createThread({
                 assistant_id: assistantId,
             });
         }
 
-        // Build the request body
         const requestBody: Record<string, any> = {
             assistant_id: assistantId,
             stream_mode: ["custom"],
@@ -173,22 +115,18 @@ export async function streamLangGraphEvents<T = any>(options: StreamOptions): Pr
             durability: "async",
         };
 
-        // Add input if provided (for initial run)
         if (input) {
             requestBody.input = input;
         }
 
-        // Add command if provided (for resume or goto)
         if (command) {
             requestBody.command = command;
         }
 
-        // Determine endpoint based on whether we have a thread
         const endpoint = currentThreadId
             ? `${baseUrl}/threads/${currentThreadId}/runs/stream`
             : `${baseUrl}/runs/stream`;
 
-        // Log the request details for debugging
         debugLog('[LangGraph] Starting stream request:', {
             endpoint,
             assistantId,
@@ -258,12 +196,9 @@ export async function streamLangGraphEvents<T = any>(options: StreamOptions): Pr
                 for (const line of lines) {
                     const trimmedLine = line.trim();
 
-                    // Skip empty lines and heartbeat events
                     if (!trimmedLine || trimmedLine === ': heartbeat') continue;
 
-                    // Handle SSE format: "event: eventType\ndata: jsonData"
                     if (trimmedLine.startsWith('event:')) {
-                        // This is an event type line, skip to data
                         continue;
                     }
 
@@ -272,12 +207,10 @@ export async function streamLangGraphEvents<T = any>(options: StreamOptions): Pr
                     try {
                         const jsonStr = trimmedLine.replace(/^data: /, '');
 
-                        // Skip non-JSON data
                         if (!jsonStr.startsWith('{') && !jsonStr.startsWith('[')) continue;
 
                         const parsed = JSON.parse(jsonStr);
 
-                        // LangGraph custom stream can wrap events in arrays
                         const events = Array.isArray(parsed) ? parsed : [parsed];
 
                         for (const event of events) {
@@ -288,7 +221,6 @@ export async function streamLangGraphEvents<T = any>(options: StreamOptions): Pr
                             }
                         }
                     } catch (e) {
-                        // Not a JSON event, skip silently
                         debugLog('Non-JSON SSE data:', trimmedLine);
                     }
                 }
@@ -297,8 +229,6 @@ export async function streamLangGraphEvents<T = any>(options: StreamOptions): Pr
             reader.releaseLock();
         }
 
-        // After stream ends, check thread state for pending interrupts
-        // This catches LangGraph's native interrupt() calls that don't emit custom events
         let interrupts: any[] | undefined;
         if (currentThreadId) {
             try {
@@ -358,7 +288,6 @@ export async function streamLangGraphEvents<T = any>(options: StreamOptions): Pr
         };
 
     } catch (error) {
-        // Handle AbortError gracefully
         if (error instanceof Error && error.name === 'AbortError') {
             if (onError) {
                 onError(error);
@@ -370,7 +299,6 @@ export async function streamLangGraphEvents<T = any>(options: StreamOptions): Pr
             };
         }
 
-        // Handle other errors
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         if (onError) {
             onError(error instanceof Error ? error : new Error(errorMessage));
@@ -384,23 +312,6 @@ export async function streamLangGraphEvents<T = any>(options: StreamOptions): Pr
     }
 }
 
-/**
- * Resume an interrupted LangGraph workflow
- * 
- * @param threadId - The thread ID of the interrupted workflow
- * @param assistantId - The assistant ID
- * @param resumeValue - The value to pass to the interrupt() call
- * @param options - Additional options (signal, callbacks)
- * @returns Promise that resolves with StreamResponse
- * 
- * @example
- * // Resume with user's approval
- * const result = await resumeLangGraphWorkflow(
- *     "thread-123",
- *     "content_architect",
- *     { approved: true, selected_pages: ["/about", "/services"] }
- * );
- */
 export async function resumeLangGraphWorkflow<T = any>(
     threadId: string,
     assistantId: string,

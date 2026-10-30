@@ -8,13 +8,6 @@ import { ReportCard } from './ReportCard';
 import { ReportData, ReportFilter, ReportSort, ReportViewOptions, ReportType, REPORT_TYPE_LABELS, REPORT_STATUS_LABELS, REPORT_PRIORITY_LABELS } from './types/reports.types';
 import { Search, Filter, ArrowUpDown, Download, Grid3x3, List } from 'lucide-react';
 
-/**
- * ReportList Component
- *
- * Displays a list of reports with filtering, sorting, and view options.
- *
- * @component
- */
 export interface ReportListProps {
     reports: ReportData[];
     selectedReports: Set<string>;
@@ -53,11 +46,9 @@ export const ReportList: React.FC<ReportListProps> = ({
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-    // Filter and sort reports
     const filteredReports = useMemo(() => {
         let result = [...reports];
 
-        // Apply search filter
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             result = result.filter(
@@ -67,7 +58,6 @@ export const ReportList: React.FC<ReportListProps> = ({
             );
         }
 
-        // Apply filters
         const activeFilters = filters.filter((f) => f.value !== null && f.value !== '');
         activeFilters.forEach((filter) => {
             result = result.filter((report) => {
@@ -95,7 +85,6 @@ export const ReportList: React.FC<ReportListProps> = ({
             });
         });
 
-        // Apply sort
         if (sort) {
             result.sort((a, b) => {
                 const aValue = a[sort.field as keyof ReportData];
@@ -117,7 +106,6 @@ export const ReportList: React.FC<ReportListProps> = ({
         return result;
     }, [reports, searchQuery, filters, sort]);
 
-    // Pagination
     const totalPages = Math.ceil(filteredReports.length / viewOptions.pageSize);
     const startIndex = (viewOptions.currentPage - 1) * viewOptions.pageSize;
     const endIndex = startIndex + viewOptions.pageSize;
@@ -140,7 +128,6 @@ export const ReportList: React.FC<ReportListProps> = ({
 
     const handleExportSelected = () => {
         const selectedReportsData = reports.filter((r) => selectedReports.has(r.id));
-        // Trigger export with selected reports
         console.log('Exporting', selectedReportsData);
         onExportSelected?.();
     };
@@ -184,7 +171,6 @@ export const ReportList: React.FC<ReportListProps> = ({
 
     return (
         <div className={cn('space-y-4', className)}>
-            {/* Header with Controls */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
                 <div className="flex-1">
                     <h2 className="text-xl font-semibold text-neutral-900">
@@ -196,7 +182,6 @@ export const ReportList: React.FC<ReportListProps> = ({
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {/* Search */}
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
                         <Input
@@ -208,7 +193,6 @@ export const ReportList: React.FC<ReportListProps> = ({
                         />
                     </div>
 
-                    {/* View Mode Toggle */}
                     <div className="flex items-center bg-neutral-100 rounded-lg p-1">
                         <Button
                             type="button"
@@ -230,7 +214,6 @@ export const ReportList: React.FC<ReportListProps> = ({
                         </Button>
                     </div>
 
-                    {/* Sort Dropdown */}
                     {sort && (
                         <div className="relative">
                             <select
@@ -247,7 +230,6 @@ export const ReportList: React.FC<ReportListProps> = ({
                         </div>
                     )}
 
-                    {/* Export Button */}
                     {selectedReports.size > 0 && onExportSelected && (
                         <Button
                             type="button"
@@ -263,7 +245,6 @@ export const ReportList: React.FC<ReportListProps> = ({
                 </div>
             </div>
 
-            {/* Active Filters */}
             {filters.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                     {filters.map((filter, index) => (
@@ -291,7 +272,6 @@ export const ReportList: React.FC<ReportListProps> = ({
                 </div>
             )}
 
-            {/* Reports Grid/List */}
             <div
                 className={cn(
                     viewMode === 'grid'
@@ -311,7 +291,6 @@ export const ReportList: React.FC<ReportListProps> = ({
                 ))}
             </div>
 
-            {/* Pagination */}
             {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 mt-6">
                     <Button

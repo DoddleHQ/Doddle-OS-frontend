@@ -1,10 +1,3 @@
-/* ==========================================================================
-   v3 — Lively Glass OS stylesheet
-   Ported from plans/doddle-os-v7-lively.html (locked reference, v7 "Lively").
-   Everything is scoped under .v3-scope so nothing leaks into other surfaces.
-   ========================================================================== */
-
-/* ---------- tokens: neutral silver glass (light) ---------- */
 .v3-scope {
   --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(240, 240, 245, 0.5));
   --glass-tint: rgba(255, 255, 255, 0.7);
@@ -22,8 +15,6 @@
   --green: #059669;
   --amber: #d97706;
   --pink: #db2777;
-  /* radius discipline (v13 reliability pass): component corners stay clamped
-     to 4–10px; only circles (50%) and pill badges are exempt */
   --r: 8px;
 
   font-family: var(--font-v3-inter), 'Inter', system-ui, sans-serif;
@@ -31,7 +22,6 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-/* ---------- tokens: deep graphite glass (dark) ---------- */
 .v3-scope.dark {
   --glass-bg: linear-gradient(135deg, rgba(31, 31, 35, 0.75), rgba(18, 18, 20, 0.6));
   --glass-tint: rgba(24, 24, 27, 0.7);
@@ -53,7 +43,6 @@
 .v3-scope .font-mono { font-family: var(--font-v3-jmono), 'JetBrains Mono', monospace; }
 .v3-scope .no-select { user-select: none; -webkit-user-select: none; }
 
-/* ---------- lively wallpaper ---------- */
 .v3-wallpaper {
   position: fixed;
   inset: 0;
@@ -64,7 +53,6 @@
 .v3-scope.dark .v3-wallpaper { background: linear-gradient(180deg, #0b1026 0%, #09090b 60%, #170b28 100%); }
 .v3-aurora { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.42; filter: blur(14px); }
 
-/* ---------- core glass: per-edge specular (top/left catch light) ---------- */
 .v3-scope .glass {
   background: var(--glass-bg);
   backdrop-filter: blur(36px) saturate(180%);
@@ -89,7 +77,6 @@
   border: 1px solid var(--glass-border);
 }
 
-/* ---------- top menu notch (attached pills — no bottom dock) ---------- */
 .v3-scope .menu-notch {
   position: fixed;
   top: 12px;
@@ -144,10 +131,7 @@
   border: 2px solid rgba(255, 255, 255, 0.35);
 }
 
-/* notch dropdowns (workspace / settings) */
 .v3-scope .v3-ws-menu { position: fixed; z-index: 90; min-width: 260px; border-radius: 10px; padding: 6px; top: 60px; left: 16px; }
-/* v13 workspace entries: icon tile + two-line identity (name · real metric
-   for the active workspace, real domain for the rest) */
 .v3-scope .v3-ws-item { align-items: flex-start; gap: 10px; padding: 9px 12px; }
 .v3-scope .v3-ws-ico {
   width: 30px;
@@ -163,10 +147,8 @@
 }
 .v3-scope .v3-settings-menu { position: fixed; z-index: 90; min-width: 240px; border-radius: 10px; padding: 6px; top: 60px; right: 16px; }
 
-/* rail styling lives in v13.css (#activity-rail + .rail-btn) — kept in sync with the reference */
 @keyframes v3-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.35); opacity: 0.6; } }
 
-/* ---------- windows layer ---------- */
 .v3-scope .windows-layer { position: fixed; inset: 76px 0 0 0; z-index: 20; pointer-events: none; }
 .v3-scope .os-window {
   position: absolute;
@@ -182,7 +164,6 @@
 .v3-scope .os-window.focused { z-index: 50; box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 50px 100px -20px rgba(29, 78, 216, 0.35); }
 .v3-scope.dark .os-window.focused { box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 50px 100px -20px rgba(59, 130, 246, 0.4); }
 .v3-scope .os-window.minimized { transform: translateY(60px) scale(0.95); opacity: 0; pointer-events: none; }
-/* page mode: fill the stage; only executions float later */
 .v3-scope .os-window.page {
   left: 0 !important;
   top: 0 !important;
@@ -198,7 +179,6 @@
   z-index: 15 !important;
 }
 .v3-scope .os-window.page .titlebar { cursor: default; }
-/* page mode keeps Close + Zoom (zoom restores window mode); only Minimize hides */
 .v3-scope .os-window.page .t-min { display: none; }
 .v3-scope .os-window::after {
   content: '';
@@ -225,7 +205,6 @@
 .v3-scope .t-max { background: #28c840; }
 .v3-scope .win-body { flex: 1; overflow: auto; padding: 16px; }
 
-/* ---------- ui components ---------- */
 .v3-scope .widget { border-radius: 8px; padding: 20px; background: var(--glass-tint); border: 1px solid var(--glass-border); }
 .v3-scope .bento-item {
   border-radius: 8px;
@@ -247,7 +226,6 @@
   align-items: center;
   gap: 6px;
 }
-/* buttons: liquid-glass smoke only (Apple-like) — no solid fills */
 .v3-scope .btn-primary,
 .v3-scope .btn-deploy {
   background: rgba(255, 255, 255, 0.38);
@@ -317,7 +295,6 @@
 }
 .v3-scope.dark .terminal { background: rgba(0, 0, 0, 0.5); }
 
-/* ---------- overlays ---------- */
 .v3-scope .overlay { position: fixed; inset: 0; z-index: 95; display: flex; align-items: flex-start; justify-content: center; padding-top: 14vh; background: rgba(10, 15, 25, 0.25); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 .v3-scope .hidden { display: none !important; }
 .v3-scope .spot { width: min(640px, 92vw); border-radius: 10px; overflow: hidden; }
@@ -344,12 +321,10 @@
 .v3-scope .v3-cc { position: fixed; top: 76px; right: 14px; z-index: 90; width: 340px; border-radius: 10px; padding: 18px; }
 .v3-scope .v3-notifs { position: fixed; top: 76px; right: 14px; bottom: 16px; z-index: 90; width: 380px; border-radius: 10px; padding: 18px; display: flex; flex-direction: column; overflow: hidden; }
 
-/* ---------- morph headline ---------- */
 .v3-scope .morph { display: inline-block; position: relative; color: var(--accent); font-weight: 800; min-width: 9ch; text-align: left; }
 .v3-scope .morph span { position: absolute; left: 0; top: 0; opacity: 0; transform: translateY(60%); transition: opacity 0.4s, transform 0.4s; white-space: nowrap; }
 .v3-scope .morph span.on { position: relative; opacity: 1; transform: none; }
 
-/* ---------- full-page dashboard (visible when no window is open) ---------- */
 .v3-scope .dashboard { position: fixed; inset: 76px 0 0 0; z-index: 10; overflow-y: auto; transition: opacity 0.35s ease; }
 .v3-scope .dashboard.dash-hidden { opacity: 0; pointer-events: none; }
 .v3-scope .dash-inner { max-width: 1080px; margin: 0 auto; padding: 28px 24px 60px; }
@@ -389,7 +364,6 @@
 .v3-scope .pbar { height: 6px; border-radius: 5px; background: rgba(128, 128, 128, 0.2); overflow: hidden; flex: 1; }
 .v3-scope .pbar > div { height: 100%; background: linear-gradient(90deg, var(--accent), #06b6d4); border-radius: 5px; transition: width 0.5s ease; }
 
-/* ---------- lens controls (control center) ---------- */
 .v3-scope .lens-toggle { width: 52px; height: 30px; border-radius: 10px; border: 1px solid var(--glass-border); position: relative; cursor: pointer; background: rgba(128, 128, 128, 0.3); transition: 0.2s; padding: 0; }
 .v3-scope .lens-toggle::after {
   content: '';
@@ -419,18 +393,12 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35), inset 0 1px 0 #fff;
 }
 
-/* ---------- browser surfaces ---------- */
 .v3-scope ::selection { background: rgba(29, 78, 216, 0.18); }
 .v3-scope.dark ::selection { background: rgba(59, 130, 246, 0.35); }
 .v3-scope :focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; border-radius: 8px; }
 .v3-scope ::-webkit-scrollbar { width: 4px; height: 4px; }
 .v3-scope ::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 10px; }
 
-/* ---------- agents screen: roster, agent head, threads, input console ---------- */
-/* the roster is container-responsive: windows resize independently of the
-   viewport, so column counts follow the window body, not the screen —
-   auto-fill packs as many compact cards as the width allows (4-up on a full
-   desktop, fewer as the window narrows) */
 .v3-scope .win-body { container-type: inline-size; }
 .v3-scope .roster-grid {
   display: grid;
@@ -439,7 +407,6 @@
 }
 .v3-scope .roster-grid > * { min-width: 0; }
 
-/* assignments board: agent columns on wide window bodies, stacked when narrow */
 .v3-scope .v3-board {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
@@ -447,7 +414,6 @@
   align-items: start;
 }
 .v3-scope .v3-board-col { min-width: 0; }
-/* v13 dashboard composer: glass textarea + action bar (attach · model · mode · run) */
 .v3-scope .composer {
   background: var(--glass-tint);
   backdrop-filter: blur(36px) saturate(180%);
@@ -489,7 +455,6 @@
 .v3-scope .composer-icon:hover { color: var(--ink); border-color: var(--accent); }
 .v3-scope .composer-files { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 
-/* v13 kinetic DAG: run steps as nodes with fill lines */
 .v3-scope .dag { display: flex; align-items: center; overflow-x: auto; padding: 6px 0 10px; }
 .v3-scope .dag-node {
   display: flex;
@@ -530,7 +495,6 @@
   transition: width 0.4s ease;
 }
 .v3-scope .dag-line.fill::after { width: 100%; }
-/* v13 artefact gallery rows (history window) */
 .v3-scope .hrow {
   display: flex;
   align-items: center;
@@ -569,7 +533,6 @@
   transition: 0.2s;
 }
 .v3-scope .v3-lockbtn.locked { color: #10b981; border-color: rgba(16, 185, 129, 0.4); }
-/* v13 library cards (blueprints window) */
 .v3-scope .v3-lib-card { display: block; text-align: left; color: var(--ink); text-decoration: none; }
 .v3-scope .v3-lib-card:hover { border-color: var(--accent); }
 .v3-scope .v3-lib-badge {
@@ -582,7 +545,6 @@
   padding: 2px 6px;
 }
 
-/* v13 segmented control: Gantt / Board / Review */
 .v3-scope .seg {
   display: inline-flex;
   gap: 2px;
@@ -591,9 +553,6 @@
   border: 1px solid var(--glass-border);
   background: var(--glass-tint);
 }
-/* seg-tabs, gantt and fizzy board styling live in v13.css (reference-exact) */
-
-/* v12 slide-over: right drawer with the session detail */
 .v3-slideover { position: fixed; inset: 0; z-index: 95; background: rgba(10, 15, 25, 0.35); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 .v3-scope .slide-panel {
   position: absolute;
@@ -609,8 +568,6 @@
 @keyframes v3-slide-in { from { transform: translateX(60px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (max-width: 760px) { .v3-scope .slide-panel { width: 100%; border-radius: 0; top: 0; } }
 
-/* v13 triage 3-pane: queue | conversation | details — container-responsive
-   (the window body decides, not the viewport) */
 .v3-scope .v3-triage { display: grid; grid-template-columns: 280px minmax(0, 1fr) 260px; gap: 12px; align-items: start; }
 .v3-scope .v3-triage-queue { max-height: 560px; overflow-y: auto; }
 .v3-scope .v3-triage-conv { width: 100%; }
@@ -622,7 +579,6 @@
 @container (max-width: 599px) {
   .v3-scope .v3-triage { grid-template-columns: 1fr; }
 }
-/* v13 vehicle picker: live ranked module suggestions under the define bar */
 .v3-scope .v3-vehicle { display: flex; gap: 8px; flex-wrap: wrap; }
 .v3-scope .v3-vehicle-pick {
   display: flex;
@@ -652,18 +608,13 @@
   flex-shrink: 0;
 }
 .v3-scope.dark .v3-vehicle-rank { color: #071022; }
-/* module cards reuse the profile anatomy; the blurb replaces the stats line */
 .v3-scope .v3-module-blurb { margin-top: 8px; }
 @container (max-width: 599px) {
   .v3-scope .v3-vehicle-pick { flex: 1 1 100%; max-width: none; }
   .v3-scope .v3-module-blurb { display: none; }
 }
-/* v13 suite filter chips — .fchip colors live in v13.css (ink when on) */
 .v3-scope .v3-fchips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
 
-/* v13 agent profile cards — suite-tinted banner, overlapping avatar, real
-   per-agent stats from the workspace feed. The whole card is one button;
-   the Deploy / Open execution visuals are affordances of that same action. */
 .v3-scope .agent-card {
   display: flex;
   flex-direction: column;
@@ -692,12 +643,10 @@
   background: var(--green);
   border: 2px solid var(--glass-tint);
 }
-/* unread: the dot carries the signal (accent pulse) until the thread is viewed */
 .v3-scope .profile-dot.has-unread {
   background: var(--accent);
   animation: v3-pulse 1.6s ease-in-out infinite;
 }
-/* unread chip on session rows — real signal, cleared on view */
 .v3-scope .v3-unread-chip {
   font-family: var(--font-v3-jmono), 'JetBrains Mono', monospace;
   font-size: 9px;
@@ -733,7 +682,6 @@
 .v3-scope .agent-card .profile-stats strong { color: var(--ink); font-size: 12px; display: block; }
 .v3-scope .agent-card .profile-deploy { margin-top: 12px; width: 100%; }
 .v3-scope .agent-card .profile-open { margin-top: 8px; }
-/* narrow window body: the card reflows to the compact single-line row */
 @container (max-width: 599px) {
   .v3-scope .agent-card {
     flex-direction: row;
@@ -753,7 +701,6 @@
 }
 @media (max-width: 900px) { .v3-scope .roster-grid { grid-template-columns: 1fr; } }
 
-/* v13 execution header: full-bleed suite banner over the agent identity */
 .v3-scope .agent-profile-head { padding: 0; overflow: hidden; }
 .v3-scope .agent-profile-head .profile-banner {
   display: block;
@@ -815,7 +762,6 @@
   outline: none;
 }
 .v3-scope .task-input:focus { border-color: var(--accent); }
-/* engineer input console (dark plate pinned to a column bottom) */
 .v3-scope .eng {
   background: rgba(10, 12, 20, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -840,7 +786,6 @@
   cursor: pointer;
 }
 .v3-scope .eng-hints button:hover { color: #fff; border-color: rgba(255, 255, 255, 0.3); }
-/* glide: model picker dropdown */
 .v3-scope .glide { position: relative; display: inline-block; }
 .v3-scope .glide-btn {
   display: flex;
@@ -897,8 +842,6 @@
   .v3-scope .v3-split { flex-direction: row; }
 }
 
-/* ---------- conversation feed (power-agent execution) ---------- */
-/* fixed-height pane: long conversations scroll inside, never stretch the window */
 .v3-scope .v3-chat-wrap {
   display: flex;
   flex-direction: column;
@@ -913,15 +856,11 @@
   gap: 8px;
   padding-right: 2px;
 }
-/* session rows: actions appear on hover/focus, never steal row space */
 .v3-scope .v3-session { cursor: pointer; }
 .v3-scope .v3-session-actions { display: none; gap: 4px; }
 .v3-scope .v3-session:hover .v3-session-actions,
 .v3-scope .v3-session:focus-visible .v3-session-actions { display: inline-flex; }
 .v3-scope .v3-session-actions .chip { padding: 3px 6px; }
-/* v13 chat grammar: every turn is avatar · name · time · bubble;
-   tool calls read as nested replies under the flow (avatar-gutter indent
-   + reply edge). The user keeps the terminal `$` voice inside its bubble. */
 .v3-scope .v3-cmsg { display: flex; gap: 10px; min-width: 0; align-items: flex-start; }
 .v3-scope .v3-cavatar {
   width: 34px;
@@ -957,8 +896,6 @@
 .v3-scope .v3-msg-prompt { font-family: var(--font-v3-jmono), 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; color: var(--accent); flex-shrink: 0; }
 .v3-scope .v3-msg-assistant { min-width: 0; }
 .v3-scope .v3-msg-assistant .v3-cbubble { display: block; }
-/* tool replies nest under the flow: one shared avatar-gutter indent and
-   reply rail for single rows and groups alike */
 .v3-scope .v3-chat .v3-tool-row:not(.v3-tool-child),
 .v3-scope .v3-chat .v3-tool-group {
   margin-left: 44px;
@@ -974,7 +911,6 @@
 .v3-scope .v3-tool-row.running::before { background: var(--accent); animation: v3-pulse 1.2s infinite; }
 .v3-scope .v3-tool-row.failed { color: #dc2626; }
 .v3-scope .v3-tool-row.failed::before { background: #dc2626; }
-/* grouped tool run: slim expandable row + indented children */
 .v3-scope .v3-tool-group { display: flex; flex-direction: column; gap: 3px; }
 .v3-scope .v3-tool-group-head {
   display: inline-flex;
@@ -1004,7 +940,6 @@
 .v3-scope .v3-tool-group-head[aria-expanded='true'] .v3-tool-chev { transform: rotate(180deg); }
 .v3-scope .v3-tool-child { padding-left: 14px; }
 .v3-scope .v3-working { animation: v3-cue-bob 1.6s ease-in-out infinite; }
-/* markdown in the feed */
 .v3-scope .v3-md { font-size: 13px; line-height: 1.6; min-width: 0; overflow-wrap: break-word; }
 .v3-scope .v3-md p { margin: 0 0 8px; }
 .v3-scope .v3-md p:last-child { margin-bottom: 0; }
@@ -1019,7 +954,6 @@
 .v3-scope .v3-md th, .v3-scope .v3-md td { border: 1px solid var(--glass-border); padding: 4px 8px; text-align: left; }
 .v3-scope .thread-row.viewing { border-color: var(--accent); }
 
-/* ---------- responsive ---------- */
 @media (max-width: 900px) {
   .v3-scope .dash-cards { grid-template-columns: repeat(2, 1fr); }
   .v3-scope .dash-telemetry { grid-template-columns: 1fr; }
@@ -1033,5 +967,4 @@
   .v3-scope .rail-btn .dot { animation: none; }
 }
 
-/* v13 solo agents page: the AGENT PROFILES grid (3-col, 2-col, 1-col) */
 .v3-scope .agent-profile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 12px; }

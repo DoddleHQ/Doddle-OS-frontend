@@ -14,10 +14,8 @@ import { Spotlight } from './Spotlight';
 import { Notifications } from './Notifications';
 import { ControlCenter } from './ControlCenter';
 
-// v13 page paths, in keyboard order (1-6)
 const SHORTCUT_PATHS = ['/v3', '/v3/launchpad', '/v3/agents', '/v3/assignments', '/v3/triage', '/v3/blueprints'];
 
-/** The v3 OS root: wallpaper, notch chrome, windows layer, dashboard, overlays. */
 export function OSRoot({ children }: { children?: React.ReactNode }) {
   const theme = useV3OS((s) => s.theme);
   const router = useRouter();
@@ -26,19 +24,12 @@ export function OSRoot({ children }: { children?: React.ReactNode }) {
   const setSessionFeed = useV3OS((s) => s.setSessionFeed);
   const workspaceId = useV3OS((s) => s.workspaceId);
   const workspaces = useV3Fetch(fetchV3Workspaces, []);
-  // the ONE workspace feed fetch — every consumer reads it from the store.
-  // Before the workspace hydrates the placeholder stays pending: an empty
-  // array here would read as "loaded, empty queue" and trip the triage guard.
   const feed = useV3Fetch(
     () => (workspaceId ? fetchV3Sessions(workspaceId) : new Promise<V3Session[]>((resolve) => undefined)),
     [workspaceId],
   );
 
   useEffect(() => {
-    // workspace not hydrated yet → the feed hook resolves [] for it; and any
-    // in-flight refetch keeps stale data — neither is a real empty queue.
-    // Stale-while-revalidate: a route remount keeps the previous feed until
-    // the refetch resolves.
     if (!workspaceId || feed.loading) return;
     setSessionFeed(feed.data ?? [], feed.error);
   }, [feed.data, feed.error, feed.loading, workspaceId, setSessionFeed]);

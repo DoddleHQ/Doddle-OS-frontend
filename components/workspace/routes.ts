@@ -1,13 +1,3 @@
-/**
- * Workspace route definitions for the demo OS interface.
- * Built dynamically from a workspaceId so every navigation surface
- * (dock, palette, keyboard shortcuts) shares the same path builder.
- *
- * The demo interface IS the workspace interface now — these paths
- * live under /workspaces/{id}/* alongside the legacy module routes
- * (modules/*, mission-control, brand-persona) which remain accessible.
- */
-
 export interface DemoRoute {
   path: string;
   label: string;
