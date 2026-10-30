@@ -9,23 +9,7 @@ import { BOARD_THREAD, BOARD_HANDOFF, BOARD_COLUMNS, BOARD_RESIDENTS } from './c
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-/*
- * LiveBoard — the signature moment (ink register).
- * Proves the mechanism with the project's REAL data: the Q1 Content Pipeline
- * thread, where content_architect drafts, technical_architect contests on
- * technical debt vs deadline, and the operator adjudicates. Scroll-pinned with
- * GSAP; the token leaves a fading trail at each handoff; the conflict surfaces
- * with weight and shows the real competing sides.
- *
- * SYNC CONTRACT: each step in BOARD_HANDOFF carries an explicit `col` index.
- * The token position, the owner/state/note copy, and the conflict panel all
- * read from the SAME step at the SAME scroll progress — so they can never
- * desync. Never reintroduce index-clamping (Math.min(i, n)) to derive columns;
- * that was the bug that showed COMPLETE while the token sat in Review.
- */
-
 const STEPS = BOARD_HANDOFF;
-// Column index per step is now explicit on each step (no clamping).
 const colOf = (i: number) => STEPS[Math.min(i, STEPS.length - 1)].col;
 
 export function LiveBoard() {
@@ -49,7 +33,6 @@ export function LiveBoard() {
     () => {
       const mm = gsap.matchMedia();
 
-      // Reduced-motion: no choreography. Show the resolved end state statically.
       mm.add('(prefers-reduced-motion: reduce)', () => {
         const placeStatic = (stepIndex: number) => {
           const col = colOf(stepIndex);
@@ -65,7 +48,6 @@ export function LiveBoard() {
             y: colRect.top - boardRect.top + 54,
           });
 
-          // Highlight the active column's resident agent label, and reset others
           agentLabelsRef.current.forEach((label, idx) => {
             if (!label) return;
             if (idx === col) {
@@ -84,7 +66,6 @@ export function LiveBoard() {
         if (stateRef.current) stateRef.current.textContent = String(last.state).toUpperCase();
       });
 
-      // ALL screen sizes with motion allowed get the scroll choreography.
       mm.add('(prefers-reduced-motion: no-preference)', () => {
         const placeToken = (stepIndex: number) => {
           const col = colOf(stepIndex);
@@ -100,7 +81,6 @@ export function LiveBoard() {
             y: colRect.top - boardRect.top + 54,
           });
 
-          // Also highlight the initial column's label
           agentLabelsRef.current.forEach((label, idx) => {
             if (!label) return;
             if (idx === col) {
@@ -129,10 +109,6 @@ export function LiveBoard() {
             const step = STEPS[idx];
             const next = STEPS[Math.min(idx + 1, segCount - 1)];
 
-            // Token position between current and next column.
-            // Interpolates BOTH x and y — necessary on mobile where the 2-col
-            // reflow places columns on different rows (different y), not just
-            // different x like the desktop 5-col single row.
             const fromColI = colOf(idx);
             const toColI = colOf(Math.min(idx + 1, segCount - 1));
             const fromCol = colRefs.current[fromColI];
@@ -156,12 +132,10 @@ export function LiveBoard() {
               }
             }
 
-            // Drop a trail mark when we cross into a new column
             if (localP > 0.5 && toColI !== fromColI) {
               dropTrail(fromColI);
             }
 
-            // Copy / state — locked to the token's VISIBLE column.
             const sameCol = fromColI === toColI;
             const tokenFractionalCol = fromColI + (toColI - fromColI) * localP;
             const midpoint = fromColI + (toColI - fromColI) / 2;
@@ -179,7 +153,6 @@ export function LiveBoard() {
                     : 'var(--v2-ink-text)';
             }
 
-            // Highlight the active column's resident agent label, and reset others
             const activeColI = showNext ? toColI : fromColI;
             agentLabelsRef.current.forEach((label, idx) => {
               if (!label) return;
@@ -192,7 +165,6 @@ export function LiveBoard() {
               }
             });
 
-            // Conflict panel: surfaces on steps 3 (conflict) and 4 (escalated)
             const conflictStep = idx >= 3 && idx <= 4;
             const sub = idx === 3 ? localP > 0.25 : idx === 4 ? localP < 0.65 : false;
             const conflictActive = conflictStep && sub;
@@ -216,7 +188,6 @@ export function LiveBoard() {
     { scope: sectionRef }
   );
 
-  // The real conflict from BOARD_THREAD (Tech_Lead vs Content_Strategist vs Crawl_Spider)
   const conflict = BOARD_THREAD.conflict ?? { id: 'conf-001', reason: '', options: [] };
 
   return (
@@ -260,7 +231,6 @@ export function LiveBoard() {
             </div>
           </div>
 
-          {/* The board — real Mission Control kanban columns */}
           <div className="relative">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3">
               {BOARD_COLUMNS.map((name, i) => (
@@ -276,7 +246,6 @@ export function LiveBoard() {
                     className="min-h-[150px] md:min-h-[200px] relative"
                     style={{ border: 'var(--v2-rule) solid var(--v2-ink-rule)', background: 'rgba(255,255,255,0.012)' }}
                   >
-                    {/* Faint resident agent label — real graph name for this column */}
                     <div className="absolute inset-0 flex items-start justify-center pt-3 pointer-events-none">
                       <span
                         ref={(el) => { agentLabelsRef.current[i] = el; }}
@@ -286,7 +255,6 @@ export function LiveBoard() {
                         {BOARD_RESIDENTS[i] ?? ''}
                       </span>
                     </div>
-                    {/* Trail mark — the agent who handed off from this column */}
                     {trailMarks.includes(i) && (
                       <div
                         className="absolute top-9 left-1/2 -translate-x-1/2"
@@ -306,7 +274,6 @@ export function LiveBoard() {
               ))}
             </div>
 
-            {/* The traveling task token — real thread title */}
             <div
               ref={tokenRef}
               className="absolute top-0 left-0 pointer-events-none"
@@ -320,7 +287,6 @@ export function LiveBoard() {
               </div>
             </div>
 
-            {/* Conflict panel — the REAL three-way conflict */}
             <div
               ref={conflictPanelRef}
               className="mt-5 md:mt-6 md:flex md:justify-end pointer-events-none"

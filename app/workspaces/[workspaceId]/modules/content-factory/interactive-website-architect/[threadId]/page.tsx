@@ -95,7 +95,6 @@ export default function ThreadViewPage() {
         <div className="flex flex-col h-full bg-slate-50 min-h-[calc(100vh-100px)] lg:rounded-2xl lg:border lg:border-slate-200 lg:shadow-sm overflow-hidden relative">
             <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-8 scroll-smooth">
                 <div className="max-w-4xl mx-auto space-y-6">
-                    {/* Breadcrumb */}
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Link
                             href={`/workspaces/${workspaceId}/modules/content-factory`}
@@ -114,7 +113,6 @@ export default function ThreadViewPage() {
                         <span className="text-foreground">{currentThread.title}</span>
                     </div>
 
-                    {/* Thread Header */}
                     <div className="bg-white rounded-2xl border border-slate-200 p-6">
                         {isEditing ? (
                             <div className="space-y-4">
@@ -199,7 +197,6 @@ export default function ThreadViewPage() {
                         )}
                     </div>
 
-                    {/* Artifacts */}
                     {currentArtifacts.length > 0 ? (
                         <div className="space-y-4">
                             <h2 className="text-lg font-semibold">Artifacts</h2>

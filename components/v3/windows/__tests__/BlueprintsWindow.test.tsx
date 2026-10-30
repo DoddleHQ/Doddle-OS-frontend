@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BlueprintsWindow } from '@/components/v3/windows/BlueprintsWindow';
 import { useV3OS } from '@/lib/v3/osStore';
-// path navigation: router/pathname stubs
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
   usePathname: () => '/v3',
@@ -39,14 +38,13 @@ describe('BlueprintsWindow · v13 win-library (layered catalog)', () => {
   it('layer chips and search narrow the library; cards open the detail pane', () => {
     render(<BlueprintsWindow />);
     fireEvent.click(screen.getByRole('button', { name: 'strategy' }));
-    expect(screen.queryByText('SEO Cluster')).toBeNull(); // seo is structure
-    expect(screen.getByText('Brand Persona')).toBeTruthy(); // brand is strategy
+    expect(screen.queryByText('SEO Cluster')).toBeNull();
+    expect(screen.getByText('Brand Persona')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'all' }));
     fireEvent.change(screen.getByLabelText('Search the library'), { target: { value: 'email' } });
     expect(screen.getByText('Email Nurture')).toBeTruthy();
     expect(screen.queryByText('SEO Cluster')).toBeNull();
     fireEvent.change(screen.getByLabelText('Search the library'), { target: { value: '' } });
-    // detail pane: back-link, chips, runs table, launch action
     fireEvent.click(screen.getByRole('button', { name: /SEO Cluster/ }));
     expect(screen.getByText('← library')).toBeTruthy();
     expect(screen.getByText(/engine · graph/i)).toBeTruthy();

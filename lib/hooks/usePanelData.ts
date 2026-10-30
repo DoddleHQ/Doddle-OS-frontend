@@ -5,12 +5,6 @@ import { AGENT_LIST } from '@/components/v2/content-factory/agents';
 import { threadService } from '@/lib/services/threadService';
 import type { AuditArtifact, AuditThread, ModuleId } from '@/lib/types/thread.types';
 
-/**
- * Module IDs the product actually writes threads under: every live v2 agent
- * module, the legacy v1 content factory, and the retired Maya module. The
- * threads API is scoped per module, so panels that need the full picture
- * query each and merge.
- */
 export const THREAD_MODULES: ModuleId[] = Array.from(
     new Set<ModuleId>([...AGENT_LIST.map((a) => a.moduleId), 'content-factory', 'magento-content-writer'])
 );
@@ -30,11 +24,6 @@ async function fetchAllThreads(workspaceId: string): Promise<AuditThread[]> {
         );
 }
 
-/**
- * Deeplink for a thread: v2 agent threads have a streaming detail page,
- * the retired Maya module keeps its v1 detail route, everything else
- * falls back to its module home.
- */
 export function threadHref(workspaceId: string, thread: AuditThread): string {
     const m = thread.moduleId;
     if (AGENT_LIST.some((a) => a.moduleId === m)) {
@@ -46,7 +35,6 @@ export function threadHref(workspaceId: string, thread: AuditThread): string {
     return `/workspaces/${workspaceId}/modules/${m}`;
 }
 
-/** Threads that halted with an error and need operator attention. */
 export function useAttentionThreads(workspaceId: string, enabled: boolean) {
     const [threads, setThreads] = useState<AuditThread[]>([]);
     const [loading, setLoading] = useState(false);
@@ -74,11 +62,9 @@ export function useAttentionThreads(workspaceId: string, enabled: boolean) {
 }
 
 export interface VaultArtifact extends AuditArtifact {
-    /** Title of the thread that produced this artifact. */
     threadTitle: string;
 }
 
-/** Latest artifacts from the most recent threads. */
 export function useRecentArtifacts(workspaceId: string, enabled: boolean) {
     const [artifacts, setArtifacts] = useState<VaultArtifact[]>([]);
     const [loading, setLoading] = useState(false);

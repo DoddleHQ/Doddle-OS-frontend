@@ -17,23 +17,6 @@ import type { AuditThread, ModuleId } from '@/lib/types/thread.types';
 import { AGENT_LIST } from '@/components/v2/content-factory/agents';
 import { workspaceService } from '@/lib/services/workspaceService';
 
-/*
- * InstrumentShell — Operate-mode dashboard layout.
- *
- * Four zones, refined for scanability and consistency (impeccable Operate):
- *   1. Icon rail (56px, ink): workspace switcher tiles
- *   2. Module nav (220px, paper): orientation + navigation
- *   3. Content (flex-1, paper): top bar + scrollable page
- *   4. Live feed (288px, ink): agent activity, wired to mock data
- *
- * Operate-mode compliance:
- * - No Instrument Serif in the interior (Hanken Grotesk throughout)
- * - No eyebrow/kicker labels above content
- * - Active nav = solid fill, NOT border-left (hard ban)
- * - Accent reserved for state/selection only
- * - Motion: 150-250ms functional, cubic-bezier(0.16,1,0.3,1)
- */
-
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 interface InstrumentShellProps {
@@ -57,9 +40,6 @@ export function InstrumentShell({ workspaceId, workspace, children }: Instrument
       : MODULES.find((m) => pathname.includes(m.path)) || MODULES[0];
   const isOnPersonaPage = pathname.includes('/brand-persona');
 
-  // Check if workspace has a brand persona — re-checks on route changes so
-  // the banner hides after the user saves a persona (from Brand Guardrails
-  // editor or the Brand Persona setup page) and navigates anywhere else.
   useEffect(() => {
     workspaceService.getPersona(workspaceId).then((persona) => {
       setNeedsPersona(!persona || !persona.content || persona.content.trim().length === 0);
@@ -70,10 +50,8 @@ export function InstrumentShell({ workspaceId, workspace, children }: Instrument
 
   return (
     <div className="v2-scope flex h-screen overflow-hidden" style={{ background: 'var(--v2-paper-ground)' }}>
-      {/* === ZONE 1: ICON RAIL === */}
       <IconRail workspaceId={workspaceId} workspaces={workspaces} />
 
-      {/* === ZONE 2: MODULE NAV === */}
       <aside
         className="hidden md:flex flex-col flex-shrink-0 w-[220px]"
         style={{ background: 'var(--v2-paper-ground)', borderRight: '1px solid var(--v2-paper-rule)' }}
@@ -81,7 +59,6 @@ export function InstrumentShell({ workspaceId, workspace, children }: Instrument
         <ModuleNavList workspaceId={workspaceId} workspace={workspace} pathname={pathname} />
       </aside>
 
-      {/* === ZONE 3: CENTER CONTENT === */}
       <div className="flex-1 flex flex-col min-w-0">
         <header
           className="flex items-center justify-between px-5 py-3 flex-shrink-0"
@@ -124,7 +101,6 @@ export function InstrumentShell({ workspaceId, workspace, children }: Instrument
           </div>
         </header>
 
-        {/* Setup banner — shown when brand persona is not configured */}
         {showBanner && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
@@ -171,10 +147,8 @@ export function InstrumentShell({ workspaceId, workspace, children }: Instrument
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
 
-      {/* === ZONE 4: LIVE FEED === */}
       <FeedWrapper workspaceId={workspaceId} open={feedOpen} onClose={() => setFeedOpen(false)} />
 
-      {/* === MOBILE DRAWER === */}
       <AnimatePresence>
         {mobileNavOpen && (
           <>
@@ -209,7 +183,6 @@ export function InstrumentShell({ workspaceId, workspace, children }: Instrument
   );
 }
 
-/* === Module nav list (sidebar) === */
 function ModuleNavList({
   workspaceId,
   workspace,
@@ -223,7 +196,6 @@ function ModuleNavList({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Orientation: workspace name + domain (replaces banned eyebrow) */}
       <div className="px-3 py-3.5" style={{ borderBottom: '1px solid var(--v2-paper-rule)' }}>
         <div
           className="truncate"
@@ -247,7 +219,6 @@ function ModuleNavList({
         )}
       </div>
 
-      {/* Core section (Mission Control) */}
       <nav className="p-2 space-y-0.5">
         {coreModules.map((mod) => {
           const Icon = mod.icon;
@@ -263,10 +234,8 @@ function ModuleNavList({
         })}
       </nav>
 
-      {/* Hairline separator between sections */}
       <div className="mx-3 my-1" style={{ borderTop: '1px solid var(--v2-paper-rule)' }} />
 
-      {/* Modules section */}
       <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
         {moduleEntries.map((mod) => {
           const Icon = mod.icon;
@@ -282,7 +251,6 @@ function ModuleNavList({
         })}
       </nav>
 
-      {/* Settings pinned at bottom */}
       <div className="p-2" style={{ borderTop: '1px solid var(--v2-paper-rule)' }}>
         <NavItem
           href={`/workspaces/${workspaceId}/settings`}
@@ -295,7 +263,6 @@ function ModuleNavList({
   );
 }
 
-/* === Icon rail (workspace switcher) === */
 function IconRail({ workspaceId, workspaces }: { workspaceId: string; workspaces: Workspace[] }) {
   return (
     <aside
@@ -352,10 +319,6 @@ function IconRail({ workspaceId, workspaces }: { workspaceId: string; workspaces
   );
 }
 
-/* === Feed panel (real recent threads, no mock data) === */
-
-// Modules whose recent threads feed the activity panel: the base modules plus
-// every v2 agent's module (registry-driven — new agents appear automatically).
 const FEED_MODULE_IDS: ModuleId[] = [
   'content-factory', 'seo-cluster', 'social-growth', 'business-audit', 'analytics-action',
   ...AGENT_LIST.map((a) => a.moduleId),
@@ -401,7 +364,6 @@ function FeedPanel({ workspaceId, onClose }: { workspaceId: string; onClose: () 
 
   return (
     <div className="w-[288px] flex flex-col h-full">
-      {/* Header: pulsing dot + "Activity" (no eyebrow label) */}
       <div
         className="flex items-center justify-between px-4 py-3"
         style={{ borderBottom: '1px solid var(--v2-ink-rule)' }}
@@ -429,7 +391,6 @@ function FeedPanel({ workspaceId, onClose }: { workspaceId: string; onClose: () 
         </button>
       </div>
 
-      {/* Activity entries — denser, spacing not borders between items */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3.5">
         {loaded && activities.length === 0 && (
           <p className="v2-mono" style={{ fontSize: '0.68rem', color: 'var(--v2-ink-text-2)' }}>
@@ -441,7 +402,6 @@ function FeedPanel({ workspaceId, onClose }: { workspaceId: string; onClose: () 
           const isSystem = act.type === 'system';
           return (
             <div key={act.id} className="flex gap-2.5">
-              {/* Type indicator dot */}
               <div className="flex-shrink-0 pt-1">
                 <StatusDot
                   variant={isResolution ? 'active' : isSystem ? 'warning' : 'neutral'}
@@ -449,7 +409,6 @@ function FeedPanel({ workspaceId, onClose }: { workspaceId: string; onClose: () 
                   size={5}
                 />
               </div>
-              {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-1.5 mb-0.5">
                   {act.agent && (
@@ -481,7 +440,6 @@ function FeedPanel({ workspaceId, onClose }: { workspaceId: string; onClose: () 
   );
 }
 
-/* === Mobile nav content === */
 function MobileNavContent({
   workspaceId,
   workspace,
@@ -497,7 +455,6 @@ function MobileNavContent({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Orientation */}
       <div className="px-4 py-4" style={{ borderBottom: '1px solid var(--v2-ink-rule)' }}>
         <div
           className="truncate"
@@ -518,7 +475,6 @@ function MobileNavContent({
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
-        {/* Core */}
         <div className="space-y-0.5 mb-2">
           {coreModules.map((mod) => {
             const Icon = mod.icon;
@@ -538,7 +494,6 @@ function MobileNavContent({
 
         <div className="mx-1 my-2" style={{ borderTop: '1px solid var(--v2-ink-rule)' }} />
 
-        {/* Modules */}
         <div className="space-y-0.5">
           {moduleEntries.map((mod) => {
             const Icon = mod.icon;
@@ -569,7 +524,6 @@ function MobileNavContent({
   );
 }
 
-/* === Feed wrapper — lg breakpoint visibility === */
 function FeedWrapper({ workspaceId, open, onClose }: { workspaceId: string; open: boolean; onClose: () => void }) {
   const [isLg, setIsLg] = useState(false);
 
@@ -601,7 +555,6 @@ function FeedWrapper({ workspaceId, open, onClose }: { workspaceId: string; open
   );
 }
 
-/* === Relative time formatter (shared) === */
 function formatRelativeTime(ts: string): string {
   const diffMs = Date.now() - new Date(ts).getTime();
   const diffMin = Math.floor(diffMs / 60000);

@@ -3,14 +3,6 @@ import { getLangGraphApiUrl, langgraphAuthHeaders } from '@/lib/config/langgraph
 
 export const dynamic = 'force-dynamic';
 
-/**
- * GET /api/power-agents/threads?agentKey=crawlability_audit
- * Lists that agent's sessions (threads), newest first.
- *
- * POST /api/power-agents/threads { agentKey, assistantId, title? }
- * Creates a new session thread with agent metadata.
- */
-
 interface ThreadRow {
   thread_id: string;
   metadata?: Record<string, unknown>;
@@ -24,8 +16,6 @@ export async function GET(req: NextRequest) {
   if (!agentKey) {
     return NextResponse.json({ error: 'agentKey required' }, { status: 400 });
   }
-  // Threads are scoped to the workspace — without the workspace_id filter
-  // every workspace would see the same agent's sessions across tenants.
   const res = await fetch(`${getLangGraphApiUrl()}/threads/search`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...langgraphAuthHeaders(req) },

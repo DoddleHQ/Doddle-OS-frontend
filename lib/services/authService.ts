@@ -1,21 +1,5 @@
-/**
- * Auth Service — Client-side service for authentication API calls.
- *
- * The backend sets HttpOnly cookies (`access_token`, `refresh_token`) on
- * login / force-login / refresh.  All requests use `credentials: 'include'`
- * so the browser sends and receives cookies across the cross-origin boundary
- * (Next.js :3000 → Backend :8000).
- *
- * @see https://docs.doddleos.dev/auth  (backend API documentation)
- */
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
-// ---------------------------------------------------------------------------
-// Types — camelCase to match the backend API exactly
-// ---------------------------------------------------------------------------
-
-/** User profile returned by login, force-login, refresh, and /me. */
 export type UserResponse = {
     name: string;
     email: string;
@@ -24,33 +8,28 @@ export type UserResponse = {
     createdAt: string;
 };
 
-/** Response returned by login, force-login, and refresh. */
 export type AuthResponse = {
     tokenType: string;
     expiresIn: number;
     user: UserResponse;
 };
 
-/** Simple message response (signup, verify-email, send-verification, etc.). */
 export type MessageResponse = {
     message: string;
 };
 
-/** Request body for POST /signup. */
 export type SignupRequest = {
     name: string;
     email: string;
     password: string;
 };
 
-/** Request body for POST /login and POST /login/force. */
 export type LoginRequest = {
     email: string;
     password: string;
     rememberMe?: boolean;
 };
 
-/** 409 Conflict detail when an active session already exists. */
 export type ActiveSessionError = {
     code: 'session_active';
     message: string;
@@ -58,7 +37,6 @@ export type ActiveSessionError = {
     hint: string;
 };
 
-/** Custom error class for login failures — carries status + optional 409 detail. */
 export class LoginError extends Error {
     status: number;
     conflict?: ActiveSessionError;
@@ -71,32 +49,16 @@ export class LoginError extends Error {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-/** Default request timeout — 10 seconds. */
 const REQUEST_TIMEOUT_MS = 10_000;
 
-/** Default access token TTL used when bootstrapping from /me (no expiresIn). */
-export const DEFAULT_EXPIRES_IN = 900; // 15 minutes
+export const DEFAULT_EXPIRES_IN = 900;
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/** Headers common to every auth request. */
 function authHeaders(): Record<string, string> {
     return {
         'Content-Type': 'application/json',
     };
 }
 
-/**
- * Wrapper around `fetch` that always includes credentials so HttpOnly cookies
- * are sent with — and received from — the backend. Includes a default timeout
- * that is properly cleaned up after the fetch completes.
- */
 async function authFetch(url: string, init?: RequestInit): Promise<Response> {
     const controller = new AbortController();
     const timeoutId = setTimeout(
@@ -122,10 +84,6 @@ async function authFetch(url: string, init?: RequestInit): Promise<Response> {
     return res;
 }
 
-/**
- * Human-readable fallback messages for common HTTP status codes.
- * Used when the response body is empty or not parseable.
- */
 function getStatusMessage(status: number): string {
     switch (status) {
         case 400: return 'Invalid request. Please check your input.';
@@ -142,21 +100,9 @@ function getStatusMessage(status: number): string {
     }
 }
 
-/**
- * Parse a backend error response.
- *
- * The backend uses different error formats depending on the source:
- * - Route handler errors: `{"Detail": "..."}`  (capital D)
- * - Middleware errors:     `{"error": {"code": "...", "message": "..."}}`
- * - Validation errors:    `{"error": {"type": "ValidationError", "detail": "...", "context": {...}}}`
- *
- * Falls back to a status-code-specific message when the body is empty or
- * not JSON.
- */
 async function parseErrorMessage(res: Response): Promise<string> {
     const contentType = res.headers.get('content-type') || '';
 
-    // If the response isn't JSON, use a status-based fallback
     if (!contentType.includes('application/json')) {
         return getStatusMessage(res.status);
     }
@@ -164,39 +110,24 @@ async function parseErrorMessage(res: Response): Promise<string> {
     try {
         const body = await res.json();
 
-        // Standard HTTP exception: {"Detail": "..."}
         if (body.Detail) {
             return body.Detail;
         }
 
-        // Middleware error: {"error": {"code": "...", "message": "..."}}
         if (body.error?.message) {
             return body.error.message;
         }
 
-        // Validation error: {"error": {"detail": "...", "context": {"errors": [...]}}}
         if (body.error?.detail) {
             return body.error.detail;
         }
 
-        // Fallback to status-based message
         return getStatusMessage(res.status);
     } catch {
-        // Body was empty or malformed JSON
         return getStatusMessage(res.status);
     }
 }
 
-// ---------------------------------------------------------------------------
-// Public API — Core Auth
-// ---------------------------------------------------------------------------
-
-/**
- * POST /api/v1/auth/signup
- *
- * Creates a new organization account and sends a verification email.
- * Does NOT log the user in — they must verify their email first, then log in.
- */
 export async function signup(payload: SignupRequest): Promise<MessageResponse> {
     const res = await authFetch(`${API_BASE_URL}/api/v1/auth/signup`, {
         method: 'POST',
@@ -211,12 +142,6 @@ export async function signup(payload: SignupRequest): Promise<MessageResponse> {
     return res.json();
 }
 
-/**
- * POST /api/v1/auth/login
- *
- * Validates credentials, checks for an existing active session (returns 409
- * if one exists), otherwise creates a new session and sets HttpOnly cookies.
- */
 export async function login(payload: LoginRequest): Promise<AuthResponse> {
     const res = await authFetch(`${API_BASE_URL}/api/v1/auth/login`, {
         method: 'POST',
@@ -241,12 +166,6 @@ export async function login(payload: LoginRequest): Promise<AuthResponse> {
     return res.json();
 }
 
-/**
- * POST /api/v1/auth/login/force
- *
- * Replaces an existing active session with a new one. The old session is
- * invalidated in Redis, new tokens are issued and set as HttpOnly cookies.
- */
 export async function loginForce(payload: LoginRequest): Promise<AuthResponse> {
     const res = await authFetch(`${API_BASE_URL}/api/v1/auth/login/force`, {
         method: 'POST',
@@ -261,12 +180,6 @@ export async function loginForce(payload: LoginRequest): Promise<AuthResponse> {
     return res.json();
 }
 
-/**
- * POST /api/v1/auth/refresh
- *
- * Reads the refresh token from the HttpOnly cookie, validates it, verifies the
- * Redis session, and rotates the access cookie. The refresh cookie is NOT modified.
- */
 export async function refreshAccessToken(): Promise<AuthResponse> {
     const res = await authFetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
         method: 'POST',
@@ -279,18 +192,7 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
     return res.json();
 }
 
-/**
- * GET /api/v1/auth/me
- *
- * Returns the currently authenticated organization profile, hydrated fresh
- * from PostgreSQL. Requires a valid access_token cookie.
- */
 export async function getMe(): Promise<UserResponse> {
-    // Use apiClient's refresh-aware fetch so an expired access token is
-    // automatically refreshed and retried. The old authFetch wrapper had no
-    // 401-refresh logic, so getMe() would fail on expired tokens even though
-    // the rest of the app (which uses apiClient) would succeed — leaving the
-    // auth store stuck on 'unauthenticated' while workspace data loaded fine.
     const { apiFetch } = await import('./apiClient');
     const res = await apiFetch(`${API_BASE_URL}/api/v1/auth/me`, {
         method: 'GET',
@@ -303,43 +205,21 @@ export async function getMe(): Promise<UserResponse> {
     return res.json();
 }
 
-/**
- * POST /api/v1/auth/logout
- *
- * Revokes the current session (invalidates Redis entries and clears both
- * HttpOnly cookies).
- */
 export async function logout(): Promise<void> {
     const res = await authFetch(`${API_BASE_URL}/api/v1/auth/logout`, {
         method: 'POST',
     });
 
     if (!res.ok) {
-        // Best-effort — clear client state even if the server call fails
         console.warn('Logout request failed, clearing client state anyway.');
     }
 }
 
-// ---------------------------------------------------------------------------
-// Public API — Email Verification
-// ---------------------------------------------------------------------------
-
-/** Possible outcomes of an email verification attempt. */
 export type VerifyEmailResult =
     | { status: 'verified' }
     | { status: 'already_verified'; message: string }
     | { status: 'error'; message: string };
 
-/**
- * GET /api/v1/auth/verify-email?token=<token>
- *
- * Verifies an email address using the token sent in the verification link.
- * The token is single-use and expires after 24 hours.
- *
- * The backend returns a **302 Redirect** on success (not JSON), so we use
- * `redirect: 'manual'` to prevent the browser from auto-following it.
- * An `opaqueredirect` response (status 0) means the verification succeeded.
- */
 export async function verifyEmail(token: string): Promise<VerifyEmailResult> {
     const res = await fetch(
         `${API_BASE_URL}/api/v1/auth/verify-email?token=${encodeURIComponent(token)}`,
@@ -349,12 +229,10 @@ export async function verifyEmail(token: string): Promise<VerifyEmailResult> {
         },
     );
 
-    // 302 → opaqueredirect (status 0) means verification succeeded
     if (res.status === 0 || res.type === 'opaqueredirect') {
         return { status: 'verified' };
     }
 
-    // 200 with JSON — "already verified" case
     if (res.status === 200) {
         try {
             const body = await res.json();
@@ -367,17 +245,10 @@ export async function verifyEmail(token: string): Promise<VerifyEmailResult> {
         }
     }
 
-    // 400 — invalid or expired token
     const err = await parseErrorMessage(res);
     return { status: 'error', message: err || 'Email verification failed.' };
 }
 
-/**
- * POST /api/v1/auth/send-verification
- *
- * Resends the email verification link. Always returns 200 to prevent
- * email enumeration.
- */
 export async function sendVerification(email: string): Promise<MessageResponse> {
     const res = await authFetch(`${API_BASE_URL}/api/v1/auth/send-verification`, {
         method: 'POST',
@@ -392,16 +263,6 @@ export async function sendVerification(email: string): Promise<MessageResponse> 
     return res.json();
 }
 
-// ---------------------------------------------------------------------------
-// Public API — Password Reset
-// ---------------------------------------------------------------------------
-
-/**
- * POST /api/v1/auth/forgot-password
- *
- * Sends a password reset link to the provided email. Always returns 200
- * to prevent email enumeration.
- */
 export async function forgotPassword(email: string): Promise<MessageResponse> {
     const res = await authFetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
         method: 'POST',
@@ -416,12 +277,6 @@ export async function forgotPassword(email: string): Promise<MessageResponse> {
     return res.json();
 }
 
-/**
- * GET /api/v1/auth/reset-password?token=<token>
- *
- * Validates a reset password token. Returns true if valid, false if expired.
- * Used by the frontend to verify the token before showing the reset form.
- */
 export async function validateResetToken(token: string): Promise<boolean> {
     const res = await authFetch(
         `${API_BASE_URL}/api/v1/auth/reset-password?token=${encodeURIComponent(token)}`,
@@ -429,12 +284,6 @@ export async function validateResetToken(token: string): Promise<boolean> {
     return res.ok;
 }
 
-/**
- * POST /api/v1/auth/reset-password
- *
- * Resets the password using the token from the reset email. The token is
- * single-use. Also evicts any active session.
- */
 export async function resetPassword(token: string, newPassword: string): Promise<MessageResponse> {
     const res = await authFetch(`${API_BASE_URL}/api/v1/auth/reset-password`, {
         method: 'POST',
@@ -449,31 +298,18 @@ export async function resetPassword(token: string, newPassword: string): Promise
     return res.json();
 }
 
-// ---------------------------------------------------------------------------
-// User profile management
-// ---------------------------------------------------------------------------
-
-/** Response from PATCH /user/edit-profile. */
 export type UserProfileResponse = {
     name: string;
     email: string;
     updatedAt: string;
 };
 
-/**
- * PATCH /api/v1/user/edit-profile
- * Edit the current user's display name.
- */
 export async function editProfile(name: string): Promise<UserProfileResponse> {
     const { apiPatch } = await import('./apiClient');
     const raw = await apiPatch(`${API_BASE_URL}/api/v1/user/edit-profile`, { name });
     return raw as UserProfileResponse;
 }
 
-/**
- * GET /api/v1/user/lookup?email=...
- * Look up a user by email (used for workspace invite validation).
- */
 export async function lookupUser(email: string): Promise<{ name: string; email: string } | null> {
     try {
         const { apiGet } = await import('./apiClient');

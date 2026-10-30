@@ -1,14 +1,4 @@
-/*
- * v13.css — the indexv13 reference stylesheet, ported verbatim and scoped
- * under .v3-scope (body→.v3-scope, .dark→.v3-scope.dark, fonts mapped to
- * our next/font vars). Loaded AFTER v3.css so the reference values win on
- * any shared class — the exact-UI replication layer.
- */
-
-/* DoddleOS app shell — extracted verbatim from indexv13.html */
-
 .v3-scope{
-  /* Neutral silver glass (from v8) */
   --glass-bg:linear-gradient(135deg,rgba(255,255,255,0.85),rgba(240,240,245,0.5));
   --glass-tint:rgba(255,253,247,0.7);
   --glass-border:rgba(255,255,255,0.9);
@@ -24,7 +14,6 @@
   --r:8px;
 }
 .v3-scope.dark{
-  /* Deep graphite glass (from v8) */
   --glass-bg:linear-gradient(135deg,rgba(31,31,35,0.75),rgba(18,18,20,0.6));
   --glass-tint:rgba(24,24,27,0.7);
   --glass-border:rgba(255,255,255,0.08);
@@ -43,15 +32,12 @@ html,.v3-scope{height:100%}
 .v3-scope{font-family:var(--font-v3-inter),'Inter',sans-serif;margin:0;overflow:hidden;color:var(--ink);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 .font-mono{font-family:var(--font-v3-jmono),'JetBrains Mono',monospace}
 .no-select{user-select:none;-webkit-user-select:none}
-/* ---------- Lively wallpaper: v5 blues meets aurora color ---------- */
 #wallpaper{position:fixed;inset:0;z-index:0;background:linear-gradient(180deg,#e0f2fe 0%,#f1f5f9 55%,#fdf4ff 100%);transition:background .5s ease}
 .v3-scope.dark #wallpaper{background:linear-gradient(180deg,#0b1026 0%,#09090b 60%,#170b28 100%)}
 #aurora{position:absolute;inset:0;width:100%;height:100%;opacity:.42;filter:blur(14px)}
-/* ---------- Core glass: per-edge specular (top/left catch light) ---------- */
 .glass{background:var(--glass-bg);backdrop-filter:blur(36px) saturate(180%);-webkit-backdrop-filter:blur(36px) saturate(180%);border-top:1px solid rgba(255,255,255,.9);border-left:1px solid rgba(255,255,255,.55);border-right:1px solid rgba(255,255,255,.25);border-bottom:1px solid rgba(255,255,255,.18);box-shadow:var(--glass-highlight),var(--win-shadow);position:relative}
 .v3-scope.dark .glass{border-top:1px solid rgba(255,255,255,.16);border-left:1px solid rgba(255,255,255,.09);border-right:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(0,0,0,.5)}
 .glass-deep{background:var(--glass-tint);backdrop-filter:blur(48px) saturate(200%);-webkit-backdrop-filter:blur(48px) saturate(200%);border:1px solid var(--glass-border)}
-/* ---------- Top menu notch (v10: v9 dual-island, centered, apps vs system) ---------- */
 #menu-notch{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:80;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 16px;pointer-events:none;width:100%;max-width:1400px;margin:0 auto}
 #menu-notch>nav:nth-child(2){flex-shrink:0}
 .island-nav{pointer-events:auto;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px}
@@ -62,19 +48,15 @@ html,.v3-scope{height:100%}
 .notch-btn svg,.notch-btn i{width:18px;height:18px}
 .notch-sep{width:1px;height:20px;background:var(--edge);margin:0 4px;opacity:.6;flex-shrink:0}
 #menu-notch .triage-badge{position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;font-size:9px;min-width:18px;height:18px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;border:2px solid var(--glass-tint)}
-/* ---------- Right activity rail: hidden until hover/focus/action flashes it ---------- */
 #rail-hover-zone{position:fixed;right:0;top:0;bottom:0;width:18px;z-index:69;background:transparent;pointer-events:auto}
 #activity-rail{position:fixed;right:12px;top:50%;transform:translateY(-50%) translateX(calc(100% - 16px));opacity:.6;z-index:70;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 8px;border-radius:8px;max-height:70vh;overflow-y:auto;transition:transform .25s ease,opacity .25s ease}
 #activity-rail:hover,#rail-hover-zone:hover + #activity-rail{transform:translateY(-50%) translateX(0);opacity:1}
 #activity-rail.pinned{transform:translateY(-50%) translateX(0);opacity:1}
 #rail-pin-btn.on{color:var(--accent);border-color:var(--accent)}
-/* ---------- Rail clearance: page + dashboard content never slides under the rail ---------- */
 .os-window.page .win-body,.dash-inner{padding-right:76px}
 .fizzy-board,.gantt{margin-right:8px}
-/* ---------- v10 pages: full-bleed transparent definition pages ---------- */
 .os-window.page{left:0!important;top:76px!important;width:100%!important;max-width:none!important;height:calc(100% - 76px)!important;border-radius:0;border:none;box-shadow:none;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;z-index:15!important}
 .os-window.page .titlebar{display:none}
-/* ---------- v10 Fizzy kanban (Assignments) ---------- */
 .fizzy-wrap{display:flex;flex-direction:column;height:100%;min-height:0}
 .fizzy-filter{display:flex;justify-content:center;margin:6px 0 14px}
 .fizzy-filter .askbar{width:min(420px,90vw);border-radius:8px}
@@ -99,7 +81,6 @@ html,.v3-scope{height:100%}
 .fizzy-meta .cmt{margin-left:auto;display:inline-flex;align-items:center;gap:4px;color:var(--muted)}
 .fizzy-add{border:1.5px dashed rgba(59,130,246,.5);border-radius:8px;background:var(--glass-tint);padding:16px;text-align:center}
 .fizzy-bottom{display:flex;justify-content:space-between;padding:10px 22px;border-top:1px solid var(--edge);font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.08em}
-/* ---------- folders on a shelf: stacked back sheets, spine, stagger, shelf base ---------- */
 .folder-deck{position:relative;height:30px;margin:12px 16px 0}
 .folder-deck span{position:absolute;left:50%;transform:translateX(-50%);height:30px;border-radius:8px 8px 0 0;border:1px solid var(--glass-border);border-bottom:0;background:rgba(128,128,128,.14)}
 .folder-deck span:nth-child(1){width:62%;top:0;background:rgba(128,128,128,.16);background:color-mix(in srgb,var(--fc) 32%,transparent)}
@@ -113,7 +94,6 @@ html,.v3-scope{height:100%}
 .fizzy-board .fizzy-col .fizzy-card:hover{transform:translateY(-2px) rotate(0)}
 .fizzy-shelf{height:10px;border-radius:8px;margin-top:14px;background:linear-gradient(180deg,rgba(128,128,128,.4),rgba(128,128,128,.16));box-shadow:0 10px 18px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.35)}
 .fizzy-shelf{height:10px;border-radius:8px;margin-top:14px;background:linear-gradient(180deg,rgba(128,128,128,.4),rgba(128,128,128,.16));box-shadow:0 10px 18px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.35)}
-/* ---------- v10 focus-board (one open column) + gantt ---------- */
 .fizzy-board.single{justify-content:flex-start}
 .fizzy-colhead.clickable{cursor:pointer}
 .fizzy-colhead.clickable:hover{color:var(--accent)}
@@ -153,18 +133,14 @@ html,.v3-scope{height:100%}
 .gantt-tick.today{background:var(--accent);border-radius:8px}
 .gantt-tick.today b,.gantt-tick.today i{color:#fff}
 .gantt-row{display:grid;grid-template-columns:minmax(220px,300px) 1fr;border-top:1px solid var(--glass-border);min-height:44px}
-/* ---------- segmented control: Gantt / Board / Review ---------- */
 .seg{display:inline-flex;gap:2px;padding:4px;border-radius:8px;border:1px solid var(--glass-border);background:var(--glass-tint);backdrop-filter:blur(36px) saturate(180%);-webkit-backdrop-filter:blur(36px) saturate(180%);box-shadow:var(--win-shadow)}
 .seg-btn{font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:11px;font-weight:600;padding:8px 20px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s cubic-bezier(.16,1,.3,1)}
 .seg-btn:hover{color:var(--ink)}
 .seg-btn.on{background:var(--ink);color:#fff;box-shadow:0 4px 14px rgba(15,23,42,.25)}
 .v3-scope.dark .seg-btn.on{background:#f9fafb;color:#111827;box-shadow:0 4px 14px rgba(0,0,0,.5)}
-/* ---------- zebra glass rows ---------- */
 .gantt-row:nth-of-type(even){background:rgba(128,128,128,.07)}
 .gantt-row:hover{background:rgba(128,128,128,.14)}
 .hrow.zebra:nth-of-type(even){background:rgba(128,128,128,.06)}
-/* ---------- v10 approval card (slide-over + triage detail actions) ---------- */
-/* ---------- half-screen slide-over (v12 drawer language) ---------- */
 #slideover{position:fixed;inset:0;z-index:95;background:rgba(10,15,25,.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 #slideover.hidden{display:none}
 .slide-panel{position:absolute;top:76px;right:0;bottom:0;width:min(50vw,640px);overflow-y:auto;padding:20px;border-radius:8px 0 0 8px;animation:slideIn .28s cubic-bezier(.16,1,.3,1)}
@@ -185,7 +161,6 @@ html,.v3-scope{height:100%}
 .gantt-bar.st-done{background:rgba(16,185,129,.25)}.gantt-bar.st-done .gantt-fill{background:#10b981}
 .gantt-mile{position:absolute;top:14px;width:14px;height:14px;transform:rotate(45deg);border-radius:4px;background:var(--violet);border:1px solid #fff}
 .gantt-bar.st-late{box-shadow:0 0 0 1px rgba(239,68,68,.55),0 0 14px rgba(239,68,68,.35)}
-/* ---------- v10 Agents two-column ---------- */
 .agent-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:900px){.agent-2col{grid-template-columns:1fr}.fizzy-board{flex-wrap:nowrap}}
 .agent-colhead{display:flex;align-items:center;gap:8px;margin:4px 0 8px}
@@ -210,14 +185,12 @@ html,.v3-scope{height:100%}
 .rail-btn.st-running .dot{background:var(--accent);animation:pulse 1.2s infinite}
 @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.6}}
 .rail-sep{width:24px;height:1px;background:var(--glass-border);opacity:.6;flex-shrink:0}
-/* History window list rows */
 .hrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid var(--glass-border);margin-bottom:8px;background:var(--glass-tint)}
 .hrow .meta{min-width:0;flex:1}
 .hrow .meta p{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fchip{font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid var(--glass-border);background:transparent;color:var(--muted);cursor:pointer}
 .fchip.on{background:var(--ink);color:#fff;border-color:transparent}
 .v3-scope.dark .fchip.on{background:#f9fafb;color:#111827}
-/* ---------- Forge ports: morph, glide, lock, stack ---------- */
 .morph{display:inline-block;position:relative;color:var(--accent);font-weight:800;min-width:9ch;text-align:left}
 .morph span{position:absolute;left:0;top:0;opacity:0;transform:translateY(60%);transition:opacity .4s,transform .4s;white-space:nowrap}
 .morph span.on{position:relative;opacity:1;transform:none}
@@ -235,7 +208,6 @@ html,.v3-scope{height:100%}
 .lockbtn svg{width:12px;height:12px}
 .pstack{display:flex;height:10px;border-radius:6px;overflow:hidden;background:rgba(128,128,128,.18);gap:2px;padding:2px}
 .pstack>div{height:100%;border-radius:4px;transition:width .5s ease;min-width:0}
-/* ---------- Forge UI ports: morph, tab pill, glide, lock, risk, stack, reactor, pop, backdrops ---------- */
 .morph{display:inline-block;position:relative;color:var(--accent);font-weight:800;min-width:9ch;text-align:left}
 .morph span{position:absolute;left:0;top:0;opacity:0;transform:translateY(60%);transition:opacity .4s,transform .4s;white-space:nowrap}
 .morph span.on{position:relative;opacity:1;transform:none}
@@ -273,7 +245,6 @@ html,.v3-scope{height:100%}
 .bg-thumb.lattice{background-color:var(--glass-tint);background-image:linear-gradient(rgba(128,128,128,.4) 1px,transparent 1px),linear-gradient(90deg,rgba(128,128,128,.4) 1px,transparent 1px);background-size:10px 10px}
 .bg-thumb.halo{background-color:var(--glass-tint);background-image:radial-gradient(rgba(128,128,128,.7) 1.2px,transparent 1.2px);background-size:8px 8px}
 .bg-thumb.calm{background:linear-gradient(180deg,rgba(128,128,128,.15),transparent)}
-/* ---------- Windows layer (from v8) ---------- */
 #windows-layer{position:fixed;inset:76px 0 0 0;z-index:20;pointer-events:none}
 #dim{position:fixed;inset:76px 0 0 0;z-index:18;background:rgba(15,23,42,.22);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .3s ease}
 .v3-scope.dark #dim{background:rgba(0,0,0,.45)}
@@ -283,7 +254,6 @@ html,.v3-scope{height:100%}
 .os-window.focused{z-index:50;box-shadow:inset 0 1px 1px rgba(255,255,255,0.4),0 50px 100px -20px rgba(29,78,216,.35)}
 .v3-scope.dark .os-window.focused{box-shadow:inset 0 1px 1px rgba(255,255,255,0.1),0 50px 100px -20px rgba(59,130,246,.4)}
 .os-window.minimized{transform:translateY(60px) scale(.95);opacity:0;pointer-events:none}
-/* ---------- Page mode: standard places fill the stage, only executions float ---------- */
 .os-window.page{left:0!important;top:0!important;width:100%!important;max-width:none!important;height:100%!important;max-height:100%!important;min-height:100%;border-radius:0;border-left:0;border-right:0;border-bottom:0;z-index:15!important}
 .os-window.page .titlebar{cursor:default}
 .os-window.page .traffic{display:none}
@@ -303,23 +273,17 @@ html,.v3-scope{height:100%}
 .traffic button:hover{transform:scale(1.1)}
 .t-close{background:#ff5f57}.t-min{background:#febc2e}.t-max{background:#28c840}
 .win-body{flex:1;overflow:auto;padding:16px}
-/* ---------- Task windows: dynamic execution containers (agent/blueprint runs) ----------
-   Every task window keeps original min/close/expand behaviour. Static pages stay
-   chromeless (page mode + solo cards hide outer .traffic; see the solo block below). */
 .task-window{border:1px solid var(--glass-border);border-radius:10px;background:var(--glass-tint);overflow:hidden}
 .task-window>.titlebar{padding:10px 14px;cursor:grab}
 .task-window>.task-body{padding:12px}
 .task-window.minimized>.task-body{display:none}
 .task-window.expanded{position:fixed!important;inset:76px 12px 12px 12px!important;z-index:60;overflow:auto}
-/* Bento (from v8) */
 .bento-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .bento-item{border-radius:8px;padding:20px;background:var(--glass-tint);border:1px solid var(--glass-border);transition:all .2s cubic-bezier(0.16,1,0.3,1)}
 .bento-item:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.06)}
 .v3-scope.dark .bento-item:hover{box-shadow:0 8px 24px rgba(0,0,0,0.3)}
-/* ---------- UI components (from v8, neutral) ---------- */
 .widget{border-radius:8px;padding:20px;background:var(--glass-tint);border:1px solid var(--glass-border)}
 .chip{font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid var(--glass-border);background:rgba(128,128,128,0.1);display:inline-flex;align-items:center;gap:6px}
-/* buttons: liquid-glass smoke only (Apple-like) — no solid fills */
 .btn-primary,.btn-deploy{background:linear-gradient(135deg,rgba(58,58,63,.88),rgba(27,27,30,.88));backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);color:#fffdf4;border-radius:8px;min-height:40px;padding:.5rem 1.1rem;font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:.5rem;justify-content:center;cursor:pointer;border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 6px 16px -6px rgba(0,0,0,.5),0 0 18px -6px rgba(47,109,246,.5);transition:all .2s;white-space:nowrap}
 .v3-scope.dark .btn-primary,.v3-scope.dark .btn-deploy{background:linear-gradient(135deg,rgba(47,107,216,.92),rgba(30,64,175,.92));border-color:rgba(255,255,255,.25);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 6px 16px -6px rgba(30,64,175,.7),0 0 18px -4px rgba(77,163,255,.5)}
 .btn-primary:hover,.btn-deploy:hover{filter:brightness(1.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 8px 20px -6px rgba(0,0,0,.55),0 0 22px -4px rgba(47,109,246,.65)}
@@ -331,7 +295,6 @@ html,.v3-scope{height:100%}
 .askbar input{flex:1;background:transparent;border:0;outline:0;font-size:14px;color:var(--ink)}
 .terminal{background:rgba(0,0,0,0.85);color:#e5e7eb;border-radius:8px;padding:16px;font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:12px;line-height:1.6;border:1px solid rgba(255,255,255,0.1);border-top:2px solid rgba(34,211,238,.55);box-shadow:inset 0 4px 24px rgba(0,0,0,0.5);backdrop-filter:blur(12px)}
 .v3-scope.dark .terminal{background:rgba(0,0,0,0.5)}
-/* Kinetic DAG nodes (from v8, neutral) */
 .dag{display:flex;align-items:center;gap:0;overflow-x:auto;padding:12px 0}
 .dag-node{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:8px;white-space:nowrap;background:var(--node-bg);border:1px solid var(--glass-border);transition:all .3s cubic-bezier(0.34,1.56,0.64,1)}
 .dag-node.done{border-color:#10b981;opacity:.85}
@@ -352,7 +315,6 @@ html,.v3-scope{height:100%}
 .dag-line.fill::after{width:100%}
 .dag-line.active::after{width:100%;background:linear-gradient(90deg,transparent,var(--accent),transparent);background-size:200% 100%;animation:dagflow 1.4s linear infinite}
 @keyframes dagflow{0%{background-position:100% 0}100%{background-position:-100% 0}}
-/* Aave lens controls (neutral accent) */
 .lens-toggle{width:52px;height:30px;border-radius:99px;border:1px solid var(--glass-border);position:relative;cursor:pointer;background:rgba(128,128,128,.3);transition:.2s}
 .lens-toggle::after{content:'';position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;
   background:linear-gradient(135deg,#fff,rgba(255,255,255,.55));box-shadow:0 2px 8px rgba(0,0,0,.3),inset 0 1px 0 #fff;transition:.2s}
@@ -361,7 +323,6 @@ html,.v3-scope{height:100%}
 input[type=range].lens{ -webkit-appearance:none;width:100%;height:26px;background:transparent;cursor:pointer}
 input[type=range].lens::-webkit-slider-runnable-track{height:8px;border-radius:5px;background:linear-gradient(90deg,var(--accent) var(--v,40%),rgba(128,128,128,.3) var(--v,40%))}
 input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-8px;border-radius:50%;background:linear-gradient(135deg,#fff,rgba(255,255,255,.5));border:1px solid var(--glass-border);box-shadow:0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 #fff}
-/* overlays */
 .overlay{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-start;justify-content:center;padding-top:14vh;background:rgba(10,15,25,.25);backdrop-filter:blur(4px)}
 .hidden{display:none!important}
 .spot{width:min(640px,92vw);border-radius:8px;overflow:hidden}
@@ -372,7 +333,6 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 #notifs{position:fixed;top:76px;right:14px;bottom:16px;z-index:79;width:380px;border-radius:8px;padding:18px;display:flex;flex-direction:column;overflow:hidden}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:rgba(128,128,128,.3);border-radius:8px}
-/* ---------- Site language: toast, workflow stepper, logo mark ---------- */
 .doddle-toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:200;background:var(--glass-tint);backdrop-filter:blur(18px);border:1px solid var(--glass-border);border-left:4px solid var(--green);border-radius:8px;padding:10px 16px;font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:12px;color:var(--ink);box-shadow:var(--win-shadow);animation:toastIn .3s cubic-bezier(.16,1,.3,1)}
 @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%)}}
 .wfsteps{display:flex;margin:12px 0 4px;overflow-x:auto;padding-bottom:4px}
@@ -385,13 +345,11 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 .wfstep.now i{border-color:var(--accent);color:var(--accent)}
 .brandmark{width:30px;height:28px;border-radius:4px 8px 8px 4px;background:linear-gradient(135deg,#3a3a3f,#1b1b1e);display:grid;place-items:center;box-shadow:0 6px 14px -6px rgba(0,0,0,.5),inset 0 1px 1px rgba(255,255,255,.15);flex-shrink:0}
 .brandmark-in{background:#fffdf4;color:#2f6df6;border-radius:2px 8px 8px 2px;font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-weight:700;font-size:.72rem;line-height:1;padding:3px 5px 4px 4px;box-shadow:0 0 12px rgba(255,253,244,.35)}
-/* ---------- Site language: blue-chip rows + squircle avatars + solid primaries ---------- */
 .glide-menu button>i,.glide-menu button>svg{width:28px;height:28px;padding:8px;background:var(--accent);border-radius:8px;color:#fff;flex-shrink:0;box-shadow:0 4px 12px -4px rgba(29,78,216,.6)}
 #ws-menu .spot-item>i,#ws-menu .spot-item>svg{width:30px;height:30px;padding:7px;background:var(--accent);border-radius:8px;color:#fff;flex-shrink:0;box-shadow:0 4px 12px -4px rgba(29,78,216,.6)}
 .profile-avatar{background:var(--glass-tint);border-color:var(--glass-border);border-radius:16px}
 .v3-scope.dark .brandmark{background:linear-gradient(135deg,#2f6bd8,#1e40af);box-shadow:0 6px 14px -6px rgba(30,64,175,.65),inset 0 1px 0 rgba(255,255,255,.5)}
 .v3-scope.dark .brandmark-in{background:#fff;color:#111827;box-shadow:none}
-/* ---------- Glass dock: smoky segmented action bar (MEXC-style) ---------- */
 .gdock{display:flex;align-items:stretch;background:rgba(15,23,42,.66);backdrop-filter:blur(28px) saturate(150%);-webkit-backdrop-filter:blur(28px) saturate(150%);border:1px solid rgba(255,255,255,.28);border-radius:20px;overflow:hidden;box-shadow:0 20px 50px -20px rgba(15,23,42,.5)}
 .gdock.scroll{overflow-x:auto}
 .gseg{flex:1;display:flex;align-items:center;gap:12px;padding:12px 18px;background:transparent;border:0;border-left:1px solid rgba(255,255,255,.14);color:#fff;cursor:pointer;font-family:var(--font-v3-inter),'Inter',sans-serif;min-width:0;text-align:left}
@@ -403,11 +361,9 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 .gchip{width:36px;height:36px;border-radius:12px;background:var(--accent);display:grid;place-items:center;flex-shrink:0;box-shadow:0 6px 16px -6px rgba(29,78,216,.7)}
 .gchip svg,.gchip i{width:18px;height:18px;color:#fff}
 .glabel{font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* ---------- Full-page dashboard (v5 home; fades out while any window is active) ---------- */
 #dashboard{position:fixed;inset:76px 0 0 0;z-index:10;overflow-y:auto;transition:opacity .35s ease}
 #dashboard.dash-hidden{opacity:0;pointer-events:none}
 .dash-inner{max-width:1080px;margin:0 auto;padding:28px 24px 60px}
-/* hero owns the fold: the get-started chat is the highlighter */
 .dash-hero{min-height:calc(100vh - 170px);display:flex;flex-direction:column;justify-content:center;max-width:880px;margin:0 auto}
 .hero-ask{display:flex;align-items:center;gap:10px;border-radius:8px;padding:12px 12px 12px 18px;border:1px solid rgba(29,78,216,.35);background:var(--glass-tint);box-shadow:0 0 0 4px rgba(29,78,216,.08),0 12px 40px -12px rgba(29,78,216,.35)}
 .v3-scope.dark .hero-ask{border-color:rgba(59,130,246,.45);box-shadow:0 0 0 4px rgba(59,130,246,.12),0 12px 40px -12px rgba(59,130,246,.4)}
@@ -423,7 +379,6 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 @media(max-width:900px){.dash-telemetry{grid-template-columns:1fr}}
 .pbar{height:6px;border-radius:5px;background:rgba(128,128,128,.2);overflow:hidden;flex:1}
 .pbar>div{height:100%;background:linear-gradient(90deg,var(--accent),#06b6d4);border-radius:5px;transition:width .5s ease}
-/* ---------- Two-fold action layout: input 40 / inference canvas 60 ---------- */
 .split{display:flex;gap:12px;align-items:stretch}
 .split-input{flex:4;min-width:0;display:flex;flex-direction:column;gap:12px}
 .split-canvas{flex:6;min-width:0;display:flex;flex-direction:column;gap:12px}
@@ -431,9 +386,7 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 .pane{border:1px solid var(--glass-border);border-radius:8px;background:var(--glass-tint);padding:14px;min-width:0}
 .pane-label{font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
 @media(max-width:900px){.split{flex-direction:column}}
-/* ---------- Engineer-grade input console ---------- */
 .eng{background:rgba(10,12,20,.92);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:10px 10px 8px;box-shadow:inset 0 2px 18px rgba(0,0,0,.5);flex:none!important}
-/* pin input consoles to the bottom of their column */
 .split-input>.eng,.split-canvas>.eng{margin-top:auto}
 .eng-row{display:flex;align-items:center;gap:10px}
 .eng-prompt{font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:#34d399;flex-shrink:0}
@@ -442,7 +395,6 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 .eng-hints{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .eng-hints button{font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:10px;color:#9ca3af;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:5px;padding:2px 7px;cursor:pointer}
 .eng-hints button:hover{color:#fff;border-color:rgba(255,255,255,.3)}
-/* ---------- Threads ---------- */
 .thread-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;border:1px solid var(--glass-border);margin-bottom:6px;cursor:pointer;background:transparent;width:100%;text-align:left;color:var(--ink)}
 .thread-row:hover{background:rgba(128,128,128,.08)}
 .thread-row.viewing{border-color:var(--accent)}
@@ -478,7 +430,6 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 .back-link{font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--accent);cursor:pointer;background:none;border:0;padding:0 0 2px;border-bottom:2px solid transparent}
 .back-link:hover{border-color:var(--accent)}
 @media(max-width:900px){#windows-layer{inset:76px 0 0 0}.os-window{max-width:94vw!important;left:3%!important}#menu-notch{padding:0 8px}#menu-notch .island-nav{overflow-x:auto;max-width:calc(50vw - 12px)}}
-/* ---------- Dashboard composer (theme glass: textarea + model/mode + send) ---------- */
 .composer{background:var(--glass-tint);backdrop-filter:blur(36px) saturate(180%);-webkit-backdrop-filter:blur(36px) saturate(180%);border:1px solid rgba(29,78,216,.35);border-radius:8px;padding:14px 14px 10px;box-shadow:0 0 0 4px rgba(29,78,216,.08),0 12px 40px -12px rgba(29,78,216,.35);margin-top:20px}
 .v3-scope.dark .composer{border-color:rgba(59,130,246,.45);box-shadow:0 0 0 4px rgba(59,130,246,.12),0 12px 40px -12px rgba(59,130,246,.4)}
 .composer-input{width:100%;background:transparent;border:0;outline:0;resize:vertical;min-height:64px;max-height:220px;font-family:var(--font-v3-inter),'Inter',sans-serif;font-size:15px;line-height:1.5;color:var(--ink)}
@@ -486,17 +437,14 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 .composer-bar{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
 .composer-icon{width:34px;height:34px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;color:var(--muted);cursor:pointer;font-size:20px;line-height:1}
 .composer-icon:hover{color:var(--ink);border-color:var(--accent)}
-/* ---------- Agents deploy flow: single column, unlike launchpad split ---------- */
 #win-agents .split.agent-flow{flex-direction:column}
 #win-agents .split.agent-flow .split-input{position:static;max-height:none}
-/* ---------- Agents roster: vertical portrait cards, 3-column listing ---------- */
 .v3-scope.solo #agent-roster.agent-2col{display:block}
 .v3-scope.solo #agent-roster-active,.v3-scope.solo #agent-roster-idle{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 @media(max-width:1100px){.v3-scope.solo #agent-roster-active,.v3-scope.solo #agent-roster-idle{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:640px){.v3-scope.solo #agent-roster-active,.v3-scope.solo #agent-roster-idle{grid-template-columns:1fr}}
 .agent-card-v{display:flex;flex-direction:column;min-height:320px}
 .agent-card-v .agent-card-desc{flex:1}
-/* ---------- Agent profile cards: banner, avatar, stats ---------- */
 .profile-card{text-align:center;overflow:hidden}
 .profile-banner{margin:-20px -20px 0;height:72px;position:relative;border-bottom:1px solid var(--glass-border)}
 .profile-dot{position:absolute;top:10px;right:10px;width:10px;height:10px;border-radius:50%;border:2px solid var(--glass-tint)}
@@ -505,8 +453,6 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 #agent-exec-view .profile-avatar{margin:8px auto 0}
 .profile-stats{display:flex;justify-content:center;gap:18px;margin-top:12px;font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
 .profile-stats strong{color:var(--ink);font-size:13px;display:block}
-/* ---------- Activity rail: fully hidden until hover/focus/action ---------- */
-/* ---------- Threads conversation: channel → messages → nested replies ---------- */
 .chat-list{display:flex;flex-direction:column;gap:14px;max-height:420px;overflow-y:auto;padding-right:4px}
 .chat-msg{display:flex;gap:10px;min-width:0}
 .chat-avatar{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--glass-border);background:var(--glass-tint)}
@@ -523,14 +469,12 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 .chat-reply summary::-webkit-details-marker{display:none}
 .chat-reply .chat-out{padding:0 10px 10px;font-family:var(--font-v3-jmono),'JetBrains Mono',monospace;font-size:11px;line-height:1.6;max-height:220px;overflow:auto}
 .chat-reply pre{white-space:pre-wrap;margin:0}
-/* ---------- Triage 3-pane: queue | conversation | details ---------- */
 #rail-hover-zone{width:26px}
 .triage-3col{display:grid;grid-template-columns:290px minmax(0,1fr) 280px;gap:12px;align-items:start}
 #win-triage.cols-1 .triage-3col{grid-template-columns:1fr}
 #win-triage.cols-1 #triage-conv-pane,#win-triage.cols-1 #triage-side-pane{display:none}
 @media(max-width:1100px){.triage-3col{grid-template-columns:240px minmax(0,1fr)}}
 @media(max-width:760px){.triage-3col{grid-template-columns:1fr}}
-/* ---------- task/row listings: gantt band language everywhere ---------- */
 .table-glass{border:1px solid var(--edge);border-radius:8px;overflow:hidden;background:var(--glass-tint)}
 .table-glass>p{margin:0;padding:12px 14px}
 #triage-list>.hrow,#proj-tab-review-list>.hrow,#hist-list>.hrow,#libd-runs>.hrow,#vehicle-threads>.hrow,#dash-task-list>.hrow,#camp-threads>.thread-row,#agent-threads>.thread-row{border-radius:0;margin:0;padding:8px 12px;border-top:0;border-right:0;border-bottom:1px solid var(--glass-border);border-left:3px solid transparent;background:transparent}
@@ -541,23 +485,16 @@ input[type=range].lens::-webkit-slider-thumb{-webkit-appearance:none;width:24px;
 #activity-rail{transform:translateY(-50%) translateX(calc(100% + 14px));opacity:0;pointer-events:none}
 #rail-hover-zone:hover + #activity-rail,#activity-rail:hover,#activity-rail:focus-within,#activity-rail.show{transform:translateY(-50%) translateX(0);opacity:1;pointer-events:auto}
 
-/* ---------- solo section pages (path navigation, from solo.css) ---------- */
 .v3-scope .v3-solo-main { position: fixed; inset: 76px 0 0 0; z-index: 10; overflow-y: auto; }
 .v3-scope .v3-solo-inner { max-width: 1200px; margin: 0 auto; padding: 22px 76px 60px 22px; }
 
-/* ---------- solo section pages: os-window renders as a static full-bleed card (from solo.css) ---------- */
 .v3-scope .os-window{position:relative!important;right:auto!important;width:100%!important;max-width:1100px!important;margin:0 auto 18px!important;max-height:none!important;height:auto!important;opacity:1!important;pointer-events:auto!important}
 .v3-scope .os-window.page{width:100%!important;height:auto!important;border-radius:10px!important;border:1px solid var(--glass-border)!important;box-shadow:inset 0 1px 1px rgba(255,255,255,1),0 40px 100px -20px rgba(17,24,39,0.15)!important;background:var(--glass-tint)!important;backdrop-filter:blur(36px) saturate(180%)!important;-webkit-backdrop-filter:blur(36px) saturate(180%)!important;z-index:10!important}
 .v3-scope .os-window.page .titlebar{display:flex!important;cursor:grab!important}
-/* Static solo cards stay chromeless — the launched task takes over the window
-   chrome instead: traffic + task name appear in the top titlebar (browser-pane
-   style), never nested within the page. */
 .v3-scope .os-window>.titlebar>.traffic{display:none!important}
 .v3-scope .os-window.task-active>.titlebar>.traffic.task-traffic{display:flex!important}
 .v3-scope .task-window>.titlebar>.traffic{display:flex!important}
-/* Zoomed task: the whole window fills the stage so its chrome stays visible. */
 .v3-scope .os-window.task-zoom{position:fixed!important;inset:76px 12px 12px 12px!important;z-index:60!important;width:auto!important;max-width:none!important;margin:0!important;max-height:none!important}
-/* tailwind utilities the v13 markup leans on (CDN in the reference) */
 .v3-scope .space-y-2 > * + * { margin-top: 0.5rem; }
 .v3-scope .mt-3 { margin-top: 0.75rem; }
 .v3-scope .shrink-0 { flex-shrink: 0; }

@@ -377,7 +377,6 @@ function ExecutionCanvas() {
   );
 }
 
-/** Q4 campaign: static approval workflow feed (from the reference's triage seed). */
 function Q4Feed() {
   const triage = useOS((s) => s.triage);
   const resolveTriage = useOS((s) => s.resolveTriage);
@@ -442,7 +441,6 @@ function Q4Feed() {
   );
 }
 
-/** Q4 campaign canvas: the landing page artifact. */
 function Q4Canvas() {
   return (
     <div className="absolute inset-0 flex flex-col slide-in">
@@ -530,7 +528,6 @@ export default function DemoLaunchpadPage() {
       </header>
 
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-y-auto lg:overflow-hidden">
-        {/* active campaigns */}
         <aside className="lg:w-64 shrink-0 border-b lg:border-b-0 lg:border-r agency-border agency-panel z-30">
           <div className="hidden lg:flex h-14 px-4 border-b agency-border items-center shrink-0">
             <p className="label-rule">Active Campaigns</p>
@@ -564,7 +561,6 @@ export default function DemoLaunchpadPage() {
           </div>
         </aside>
 
-        {/* mission control feed */}
         <section className="lg:w-[420px] shrink-0 border-b lg:border-b-0 lg:border-r agency-border flex flex-col min-h-[380px] lg:min-h-0 relative z-20">
           <div className="h-14 px-5 border-b agency-border flex items-center justify-between shrink-0">
             <div>
@@ -620,7 +616,6 @@ export default function DemoLaunchpadPage() {
           )}
         </section>
 
-        {/* execution canvas */}
         <section className="flex-1 relative min-h-[420px] lg:min-h-0 overflow-hidden">
           {campaign === 'gsc-mcp' ? <ExecutionCanvas /> : <Q4Canvas />}
         </section>

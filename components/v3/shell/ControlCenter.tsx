@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { Wifi, Moon } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 
-/** The v13 control center, exact: Wi-Fi / Focus lens toggles, brightness and
- *  agent-verbosity lens sliders, toggle-theme + settings buttons. */
 export function ControlCenter() {
   const open = useV3OS((s) => s.ccOpen);
   const { toggleTheme, toggleCC } = useV3OS.getState();

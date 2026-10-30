@@ -6,7 +6,6 @@ import { useV3OS } from '@/lib/v3/osStore';
 import { useV3Fetch, isV3SessionUnread, markThreadSeen, v3Ago, v3SessionStatus } from '@/lib/v3/data';
 import { fetchV3PowerAgents } from '@/lib/v3/powerAgents';
 
-/** Triage panel: runs updated since your last view, waiting for the operator. */
 export function Notifications() {
   const router = useRouter();
   const open = useV3OS((s) => s.notifsOpen);
@@ -60,7 +59,7 @@ export function Notifications() {
                 <button
                   className="btn-primary flex-1"
                   onClick={() => {
-                    markThreadSeen(r.id); // approve: reviewed — leaves the queue
+                    markThreadSeen(r.id);
                     useV3OS.setState((st) => ({ sessionFeed: [...st.sessionFeed] }));
                   }}
                 >

@@ -11,10 +11,8 @@ import type {
   VaultRun,
 } from './types';
 
-/** USD cost for a token count (4e-6 per token, as in the sample). */
 export const runCost = (tokens: number): number => tokens * PRICE_PER_TOK;
 
-/** Progress from log count vs. expected steps, capped at 95 until done. */
 export function progressPct(logs: number, steps: number, status: ThreadStatus): number {
   if (status === 'done') return 100;
   if (logs === 0) return 0;
@@ -23,7 +21,6 @@ export function progressPct(logs: number, steps: number, status: ThreadStatus): 
 
 export type SwarmStatus = 'idle' | 'running' | 'completed' | 'halted';
 
-/** Aggregate status across the swarm threads, for the dashboard GSC row. */
 export function aggregateStatus(threads: ThreadState[]): SwarmStatus {
   if (threads.length === 0) return 'idle';
   if (threads.some((t) => t.status === 'running')) return 'running';

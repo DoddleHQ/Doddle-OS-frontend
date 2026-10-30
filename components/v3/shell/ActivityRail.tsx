@@ -7,16 +7,11 @@ import { useV3Fetch, v3Ago, v3SessionStatus } from '@/lib/v3/data';
 import { Pin, History } from 'lucide-react';
 import { V3_APP_META } from '@/lib/v3/apps';
 
-/** Deterministic 0–90 demo progress per session id (stable across reloads). */
 function demoProgress(id: string): number {
   const h = [...id].reduce((a, c) => a + c.charCodeAt(0), 0);
   return ((h * 31) % 19) * 5;
 }
 
-/** Right-edge activity rail, exact reference DOM: a hover zone peels the
- *  glass rail out; DOING holds unfinished sessions (attention = awaiting
- *  review), DONE the recently finished ones. Clicking a block opens the
- *  agent execution view for that session. */
 export function ActivityRail() {
   const router = useRouter();
   const railPinned = useV3OS((s) => s.railPinned);

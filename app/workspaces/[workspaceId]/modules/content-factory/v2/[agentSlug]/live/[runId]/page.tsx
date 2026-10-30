@@ -6,17 +6,6 @@ import { getAgent } from '@/components/v2/content-factory/agents';
 import { AgentStream } from '@/components/v2/content-factory/AgentStream';
 import { useRunRegistry } from '@/lib/runs/runRegistry';
 
-/*
- * Live run view — renders an ACTIVE registry run.
- *
- * Reached from the sidebar's "Running now" section or by the URL rewrite
- * that happens when a run starts. Runs whose container is still mounted
- * stream live here; navigating away and back reattaches seamlessly.
- * A run id that is no longer in the registry (dismissed, or the page was
- * reloaded — registry is in-memory) falls back to a pointer to the thread
- * list, where completed runs live as DB threads.
- */
-
 export default function LiveRunPage() {
     const params = useParams();
     const workspaceId = params.workspaceId as string;

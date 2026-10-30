@@ -44,7 +44,6 @@ function TriageCard({ thread, workspaceId }: { thread: AuditThread; workspaceId:
   );
 }
 
-/** Triage — real threads halted with an error, pulled from the threads API. */
 export function TriagePanel({ workspaceId }: { workspaceId: string }) {
   const open = useOS((s) => s.triageOpen);
   const setOverlay = useOS((s) => s.setOverlay);

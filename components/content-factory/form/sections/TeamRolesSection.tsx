@@ -19,12 +19,10 @@ export const TeamRolesSection: React.FC<TeamRolesSectionProps> = ({
     currentUserId,
     availableMembers,
 }) => {
-    // Get project lead member object
     const projectLead = availableMembers.find((m) => m.id === formData.projectLeadId);
 
     return (
         <div className="space-y-5" data-testid="team-roles-section">
-            {/* Section Header */}
             <div>
                 <h3 className="text-lg font-semibold text-neutral-900 mb-1">
                     Team Roles & Permissions
@@ -34,7 +32,6 @@ export const TeamRolesSection: React.FC<TeamRolesSectionProps> = ({
                 </p>
             </div>
 
-            {/* Project Lead */}
             <FormField
                 label="Project Lead"
                 required
@@ -61,7 +58,6 @@ export const TeamRolesSection: React.FC<TeamRolesSectionProps> = ({
                             </option>
                         ))}
                     </select>
-                    {/* Custom arrow icon */}
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                         <svg
                             className="h-4 w-4 text-neutral-500"
@@ -80,7 +76,6 @@ export const TeamRolesSection: React.FC<TeamRolesSectionProps> = ({
                 </div>
             </FormField>
 
-            {/* Content Writers */}
             <div>
                 <label className="text-sm font-medium text-neutral-900 mb-2 block">
                     Content Writers
@@ -97,7 +92,6 @@ export const TeamRolesSection: React.FC<TeamRolesSectionProps> = ({
                 />
             </div>
 
-            {/* Content Reviewers */}
             <div>
                 <label className="text-sm font-medium text-neutral-900 mb-2 block">
                     Content Reviewers

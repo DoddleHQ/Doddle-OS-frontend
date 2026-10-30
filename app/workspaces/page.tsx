@@ -12,21 +12,12 @@ import { groupWorkspacesByOrg } from '@/lib/utils/groupByOrg';
 import type { Workspace } from '@/lib/types/workspace.types';
 import { Logo } from '@/components/v2/Logo';
 
-/*
- * /workspaces — the workspace list page.
- *
- * Workspaces are grouped under the organizations they belong to: the user's
- * own org plus any organizations they were invited to. If the user has NO
- * workspaces at all, redirect to /onboarding.
- */
-
 const PREMIUM_EASE = [0.4, 0, 0.2, 1] as const;
 
 export default function WorkspacesPage() {
   const router = useRouter();
   const { workspaces, isLoading } = useWorkspaces();
   const status = useAuthStore((s) => s.status);
-  // Orgs the user owns — groups outside this set are orgs they were invited to.
   const [ownOrgIds, setOwnOrgIds] = useState<Set<string> | null>(null);
 
   useEffect(() => {
@@ -37,14 +28,12 @@ export default function WorkspacesPage() {
       .catch(() => setOwnOrgIds(null));
   }, [status]);
 
-  // No workspaces → go to onboarding (the agent creates the workspace)
   useEffect(() => {
     if (!isLoading && status === 'authenticated' && workspaces.length === 0) {
       router.replace('/onboarding');
     }
   }, [isLoading, status, workspaces.length, router]);
 
-  // Auth loading
   if (status === 'loading' || isLoading) {
     return (
       <div className="v2-scope min-h-screen flex items-center justify-center" style={{ background: 'var(--v2-paper-ground)' }}>
@@ -53,7 +42,6 @@ export default function WorkspacesPage() {
     );
   }
 
-  // Redirecting to onboarding
   if (workspaces.length === 0) {
     return (
       <div className="v2-scope min-h-screen flex items-center justify-center" style={{ background: 'var(--v2-paper-ground)' }}>
@@ -66,7 +54,6 @@ export default function WorkspacesPage() {
 
   return (
     <div className="v2-scope min-h-screen" style={{ background: 'var(--v2-paper-ground)' }}>
-      {/* Header */}
       <header className="px-6 md:px-10 pt-12 pb-8">
         <div className="max-w-[720px] mx-auto">
           <Link href="/" className="v2-display text-[1.25rem] block mb-2" style={{ color: 'var(--v2-paper-ink)' }}>
@@ -81,13 +68,10 @@ export default function WorkspacesPage() {
         </div>
       </header>
 
-      {/* Workspace cards, grouped by organization */}
       <main className="px-6 md:px-10 pb-20">
         <div className="max-w-[720px] mx-auto">
           {groups.map((group) => {
             const invited = ownOrgIds !== null && !ownOrgIds.has(group.organizationId);
-            // A lone org needs no header — it would only detach the section
-            // from the "Your Workspaces" title above it.
             const singleOrg = groups.length === 1;
             return (
               <section key={group.organizationId} className="mb-8">
@@ -117,7 +101,6 @@ export default function WorkspacesPage() {
             );
           })}
 
-          {/* Create another workspace */}
           <Link
             href="/onboarding"
             className="flex items-center gap-3 px-4 py-3.5 rounded-[10px] transition-colors mt-4 group"
@@ -132,7 +115,6 @@ export default function WorkspacesPage() {
   );
 }
 
-/* === Workspace Card === */
 function WorkspaceCard({ ws, index }: { ws: Workspace; index: number }) {
   return (
     <motion.div

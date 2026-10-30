@@ -1,7 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ReportsWindow } from '@/components/v3/windows/HistoryWindow';
 import { useV3OS } from '@/lib/v3/osStore';
-// path navigation: router/pathname stubs
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
   usePathname: () => '/v3',
@@ -23,7 +22,6 @@ describe('ReportsWindow · v13 win-reports (analytics + gallery)', () => {
     try {
       window.localStorage.clear();
     } catch {
-      /* ignore */
     }
     mockedAgents.mockResolvedValue([
       { key: 'crawlability_audit', assistantId: 'as_1', name: 'Crawlability', role: 'Crawler', handle: '@Crawlability', suite: 'SEO Audit Suite', icon: Bot } as V3Agent,
@@ -49,7 +47,7 @@ describe('ReportsWindow · v13 win-reports (analytics + gallery)', () => {
     expect(screen.getByText(/THROUGHPUT · DONE PER DAY/i)).toBeTruthy();
     expect(screen.getByText(/ARTEFACT GALLERY · COMPLETED WORK/i)).toBeTruthy();
     expect((await screen.findAllByText('Q4 site audit')).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Research').length).toBeGreaterThan(0); // category badges
+    expect(screen.getAllByText('Research').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: /export/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: /seal /i }).length).toBe(2);
     expect(screen.getAllByText('RISK').length).toBe(2);
@@ -69,7 +67,7 @@ describe('ReportsWindow · v13 win-reports (analytics + gallery)', () => {
     render(<ReportsWindow />);
     fireEvent.change(await screen.findByLabelText('Search reports'), { target: { value: 'robots' } });
     expect(screen.getAllByText('robots recheck').length).toBeGreaterThan(0);
-    expect(document.querySelector('#rep-gallery')?.textContent?.includes('Q4 site audit')).toBe(false); // gallery narrows; project rows still list it
+    expect(document.querySelector('#rep-gallery')?.textContent?.includes('Q4 site audit')).toBe(false);
   });
 
   it('project rows open the report detail with the run conversation', async () => {

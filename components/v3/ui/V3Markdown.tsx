@@ -4,7 +4,6 @@ import { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-/** Assistant markdown in the v3 conversation pane — minimal, feed-shaped. */
 export const V3Markdown = memo(function V3Markdown({ children }: { children: string }) {
   return (
     <div className="v3-md">

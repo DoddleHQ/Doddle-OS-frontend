@@ -4,17 +4,6 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 
-/*
- * V2Markdown — Specimen Terminal markdown renderer.
- *
- * Replaces the v1 MarkdownRenderer (which uses slate/blue tokens) with
- * v2 CSS-variable-based styling. Renders markdown content using
- * react-markdown + remark-gfm + rehype-raw (same deps as v1).
- *
- * All colors use v2 tokens: paper-ink for text, paper-rule for borders,
- * vermilion for links/accents. No slate, no blue.
- */
-
 interface V2MarkdownProps {
   content: string;
 }
@@ -22,7 +11,6 @@ interface V2MarkdownProps {
 export function V2Markdown({ content }: V2MarkdownProps) {
   if (!content) return null;
 
-  // Normalize status emojis (same as v1)
   const normalized = content
     .replace(/✅/g, '✓')
     .replace(/❌/g, '✗')

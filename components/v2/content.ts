@@ -1,16 +1,3 @@
-/*
- * Real content for the v2 landing, sourced from the project's GRAPH STREAMING
- * layer — the agents actually integrated via useLangGraphStream, not mock data.
- *
- * Sources of truth:
- *   - lib/types/graph-events.types.ts  → graphId values, BROWSING_ARCHITECT_STEPS,
- *                                        HITLType, ArtifactType, GraphEventType
- *   - app/workspaces/[id]/modules/.../new/page.tsx → which graphId each module runs
- *   - data/* → supplementary KPIs / module names
- *
- * If the integrated agents change, update those files; this module reads from them.
- */
-
 import {
   BROWSING_ARCHITECT_STEPS,
   type ArtifactType,
@@ -20,28 +7,16 @@ import { sampleThread } from '@/data/threadData';
 import { socialThreads } from '@/data/socialGrowth';
 import { mockMissionControlData } from '@/data/missionControl';
 
-// ---------------------------------------------------------------------------
-// The real graph-streaming agents (graphId → module → what it ships)
-// ---------------------------------------------------------------------------
-
 export interface GraphAgent {
-  /** The real graphId passed to useLangGraphStream */
   graphId: string;
-  /** Human name, derived from the graph id */
   name: string;
-  /** The module route it lives under */
   module: string;
-  /** What it actually does, in its own vocabulary */
   job: string;
-  /** The real ArtifactType values it produces */
   artifacts: ArtifactType[];
-  /** One-line input prompt (from the real ChatInput placeholders) */
   inputHint: string;
   tone: 'default' | 'vermilion';
 }
 
-// Human-readable labels for the real ArtifactType enum values, so the Fleet's
-// "ships" chips read as language, not as snake_case identifiers.
 export const ARTIFACT_LABELS: Record<ArtifactType, string> = {
   blueprint: 'Blueprint',
   content: 'Content',
@@ -110,10 +85,6 @@ export const GRAPH_AGENTS: GraphAgent[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
-// The real 12-step pipeline every graph agent runs (BROWSING_ARCHITECT_STEPS)
-// ---------------------------------------------------------------------------
-
 export const PIPELINE_STEPS = BROWSING_ARCHITECT_STEPS.map((s, i) => ({
   num: String(i + 1).padStart(2, '0'),
   id: s.id,
@@ -121,10 +92,8 @@ export const PIPELINE_STEPS = BROWSING_ARCHITECT_STEPS.map((s, i) => ({
   description: s.description,
 }));
 
-// Map each step to the GraphEventType it emits (for the live tape vocabulary).
 export type StepEvent = 'step_start' | 'step_complete' | 'artifact' | 'hitl_request';
 
-// A few steps carry real HITL interrupts (from HITLType) — the operator moments.
 export const HITL_STEPS: Record<string, { type: HITLType; message: string }> = {
   tech_selection: {
     type: 'confirmation',
@@ -140,10 +109,6 @@ export const HITL_STEPS: Record<string, { type: HITLType; message: string }> = {
   },
 };
 
-// ---------------------------------------------------------------------------
-// The live tape — real graph event vocabulary
-// ---------------------------------------------------------------------------
-
 export type TapeTone = 'system' | 'handoff' | 'conflict' | 'complete' | 'artifact';
 export interface TapeEvent {
   from: string;
@@ -152,8 +117,6 @@ export interface TapeEvent {
   tone: TapeTone;
 }
 
-// The live tape — real agent handoffs written in plain language, not internal
-// step IDs or event type names. Reads like a dealing-floor tape a human can scan.
 export const TAPE_EVENTS: TapeEvent[] = [
   { from: 'operator', to: 'Content Architect', action: 'brief received', tone: 'system' },
   { from: 'Content Architect', to: 'research', action: 'crawling site', tone: 'handoff' },
@@ -166,10 +129,6 @@ export const TAPE_EVENTS: TapeEvent[] = [
   { from: 'operator', to: 'Content Architect', action: 'resolved', tone: 'handoff' },
   { from: 'Content Architect', to: '—', action: 'content shipped', tone: 'complete' },
 ];
-
-// ---------------------------------------------------------------------------
-// The signature board — still the Q1 Content Pipeline, now in pipeline terms
-// ---------------------------------------------------------------------------
 
 const boardConflict = sampleThread.conflict ?? {
   id: 'conf-001',
@@ -185,13 +144,6 @@ export const BOARD_THREAD = {
   conflict: boardConflict,
 } as const;
 
-// The handoff as pipeline phases. Each step carries an EXPLICIT column index
-// (into BOARD_COLUMNS) so the token position and the copy/state stay in sync —
-// no index-clamping, no column-skips. Agents are the real graph names.
-// Flow: Inbox(brief) → In Progress(scrape) → Review(draft+audit) →
-//       Review(conflict) → Blocked(operator gate) → Done(resolved+shipped).
-// The conflict surfaces in Review where audits happen; it moves to Blocked
-// while the operator adjudicates; it ships to Done on resolve. No skips.
 export const BOARD_HANDOFF = [
   { agent: 'Content Architect', role: 'Content Factory', note: 'brief received — pipeline started', state: 'running' as const, col: 0 },
   { agent: 'Content Architect', role: 'Content Factory', note: 'scraping home page, extracting context', state: 'running' as const, col: 1 },
@@ -203,19 +155,13 @@ export const BOARD_HANDOFF = [
 
 export const BOARD_COLUMNS = mockMissionControlData.columns.map((c) => c.title);
 
-// The agent that resides in each board column (Inbox/In Progress/Review/Blocked/Done).
-// Display names, not internal identifiers.
 export const BOARD_RESIDENTS: string[] = [
-  'Content Architect', // Inbox — receives the brief
-  'Content Architect', // In Progress — scraping + drafting
-  'Technical Architect', // Review — audits + contests
-  'operator',          // Blocked — awaits human call
-  'Content Architect', // Done — ships artifacts
+  'Content Architect',
+  'Content Architect',
+  'Technical Architect',
+  'operator',
+  'Content Architect',
 ];
-
-// ---------------------------------------------------------------------------
-// KPIs (still real, from missionControl)
-// ---------------------------------------------------------------------------
 
 export const KPIS = [
   { label: 'System Health', value: '94%', trend: 'up' as const },
@@ -224,10 +170,6 @@ export const KPIS = [
   { label: 'Artifacts Types', value: '14', trend: 'up' as const },
   { label: 'HITL Gates', value: '3', trend: 'neutral' as const },
 ];
-
-// ---------------------------------------------------------------------------
-// Real conflicts (operator adjudicates)
-// ---------------------------------------------------------------------------
 
 export interface RealConflict {
   thread: string;
@@ -259,10 +201,6 @@ export const REAL_CONFLICTS: RealConflict[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
-// Modules (the 9 from the workspace nav)
-// ---------------------------------------------------------------------------
-
 export const MODULES = [
   'SEO_Cluster',
   'Content_Factory',
@@ -275,20 +213,13 @@ export const MODULES = [
   'Brand_Guardrails',
 ] as const;
 
-// ---------------------------------------------------------------------------
-// Sample HITL interrupts for the Operator section — real HITLType vocabulary
-// ---------------------------------------------------------------------------
-
 export interface SampleHitl {
   id: string;
   type: HITLType;
-  /** Human-readable label for the HITL type */
   typeLabel: string;
-  /** Display name of the agent (not the raw graphId) */
   agent: string;
   message: string;
   options: Array<{ id: string; label: string; value: string }>;
-  /** What happens when the operator picks each option */
   outcomes: Record<string, string>;
 }
 

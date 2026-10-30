@@ -6,22 +6,6 @@ import { Check, X } from 'lucide-react';
 import type { HITLRequestPayload } from '@/lib/types/graph-events.types';
 import { PREMIUM_EASE } from '@/components/v2/motion';
 
-/*
- * V2HITLCard — Specimen Terminal replacement for HITLMessageCard.
- *
- * Handles all HITL types the brand_persona_generator graph emits:
- *   - confirmation → yes/no buttons
- *   - selection → radio-style pickable cards
- *   - multi_selection → checkbox cards
- *   - feedback / topic_input / data_input → textarea
- *   - content_review → approve/revise
- *
- * v2 design: paper-register cards with vermilion accents, no left-accent
- * stripes (impeccable ban), hairline borders, Hanken Grotesk labels.
- * Same response formats as v1 (confirmed, value, feedback) so the hook
- * doesn't need changes.
- */
-
 interface V2HITLCardProps {
   request: HITLRequestPayload;
   onRespond: (response: Record<string, unknown>) => void;
@@ -38,7 +22,6 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
   const message = request.message || request.prompt || '';
   const options = request.options || [];
 
-  // --- Handlers (same response shapes as v1) ---
   const handleConfirm = (confirmed: boolean) => {
     setSubmitted(true);
     onRespond({ confirmed });
@@ -46,11 +29,6 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
 
   const handleSelection = (isMulti: boolean) => {
     setSubmitted(true);
-    // Send both 'value' and 'selected' keys — different backend graphs check
-    // different keys (content_architect niche selection checks 'selected',
-    // other graphs use extract_user_response which checks 'value').
-    // Also include the option LABELS for chat display (the hook reads
-    // selectedLabel/selectedLabels to render the user's choice).
     const selectedLabels = options
       .filter(opt => selected.includes(opt.id))
       .map(opt => opt.label);
@@ -61,8 +39,6 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
     }
   };
 
-  // Single-select: choosing an option submits immediately — no extra
-  // Confirm click needed (multi-select still requires explicit confirm).
   const handleSinglePick = (optionId: string) => {
     if (isDisabled) return;
     setSelected([optionId]);
@@ -76,7 +52,6 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
     onRespond({ feedback: textValue });
   };
 
-  // Strip markdown from message for cleaner display
   const cleanMessage = message.replace(/^#+\s*/gm, '').replace(/\*\*/g, '');
 
   return (
@@ -93,17 +68,14 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
           border: '1px solid var(--v2-paper-rule)',
         }}
       >
-        {/* Label */}
         <div className="v2-label text-[8px] mb-2" style={{ color: 'var(--v2-vermilion)' }}>
           {type.replace(/_/g, ' ')}
         </div>
 
-        {/* Message */}
         <p className="text-[14px] leading-[1.55] mb-4" style={{ color: 'var(--v2-paper-ink)' }}>
           {cleanMessage}
         </p>
 
-        {/* === CONFIRMATION === */}
         {type === 'confirmation' && (
           <div className="flex gap-2">
             <V2Button onClick={() => handleConfirm(true)} disabled={isDisabled} variant="primary">Yes</V2Button>
@@ -111,7 +83,6 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
           </div>
         )}
 
-        {/* === SELECTION (single — pick submits immediately) === */}
         {type === 'selection' && options.length > 0 && (
           <div className="space-y-1.5">
             {options.map((opt) => {
@@ -130,7 +101,6 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
           </div>
         )}
 
-        {/* === MULTI_SELECTION === */}
         {type === 'multi_selection' && options.length > 0 && (
           <div className="space-y-1.5">
             {options.map((opt) => {
@@ -156,7 +126,6 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
           </div>
         )}
 
-        {/* === URL_SELECTION (multi) === */}
         {type === 'url_selection' && options.length > 0 && (
           <div className="space-y-1.5">
             {options.map((opt) => {
@@ -182,10 +151,8 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
           </div>
         )}
 
-        {/* === FEEDBACK / TOPIC_INPUT / DATA_INPUT === */}
         {(type === 'feedback' || type === 'topic_input' || type === 'data_input') && (
           <div>
-            {/* Structured fields for data_input */}
             {type === 'data_input' && Array.isArray(request.data?.fields) ? (
               <div className="space-y-3">
                 {(request.data!.fields as Array<{ key: string; label: string; type?: string; placeholder?: string }>).map((field) => (
@@ -204,7 +171,6 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
                 </V2Button>
               </div>
             ) : (
-              /* Free-text textarea */
               <div>
                 <textarea
                   value={textValue}
@@ -227,7 +193,6 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
           </div>
         )}
 
-        {/* === CONTENT_REVIEW === */}
         {type === 'content_review' && (
           <div className="flex gap-2">
             <V2Button onClick={() => handleConfirm(true)} disabled={isDisabled} variant="primary">
@@ -259,7 +224,6 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
           </div>
         )}
 
-        {/* Submitted indicator */}
         {submitted && (
           <div className="mt-3 v2-mono text-[11px]" style={{ color: 'var(--v2-sage)' }}>
             ✓ Response sent
@@ -269,8 +233,6 @@ export function V2HITLCard({ request, onRespond, disabled = false }: V2HITLCardP
     </motion.div>
   );
 }
-
-// --- v2 UI primitives ---
 
 function V2Button({ children, onClick, disabled, variant = 'primary', className = '' }: {
   children: React.ReactNode;

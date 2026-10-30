@@ -24,18 +24,15 @@ export function ThreadTimeline({ events, viewMode = 'standard' }: ThreadTimeline
     <div className="space-y-4">
       {events.map((event, index) => (
         <div key={index} className="relative">
-          {/* Timeline line */}
           {index !== events.length - 1 && (
             <div className="absolute left-4 top-8 bottom-0 w-px bg-border" />
           )}
 
           <div className="flex gap-4">
-            {/* Agent avatar/icon */}
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-lg">
               {event.agent.avatar}
             </div>
 
-            {/* Event content */}
             <div className="flex-1 min-w-0">
               <Card className="p-4">
                 <div className="flex items-start justify-between mb-2">
@@ -55,10 +52,8 @@ export function ThreadTimeline({ events, viewMode = 'standard' }: ThreadTimeline
                   </Badge>
                 </div>
 
-                {/* Content */}
                 <p className="text-sm mb-3">{event.content}</p>
 
-                {/* Logic Chain (Logic view) */}
                 {viewMode === 'logic' && event.logicChain && event.logicChain.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-border">
                     <p className="text-xs font-medium text-muted-foreground mb-2">Logic Chain:</p>
@@ -73,7 +68,6 @@ export function ThreadTimeline({ events, viewMode = 'standard' }: ThreadTimeline
                   </div>
                 )}
 
-                {/* Debug Metadata (Debug view) */}
                 {viewMode === 'debug' && event.meta && (
                   <div className="mt-3 pt-3 border-t border-border">
                     <p className="text-xs font-medium text-muted-foreground mb-2">Debug Metadata:</p>

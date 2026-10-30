@@ -1,14 +1,3 @@
-/**
- * TypeScript types for the Reusable Reports/Workflows System
- *
- * A generic system that can display various types of reports and workflows,
- * designed to be used across different functionalities.
- */
-
-// ============================================
-// Report Types
-// ============================================
-
 export type ReportType =
     | 'workflow'
     | 'audit'
@@ -41,10 +30,6 @@ export const REPORT_TYPE_ICONS: Record<ReportType, string> = {
     custom: 'file',
 };
 
-// ============================================
-// Report Status
-// ============================================
-
 export type ReportStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
 export const REPORT_STATUS_LABELS: Record<ReportStatus, string> = {
@@ -63,10 +48,6 @@ export const REPORT_STATUS_COLORS: Record<ReportStatus, string> = {
     cancelled: 'bg-neutral-100 text-neutral-400',
 };
 
-// ============================================
-// Report Priority
-// ============================================
-
 export type ReportPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 export const REPORT_PRIORITY_LABELS: Record<ReportPriority, string> = {
@@ -83,10 +64,6 @@ export const REPORT_PRIORITY_COLORS: Record<ReportPriority, string> = {
     urgent: 'bg-error text-white',
 };
 
-// ============================================
-// Report Data Types
-// ============================================
-
 export interface ReportData {
     id: string;
     title: string;
@@ -97,7 +74,7 @@ export interface ReportData {
     createdAt: string;
     startedAt?: string;
     completedAt?: string;
-    progress?: number; // 0-100
+    progress?: number;
     createdBy?: string;
     metadata?: Record<string, any>;
 }
@@ -145,10 +122,6 @@ export interface ReportTableRow {
     metadata?: Record<string, any>;
 }
 
-// ============================================
-// Filter/Sort Types
-// ============================================
-
 export interface ReportFilter {
     field: string;
     value: any;
@@ -167,10 +140,6 @@ export interface ReportViewOptions {
     currentPage: number;
 }
 
-// ============================================
-// Export Types
-// ============================================
-
 export type ExportFormat = 'pdf' | 'csv' | 'json' | 'xlsx';
 
 export const EXPORT_FORMAT_LABELS: Record<ExportFormat, string> = {
@@ -187,10 +156,6 @@ export interface ExportOptions {
     includeRawData?: boolean;
 }
 
-// ============================================
-// Report List State
-// ============================================
-
 export interface ReportListState {
     reports: ReportData[];
     selectedReports: Set<string>;
@@ -200,10 +165,6 @@ export interface ReportListState {
     loading: boolean;
     error: string | null;
 }
-
-// ============================================
-// Report Detail State
-// ============================================
 
 export interface ReportDetailState {
     report: ReportData | null;

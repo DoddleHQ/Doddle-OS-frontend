@@ -7,13 +7,6 @@ import { Badge } from '@/components/ui/Badge';
 import { ReportData, ReportStatus, ReportPriority, REPORT_TYPE_ICONS, REPORT_STATUS_LABELS, REPORT_PRIORITY_LABELS, REPORT_STATUS_COLORS, REPORT_PRIORITY_COLORS } from './types/reports.types';
 import { FileText, Clock, CheckCircle2, XCircle, AlertCircle, Download, MoreHorizontal } from 'lucide-react';
 
-/**
- * ReportCard Component
- *
- * Displays a report card with status, priority, and actions.
- *
- * @component
- */
 export interface ReportCardProps {
     report: ReportData;
     onSelect?: (id: string) => void;
@@ -59,7 +52,6 @@ export const ReportCard: React.FC<ReportCardProps> = ({
         >
             <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-3">
-                    {/* Type Icon and Title */}
                     <div className="flex items-center gap-3 flex-1">
                         <div className={cn('p-2 rounded-lg', statusColor)}>
                             <span className="text-xl">{typeIcon}</span>
@@ -76,7 +68,6 @@ export const ReportCard: React.FC<ReportCardProps> = ({
                         </div>
                     </div>
 
-                    {/* Status and Priority Badges */}
                     <div className="flex items-center gap-2">
                         <Badge variant="outline" className={statusColor}>
                             {REPORT_STATUS_LABELS[report.status]}
@@ -87,7 +78,6 @@ export const ReportCard: React.FC<ReportCardProps> = ({
                     </div>
                 </div>
 
-                {/* Progress Bar (for running reports) */}
                 {report.status === 'running' && (
                     <div className="mb-3">
                         <div className="flex items-center justify-between text-xs text-neutral-500 mb-1">
@@ -103,7 +93,6 @@ export const ReportCard: React.FC<ReportCardProps> = ({
                     </div>
                 )}
 
-                {/* Metadata */}
                 <div className="flex items-center justify-between text-xs text-neutral-500">
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-1">
@@ -147,7 +136,6 @@ export const ReportCard: React.FC<ReportCardProps> = ({
                     </div>
                 </div>
 
-                {/* Status Icon */}
                 {report.status === 'completed' && (
                     <div className="absolute top-4 right-4">
                         <CheckCircle2 className="h-5 w-5 text-success" />

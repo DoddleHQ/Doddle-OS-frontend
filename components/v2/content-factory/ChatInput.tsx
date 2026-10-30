@@ -6,13 +6,6 @@ import { Send } from 'lucide-react';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/*
- * ChatInput — v2 Specimen Terminal input bar.
- *
- * Paper-register translucent surface, vermilion send button when there's text.
- * Operate mode: single sans, accent only on the active send button.
- */
-
 interface ChatInputProps {
     onSend: (message: string) => void;
     disabled?: boolean;

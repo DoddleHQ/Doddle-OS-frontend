@@ -27,7 +27,6 @@ export default function ThreadDetailPage() {
   const [commandInput, setCommandInput] = useState('');;
   const [sendingCommand, setSendingCommand] = useState(false);
 
-  // Conflict resolution state
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [resolvedConflict, setResolvedConflict] = useState(false);
 
@@ -105,7 +104,6 @@ export default function ThreadDetailPage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href={`/workspaces/${workspaceId}/modules/${moduleSlug}`}>
@@ -131,11 +129,8 @@ export default function ThreadDetailPage() {
         </div>
       </div>
 
-      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Timeline */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Thread Info Card */}
           <Card className="p-4">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-4">
@@ -152,10 +147,8 @@ export default function ThreadDetailPage() {
             </div>
           </Card>
 
-          {/* Timeline */}
           <ThreadTimeline events={thread.events} viewMode={viewMode} />
 
-          {/* Command Input */}
           <Card className="p-4">
             <div className="flex gap-2">
               <input
@@ -184,7 +177,6 @@ export default function ThreadDetailPage() {
           </Card>
         </div>
 
-        {/* Right Column: Conflict Panel */}
         <div>
           {activeConflict && !resolvedConflict && (
             <ConflictPanel

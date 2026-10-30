@@ -2,43 +2,27 @@
 
 import { useEffect, useRef } from 'react';
 
-/*
- * FlowingThreads — the agent handoff network on paper.
- *
- * Threads are pure sine waves — inherently smooth, zero sharp peaks. Each
- * thread is a sum of 2-3 sine harmonics with different frequencies/phases,
- * so they look organic (not like a single cosine). The wave slowly shifts
- * over time (phase drift) so the whole field breathes.
- *
- * Every few seconds a translucent vermilion glow travels along a thread
- * left→right. The glow fades to transparent at both edges (sin-based alpha).
- * Inherently in sync because it samples the exact same sine function.
- */
-
 interface Thread {
-  baseY: number;        // vertical center of the thread
-  amp1: number;         // primary amplitude
-  amp2: number;         // secondary (harmonic) amplitude
-  freq1: number;        // primary frequency (radians per px)
-  freq2: number;        // harmonic frequency
-  phase1: number;       // starting phase
+  baseY: number;
+  amp1: number;
+  amp2: number;
+  freq1: number;
+  freq2: number;
+  phase1: number;
   phase2: number;
-  driftSpeed: number;   // how fast the phase drifts over time
+  driftSpeed: number;
   driftSpeed2: number;
 }
 
-// Compute the y of a thread at horizontal position x and time t.
 function threadY(thread: Thread, x: number, t: number, w: number): number {
   const p1 = thread.phase1 + t * thread.driftSpeed;
   const p2 = thread.phase2 + t * thread.driftSpeed2;
-  // Normalize x so the wave scales with viewport width
   const nx = x / w;
   return thread.baseY
     + Math.sin(nx * thread.freq1 * Math.PI * 2 + p1) * thread.amp1
     + Math.sin(nx * thread.freq2 * Math.PI * 2 + p2) * thread.amp2;
 }
 
-// Sample N points along a thread at time t.
 function sampleThread(thread: Thread, t: number, w: number, samples: number): { x: number; y: number }[] {
   const result: { x: number; y: number }[] = [];
   for (let s = 0; s < samples; s++) {
@@ -84,7 +68,7 @@ export function FlowingThreads() {
           baseY,
           amp1: 12 + Math.random() * 18,
           amp2: 4 + Math.random() * 8,
-          freq1: 1 + Math.random() * 1.5,    // 1-2.5 full waves across the width
+          freq1: 1 + Math.random() * 1.5,
           freq2: 2.5 + Math.random() * 2,
           phase1: Math.random() * Math.PI * 2,
           phase2: Math.random() * Math.PI * 2,
@@ -123,7 +107,6 @@ export function FlowingThreads() {
 
       ctx.clearRect(0, 0, w, h);
 
-      // --- Base threads ---
       threads.forEach((thread, ti) => {
         const sampled = sampleThread(thread, now, w, PATH_SAMPLES);
         let minDist = Infinity;
@@ -136,13 +119,11 @@ export function FlowingThreads() {
         ctx.stroke();
       });
 
-      // --- Spawn glows ---
       if (now - lastGlowTime > GLOW_INTERVAL) {
         glows.push({ threadIdx: Math.floor(Math.random() * threads.length), progress: 0 });
         lastGlowTime = now;
       }
 
-      // --- Draw glows ---
       for (let g = glows.length - 1; g >= 0; g--) {
         const glow = glows[g];
         glow.progress += 0.0028 * (dt / 16);
@@ -160,14 +141,11 @@ export function FlowingThreads() {
 
         const glowSegment = sampled.slice(startIdx, endIdx + 1);
 
-        // Skip if in calm zone (guard against empty sampled array on mount/resize)
         const headIdx = Math.min(sampled.length - 1, Math.floor(glow.progress * (sampled.length - 1)));
         const headPoint = sampled[headIdx];
         if (!headPoint) continue;
         if (Math.hypot(headPoint.x - ccx, headPoint.y - ccy) < cr * 0.85) continue;
 
-        // Draw 3 layers, each with per-point sin-based fade at the edges.
-        // Low peak alphas → translucent, soft.
         const layers = [
           { width: 6, alpha: 0.035 },
           { width: 3, alpha: 0.07 },
@@ -176,7 +154,7 @@ export function FlowingThreads() {
         for (const layer of layers) {
           for (let i = 0; i < glowSegment.length - 1; i++) {
             const localT = i / Math.max(1, glowSegment.length - 1);
-            const fade = Math.sin(localT * Math.PI); // 0 → 1 → 0
+            const fade = Math.sin(localT * Math.PI);
             ctx.beginPath();
             ctx.moveTo(glowSegment[i].x, glowSegment[i].y);
             ctx.lineTo(glowSegment[i + 1].x, glowSegment[i + 1].y);

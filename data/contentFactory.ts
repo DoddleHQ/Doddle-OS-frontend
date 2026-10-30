@@ -1,6 +1,5 @@
 import { Thread, Agent } from './mockData';
 
-// Content Factory specific metrics
 export interface ContentFactoryMetrics {
   contentVelocity: {
     current: number;
@@ -13,7 +12,6 @@ export interface ContentFactoryMetrics {
   avgReviewTime: string;
 }
 
-// Content threads with content-specific metadata
 export interface ContentThread extends Thread {
   contentType: 'blog' | 'social' | 'email' | 'landing-page';
   wordCount?: number;
@@ -35,7 +33,6 @@ export interface ContentThread extends Thread {
   };
 }
 
-// Mock content factory metrics
 export const contentFactoryMetrics: ContentFactoryMetrics = {
   contentVelocity: {
     current: 12,
@@ -48,7 +45,6 @@ export const contentFactoryMetrics: ContentFactoryMetrics = {
   avgReviewTime: '2.5 hours',
 };
 
-// Mock agents for content factory
 const contentAgents: Agent[] = [
   {
     id: 'agent-content-1',
@@ -82,7 +78,6 @@ const contentAgents: Agent[] = [
   },
 ];
 
-// Mock content threads
 export const contentThreads: ContentThread[] = [
   {
     id: 'thread-content-1',
@@ -190,17 +185,14 @@ export const contentThreads: ContentThread[] = [
   },
 ];
 
-// Get content thread by ID
 export const getContentThreadById = (id: string): ContentThread | undefined => {
   return contentThreads.find(thread => thread.id === id);
 };
 
-// Get content threads by status
 export const getContentThreadsByStatus = (status: string): ContentThread[] => {
   return contentThreads.filter(thread => thread.status === status);
 };
 
-// Get content threads by type
 export const getContentThreadsByType = (type: string): ContentThread[] => {
   return contentThreads.filter(thread => thread.contentType === type);
 };

@@ -1,8 +1,6 @@
 import type { Agent, ThreadState, TriageItem, VaultRun } from './types';
 
-/** Price per token for the simulated cost meter (matches the HTML sample). */
 export const PRICE_PER_TOK = 4e-6;
-
 
 export const AGENTS: Record<string, Agent> = {
   orchestrator: { id: 'orchestrator', handle: '@Dod_Orchestrator', role: 'Orchestrator', icon: 'bot' },
@@ -12,14 +10,12 @@ export const AGENTS: Record<string, Agent> = {
   writer: { id: 'writer', handle: '@glob_Writer', role: 'Marketing', icon: 'pen-tool' },
 };
 
-/** The three engine-driven threads of the GSC MCP pipeline swarm. */
 export const GSC_THREAD_SEEDS: Omit<ThreadState, 'status' | 'progress' | 'tokens' | 'logs' | 'startedAt' | 'endedAt'>[] = [
   { id: 'infra', title: 'schema_eval', agentId: 'infra', objective: 'Compile optimized DDL for ClickHouse.', steps: 4 },
   { id: 'sec', title: 'vault_sync', agentId: 'sec', objective: 'Validate in-memory credential hash set.', steps: 4 },
   { id: 'data', title: 'mcp_stream', agentId: 'data', objective: 'Extract metrics and pipe to schema.', steps: 7 },
 ];
 
-/** Static dashboard row — a long-lived process outside the demo swarm. */
 export const NIGHTLY_AUDIT_ROW = {
   title: 'Nightly DB Audit',
   id: 'db-audit-main',
@@ -63,7 +59,6 @@ CREATE TABLE IF NOT EXISTS gsc_local_audits (
 
 export const SQL_ARTIFACT = VAULT_SEED[0].artifact;
 
-/** Workflow templates shown in Graphs. */
 export const GRAPH_TEMPLATES = [
   {
     id: 'gsc-mcp',
@@ -91,7 +86,6 @@ export const GRAPH_TEMPLATES = [
   },
 ];
 
-/** Additional dashboard rows from the reference (static demo state). */
 export const EXTRA_PROCESSES = [
   { title: 'Q4 Marketing Assets', id: 'q4-marketing', status: 'halted' as const, progress: 100, agentId: 'writer', badge: 'approval_req' },
   { title: 'Competitor SEO Scrape', id: 'seo-intel', status: 'idle' as const, progress: 0, agentId: null, badge: 'queued' },

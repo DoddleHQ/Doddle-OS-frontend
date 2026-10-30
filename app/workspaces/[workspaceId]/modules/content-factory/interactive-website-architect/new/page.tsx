@@ -18,12 +18,6 @@ import MarkdownRenderer from '@/components/content-factory/chat/artifacts/Markdo
 import Notification from '@/components/ui/Notification';
 import { extractArtifactMarkdown } from '@/components/content-factory/chat/artifacts/artifactContentUtils';
 
-/**
- * Interactive Website Architect - New Thread Page
- *
- * A chat interface that streams the interactive_website_architect_v2 LangGraph workflow
- * events in real-time using the unified event system.
- */
 export default function InteractiveWebsiteArchitectNewPage() {
     const params = useParams();
     const router = useRouter();
@@ -47,7 +41,6 @@ export default function InteractiveWebsiteArchitectNewPage() {
     const sentMessageRef = useRef<string | null>(null);
     const [dbThreadId, setDbThreadId] = useState<string | null>(null);
 
-    // Use the LangGraph stream hook with interactive_website_architect graph
     const {
         state: streamState,
         startStream,
@@ -71,13 +64,11 @@ export default function InteractiveWebsiteArchitectNewPage() {
         },
     });
 
-    // Handle message send
     const handleSendMessage = useCallback((message: string) => {
         setChatInputValue('');
         sentMessageRef.current = message;
 
         if (isHITLPending && streamState.pendingHITL) {
-            // If there's a pending HITL request, treat message as response
             respondToHITL(streamState.pendingHITL.requestId, message);
             return;
         }
@@ -94,14 +85,12 @@ export default function InteractiveWebsiteArchitectNewPage() {
         }
     }, [isRunning, isHITLPending, streamState.pendingHITL, startStream, respondToHITL, addMessage]);
 
-    // Handle HITL response from the HITL card
     const handleHITLRespond = useCallback((response: unknown) => {
         if (streamState.pendingHITL) {
             respondToHITL(streamState.pendingHITL.requestId, response);
         }
     }, [streamState.pendingHITL, respondToHITL]);
 
-    // Copy artifact content to clipboard
     const handleCopyArtifact = useCallback(async (artifact: ArtifactPayload) => {
         const markdownContent = extractArtifactMarkdown(artifact);
         await navigator.clipboard.writeText(markdownContent);
@@ -109,7 +98,6 @@ export default function InteractiveWebsiteArchitectNewPage() {
         setTimeout(() => setCopiedArtifactId(null), 2000);
     }, []);
 
-    // Download artifact
     const handleDownloadArtifact = useCallback((artifact: ArtifactPayload) => {
         const markdownContent = extractArtifactMarkdown(artifact);
         const blob = new Blob([markdownContent], { type: 'text/markdown' });
@@ -123,7 +111,6 @@ export default function InteractiveWebsiteArchitectNewPage() {
         URL.revokeObjectURL(url);
     }, []);
 
-    // Redirect if workspaceId is not available
     useEffect(() => {
         if (!workspaceId || workspaceId === 'undefined') {
             router.push('/workspaces');
@@ -141,8 +128,6 @@ export default function InteractiveWebsiteArchitectNewPage() {
                 title: `Website Architect: ${message.substring(0, 50)}`,
                 description: `Interactive website architect session: ${message.substring(0, 100)}`,
             }).then((thread) => {
-                // Only use the database-returned ID — never fall back to the
-                // LangGraph thread ID, which does not exist in the database.
                 const dbId = thread.id;
                 if (!dbId) {
                     console.error('[InteractiveWebsiteArchitectNew] Thread created but returned no database ID:', thread);
@@ -180,29 +165,24 @@ export default function InteractiveWebsiteArchitectNewPage() {
         }
     }, [isComplete, completeEvent, dbThreadId, workspaceId, updateThread]);
 
-    // Auto-scroll to bottom when new messages arrive
     useEffect(() => {
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
     }, [messages]);
 
-    // Don't render if workspaceId is not available - AFTER all hooks
     if (!workspaceId || workspaceId === 'undefined') {
         return null;
     }
 
-    // Input is disabled when workflow is running and no HITL is pending
     const isInputDisabled = isRunning && !isHITLPending;
 
-    // Calculate overall progress
     const overallProgress = currentStep
         ? calculateOverallProgress(currentStep.stepNumber, currentStep.totalSteps, progress?.current ? (progress.current / progress.total) * 100 : undefined)
         : 0;
 
     return (
         <div className="flex flex-col h-full bg-slate-50 min-h-[calc(100vh-100px)] lg:rounded-2xl lg:border lg:border-slate-200 lg:shadow-sm overflow-hidden relative">
-            {/* Error notification */}
             <Notification
                 message={error?.message || ''}
                 variant="error"
@@ -210,7 +190,6 @@ export default function InteractiveWebsiteArchitectNewPage() {
                 onClose={clearError}
             />
 
-            {/* Success notification when workflow completes successfully */}
             <Notification
                 message={completeEvent?.message || 'Website architecture completed successfully!'}
                 variant="success"
@@ -218,7 +197,6 @@ export default function InteractiveWebsiteArchitectNewPage() {
                 onClose={() => setSuccessDismissed(true)}
             />
 
-            {/* Status indicator when running (but not during HITL) */}
             {isRunning && !isHITLPending && (
                 <div className="flex-shrink-0 bg-emerald-50/50 backdrop-blur border-b border-emerald-100/50 px-6 py-2.5 sticky top-0 z-10 transition-all">
                     <div className="max-w-6xl mx-auto">
@@ -231,7 +209,6 @@ export default function InteractiveWebsiteArchitectNewPage() {
                                 }
                             </span>
                         </div>
-                        {/* Progress bar */}
                         <div className="w-full bg-emerald-100 rounded-full h-1.5">
                             <div
                                 className="bg-emerald-600 h-1.5 rounded-full transition-all duration-300"
@@ -242,7 +219,6 @@ export default function InteractiveWebsiteArchitectNewPage() {
                 </div>
             )}
 
-            {/* HITL Pending Status Banner */}
             {isHITLPending && (
                 <div className="flex-shrink-0 bg-amber-50/50 backdrop-blur border-b border-amber-100/50 px-6 py-2.5 sticky top-0 z-10 transition-all">
                     <div className="max-w-6xl mx-auto">
@@ -254,13 +230,11 @@ export default function InteractiveWebsiteArchitectNewPage() {
                 </div>
             )}
 
-            {/* Chat Messages Area */}
             <div
                 ref={chatContainerRef}
                 className="flex-1 overflow-y-auto px-4 sm:px-6 py-8 scroll-smooth"
             >
                 <div className="w-full space-y-6">
-                    {/* Welcome message if no messages yet */}
                     {messages.length === 0 && (
                         <div className="flex flex-col items-center justify-center h-full min-h-[50vh] text-center px-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
                             <div className="w-20 h-20 bg-gradient-to-tr from-emerald-600 to-teal-500 rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center mb-6 transform transition-transform hover:scale-105">
@@ -278,7 +252,6 @@ export default function InteractiveWebsiteArchitectNewPage() {
                         </div>
                     )}
 
-                    {/* Chat messages */}
                     {messages.map((message) => (
                         <MessageRenderer
                             key={message.id}
@@ -295,7 +268,6 @@ export default function InteractiveWebsiteArchitectNewPage() {
                         />
                     ))}
 
-                    {/* Typing indicator when workflow is running */}
                     {isRunning && !isHITLPending && (
                         <div className="flex justify-start my-4 animate-in fade-in slide-in-from-bottom-2">
                             <div className="bg-white border border-slate-200 px-5 py-4 rounded-2xl rounded-bl-sm shadow-sm">
@@ -316,7 +288,6 @@ export default function InteractiveWebsiteArchitectNewPage() {
                         </div>
                     )}
 
-                    {/* Completion message */}
                     {streamState.status === 'complete' && (
                         <div className="flex justify-center my-4">
                             <div className="bg-green-50 border border-green-200 rounded-xl p-5 max-w-md text-center">
@@ -333,7 +304,6 @@ export default function InteractiveWebsiteArchitectNewPage() {
                 </div>
             </div>
 
-            {/* Chat Input */}
             <div className="border-t border-slate-200/80 bg-white/80 backdrop-blur-sm">
                 <ChatInput
                     onSend={handleSendMessage}
@@ -352,10 +322,6 @@ export default function InteractiveWebsiteArchitectNewPage() {
         </div>
     );
 }
-
-// ============================================
-// Message Renderer Component
-// ============================================
 
 interface MessageRendererProps {
     message: ChatMessageType;
@@ -380,7 +346,6 @@ function MessageRenderer({
 }: MessageRendererProps) {
     const metadata = message.metadata;
 
-    // User messages - right aligned
     if (message.type === 'user') {
         return (
             <div className="flex justify-end my-4">
@@ -391,7 +356,6 @@ function MessageRenderer({
         );
     }
 
-    // System messages - center aligned, smaller
     if (message.type === 'system') {
         return (
             <div className="flex justify-center my-2">
@@ -402,7 +366,6 @@ function MessageRenderer({
         );
     }
 
-    // Step messages - show description without step counter
     if (message.type === 'step') {
         return (
             <div className="flex justify-start my-4">
@@ -418,7 +381,6 @@ function MessageRenderer({
         );
     }
 
-    // Agent messages - left aligned with avatar
     if (message.type === 'agent') {
         return (
             <div className="flex justify-start my-4">
@@ -437,7 +399,6 @@ function MessageRenderer({
         );
     }
 
-    // Artifact messages - routed to dedicated card components
     if (message.type === 'artifact') {
         const artifactId = metadata?.artifactId;
         const artifact = artifacts.find(a => a.artifactId === artifactId);
@@ -456,12 +417,10 @@ function MessageRenderer({
         );
     }
 
-    // HITL messages - interactive card (or static if already responded)
     if (message.type === 'hitl') {
         const isActive = pendingHITL !== null && pendingHITL.requestId === metadata?.requestId;
         const hitlData = isActive ? pendingHITL : (metadata?.data as HITLRequestPayload | undefined);
 
-        // Use HITLMessageCard for selection, multi_selection, and data_input with fields
         if (hitlData && hitlData.options && hitlData.options.length > 0 && hitlData.requestType !== 'url_selection') {
             const hasLinkListArtifact = artifacts.some(a => a.artifactType === 'link_list');
             if (hitlData.requestType === 'multi_selection' && hasLinkListArtifact) {
@@ -479,7 +438,6 @@ function MessageRenderer({
             );
         }
 
-        // Use HITLMessageCard for data_input with structured fields
         if (hitlData && hitlData.requestType === 'data_input' && hitlData.data?.fields) {
             return (
                 <div className="flex justify-start my-4">
@@ -503,7 +461,6 @@ function MessageRenderer({
                             <MarkdownRenderer content={message.content} accentColor="amber" />
                         </div>
 
-                        {/* Show interactive elements only when HITL is active */}
                         {hitlData && (
                             <>
                                 {hitlData.requestType === 'confirmation' && (
@@ -570,7 +527,6 @@ function MessageRenderer({
                             </>
                         )}
 
-                        {/* Show "responded" indicator when no longer active */}
                         {!isActive && (
                             <p className="text-xs text-slate-400 mt-2 flex items-center gap-1">
                                 <CheckCircle2 className="w-3 h-3" /> Responded

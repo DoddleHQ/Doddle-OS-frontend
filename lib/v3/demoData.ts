@@ -3,16 +3,6 @@ import {
 } from 'lucide-react';
 import type { V3Agent, V3Session } from '@/lib/v3/powerAgents';
 
-/**
- * Versatile demo data — the bridge until real runs exist.
- *
- * Used ONLY as a fallback: when the workspace's real feed (or agent roster)
-   comes back empty, these seeds light up every v13 surface — the dashboard
- * telemetry, the 21-day gantt, the fizzy board, triage, reports analytics
- * (throughput trend, output by type, agent utilization) and the rail.
- * The moment the API returns a single real item, the demo steps aside.
- */
-
 const MIN = 60_000;
 const HOUR = 60 * MIN;
 const DAY = 24 * HOUR;
@@ -43,15 +33,11 @@ interface DemoSeed {
   id: string;
   title: string;
   agentKey: string;
-  /** minutes ago the run finished (or was last touched) */
   ageMin: number;
-  /** minutes ago it started */
   spanMin: number;
-  /** done runs get a seen marker so they read as reviewed, not unread */
   done: boolean;
 }
 
-/** One running, two awaiting review, ten reviewed — spread across 12 days. */
 const SEEDS: DemoSeed[] = [
   { id: 'demo_crawl_live', title: 'Q4 sitemap crawl', agentKey: 'crawlability_audit', ageMin: 4, spanMin: 42, done: false },
   { id: 'demo_git_review', title: 'Release branch sync', agentKey: 'gitops_agent', ageMin: 118, spanMin: 55, done: false },
@@ -68,19 +54,13 @@ const SEEDS: DemoSeed[] = [
   { id: 'demo_sept_crawl', title: 'September crawl — baseline', agentKey: 'crawlability_audit', ageMin: 12 * 24 * 60, spanMin: 3 * 60, done: true },
 ];
 
-/** Marker format shared with markThreadSeen() — keep in sync. */
 const seenKey = (id: string) => `v3.seen.th.${id}`;
 
-/** The demo feed: statuses derive from age exactly like real threads
- *  (fresh unseen → running blue, older unseen → review red, seen → done). */
 export function demoSessions(): V3Session[] {
   const now = Date.now();
   try {
-    // a brand-new visitor's firstVisit is "now", which would read every
-    // historical seed as already seen — backdate it so the demo story works
     if (!localStorage.getItem('v3.firstVisit')) localStorage.setItem('v3.firstVisit', String(now - 14 * DAY));
   } catch {
-    /* private mode */
   }
   const out = SEEDS.map((s) => {
     const updated = new Date(now - s.ageMin * MIN).toISOString();
@@ -89,7 +69,6 @@ export function demoSessions(): V3Session[] {
       try {
         if (!localStorage.getItem(seenKey(s.id))) localStorage.setItem(seenKey(s.id), String(now));
       } catch {
-        /* private mode — statuses still render, just skew unread */
       }
     }
     return { id: s.id, title: s.title, agentKey: s.agentKey, createdAt: created, updatedAt: updated };

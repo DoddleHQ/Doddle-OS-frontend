@@ -1,25 +1,5 @@
 'use client';
 
-/*
- * Run Registry — process-lifetime ownership of agent runs.
- *
- * Problem it solves: useLangGraphStream lives inside the AgentStream page
- * component, and its unmount cleanup cancels the SSE stream. Navigating
- * away killed the client stream while the graph kept running server-side
- * (orphaned runs, lost artifacts) and only one run could ever be active.
- *
- * Design: headless RunContainer components (one per run) live at the
- * content-factory layout level, outliving route changes. Each wraps the
- * PROVEN useLangGraphStream hook unchanged and publishes snapshots here.
- * Views (AgentStream, sidebar) read snapshots; imperative actions
- * (start/respond/cancel) go through a module-level bridge that the
- * containers register — actions never trigger renders.
- *
- * Step 1 scope: registry survives navigation anywhere inside the content
- * factory module. Cross-module survival (and refresh survival) needs the
- * durable langgraph deployment + state polling (tracked separately).
- */
-
 import { create } from 'zustand';
 import type {
     ChatMessage,
@@ -38,13 +18,10 @@ export interface RunSnapshot {
     graphId: string;
     moduleId: string;
     workspaceId: string;
-    /** Agent display name — snapshots must render without re-resolving config. */
     agentName: string;
     agentInitials: string;
     status: RunStatus;
-    /** LangGraph thread id — set once the server assigns it. */
     threadId: string | null;
-    /** Product DB thread id — set once createThreadFromStream resolves. */
     dbThreadId: string | null;
     messages: ChatMessage[];
     artifacts: ArtifactPayload[];
@@ -71,15 +48,10 @@ export interface RunStartSpec {
     agentInitials: string;
     workspaceId: string;
     input: Record<string, unknown>;
-    /** User-visible first message, added by the container before the stream
-     * starts (the view can't add it — the container isn't mounted yet). */
     openingMessage?: Omit<ChatMessage, 'id' | 'timestamp'>;
 }
 
-// --- Non-reactive bridges (module scope; never re-render subscribers) ---
-
 const actionsBridge = new Map<string, RunActions>();
-/** Start inputs wait here until the provider mounts the container. */
 const startSpecs = new Map<string, RunStartSpec>();
 
 export function registerRunActions(runId: string, actions: RunActions): void {
@@ -98,15 +70,11 @@ export function consumeRunStart(runId: string): RunStartSpec | undefined {
     return startSpecs.get(runId);
 }
 
-// --- Store ---
-
 interface RunRegistryState {
     runs: Record<string, RunSnapshot>;
-    /** Newest first — the sidebar renders this order. */
     order: string[];
     createRun: (spec: RunStartSpec) => string;
     patchRun: (runId: string, patch: Partial<RunSnapshot>) => void;
-    /** A completed/errored run leaves the registry (unmounts its container). */
     dismissRun: (runId: string) => void;
 }
 
@@ -164,8 +132,6 @@ export const useRunRegistry = create<RunRegistryState>((set, get) => ({
         });
     },
 }));
-
-// --- View helpers (pure selectors) ---
 
 export function isRunLive(status: RunStatus): boolean {
     return status === 'connecting' || status === 'running' || status === 'hitl_pending';

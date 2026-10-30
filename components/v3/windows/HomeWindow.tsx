@@ -13,7 +13,6 @@ function greeting(): string {
   return 'Good evening';
 }
 
-/** Home floating window: ask bar + quick starts (reference win-home). */
 export function HomeWindow() {
   const openApp = useV3OS((s) => s.openApp);
   const operator = useV3OperatorName();

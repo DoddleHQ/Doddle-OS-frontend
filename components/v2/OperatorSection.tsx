@@ -4,15 +4,6 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SAMPLE_HITLS } from './content';
 
-/*
- * Operator — the HITL dramatization, made interactive.
- *
- * The product's core differentiator is that agents PAUSE and ask the operator
- * to decide (real HITLType: confirmation, multi_selection, content_review).
- * Here the visitor plays operator: cycle the real sample interrupts, pick an
- * option, and see the pipeline consequence. Paper register, returns calm.
- */
-
 export function OperatorSection() {
   const [idx, setIdx] = useState(0);
   const [choice, setChoice] = useState<string | null>(null);
@@ -33,7 +24,6 @@ export function OperatorSection() {
       style={{ background: 'var(--v2-paper-ground)', color: 'var(--v2-paper-ink)', borderTop: 'var(--v2-rule) solid var(--v2-paper-rule)' }}
     >
       <div className="max-w-[1000px] mx-auto w-full">
-        {/* Lead */}
         <div className="mb-12 md:mb-16">
           <div className="v2-label text-[10px] mb-3" style={{ color: 'var(--v2-paper-ink-2)' }}>
             the operator <span style={{ color: 'var(--v2-vermilion)' }}>·</span> human-in-the-loop
@@ -50,9 +40,7 @@ export function OperatorSection() {
           </p>
         </div>
 
-        {/* The interrupt terminal — paper, mono, like a specimen of the real HITL card */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-px" style={{ background: 'var(--v2-paper-rule)' }}>
-          {/* Left: the interrupt */}
           <div className="p-6 md:p-8" style={{ background: 'var(--v2-paper-ground)' }}>
             <div className="flex items-center justify-between mb-4">
               <span className="v2-label text-[9px]" style={{ color: 'var(--v2-vermilion)' }}>
@@ -81,7 +69,6 @@ export function OperatorSection() {
               </motion.p>
             </AnimatePresence>
 
-            {/* Options */}
             <div className="flex flex-col gap-2">
               {hitl.options.map((opt) => {
                 const selected = choice === opt.id;
@@ -106,7 +93,6 @@ export function OperatorSection() {
             </div>
           </div>
 
-          {/* Right: the outcome */}
           <div className="p-6 md:p-8 flex flex-col" style={{ background: 'var(--v2-paper-ground)' }}>
             <div className="v2-label text-[9px] mb-4" style={{ color: 'var(--v2-paper-ink-2)' }}>
               pipeline consequence
@@ -154,7 +140,6 @@ export function OperatorSection() {
           </div>
         </div>
 
-        {/* Interrupt dots */}
         <div className="mt-8 flex items-center justify-center gap-2">
           {SAMPLE_HITLS.map((_, i) => (
             <button

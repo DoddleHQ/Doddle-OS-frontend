@@ -26,19 +26,6 @@ import type { ChatMessage as ChatMessageType } from '@/lib/types/graph-events.ty
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/*
- * AgentStream — v2 shared streaming chat page for content factory agents.
- *
- * Multi-run capable: the run's stream, messages, artifacts, HITL state and
- * persistence all live in the RunRegistry (headless RunContainer at the
- * layout level). This component is a VIEW over one run snapshot —
- * navigating away no longer cancels the run, and several agents can run
- * concurrently, switched via the sidebar or the /live/{runId} URL.
- *
- * Without a runId prop it renders the welcome state; starting a run
- * creates a registry entry and rewrites the URL to the run's live route.
- */
-
 export function AgentStream({ config, workspaceId, runId: runIdProp }: {
     config: AgentConfig;
     workspaceId: string;
@@ -53,7 +40,6 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
     const run: RunSnapshot | undefined = useRunRegistry((s) => (activeRunId ? s.runs[activeRunId] : undefined));
     const createRun = useRunRegistry((s) => s.createRun);
 
-    // Snapshot-derived view state (null when no run is active)
     const isRunning = !!run && (run.status === 'running' || run.status === 'connecting' || run.status === 'hitl_pending');
     const isHITLPending = run?.status === 'hitl_pending';
     const isComplete = run?.status === 'complete';
@@ -63,9 +49,6 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
     const progress = run?.progress ?? null;
     const completeEvent = run?.completeEvent ?? null;
 
-    // Auto-scroll to bottom on new content — but only when the user is
-    // already near the bottom, so reviewing earlier messages during a long
-    // run isn't constantly yanked back down.
     useEffect(() => {
         const el = chatRef.current;
         if (!el) return;
@@ -78,9 +61,6 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
     const showHITL = isHITLPending && !!run?.pendingHITL;
     const showWelcome = !activeRunId;
 
-    // Start a run: create the registry entry (the layout-level container
-    // picks it up, starts the stream, owns persistence) and rewrite the
-    // URL so back/refresh point at the live view.
     const beginRun = useCallback((input: Record<string, unknown>, openingMessage?: { type: 'user'; content: string; sender: string }) => {
         const runId = createRun({
             agentSlug: config.slug,
@@ -100,7 +80,6 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
     }, [createRun, config, workspaceId]);
 
     const handleSend = useCallback((message: string) => {
-        // Auto-use workspace domain on the first message — the user doesn't need to type a URL
         const effectiveUrl = showWelcome && workspaceDomain ? workspaceDomain : message;
         const userText = showWelcome && workspaceDomain ? `Analyze ${workspaceDomain}` : message;
         if (activeRunId) {
@@ -115,9 +94,6 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
         );
     }, [activeRunId, beginRun, config, showWelcome, workspaceDomain, workspaceId]);
 
-    // Welcome-screen start button — the only trigger for the first run.
-    // Agents with a startMessage (e.g. Mia, who works from the catalog
-    // instead of a domain) use it verbatim.
     const handleStart = useCallback(() => {
         const content = config.startMessage ?? (workspaceDomain ? `Analyze ${workspaceDomain}` : 'Start');
         beginRun(
@@ -136,25 +112,18 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
         if (activeRunId) getRunActions(activeRunId)?.clearError();
     }, [activeRunId]);
 
-    // Deduplicate messages — the hook sometimes adds duplicate step messages
     const lastHitlId = (() => {
         const hitlMsgs = messages.filter(m => m.type === 'hitl');
         return run?.pendingHITL ? hitlMsgs[hitlMsgs.length - 1]?.id : null;
     })();
 
-    // Run context — structured progress events win (graph-agnostic); the
-    // per-graph message-pattern table in ./runContext is the fallback for
-    // graphs that don't emit progress. Empty for agents with neither.
     const runContext = getRunContext(config.graphId, progress, messages);
     const completionSummary = getCompletionSummary(completeEvent);
 
-    // Revised pages re-emit their content artifact — show only the newest
-    // version of each page title (older versions stay persisted as history).
     const supersededArtifacts = supersededArtifactIds(artifacts);
 
     return (
         <div className="flex flex-col h-full">
-            {/* Top bar: back link + status */}
             <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0" style={{ borderBottom: '1px solid var(--v2-paper-rule)' }}>
                 <Link
                     href={`/workspaces/${workspaceId}/modules/content-factory/v2/${config.slug}`}
@@ -162,7 +131,6 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
                     style={{ color: 'var(--v2-paper-ink-2)' }}
                 >
                     <ArrowLeft className="w-3.5 h-3.5" />
-                    {/* Agent avatar + name */}
                     <div
                         className="w-6 h-6 rounded-full flex items-center justify-center"
                         style={{ background: 'rgba(200,50,27,0.08)', border: '1px solid rgba(200,50,27,0.15)', color: 'var(--v2-vermilion)', fontFamily: 'var(--v2-font-sans)', fontSize: '0.6rem', fontWeight: 600 }}
@@ -192,10 +160,8 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
                 )}
             </div>
 
-            {/* Chat area */}
             <div ref={chatRef} className="flex-1 overflow-y-auto px-4 py-4">
                 <div className="max-w-[720px] mx-auto flex flex-col">
-                    {/* Welcome state */}
                     {showWelcome && (
                         <motion.div
                             initial={{ opacity: 0, y: 8 }}
@@ -203,7 +169,6 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
                             transition={{ duration: 0.3, ease: EASE }}
                             className="flex flex-col items-center justify-center py-12 text-center"
                         >
-                            {/* Avatar */}
                             <div
                                 className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
                                 style={{ background: 'rgba(200,50,27,0.08)', border: '1px solid rgba(200,50,27,0.15)', color: 'var(--v2-vermilion)', fontFamily: 'var(--v2-font-sans)', fontSize: '1.25rem', fontWeight: 600 }}
@@ -219,8 +184,6 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
                             <p style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.85rem', color: 'var(--v2-paper-ink-2)', maxWidth: '400px', marginBottom: '2rem', lineHeight: 1.55 }}>
                                 {config.greeting}
                             </p>
-                            {/* Pre-flight context — catalog agents (Mia) gate on the
-                                Magento connection; the rest show the workspace domain */}
                             {config.connectionSource === 'magento' ? (
                                 <MagentoGate
                                     workspaceId={workspaceId}
@@ -254,7 +217,6 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
                                     </button>
                                 </div>
                             ) : (
-                                /* No domain set — tell the user to add one in settings */
                                 <div className="px-4 py-3 rounded-[8px]" style={{ border: '1px dashed var(--v2-paper-rule-strong)', background: 'rgba(255,255,255,0.2)' }}>
                                     <p style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.78rem', color: 'var(--v2-paper-ink-2)', textAlign: 'center' }}>
                                         No website domain set for this workspace.
@@ -267,13 +229,8 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
                         </motion.div>
                     )}
 
-                    {/* Messages */}
                     {messages.map((msg) => {
                         if (msg.type === 'hitl') {
-                            // The currently-pending HITL renders as the live
-                            // interactive card below — skip it here. Past
-                            // (answered) HITLs render as static question text
-                            // so the transcript stays coherent.
                             if (msg.id === lastHitlId) return null;
                             const hitlData = msg.metadata?.data as { message?: string; prompt?: string } | undefined;
                             const questionText = hitlData?.message || hitlData?.prompt || msg.content || '';
@@ -295,17 +252,14 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
                         return <ChatMessage key={msg.id} message={msg as ChatMessageType} agentName={config.name} agentInitials={config.initials} />;
                     })}
 
-                    {/* HITL card */}
                     {showHITL && (
                         <V2HITLCard request={run!.pendingHITL!} onRespond={handleHITLRespond} />
                     )}
 
-                    {/* Typing indicator */}
                     <AnimatePresence>
                         {isRunning && !isHITLPending && <TypingIndicator agentName={config.name} agentInitials={config.initials} />}
                     </AnimatePresence>
 
-                    {/* Error */}
                     {error && !isRunning && (
                         <div className="my-3 p-3 rounded-[8px]" style={{ background: 'rgba(200,50,27,0.04)', border: '1px solid var(--v2-vermilion)' }}>
                             <p className="v2-mono" style={{ fontSize: '0.72rem', color: 'var(--v2-vermilion)' }}>{error.message}</p>
@@ -313,7 +267,6 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
                         </div>
                     )}
 
-                    {/* Completion */}
                     {isComplete && (
                         <motion.div
                             initial={{ opacity: 0, scale: 0.96 }}
@@ -341,7 +294,6 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
                 </div>
             </div>
 
-            {/* Input — hidden on welcome screen; "Start Analysis" is the only trigger */}
             {!isComplete && !showWelcome && (
                 <div className="flex-shrink-0 px-4 pb-4 pt-1">
                     <div className="max-w-[720px] mx-auto">

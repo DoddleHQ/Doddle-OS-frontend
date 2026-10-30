@@ -10,10 +10,6 @@ import {
 } from '@/lib/types/thread.types';
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/services/apiClient';
 
-// ---------------------------------------------------------------------------
-// Raw API response shapes (camelCase from backend)
-// ---------------------------------------------------------------------------
-
 interface RawThread {
     id?: string;
     threadId?: string;
@@ -30,7 +26,6 @@ interface RawThread {
 }
 
 interface RawArtifact {
-    /** The API returns the obfuscated `artifactId`; the numeric `id` is legacy. */
     id?: number;
     artifactId?: string;
     threadId: string;
@@ -40,10 +35,6 @@ interface RawArtifact {
     pageName: string;
     createdAt: string;
 }
-
-// ---------------------------------------------------------------------------
-// Mappers
-// ---------------------------------------------------------------------------
 
 function toThread(raw: RawThread): AuditThread {
     return {
@@ -73,18 +64,10 @@ function toArtifact(raw: RawArtifact): AuditArtifact {
     };
 }
 
-// ---------------------------------------------------------------------------
-// URL helper
-// ---------------------------------------------------------------------------
-
 function threadsUrl(workspaceId: string, moduleId: string, ...segments: string[]): string {
     const base = `/api/v1/workspaces/${workspaceId}/modules/${moduleId}/threads`;
     return segments.length > 0 ? `${base}/${segments.join('/')}` : base;
 }
-
-// ---------------------------------------------------------------------------
-// Thread Service
-// ---------------------------------------------------------------------------
 
 export const threadService = {
     async listThreads(workspaceId: string, params: ListThreadsParams): Promise<AuditThread[]> {
@@ -102,8 +85,6 @@ export const threadService = {
     async createThread(workspaceId: string, request: CreateThreadRequest): Promise<AuditThread> {
         const url = threadsUrl(workspaceId, request.moduleId);
         const raw: RawThread = await apiPost(url, {
-            // The backend expects `langId` (LangGraph thread ID), not `threadId`.
-            // `request.threadId` carries the LangGraph-assigned ID from the stream.
             langId: request.threadId,
             moduleId: request.moduleId,
             title: request.title,

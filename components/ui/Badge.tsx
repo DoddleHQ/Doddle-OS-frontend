@@ -2,7 +2,6 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
-// Define the variant type explicitly
 export type BadgeVariant = 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info' | 'outline' | 'ghost' | 'neutral' | 'secondary';
 
 const badgeVariants = cva(
@@ -51,7 +50,6 @@ export interface BadgeProps
   withDot?: boolean;
 }
 
-// Fixed dotColorMap to include all variant types
 const dotColorMap: Record<BadgeVariant, string> = {
   default: 'bg-gray-500',
   primary: 'bg-blue-500',

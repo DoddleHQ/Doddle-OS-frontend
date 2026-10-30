@@ -12,14 +12,6 @@ import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/*
- * Accept Invite — v2 Specimen Terminal design.
- *
- * Renders a centered card on the FlowingThreads background (same as auth pages).
- * Three states: loading → success/error.
- * Paper register, vermilion accents, Hanken Grotesk throughout.
- */
-
 function AcceptInviteContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -28,8 +20,6 @@ function AcceptInviteContent() {
 
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [message, setMessage] = useState('');
-    // React StrictMode double-invokes effects in dev — without this guard the
-    // accept POST fires twice and the second attempt reads as a failure.
     const attempted = useRef(false);
 
     useEffect(() => {
@@ -43,17 +33,10 @@ function AcceptInviteContent() {
             attempted.current = true;
             try {
                 const result = await inviteLinkService.acceptInvite(token);
-                // Joining a workspace changes what the guards consider "your
-                // workspaces". The app-wide context fetched the list at login
-                // time — before this membership existed — so without a refetch
-                // every guard still sees an empty list and sends the user to
-                // onboarding to create a workspace they already have.
                 await refreshWorkspaces();
                 setStatus('success');
                 setMessage(result.message || 'You have joined the workspace.');
             } catch (err) {
-                // Re-visiting an already-used link is not a failure — the user
-                // is in the workspace either way.
                 const msg = err instanceof Error ? err.message : '';
                 if (/already a member/i.test(msg)) {
                     await refreshWorkspaces().catch(() => {});
@@ -70,7 +53,6 @@ function AcceptInviteContent() {
 
     return (
         <div className="v2-scope min-h-screen flex flex-col relative overflow-hidden" style={{ background: 'var(--v2-paper-ground)' }}>
-            {/* Ambient background */}
             <div className="fixed inset-0 pointer-events-none" style={{ opacity: 0.3 }}>
                 <FlowingThreads />
             </div>
@@ -81,14 +63,12 @@ function AcceptInviteContent() {
                 transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
             />
 
-            {/* Logo */}
             <header className="flex-shrink-0 px-6 md:px-10 pt-8 relative z-10">
                 <div className="max-w-[420px] mx-auto">
                     <Logo variant="wordmark" theme="light" />
                 </div>
             </header>
 
-            {/* Center card */}
             <div className="flex-1 flex items-center justify-center px-6 md:px-10 relative z-10">
                 <motion.div
                     initial={{ opacity: 0, y: 16 }}

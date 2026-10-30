@@ -10,10 +10,6 @@ export const V3_MODELS: { name: string; tag: string; icon: LucideIcon }[] = [
   { name: 'Gemini 3', tag: 'broad', icon: Globe },
 ];
 
-/**
- * Engineer input console: $ prompt, optional model glide menu, hint chips,
- * run button — or a Stop button while a run is streaming.
- */
 export function EngConsole({
   placeholder,
   buttonLabel,

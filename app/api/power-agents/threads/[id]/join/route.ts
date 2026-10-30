@@ -4,15 +4,6 @@ import { getLangGraphApiUrl, langgraphAuthHeaders } from '@/lib/config/langgraph
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-/**
- * GET /api/power-agents/threads/:id/join
- *
- * Attaches to an active run's live stream on this thread and re-emits
- * the AI SDK UI Message Stream — so switching back to a busy thread
- * resumes token-level streaming exactly where it is. If no run is active,
- * returns a `data-no-active-run` part and closes.
- */
-
 const base = () => getLangGraphApiUrl();
 
 interface LGMessage {
@@ -43,7 +34,6 @@ export async function GET(
 ) {
   const { id: threadId } = await params;
 
-  // find the active run on this thread
   const runsRes = await fetch(`${base()}/threads/${threadId}/runs`, {
     headers: langgraphAuthHeaders(req),
   });
@@ -75,16 +65,12 @@ export async function GET(
     );
   }
 
-  // join the run's stream — same SSE translation as the chat route
   const upstream = await fetch(
     `${base()}/threads/${threadId}/runs/${activeRun.run_id}/stream?stream_mode=messages-tuple`,
     { headers: { Accept: 'text/event-stream', ...langgraphAuthHeaders(req) } },
   );
 
   if (upstream.status === 404) {
-    // Race: the run finished between listing it above and attaching to its
-    // stream. That is success, not an error — answer with the no-active-run
-    // stream so the client falls back to loading the thread's final state.
     return new Response(
       encoder.encode(
         sse({ type: 'start' }) +
@@ -104,8 +90,6 @@ export async function GET(
 
   const stream = new ReadableStream({
     async start(controller) {
-      // Same guards as the chat route: heartbeat through proxy idle
-      // timeouts, guarded enqueues for a gone client.
       let alive = true;
       const safeEnqueue = (chunk: string) => {
         if (!alive) return;
@@ -212,7 +196,6 @@ export async function GET(
         try {
           controller.close();
         } catch {
-          /* already closed */
         }
       }
     },

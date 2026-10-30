@@ -3,11 +3,6 @@ import { getLangGraphApiUrl, langgraphAuthHeaders } from '@/lib/config/langgraph
 
 export const dynamic = 'force-dynamic';
 
-/**
- * GET /api/power-agents
- * Lists the assistants registered on the LangGraph server.
- * Server-side proxy so the browser never hits CORS or the raw server URL.
- */
 export async function GET(req: NextRequest) {
   const base = getLangGraphApiUrl();
   try {

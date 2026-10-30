@@ -2,7 +2,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ActivityRail } from '@/components/v3/shell/ActivityRail';
 import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3PowerAgents, fetchV3Sessions, type V3Agent, type V3Session } from '@/lib/v3/powerAgents';
-// path navigation: router/pathname stubs
 const pushes: string[] = [];
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: (p: string) => pushes.push(p), replace: jest.fn() }),
@@ -60,7 +59,6 @@ describe('ActivityRail (reference #activity-rail DOM)', () => {
       expect(el).toBeTruthy();
       return el as HTMLElement;
     });
-    // zone is the previous sibling — v13's hover-reveal selector depends on it
     const zone = container.querySelector('#rail-hover-zone');
     expect(zone?.nextElementSibling).toBe(rail);
 

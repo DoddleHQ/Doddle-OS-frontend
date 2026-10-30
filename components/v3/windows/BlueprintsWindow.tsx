@@ -10,7 +10,6 @@ import { V3_MODULES, v3ModuleHref, type V3Module, type V3ModuleDomain } from '@/
 import { useV3Fetch, v3Ago, v3SessionStatus } from '@/lib/v3/data';
 import { fetchV3PowerAgents } from '@/lib/v3/powerAgents';
 
-/** v13 library layers, exact labels. */
 const LAYERS: { id: string; label: string }[] = [
   { id: 'strategy', label: 'STRATEGY · BOUNDARIES & OPTIONS' },
   { id: 'structure', label: 'STRUCTURE · BLUEPRINTS & DOCS' },
@@ -18,7 +17,6 @@ const LAYERS: { id: string; label: string }[] = [
   { id: 'review', label: 'REVIEW · OPTIMIZATION & FEEDBACK' },
 ];
 
-/** v13 library type language — modules typed by what they govern. */
 const LTYPE_ICON: Record<string, typeof Search> = {
   policy: ShieldCheck, playbook: BookOpen, blueprint: FolderTree, workflow: GitBranch,
   checklist: ListChecks, template: LayoutTemplate, runbook: Siren,
@@ -28,7 +26,6 @@ const LTYPE_LABEL: Record<string, string> = {
   checklist: 'Checklist', template: 'Template', runbook: 'Runbook',
 };
 
-/** module → library placement (layer + type + step count), design-forward. */
 const LIB_META: Record<string, { layer: string; ltype: string; steps: number }> = {
   'brand-persona': { layer: 'strategy', ltype: 'playbook', steps: 3 },
   'brand-guardrails': { layer: 'strategy', ltype: 'policy', steps: 2 },
@@ -42,19 +39,11 @@ const LIB_META: Record<string, { layer: string; ltype: string; steps: number }> 
   'analytics-action': { layer: 'review', ltype: 'checklist', steps: 3 },
 };
 
-/** Domain → agents' suites, to derive a module's live status from the feed. */
 const DOMAIN_SUITES: Partial<Record<V3ModuleDomain, string[]>> = {
   seo: ['SEO Audit Suite'], content: ['Website Content Suite', 'Shopify Suite'], social: ['WordPress Suite'],
   ads: ['Shopify Suite'], analytics: ['DevOps Suite'], ops: ['GitOps Suite', 'DevOps Suite'], brand: ['Website Content Suite'],
 };
 
-/**
- * Blueprints — the v13 win-library page, exact DOM: titlebar, hero, askbar
- * search with the live count chip, layer filter chips, the layered
- * blueprint-grid and the reference library detail (title/desc/chips/runs +
- * Launch). Items are the real module catalog; layers/types are the
- * reference taxonomy.
- */
 export function BlueprintsWindow() {
   const router = useRouter();
   const workspaceId = useV3OS((s) => s.workspaceId);

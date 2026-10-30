@@ -9,7 +9,6 @@ jest.mock('@/components/v3/windows/TriageWindow', () => ({
 jest.mock('@/components/v3/windows/AssignmentsWindow', () => ({
   AssignmentsWindow: () => <div data-testid="assignments-stub" />,
 }));
-// the agents window pulls in the ai-sdk; jsdom lacks TransformStream, so mock it
 jest.mock('@ai-sdk/react', () => ({
   useChat: () => ({ messages: [], setMessages: jest.fn(), sendMessage: jest.fn(), status: 'ready', stop: jest.fn(), error: null }),
 }));
@@ -21,7 +20,7 @@ import { useV3OS } from '@/lib/v3/osStore';
 
 beforeEach(() => {
   useV3OS.setState({ windows: [], spotlightOpen: false, sessionFeed: [] });
-  try { window.localStorage.setItem('v3.firstVisit', String(Date.now() - 24 * 3600_000)); } catch { /* ignore */ }
+  try { window.localStorage.setItem('v3.firstVisit', String(Date.now() - 24 * 3600_000)); } catch {}
 });
 
 describe('WindowsLayer', () => {
@@ -68,7 +67,6 @@ describe('WindowsLayer', () => {
   it('renders the home window content (greeting + ask bar)', () => {
     useV3OS.getState().openApp('home');
     render(<WindowsLayer />);
-    // operator name arrives async from the API — assert the greeting stem only
     expect(screen.getByText(/^Good (morning|afternoon|evening)\.?/i)).toBeTruthy();
     expect(screen.getByPlaceholderText(/Describe what you're working on/i)).toBeTruthy();
   });
@@ -77,12 +75,9 @@ describe('WindowsLayer', () => {
     useV3OS.getState().openApp('home');
     useV3OS.getState().setMode('home', 'page');
     const { container } = render(<WindowsLayer />);
-    // the page class drives CSS: t-min hidden, window fills the stage
     expect(container.querySelector('.os-window.page')).toBeTruthy();
-    // zoom returns to window mode
     fireEvent.click(screen.getByLabelText('Zoom'));
     expect(useV3OS.getState().windows[0].mode).toBe('window');
-    // and in page mode, close works
     useV3OS.getState().setMode('home', 'page');
     fireEvent.click(screen.getByLabelText('Close'));
     expect(useV3OS.getState().windows).toHaveLength(0);

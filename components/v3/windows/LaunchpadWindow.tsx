@@ -11,7 +11,6 @@ import { useV3Fetch } from '@/lib/v3/data';
 import { Glide } from '@/components/v3/ui/Glide';
 import { COMPOSER_MODES } from '@/components/v3/ui/Composer';
 
-/** v13's six task categories, exact markup. */
 const CATS: { cat: string; icon: typeof Search; color: string; label: string; title: string; sub: string; to: V3ModuleDomain }[] = [
   { cat: 'research', icon: Search, color: 'var(--task-research)', label: 'Research', title: 'Research & articles', sub: 'Investigate, compare, summarize.', to: 'seo' },
   { cat: 'code', icon: Code2, color: 'var(--task-code)', label: 'Code', title: 'Code review & PRs', sub: 'Review, audit, fix plans.', to: 'ops' },
@@ -25,7 +24,6 @@ const DOMAIN_CAT: Record<V3ModuleDomain, string> = {
   seo: 'research', content: 'writing', social: 'design', ads: 'design', analytics: 'data', ops: 'code', brand: 'admin',
 };
 
-/** Design-forward stage names until modules expose their real step plans. */
 const DOMAIN_STAGES: Record<V3ModuleDomain, string[]> = {
   seo: ['keyword clusters', 'briefs drafted', 'pages interlinked'],
   content: ['outline', 'draft', 'assemble'],
@@ -46,13 +44,6 @@ const DOMAIN_SUITES: Partial<Record<V3ModuleDomain, V3Suite[]>> = {
   brand: ['Website Content Suite'],
 };
 
-/**
- * Launchpad — the v13 win-launchpad page, exact DOM: solo glass window with
- * the "choose to begin" state chip, the launcher composer (model/mode/
- * blueprint glides, >_ start), the vehicle pane (matched blueprint stages +
- * swarm + live task threads from the workspace feed) and the six category
- * cards. Suggestions rank the real module library; Launch opens the module.
- */
 export function LaunchpadWindow() {
   const router = useRouter();
   const workspaceId = useV3OS((s) => s.workspaceId);
@@ -60,8 +51,6 @@ export function LaunchpadWindow() {
   const { viewThread, selectAgent } = useV3OS.getState();
   const agents = useV3Fetch(fetchV3PowerAgents, []);
 
-  // deep links: ?type=research preselects a flow; ?ask= carries the dashboard
-  // brief (carryAsk); ?bp= the blueprint pick; ?agent= the solo-deploy pick
   const searchParams = useSearchParams();
   const deepType = searchParams.get('type');
   const [brief, setBrief] = useState(
@@ -164,7 +153,6 @@ export function LaunchpadWindow() {
             </div>
           </div>
 
-          {/* VEHICLE: matched blueprint + swarm + threads, below the input */}
           <div id="lp-vehicle" className="pane" style={{ borderColor: 'rgba(29,78,216,.35)', marginBottom: 12 }}>
             <div className="flex items-center justify-between flex-wrap gap-2">
               <p className="pane-label" style={{ margin: 0 }}>

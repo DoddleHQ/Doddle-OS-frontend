@@ -1,15 +1,3 @@
-/**
- * LangGraph Stream Hook
- *
- * A React hook for streaming events from LangGraph workflows.
- * Uses the unified event system defined in lib/types/graph-events.types.ts
- * 
- * Supports thread-based runs for HITL (Human-in-the-Loop) resumption.
- * 
- * HITL Protocol: Uses native interrupt-based detection via thread state polling.
- * @see plans/hitl-streaming-protocol.md
- */
-
 import { useState, useCallback, useRef, useMemo } from 'react';
 import {
     GraphEvent,
@@ -35,20 +23,7 @@ import { streamLangGraphEvents, resumeLangGraphWorkflow, getThreadState, ThreadS
 import { validateHITLPayload } from '@/lib/utils/eventValidator';
 import { debugLog } from '@/lib/utils/debugLog';
 
-// ============================================================================
-// Feature Flags
-// ============================================================================
-
-/**
- * Feature flag for interrupt-based HITL detection.
- * When true, polls thread state for interrupts instead of relying on hitl_request events.
- * @todo Remove this flag once migration is complete
- */
 const USE_INTERRUPT_BASED_HITL = true;
-
-// ============================================================================
-// Types
-// ============================================================================
 
 interface UseLangGraphStreamOptions {
     graphId: string;
@@ -59,22 +34,19 @@ interface UseLangGraphStreamOptions {
 }
 
 interface UseLangGraphStreamReturn {
-    // State
     state: GraphStreamState;
 
-    // Actions
     startStream: (input: Record<string, unknown>) => Promise<void>;
     respondToHITL: (requestId: string, response: unknown) => Promise<void>;
     cancelStream: () => void;
     reset: () => void;
     addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
 
-    // Derived state
     isRunning: boolean;
     isConnecting: boolean;
     isHITLPending: boolean;
     isComplete: boolean;
-    hitlRequestId: string | null;  // Track the HITL request ID for resumption
+    hitlRequestId: string | null;
     currentStep: StepStartPayload | null;
     progress: { current: number; total: number; message?: string } | null;
     error: ErrorPayload | null;
@@ -83,10 +55,6 @@ interface UseLangGraphStreamReturn {
     artifacts: ArtifactPayload[];
     clearError: () => void;
 }
-
-// ============================================================================
-// Constants
-// ============================================================================
 
 const initialState: GraphStreamState = {
     isConnected: false,
@@ -103,20 +71,9 @@ const initialState: GraphStreamState = {
     completeEvent: null,
 };
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * Convert raw event data to GraphEvent format.
- * 
- * IMPORTANT: Backend now sends camelCase only. No snake_case fallbacks.
- * If the backend sends snake_case, the event will be logged and skipped.
- */
 function convertToGraphEvent(raw: Record<string, unknown>): GraphEvent | null {
     const type = raw.type as string;
 
-    // Generate base event properties
     const baseEvent = {
         id: (raw.id as string) || `evt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         timestamp: (raw.timestamp as string) || new Date().toISOString(),
@@ -264,12 +221,8 @@ function convertToGraphEvent(raw: Record<string, unknown>): GraphEvent | null {
             };
         }
 
-        // NOTE: hitl_request event type is DEPRECATED.
-        // HITL is now detected via thread state interrupts, not custom events.
-        // Keeping this case for backward compatibility during migration.
         case 'hitl_request': {
             if (!USE_INTERRUPT_BASED_HITL) {
-                // Legacy path: handle hitl_request events (remove after migration)
                 const payload = raw.payload as Record<string, unknown> | undefined;
                 return {
                     ...baseEvent,
@@ -287,21 +240,15 @@ function convertToGraphEvent(raw: Record<string, unknown>): GraphEvent | null {
                     },
                 };
             }
-            // When using interrupt-based HITL, ignore hitl_request events
             debugLog('[useLangGraphStream] Ignoring deprecated hitl_request event (using interrupt-based detection)');
             return null;
         }
 
         default:
-            // Unknown event type - log and skip
             debugLog('[useLangGraphStream] Unknown event type:', type, raw);
             return null;
     }
 }
-
-// ============================================================================
-// Hook Implementation
-// ============================================================================
 
 export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangGraphStreamReturn {
     const { graphId, workspaceId, onEvent, onError, onComplete } = options;
@@ -337,7 +284,6 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                 return null;
             }
 
-            // Find tasks with pending interrupts
             const interruptedTask = threadState.tasks?.find(
                 task => task.interrupts && task.interrupts.length > 0
             );
@@ -350,11 +296,9 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
             const interruptValue = interruptedTask.interrupts[0].value;
             debugLog('[useLangGraphStream] Found interrupt:', interruptValue);
 
-            // Validate the payload using Zod schema
             const validation = validateHITLPayload(interruptValue);
             if (!validation.success) {
                 console.error('[useLangGraphStream] Invalid HITL interrupt payload:', validation.error.errors);
-                // Graceful degradation: create a basic HITL request from the raw value
                 const fallbackPayload: HITLRequestPayload = {
                     requestId: `interrupt-${interruptedTask.id || Date.now()}`,
                     message: typeof interruptValue === 'string'
@@ -370,7 +314,6 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                 return fallbackPayload;
             }
 
-            // Convert to frontend-friendly format using the utility function
             const hitlRequest = convertInterruptToHITLRequest(
                 validation.data as HITLInterruptPayload,
                 interruptedTask.id || `task-${Date.now()}`
@@ -385,7 +328,6 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
         }
     }, []);
 
-    // Cancel streaming
     const cancelStream = useCallback(() => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -402,12 +344,9 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
         }));
     }, []);
 
-    // Handle incoming graph event
     const handleGraphEvent = useCallback((event: GraphEvent) => {
-        // Call external event handler if provided
         onEvent?.(event);
 
-        // Update state based on event type
         if (isStepStartEvent(event)) {
             addMessage({
                 type: 'step',
@@ -467,7 +406,6 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
             });
         }
         else if (isArtifactEvent(event)) {
-            // Store artifact
             artifactsRef.current.set(event.payload.artifactId, event.payload);
 
             addMessage({
@@ -493,8 +431,6 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
             }));
         }
         else if (isHITLRequestEvent(event)) {
-            // NOTE: This path is only used for legacy hitl_request events
-            // when USE_INTERRUPT_BASED_HITL is false
             addMessage({
                 type: 'hitl',
                 content: event.payload.prompt ?? event.payload.message ?? '',
@@ -554,34 +490,26 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                 pendingHITL: null,
             }));
 
-            // Don't cancel the stream - let it end naturally
-            // The stream will complete on its own after the complete event
-
             onComplete?.(event.payload.summary);
         }
     }, [onEvent, onError, onComplete, addMessage]);
 
-    // Start streaming using thread-based runs for HITL support
     const startStream = useCallback(async (input: Record<string, unknown>) => {
         try {
             setState(prev => ({ ...prev, status: 'connecting' }));
 
-            // Create abort controller for cancellation support
             abortControllerRef.current = new AbortController();
             const signal = abortControllerRef.current.signal;
 
-            // Start streaming with thread-based run
             const result = await streamLangGraphEvents({
                 assistantId: graphId,
                 input,
                 signal,
                 onEvent: (rawEvent) => {
-                    // Convert to unified event format
                     const graphEvent = convertToGraphEvent(rawEvent);
                     if (graphEvent) {
                         handleGraphEvent(graphEvent);
 
-                        // Update thread ID if provided in event
                         if (rawEvent.threadId && rawEvent.threadId !== threadIdRef.current) {
                             threadIdRef.current = rawEvent.threadId;
                             setState(prev => ({
@@ -603,7 +531,6 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
             });
 
             if (result.success) {
-                // Store thread ID
                 if (result.threadId) {
                     threadIdRef.current = result.threadId;
                 }
@@ -614,12 +541,10 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                     hasInterrupts: result.interrupts && result.interrupts.length > 0,
                 });
 
-                // Check for interrupts using the new protocol
                 if (USE_INTERRUPT_BASED_HITL && result.threadId) {
                     const hitlRequest = await checkForInterrupts(result.threadId);
 
                     if (hitlRequest) {
-                        // Found an interrupt - set HITL pending state
                         addMessage({
                             type: 'hitl',
                             content: hitlRequest.message || hitlRequest.prompt || 'Your input is required to continue',
@@ -638,16 +563,13 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                             status: 'hitl_pending' as const,
                         }));
 
-                        return; // Exit early - waiting for HITL response
+                        return;
                     }
                 }
 
-                // No interrupts - check for legacy native interrupt handling
-                // (This is kept for backward compatibility with older backends)
                 const hasNativeInterrupts = !USE_INTERRUPT_BASED_HITL && result.interrupts && result.interrupts.length > 0;
 
                 if (hasNativeInterrupts) {
-                    // Legacy: Synthesize HITL from native interrupt
                     const interrupt = result.interrupts![0];
                     const interruptValue = interrupt.value;
 
@@ -682,13 +604,11 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                     return;
                 }
 
-                // No HITL - normal completion
                 setState(prev => ({
                     ...prev,
                     threadId: result.threadId || prev.threadId,
                     graphId,
                     isConnected: false,
-                    // Don't override status if already set to 'complete' or 'error' by event handler
                     status: prev.status === 'complete' || prev.status === 'error' ? prev.status : (result.threadId ? 'running' : 'complete'),
                 }));
 
@@ -704,7 +624,6 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
             }
 
         } catch (error) {
-            // Handle AbortError gracefully
             if (error instanceof Error && error.name === 'AbortError') {
                 setState(prev => ({
                     ...prev,
@@ -728,7 +647,6 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
         }
     }, [graphId, handleGraphEvent, checkForInterrupts, addMessage, onError]);
 
-    // Respond to HITL request by resuming the graph
     const respondToHITL = useCallback(async (requestId: string, response: unknown) => {
         const currentThreadId = threadIdRef.current || state.threadId;
 
@@ -737,10 +655,6 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
             return;
         }
 
-        // Stale-card guard: if the pending interrupt has moved on (e.g. the
-        // thread advanced out-of-band), an old card's response must NOT
-        // answer the new interrupt. The requestId must match what is
-        // currently pending.
         if (state.pendingHITL && state.pendingHITL.requestId !== requestId) {
             console.warn('[respondToHITL] Ignoring stale HITL response for', requestId, '— currently pending:', state.pendingHITL.requestId);
             return;
@@ -757,23 +671,19 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                     : JSON.stringify(response).substring(0, 100),
             });
 
-            // Clear HITL state and set to connecting
             setState(prev => ({
                 ...prev,
                 pendingHITL: null,
                 status: 'connecting',
             }));
 
-            // Add user response to messages - extract readable text
             const displayContent = (() => {
                 if (typeof response === 'string') return response;
-                // Handle arrays first (multi-select, page selection, etc.)
                 if (Array.isArray(response)) {
                     return response.map(item => {
                         if (typeof item === 'string') return item;
                         if (typeof item === 'object' && item !== null) {
                             const obj = item as Record<string, any>;
-                            // Extract the most meaningful display value from each item
                             return obj.url || obj.value || obj.label || obj.page_name || obj.text || obj.name || JSON.stringify(obj);
                         }
                         return String(item);
@@ -782,19 +692,15 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                 if (typeof response === 'object' && response !== null) {
                     const obj = response as Record<string, any>;
 
-                    // HITL selection responses: use selectedLabel if available
                     if ('selectedLabel' in obj && typeof obj.selectedLabel === 'string') {
                         return obj.selectedLabel;
                     }
-                    // HITL multi-selection responses: use selectedLabels if available
                     if ('selectedLabels' in obj && Array.isArray(obj.selectedLabels)) {
                         return obj.selectedLabels.join(', ');
                     }
 
-                    // Common patterns: {feedback: "..."}, {value: "..."}, {response: "..."}, {message: "..."}
                     const textValue = obj.feedback || obj.value || obj.response || obj.message || obj.text;
                     if (typeof textValue === 'string' && textValue) return textValue;
-                    // Handle value being an array (multi-selection sends string[])
                     if (Array.isArray(textValue)) {
                         return textValue.map(item => {
                             if (typeof item === 'string') return item;
@@ -805,16 +711,12 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                             return String(item);
                         }).join(', ');
                     }
-                    // {confirmed: true/false} pattern (V2HITLCard confirmations)
                     if ('confirmed' in obj && typeof obj.confirmed === 'boolean') {
                         return obj.confirmed ? 'Confirmed ✓' : 'Declined ✗';
                     }
-                    // {approved: true/false} pattern
                     if ('approved' in obj) return obj.approved ? 'Approved ✓' : 'Rejected ✗';
-                    // Fallback: join all string values
                     const strings = Object.values(obj).filter(v => typeof v === 'string' && v);
                     if (strings.length > 0) return (strings as string[]).join(', ');
-                    // Last fallback: join array values (e.g., {value: [...], selected: [...]})
                     const arrays = Object.values(obj).filter(v => Array.isArray(v) && v.length > 0);
                     if (arrays.length > 0) {
                         return (arrays[0] as unknown[]).map(String).join(', ');
@@ -831,15 +733,12 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                 },
             });
 
-            // Create abort controller for cancellation support
             abortControllerRef.current = new AbortController();
             const signal = abortControllerRef.current.signal;
 
-            // Resume the graph with the user's response
             const result = await resumeLangGraphWorkflow(currentThreadId, graphId, response, {
                 signal,
                 onEvent: (rawEvent) => {
-                    // Convert to unified event format
                     const graphEvent = convertToGraphEvent(rawEvent);
                     if (graphEvent) {
                         handleGraphEvent(graphEvent);
@@ -862,12 +761,10 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                     hasInterrupts: result.interrupts && result.interrupts.length > 0,
                 });
 
-                // Check for interrupts using the new protocol
                 if (USE_INTERRUPT_BASED_HITL && currentThreadId) {
                     const hitlRequest = await checkForInterrupts(currentThreadId);
 
                     if (hitlRequest) {
-                        // Another interrupt found - workflow needs more input
                         addMessage({
                             type: 'hitl',
                             content: hitlRequest.message || hitlRequest.prompt || 'Your input is required to continue',
@@ -888,7 +785,6 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                     }
                 }
 
-                // No interrupts - check for legacy native interrupt handling
                 const hasNativeInterrupts = !USE_INTERRUPT_BASED_HITL && result.interrupts && result.interrupts.length > 0;
 
                 if (hasNativeInterrupts) {
@@ -924,11 +820,9 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
                     return;
                 }
 
-                // No HITL - continue running or complete
                 setState(prev => ({
                     ...prev,
                     isConnected: false,
-                    // Don't override status if already set to 'complete' or 'error' by event handler
                     status: prev.status === 'complete' || prev.status === 'error' ? prev.status : 'running',
                 }));
 
@@ -958,7 +852,6 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
         }
     }, [state.threadId, state.pendingHITL, graphId, addMessage, handleGraphEvent, checkForInterrupts, onError]);
 
-    // Reset state
     const reset = useCallback(() => {
         cancelStream();
         messagesRef.current = [];
@@ -967,7 +860,6 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
         setState(initialState);
     }, [cancelStream]);
 
-    // Clear error
     const clearError = useCallback(() => {
         setState(prev => ({
             ...prev,
@@ -976,14 +868,11 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
         }));
     }, []);
 
-    // Memoize artifacts array to prevent new reference on every render
     const memoizedArtifacts = useMemo(() => Array.from(state.artifacts.values()), [state.artifacts]);
 
     return {
-        // State
         state,
 
-        // Actions
         startStream,
         respondToHITL,
         cancelStream,
@@ -991,7 +880,6 @@ export function useLangGraphStream(options: UseLangGraphStreamOptions): UseLangG
         addMessage,
         clearError,
 
-        // Derived state
         isRunning: state.status === 'running' || state.status === 'connecting' || state.status === 'hitl_pending',
         isConnecting: state.status === 'connecting',
         isHITLPending: state.status === 'hitl_pending',

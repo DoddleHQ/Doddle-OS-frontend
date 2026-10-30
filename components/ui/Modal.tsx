@@ -17,10 +17,6 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// ============================================
-// Types & Interfaces
-// ============================================
-
 interface ModalContextValue {
   isOpen: boolean;
   close: () => void;
@@ -37,10 +33,6 @@ const useModalContext = () => {
   }
   return context;
 };
-
-// ============================================
-// Focus Management Utilities
-// ============================================
 
 const getFocusableElements = (container: HTMLElement): HTMLElement[] => {
   const focusableSelectors = [
@@ -65,14 +57,9 @@ const focusFirstElement = (container: HTMLElement): void => {
   if (focusableElements.length > 0) {
     focusableElements[0].focus();
   } else {
-    // If no focusable elements, focus the container itself
     container.focus();
   }
 };
-
-// ============================================
-// Main Modal Component
-// ============================================
 
 export interface ModalProps {
   isOpen: boolean;
@@ -99,11 +86,9 @@ export const Modal: React.FC<ModalProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
   
-  // Generate unique IDs for accessibility
   const titleId = React.useId();
   const descriptionId = React.useId();
 
-  // Focus trap handler
   const handleKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
     if (!modalRef.current) return;
 
@@ -112,7 +97,6 @@ export const Modal: React.FC<ModalProps> = ({
       return;
     }
 
-    // Focus trap: cycle through focusable elements
     if (event.key === 'Tab') {
       const focusableElements = getFocusableElements(modalRef.current);
       
@@ -125,13 +109,11 @@ export const Modal: React.FC<ModalProps> = ({
       const lastElement = focusableElements[focusableElements.length - 1];
 
       if (event.shiftKey) {
-        // Shift + Tab: move to previous element
         if (document.activeElement === firstElement) {
           event.preventDefault();
           lastElement.focus();
         }
       } else {
-        // Tab: move to next element
         if (document.activeElement === lastElement) {
           event.preventDefault();
           firstElement.focus();
@@ -140,18 +122,15 @@ export const Modal: React.FC<ModalProps> = ({
     }
   }, [closeOnEscape, onClose]);
 
-  // Handle modal open
   useEffect(() => {
     if (isOpen) {
       setMounted(true);
       document.body.style.overflow = 'hidden';
       
-      // Store the previously focused element for restoration
       if (restoreFocus) {
         previouslyFocusedElementRef.current = document.activeElement as HTMLElement;
       }
 
-      // Focus the first element after a brief delay to ensure modal is rendered
       const timeoutId = setTimeout(() => {
         if (modalRef.current) {
           focusFirstElement(modalRef.current);
@@ -162,12 +141,10 @@ export const Modal: React.FC<ModalProps> = ({
     } else {
       document.body.style.overflow = '';
       
-      // Restore focus to the previously focused element
       if (restoreFocus && previouslyFocusedElementRef.current) {
         previouslyFocusedElementRef.current.focus();
       }
       
-      // Delay unmounting for animation
       const timeoutId = setTimeout(() => setMounted(false), 300);
       return () => clearTimeout(timeoutId);
     }
@@ -184,7 +161,6 @@ export const Modal: React.FC<ModalProps> = ({
 
   return createPortal(
     <ModalContext.Provider value={contextValue}>
-      {/* Overlay */}
       <div
         className={cn(
           'fixed inset-0 z-50 flex items-center justify-center',
@@ -199,7 +175,6 @@ export const Modal: React.FC<ModalProps> = ({
           }
         }}
       >
-        {/* Modal Content */}
         <div
           ref={modalRef}
           role="dialog"
@@ -224,10 +199,6 @@ export const Modal: React.FC<ModalProps> = ({
     document.body
   );
 };
-
-// ============================================
-// Modal Subcomponents
-// ============================================
 
 export interface ModalHeaderProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;

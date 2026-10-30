@@ -54,13 +54,11 @@ export default function AnalyticsActionPage() {
 
     return (
         <div className="p-6 space-y-6">
-            {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold mb-1">Analytics Action</h1>
                 <p className="text-muted-foreground">Turning raw data into automated marketing maneuvers</p>
             </div>
 
-            {/* Analytics Tool Cards */}
             <div>
                 <h2 className="text-lg font-semibold mb-4">Analytics Tools</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

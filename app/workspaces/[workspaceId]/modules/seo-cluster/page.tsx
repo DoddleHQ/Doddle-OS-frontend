@@ -37,16 +37,13 @@ export default function SEOClusterPage() {
   if (loading) {
     return (
       <div className="p-6 space-y-6">
-        {/* Header Skeleton */}
         <div className="space-y-2">
           <div className="h-8 w-48 bg-slate-100 animate-pulse rounded" />
           <div className="h-4 w-96 bg-slate-50 animate-pulse rounded" />
         </div>
 
-        {/* Metrics Grid Skeleton */}
         <MetricsGrid.Skeleton />
 
-        {/* Threads Grid Skeleton */}
         <div className="space-y-4">
           <div className="h-6 w-32 bg-slate-100 animate-pulse rounded" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -85,7 +82,6 @@ export default function SEOClusterPage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold mb-1">SEO Cluster</h1>
@@ -99,7 +95,6 @@ export default function SEOClusterPage() {
         </div>
       </div>
 
-      {/* Metrics Grid */}
       <MetricsGrid metrics={[
         {
           label: "Crawl Health",
@@ -117,7 +112,7 @@ export default function SEOClusterPage() {
         },
         {
           label: "Organic Traffic",
-          value: '45.2K', // Missing in mock data fallback
+          value: '45.2K',
           change: +8.1,
           icon: TrendingUp,
           intent: "indigo"
@@ -131,7 +126,6 @@ export default function SEOClusterPage() {
         }
       ]} />
 
-      {/* Active Threads Grid */}
       <div>
         <h2 className="text-lg font-semibold mb-4">Active Optimization Threads</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

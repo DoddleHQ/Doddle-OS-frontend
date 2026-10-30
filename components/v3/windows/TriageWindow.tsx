@@ -9,13 +9,6 @@ import { fetchV3PowerAgents, v3AgentByKey } from '@/lib/v3/powerAgents';
 import { ChatFeed } from '@/components/v3/windows/AgentsChatFeed';
 import type { UIMessage } from 'ai';
 
-/**
- * Triage — the v13 win-triage 3-pane, exact DOM: the queue fills pane one
- * (cols-1 until you hit View), the conversation loads the real thread
- * history, and the decision pane carries the reference gdock (Approve /
- * Request changes / Report). The queue is every session awaiting review;
- * Approve acknowledges it out of the queue.
- */
 export function TriageWindow() {
   const router = useRouter();
   const feed = useV3OS((s) => s.sessionFeed);
@@ -67,7 +60,7 @@ export function TriageWindow() {
 
   function approve() {
     if (!current) return;
-    markThreadSeen(current.id); // approve: the run is reviewed — it leaves the queue
+    markThreadSeen(current.id);
     setSelected(null);
     setExpanded(false);
     setSeenTick((t) => t + 1);

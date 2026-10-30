@@ -8,18 +8,6 @@ import { getMissionControlData } from '@/lib/apiMock';
 import { mockMissionControlData as initialData } from '@/data/missionControl';
 import { MetricItem, StatusDot, KanbanCard, SkeletonBlock } from '@/components/v2/dashboard/primitives';
 
-/*
- * Mission Control — the main dashboard, redesigned for Operate mode.
- *
- * Surfaces three datasets that were previously mocked but unused:
- * - domainHealth: per-domain health chips
- * - activeAgents: agent status pills
- * - (liveActivity is surfaced in the InstrumentShell feed)
- *
- * KPI strip → metric rail (no hero-metric template).
- * Kanban: keeps the accordion (good UX), fixes the cards (no ghost, no border-top).
- */
-
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 const STATUS_LABELS: Record<string, string> = {
@@ -30,7 +18,6 @@ const STATUS_LABELS: Record<string, string> = {
   done: 'Done',
 };
 
-// Status dot variant per column (Operate: accent for state only)
 const COLUMN_STATUS: Record<string, 'neutral' | 'active' | 'warning' | 'healthy'> = {
   inbox: 'neutral',
   'in-progress': 'active',
@@ -39,7 +26,6 @@ const COLUMN_STATUS: Record<string, 'neutral' | 'active' | 'warning' | 'healthy'
   done: 'healthy',
 };
 
-// Domain health status → StatusDot variant
 const HEALTH_VARIANT: Record<string, 'healthy' | 'warning' | 'critical'> = {
   healthy: 'healthy',
   warning: 'warning',
@@ -71,11 +57,9 @@ export default function MissionControlPage() {
       .catch(() => setIsLoading(false));
   }, [workspaceId]);
 
-  // === Loading state: skeleton matching layout shape ===
   if (isLoading) {
     return (
       <div className="p-5 md:p-6">
-        {/* Metric rail skeleton */}
         <div className="grid grid-cols-3 md:grid-cols-5 gap-5 mb-5 pb-5" style={{ borderBottom: '1px solid var(--v2-paper-rule)' }}>
           {[...Array(5)].map((_, i) => (
             <div key={i} className="flex flex-col gap-1.5">
@@ -84,13 +68,11 @@ export default function MissionControlPage() {
             </div>
           ))}
         </div>
-        {/* Domain health skeleton */}
         <div className="flex gap-4 mb-5">
           {[...Array(4)].map((_, i) => (
             <SkeletonBlock key={i} width={120} height={32} radius={6} />
           ))}
         </div>
-        {/* Kanban skeleton */}
         <div className="flex gap-3">
           {[...Array(4)].map((_, i) => (
             <SkeletonBlock key={i} width={160} height={240} radius={8} />
@@ -106,7 +88,6 @@ export default function MissionControlPage() {
 
   return (
     <div className="p-5 md:p-6 flex flex-col h-full">
-      {/* === METRIC RAIL (replaces KPI hero tiles) === */}
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
@@ -124,9 +105,7 @@ export default function MissionControlPage() {
         ))}
       </motion.div>
 
-      {/* === DOMAIN HEALTH + ACTIVE AGENTS (newly surfaced) === */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-5 pb-5 flex-shrink-0" style={{ borderBottom: '1px solid var(--v2-paper-rule)' }}>
-        {/* Domain health chips — inline, no cards */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <span
             className="v2-mono"
@@ -155,7 +134,6 @@ export default function MissionControlPage() {
         </div>
       </div>
 
-      {/* === ACTIVE AGENTS (newly surfaced) === */}
       <div className="flex flex-wrap items-center gap-2 mb-5 flex-shrink-0">
         <span
           className="v2-mono"
@@ -183,7 +161,6 @@ export default function MissionControlPage() {
         ))}
       </div>
 
-      {/* === KANBAN BOARD (accordion — kept, cards fixed) === */}
       <div className="flex gap-3 flex-1 min-h-0 overflow-x-auto pb-2">
         {columns.map((col) => {
           const colItems = items.filter((item) => item.status === col.id);
@@ -201,7 +178,6 @@ export default function MissionControlPage() {
                 border: '1px solid var(--v2-paper-rule)',
               }}
             >
-              {/* Column header — status dot + label + count (no border-top accent) */}
               <div
                 className="flex items-center transition-all flex-shrink-0"
                 style={{
@@ -266,7 +242,6 @@ export default function MissionControlPage() {
                 )}
               </div>
 
-              {/* Cards — only when expanded */}
               {isExpanded && (
                 <div className="flex-1 overflow-y-auto p-2.5 space-y-2">
                   {colItems.length === 0 ? (

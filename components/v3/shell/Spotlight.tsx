@@ -16,14 +16,11 @@ interface SpotItem {
   run(): void;
 }
 
-/** ⌘K spotlight: apps, actions, outcomes (reference #spot). */
 export function Spotlight() {
   const router = useRouter();
   const open = useV3OS((s) => s.spotlightOpen);
   const [q, setQ] = useState('');
 
-  // the reference's unified spot list, identical on every page: page links
-  // with ?open= intents (ours map to the closest live route)
   const items = useMemo<SpotItem[]>(() => {
     const go = (p: string) => () => router.push(p);
     return [

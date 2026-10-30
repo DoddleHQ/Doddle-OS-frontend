@@ -1,13 +1,3 @@
-/**
- * Workspace Service
- *
- * Client-side service for workspace CRUD, invite link management,
- * and member management. Uses the apiClient wrapper which handles
- * auth token refresh automatically.
- *
- * @see /api/v1/workspaces
- */
-
 import {
     Workspace,
     PaginatedWorkspaces,
@@ -22,18 +12,10 @@ import {
 } from '@/lib/types/workspace.types';
 import { apiGet, apiPost, apiPatch, apiDelete, apiPut, apiFetch } from '@/lib/services/apiClient';
 
-// ---------------------------------------------------------------------------
-// URL helper
-// ---------------------------------------------------------------------------
-
 function workspacesUrl(...segments: string[]): string {
     const base = '/api/v1/workspaces';
     return segments.length > 0 ? `${base}/${segments.join('/')}` : base;
 }
-
-// ---------------------------------------------------------------------------
-// Custom error for 409 Conflict on invite link creation
-// ---------------------------------------------------------------------------
 
 export class InviteLinkConflictError extends Error {
     code: string;
@@ -47,10 +29,6 @@ export class InviteLinkConflictError extends Error {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Organizations
-// ---------------------------------------------------------------------------
-
 export interface OrganizationEntry {
     organizationId: string;
     name: string;
@@ -60,11 +38,6 @@ export interface OrganizationEntry {
 }
 
 export const organizationService = {
-    /**
-     * GET /api/v1/organizations
-     * Organizations the user belongs to — their own plus any they were
-     * invited to. Used to tell owned orgs from invited ones in switchers.
-     */
     async listOrganizations(): Promise<OrganizationEntry[]> {
         const raw = (await apiGet('/api/v1/organizations')) as Record<string, unknown>;
         return ((raw.items as Record<string, unknown>[]) || []).map((o) => ({
@@ -77,24 +50,12 @@ export const organizationService = {
     },
 };
 
-// ---------------------------------------------------------------------------
-// Workspace CRUD
-// ---------------------------------------------------------------------------
-
 export const workspaceService = {
-    /**
-     * POST /api/v1/workspaces
-     * Create a new workspace. The creating user automatically becomes admin.
-     */
     async createWorkspace(request: CreateWorkspaceRequest): Promise<Workspace> {
         const raw: Record<string, unknown> = await apiPost(workspacesUrl(), request);
         return toWorkspace(raw);
     },
 
-    /**
-     * GET /api/v1/workspaces?skip=0&limit=100
-     * List all workspaces the authenticated user belongs to.
-     */
     async listWorkspaces(skip = 0, limit = 100): Promise<PaginatedWorkspaces> {
         const params = new URLSearchParams({
             skip: String(skip),
@@ -111,10 +72,6 @@ export const workspaceService = {
         };
     },
 
-    /**
-     * GET /api/v1/workspaces/{workspaceId}
-     * Fetch a single workspace by its obfuscated UUID.
-     */
     async getWorkspace(workspaceId: string): Promise<Workspace> {
         const raw: Record<string, unknown> = await apiGet(
             workspacesUrl(workspaceId),
@@ -122,10 +79,6 @@ export const workspaceService = {
         return toWorkspace(raw);
     },
 
-    /**
-     * PATCH /api/v1/workspaces/{workspaceId}
-     * Update workspace name. websiteDomain is immutable.
-     */
     async updateWorkspace(
         workspaceId: string,
         request: UpdateWorkspaceRequest,
@@ -137,26 +90,14 @@ export const workspaceService = {
         return toWorkspace(raw);
     },
 
-    /**
-     * DELETE /api/v1/workspaces/{workspaceId}
-     * Delete a workspace and all associated data (cascade).
-     */
     async deleteWorkspace(workspaceId: string): Promise<void> {
         await apiDelete(workspacesUrl(workspaceId));
     },
 
-    /**
-     * PUT /api/v1/workspaces/{workspaceId}/persona
-     * Create or replace the brand persona. Admin only.
-     */
     async upsertPersona(workspaceId: string, content: string): Promise<void> {
         await apiPut(workspacesUrl(workspaceId, 'persona'), { content });
     },
 
-    /**
-     * GET /api/v1/workspaces/{workspaceId}/persona
-     * Get the brand persona. Any workspace member.
-     */
     async getPersona(workspaceId: string): Promise<{ content: string } | null> {
         try {
             const raw = (await apiGet(workspacesUrl(workspaceId, 'persona'))) as Record<string, unknown>;
@@ -167,26 +108,13 @@ export const workspaceService = {
     },
 };
 
-// ---------------------------------------------------------------------------
-// Invite Links
-// ---------------------------------------------------------------------------
-
 export const inviteLinkService = {
-    /**
-     * POST /api/v1/workspaces/invite-links/accept?token=<token>
-     * Accept an invite link to join a workspace.
-     */
     async acceptInvite(token: string): Promise<{ message: string }> {
         return apiPost(
             `${workspacesUrl('invite-links', 'accept')}?token=${encodeURIComponent(token)}`,
         );
     },
 
-    /**
-     * POST /api/v1/workspaces/{workspaceId}/invite-links
-     * Create a new invite link for a workspace.
-     * Throws InviteLinkConflictError if an active link already exists for the role.
-     */
     async createInviteLink(
         workspaceId: string,
         request: CreateInviteLinkRequest = {},
@@ -209,13 +137,11 @@ export const inviteLinkService = {
                 const body = await res.json().catch(() => ({}));
                 throw new InviteLinkConflictError(body as ActiveInviteLinkExistsError);
             }
-            // Try to extract a human-readable message from the error body
             let message = 'Failed to create invite link';
             try {
                 const body = await res.json();
                 message = body?.error?.message || body?.detail || body?.message || message;
             } catch {
-                // body wasn't JSON — keep the default message
             }
             throw new Error(message);
         }
@@ -224,10 +150,6 @@ export const inviteLinkService = {
         return toInviteLink(raw);
     },
 
-    /**
-     * POST /api/v1/workspaces/{workspaceId}/invite-links/regenerate
-     * Regenerate (replace) an invite link for a role.
-     */
     async regenerateInviteLink(
         workspaceId: string,
         request: CreateInviteLinkRequest = {},
@@ -243,10 +165,6 @@ export const inviteLinkService = {
         return toInviteLink(raw);
     },
 
-    /**
-     * GET /api/v1/workspaces/{workspaceId}/invite-links
-     * List all active (non-expired) invite links for a workspace.
-     */
     async listInviteLinks(workspaceId: string): Promise<InviteLink[]> {
         const raw: Record<string, unknown>[] = await apiGet(
             workspacesUrl(workspaceId, 'invite-links'),
@@ -254,10 +172,6 @@ export const inviteLinkService = {
         return raw.map(toInviteLink);
     },
 
-    /**
-     * DELETE /api/v1/workspaces/{workspaceId}/invite-links/{linkId}
-     * Revoke (delete) an invite link.
-     */
     async revokeInviteLink(
         workspaceId: string,
         linkId: string,
@@ -268,15 +182,7 @@ export const inviteLinkService = {
     },
 };
 
-// ---------------------------------------------------------------------------
-// Member Management
-// ---------------------------------------------------------------------------
-
 export const memberService = {
-    /**
-     * GET /api/v1/workspaces/{workspaceId}/members
-     * List all members of a workspace.
-     */
     async listMembers(workspaceId: string): Promise<WorkspaceMember[]> {
         const raw: Record<string, unknown>[] = await apiGet(
             workspacesUrl(workspaceId, 'members'),
@@ -284,10 +190,6 @@ export const memberService = {
         return raw.map(toMember);
     },
 
-    /**
-     * PATCH /api/v1/workspaces/{workspaceId}/members/{userId}
-     * Update a member's role.
-     */
     async updateMemberRole(
         workspaceId: string,
         userId: string,
@@ -300,10 +202,6 @@ export const memberService = {
         return toMember(raw);
     },
 
-    /**
-     * DELETE /api/v1/workspaces/{workspaceId}/members/{userId}
-     * Remove a member from the workspace.
-     */
     async removeMember(
         workspaceId: string,
         userId: string,
@@ -313,10 +211,6 @@ export const memberService = {
         );
     },
 };
-
-// ---------------------------------------------------------------------------
-// Mappers — backend returns camelCase, we map to our frontend types
-// ---------------------------------------------------------------------------
 
 function toWorkspace(raw: Record<string, unknown>): Workspace {
     return {

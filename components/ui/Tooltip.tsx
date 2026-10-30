@@ -30,7 +30,6 @@ export function TooltipContent({
             className
         )}>
             {children}
-            {/* Arrow */}
             <div className="absolute top-1/2 -left-1 -translate-y-1/2 border-t-4 border-t-transparent border-b-4 border-b-transparent border-r-4 border-r-black" />
         </div>
     );

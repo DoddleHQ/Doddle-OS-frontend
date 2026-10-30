@@ -1,5 +1,3 @@
-// Core Data Interfaces
-
 export interface AgentMetrics {
   accuracy: number;
   latency: number;
@@ -73,7 +71,6 @@ export interface Workspace {
 
 export type WorkspaceWithModules = Workspace;
 
-// Mock Agents
 export const mockAgents: Record<string, Agent> = {
   tech_lead: {
     id: 'agent-tech-lead',
@@ -119,11 +116,6 @@ export const mockAgents: Record<string, Agent> = {
   },
 };
 
-/**
- * Empty workspace list — workspaces are now fetched from the API
- * via workspaceService. This export is kept for backward compatibility
- * with components that import mockWorkspacesWithModules for type usage.
- */
 export const mockWorkspacesWithModules: WorkspaceWithModules[] = [];
 
 export default { workspaces: [] };

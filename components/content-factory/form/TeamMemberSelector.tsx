@@ -164,7 +164,6 @@ export const TeamMemberSelector: React.FC<TeamMemberSelectorProps> = ({
                 </div>
             )}
 
-            {/* Max Selections Warning */}
             {!canAddMore && (
                 <p className="text-xs text-neutral-500">
                     Maximum {maxSelections} team members selected

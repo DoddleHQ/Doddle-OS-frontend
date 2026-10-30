@@ -8,15 +8,6 @@ import { PIPELINE_STEPS, HITL_STEPS } from './content';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-/*
- * Pipeline — the real 12-step workflow every graph agent runs
- * (BROWSING_ARCHITECT_STEPS from lib/types/graph-events.types.ts).
- *
- * An ink-register vertical timeline. As you scroll, a vermilion progress line
- * fills down and each step lights up in sequence, HITL steps flagged. This is
- * what the integrated agents ACTUALLY do — not a marketing claim.
- */
-
 export function Pipeline() {
   const root = useRef<HTMLElement>(null);
   const fillRef = useRef<HTMLDivElement>(null);
@@ -34,7 +25,6 @@ export function Pipeline() {
             if (fillRef.current) {
               gsap.set(fillRef.current, { scaleY: self.progress, transformOrigin: 'top center' } as gsap.TweenVars);
             }
-            // Light up steps based on progress
             const steps = gsap.utils.toArray<HTMLElement>('.v2-step');
             const activeCount = Math.ceil(self.progress * steps.length);
             steps.forEach((step, i) => {
@@ -62,7 +52,6 @@ export function Pipeline() {
       className="v2-ink px-6 md:px-10 py-20 md:py-28"
     >
       <div className="max-w-[1000px] mx-auto w-full">
-        {/* Lead */}
         <div className="mb-16 md:mb-24">
           <div className="v2-label text-[10px] mb-3" style={{ color: 'var(--v2-ink-text-2)' }}>
             the pipeline <span style={{ color: 'var(--v2-vermilion-lift)' }}>·</span> every agent runs this
@@ -80,14 +69,11 @@ export function Pipeline() {
           </p>
         </div>
 
-        {/* The timeline */}
         <div className="relative pl-8 md:pl-12">
-          {/* Track */}
           <div
             className="absolute left-[3px] md:left-[5px] top-2 bottom-2 w-px"
             style={{ background: 'var(--v2-ink-rule)' }}
           />
-          {/* Vermilion fill */}
           <div
             ref={fillRef}
             className="absolute left-[3px] md:left-[5px] top-2 bottom-2 w-px"
@@ -99,7 +85,6 @@ export function Pipeline() {
               const hitl = HITL_STEPS[step.id];
               return (
                 <li key={step.id} className="v2-step relative" style={{ opacity: 0.35 }}>
-                  {/* Node */}
                   <span
                     className="v2-step-num v2-mono absolute -left-8 md:-left-12 top-0 text-[11px] font-bold"
                     style={{ color: 'var(--v2-ink-rule-strong)', background: 'var(--v2-ink-ground)', paddingRight: '0.5rem' }}

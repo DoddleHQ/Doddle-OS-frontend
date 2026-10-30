@@ -1,4 +1,3 @@
-/** Jest config — ts-jest + jsdom, with the app's `@/` path alias mapped. */
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
@@ -9,7 +8,6 @@ module.exports = {
     '^react-markdown$': '<rootDir>/jest/reactMarkdownMock.js',
     '^remark-gfm$': '<rootDir>/jest/remarkGfmMock.js',
   },
-  // tsconfig uses `jsx: preserve` for Next; tests need emitted JSX.
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: { jsx: 'react-jsx' } }],
   },

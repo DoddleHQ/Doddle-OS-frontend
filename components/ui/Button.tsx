@@ -2,7 +2,6 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
-// Define the variant type explicitly
 export type ButtonVariant = 'default' | 'primary' | 'success' | 'warning' | 'error' | 'outline' | 'ghost';
 
 const buttonVariants = cva(
@@ -60,4 +59,3 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 export { Button, buttonVariants };
-// Force recompile

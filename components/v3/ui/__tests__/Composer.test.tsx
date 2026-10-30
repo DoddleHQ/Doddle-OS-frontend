@@ -23,8 +23,8 @@ describe('Composer (v13 hero anatomy)', () => {
     expect(screen.getByRole('button', { name: 'Mode' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Pick a blueprint' })).toBeTruthy();
     expect(screen.getByRole('button', { name: />_/ })).toBeTruthy();
-    expect(screen.getAllByText('Default').length).toBeGreaterThan(0); // mode button label + menu entry
-    expect(screen.getByText('Blueprint')).toBeTruthy(); // blueprint glide label
+    expect(screen.getAllByText('Default').length).toBeGreaterThan(0);
+    expect(screen.getByText('Blueprint')).toBeTruthy();
   });
 
   it('sends on the run button and clears the composer', () => {

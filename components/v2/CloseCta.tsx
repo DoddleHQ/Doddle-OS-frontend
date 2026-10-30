@@ -5,14 +5,6 @@ import { motion } from 'motion/react';
 import { useEntryCta } from '@/lib/hooks/useEntryCta';
 import { Logo } from '@/components/v2/Logo';
 
-/*
- * CloseCta — paper register, the close.
- * Anchored, quiet, specimen-book registration. One CTA, no manufactured urgency,
- * no social proof the product can't back (PRODUCT.md: no real customers/logos).
- * Auth-aware: shows "Enter the OS" + workspace link if authenticated, otherwise
- * "Sign in to get started" + /login.
- */
-
 export function CloseCta() {
   const { href: ctaHref, label: ctaLabel } = useEntryCta();
 
@@ -60,7 +52,6 @@ export function CloseCta() {
           </motion.div>
         </div>
 
-        {/* Colophon — specimen-book close */}
         <motion.div
           className="mt-20 md:mt-28 pt-5 flex flex-wrap items-center justify-between gap-3"
           style={{ borderTop: 'var(--v2-rule) solid var(--v2-paper-rule)' }}

@@ -21,7 +21,6 @@ export interface KanbanCardProps {
   onClick?: () => void;
 }
 
-// Helper function to format timestamps consistently and safely
 const formatTimestamp = (timestamp?: Date | string): string | undefined => {
   if (!timestamp) return undefined;
 
@@ -81,7 +80,6 @@ export const KanbanCard = ({
       )}
       onClick={onClick}
     >
-      {/* Header: Domain and Priority */}
       <div className="flex items-center justify-between mb-2">
         <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 border-slate-200 bg-slate-50/50">
           {domain}
@@ -96,14 +94,11 @@ export const KanbanCard = ({
         )}
       </div>
 
-      {/* Title */}
       <h3 className="text-sm font-medium text-slate-800 mb-3 leading-relaxed line-clamp-3 group-hover:text-blue-700 transition-colors">
         {title}
       </h3>
 
-      {/* Footer: Agents and Timestamp */}
       <div className="flex items-center justify-between pt-2 border-t border-slate-50">
-        {/* Agent avatars */}
         <div className="flex -space-x-2">
           {agents.slice(0, 3).map((agent, idx) => (
             <Avatar
@@ -121,7 +116,6 @@ export const KanbanCard = ({
           )}
         </div>
 
-        {/* Timestamp */}
         {timestamp && (
           <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
             <Clock className="w-3 h-3" />

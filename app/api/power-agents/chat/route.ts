@@ -4,18 +4,6 @@ import { getLangGraphApiUrl, langgraphAuthHeaders } from '@/lib/config/langgraph
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-/**
- * POST /api/power-agents/chat
- *
- * The AI SDK standard bridge: consumes the LangGraph server's multi-mode
- * SSE (messages-tuple for token deltas + updates for complete tool calls)
- * and re-emits the Vercel AI SDK **UI Message Stream protocol**, so the
- * frontend uses stock `useChat` + AI Elements-style components.
- *
- * Body: { assistantId: string; threadId?: string; messages: UIMessage[] }
- * Responds: SSE (UI Message Stream parts) + `x-langgraph-thread-id`
- */
-
 const base = () => getLangGraphApiUrl();
 
 interface ToolCall {
@@ -65,9 +53,6 @@ export async function POST(req: NextRequest) {
   }
   const authHeaders = langgraphAuthHeaders(req);
 
-  // create or reuse the LangGraph thread (history lives server-side).
-  // Lazily-created threads carry agent metadata so they appear in the
-  // agent's session list via /threads/search.
   let threadId = body.threadId;
   if (!threadId) {
     const tRes = await fetch(`${base()}/threads`, {
@@ -106,16 +91,12 @@ export async function POST(req: NextRequest) {
   });
 
   if (upstream.status === 401) {
-    // auth rejected upstream (e.g. revoked backend session) — surface as
-    // 401 so the client can send the user to re-login
     return new Response(
       JSON.stringify({ error: 'session expired — sign in again' }),
       { status: 401 },
     );
   }
   if (upstream.status === 404) {
-    // the thread was deleted (another tab, backend cleanup) — tell the
-    // client distinctly instead of a generic bad gateway
     return new Response(
       JSON.stringify({
         error: 'session no longer exists — start a new session',
@@ -138,9 +119,6 @@ export async function POST(req: NextRequest) {
 
   const stream = new ReadableStream({
     async start(controller) {
-      // Enqueues throw once the client connection is gone (proxy cut,
-      // navigation) — route every write through a guard so the loop exits
-      // cleanly instead of throwing inside the stream.
       let alive = true;
       const safeEnqueue = (chunk: string) => {
         if (!alive) return;
@@ -151,16 +129,12 @@ export async function POST(req: NextRequest) {
         }
       };
       const push = (part: unknown) => safeEnqueue(sse(part));
-      // SSE comment — ignored by every stream parser, but keeps bytes
-      // flowing through reverse proxies so their idle read-timeout doesn't
-      // kill the connection during silent phases (model thinking, long
-      // tool calls like Lighthouse).
       const ping = () => safeEnqueue(': ping\n\n');
 
-      const toolNames = new Map<string, string>(); // toolCallId -> name
+      const toolNames = new Map<string, string>();
       let step = 0;
       let stepOpen = false;
-      let textId: string | null = null; // one text part per step, not per token
+      let textId: string | null = null;
 
       const beginStep = () => {
         if (!stepOpen) {
@@ -179,19 +153,15 @@ export async function POST(req: NextRequest) {
         }
       };
 
-      // ── messages-tuple: token deltas (skip tool fragments) ──────────
       const onMessagesTuple = (payload: unknown) => {
         const tuple = Array.isArray(payload) ? payload : [payload];
         const chunk = tuple[0] as LGMessage;
         if (!chunk || typeof chunk !== 'object') return;
-        // streaming chunks serialize their class name ("AIMessageChunk");
-        // complete messages use "ai". Accept both.
         const isAI = chunk.type === 'ai' || chunk.type === 'AIMessageChunk';
-        if (!isAI) return; // skip human/tool/other types
+        if (!isAI) return;
         const text = textOf(chunk.content);
         if (text) {
           beginStep();
-          // open the text part once per step; all deltas share its id
           if (!textId) {
             textId = `t-${step}`;
             push({ type: 'text-start', id: textId });
@@ -200,7 +170,6 @@ export async function POST(req: NextRequest) {
         }
       };
 
-      // ── updates: complete tool calls + tool results per node ────────
       const onUpdates = (payload: unknown) => {
         if (!payload || typeof payload !== 'object') return;
         for (const [node, value] of Object.entries(payload as Record<string, unknown>)) {
@@ -232,7 +201,7 @@ export async function POST(req: NextRequest) {
               }
             }
             if (msg.type === 'tool' && msg.tool_call_id) {
-              endStep(); // tool output closes the assistant's step
+              endStep();
               const name = toolNames.get(msg.tool_call_id) ?? msg.name ?? 'tool';
               push({
                 type: 'tool-output-available',
@@ -246,8 +215,6 @@ export async function POST(req: NextRequest) {
       };
 
       push({ type: 'start' });
-      // surface the thread id as a stream data part — the frontend reads
-      // it from the finished message's parts (more reliable than headers)
       push({ type: 'data-thread-id', data: [threadId] });
 
       const reader = upstream.body!.getReader();
@@ -307,7 +274,6 @@ export async function POST(req: NextRequest) {
         try {
           controller.close();
         } catch {
-          /* already closed */
         }
       }
     },
@@ -317,8 +283,6 @@ export async function POST(req: NextRequest) {
     headers: {
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
-      // Tell nginx (and compatible proxies) not to buffer this response —
-      // buffering turns token streaming into multi-second bursts.
       'X-Accel-Buffering': 'no',
       'x-langgraph-thread-id': threadId,
       'x-vercel-ai-ui-message-stream': 'v1',

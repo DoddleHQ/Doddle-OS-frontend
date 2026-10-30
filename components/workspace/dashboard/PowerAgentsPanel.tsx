@@ -20,7 +20,6 @@ const moduleIconMap: Record<string, string> = {
   'Brand Guardrails': 'shield-alert',
 };
 
-/** Module list + data source status */
 export function PowerAgentsPanel({ workspaceId }: { workspaceId: string }) {
   const [connections, setConnections] = useState<DataSourceConnection[]>([]);
 

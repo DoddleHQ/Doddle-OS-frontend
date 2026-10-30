@@ -6,12 +6,6 @@ export interface OrgGroup {
   workspaces: Workspace[];
 }
 
-/**
- * Group workspaces under the organizations they belong to. Users can be
- * members of several organizations (their own plus ones they were invited
- * to); grouping makes every org's workspaces reachable from switchers
- * instead of showing one flat, org-less list.
- */
 export function groupWorkspacesByOrg(workspaces: Workspace[]): OrgGroup[] {
   const byId = new Map<string, OrgGroup>();
   for (const ws of workspaces) {

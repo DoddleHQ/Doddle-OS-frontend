@@ -5,25 +5,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Info } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-/*
- * Dashboard primitives — Operate-mode-compliant building blocks.
- *
- * These enforce the impeccable skill's Operate rules at the component level:
- * single sans (Hanken Grotesk via --v2-font-sans), no eyebrow labels, accent
- * reserved for state/selection, border OR shadow (never both), 150-250ms
- * functional motion. Every interactive component ships hover + focus.
- *
- * Color: the accent is vermilion (the Specimen Token world stays). Semantic
- * states use sage (success/healthy) and vermilion (warning/critical/active).
- */
-
 const EASE = [0.16, 1, 0.3, 1] as const;
 const FAST = 0.15;
 const NORMAL = 0.2;
-
-// ---------------------------------------------------------------------------
-// StatusDot — semantic colored dot, paired with shape/label (never color alone)
-// ---------------------------------------------------------------------------
 
 type StatusVariant = 'healthy' | 'warning' | 'critical' | 'active' | 'idle' | 'neutral';
 
@@ -66,10 +50,6 @@ export function StatusDot({
     />
   );
 }
-
-// ---------------------------------------------------------------------------
-// MetricItem — inline metric (value + label + trend), no hero-metric template
-// ---------------------------------------------------------------------------
 
 export function MetricItem({
   value,
@@ -116,10 +96,6 @@ export function MetricItem({
   );
 }
 
-// ---------------------------------------------------------------------------
-// SkeletonBlock — loading state matching content shape (not a centered spinner)
-// ---------------------------------------------------------------------------
-
 export function SkeletonBlock({
   width = '100%',
   height = 16,
@@ -144,10 +120,6 @@ export function SkeletonBlock({
     />
   );
 }
-
-// ---------------------------------------------------------------------------
-// KanbanCard — single border, no ghost (no border + shadow combo), hover = fill
-// ---------------------------------------------------------------------------
 
 export interface KanbanCardData {
   id: string;
@@ -182,7 +154,6 @@ export function KanbanCard({
       }}
       whileHover={{ backgroundColor: 'rgba(255,255,255,0.65)' }}
     >
-      {/* Meta row: slug + priority dot */}
       <div className="flex items-center justify-between mb-1">
         <span
           className="v2-mono"
@@ -192,11 +163,9 @@ export function KanbanCard({
         </span>
         {isUrgent && <StatusDot variant="critical" size={5} />}
       </div>
-      {/* Title */}
       <p style={{ fontFamily: 'var(--v2-font-sans)', fontSize: '0.82rem', lineHeight: 1.4, color: 'var(--v2-paper-ink)', marginBottom: '0.5rem' }}>
         {item.title}
       </p>
-      {/* Assignee + time */}
       <div className="flex items-center justify-between">
         <span className="v2-mono" style={{ fontSize: '0.65rem', color: 'var(--v2-paper-ink-2)' }}>
           {item.assignee || '—'}
@@ -208,10 +177,6 @@ export function KanbanCard({
     </motion.div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// NavItem — active state via solid fill, NOT border-left (hard ban)
-// ---------------------------------------------------------------------------
 
 export function NavItem({
   href,
@@ -266,22 +231,15 @@ export function NavItem({
   );
 }
 
-// ---------------------------------------------------------------------------
-// InfoTooltip — hover/focus tooltip for labels that need explanation
-// ---------------------------------------------------------------------------
-
 const TOOLTIP_EASE = [0.16, 1, 0.3, 1] as const;
 
 export function InfoTooltip({ text, children }: { text: string; children?: ReactNode }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLSpanElement>(null);
-  const [offset, setOffset] = useState(0); // px shift from center; negative = left
+  const [offset, setOffset] = useState(0);
 
-  const TOOLTIP_WIDTH = 176; // w-44 = 11rem
+  const TOOLTIP_WIDTH = 176;
 
-  // Compute the tooltip position from the TRIGGER rect + known tooltip width,
-  // NOT from the tooltip's own rect (which carries stale transform offsets
-  // from a prior open). This eliminates the re-open measurement bug.
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) return;
 
@@ -289,7 +247,6 @@ export function InfoTooltip({ text, children }: { text: string; children?: React
     const viewportWidth = window.innerWidth;
     const margin = 8;
 
-    // Where the tooltip WOULD be if centered on the trigger (no offset):
     const centeredLeft = trigger.left + trigger.width / 2 - TOOLTIP_WIDTH / 2;
     const centeredRight = centeredLeft + TOOLTIP_WIDTH;
 

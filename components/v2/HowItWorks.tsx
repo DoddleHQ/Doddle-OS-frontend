@@ -4,12 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { GRAPH_AGENTS, REAL_CONFLICTS, KPIS, MODULES, artifactLabel } from './content';
 
-/*
- * Fleet (paper register) — the five real graph-streaming agents as specimens.
- * Each shows its real graphId, module, job, and the ArtifactType values it
- * ships. Followed by count-up KPIs, the real conflicts, and the module marquee.
- */
-
 function useCountUp(target: number, inView: boolean, duration = 1100) {
   const [val, setVal] = useState(0);
   useEffect(() => {
@@ -85,7 +79,6 @@ export function HowItWorks() {
       style={{ background: 'var(--v2-paper-ground)', color: 'var(--v2-paper-ink)' }}
     >
       <div className="max-w-[1180px] mx-auto w-full">
-        {/* Lead */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-8 mb-16 md:mb-20 items-end">
           <motion.h2
             className="v2-display text-[clamp(2rem,5vw,3.75rem)]"
@@ -112,14 +105,12 @@ export function HowItWorks() {
           </motion.p>
         </div>
 
-        {/* KPI strip */}
         <div ref={kpiRef} className="grid grid-cols-2 md:grid-cols-5 gap-x-6 gap-y-2 mb-20 md:mb-28">
           {KPIS.map((k, i) => (
             <KpiChip key={i} kpi={k} inView={kpiInView} />
           ))}
         </div>
 
-        {/* The fleet — real graph agents as specimens */}
         <div className="mb-20 md:mb-28">
           <div className="v2-label text-[10px] mb-6" style={{ color: 'var(--v2-paper-ink-2)' }}>
             the fleet · five graph agents
@@ -137,10 +128,6 @@ export function HowItWorks() {
                   viewport={{ once: true, margin: '-60px' }}
                   transition={{ duration: 0.7, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  {/* Name + module — column 1.
-                      A shared mono top-label establishes a common baseline across all
-                      three columns, so the rows align as a registry regardless of the
-                      differing display/body/label sizes below it. */}
                   <div>
                     <div className="v2-mono text-[10px] mb-3" style={{ color: 'var(--v2-paper-ink-2)' }}>
                       agent
@@ -153,8 +140,6 @@ export function HowItWorks() {
                     </div>
                   </div>
 
-                  {/* Job + input hint — column 2.
-                      Same mono top-label height as columns 1 and 3. */}
                   <div>
                     <div className="v2-mono text-[10px] mb-3" style={{ color: 'var(--v2-paper-ink-2)' }}>
                       does
@@ -167,8 +152,6 @@ export function HowItWorks() {
                     </p>
                   </div>
 
-                  {/* Artifacts it ships — column 3.
-                      Same mono top-label height; chips wrap right-aligned. */}
                   <div className="md:text-right">
                     <div className="v2-mono text-[10px] mb-3" style={{ color: 'var(--v2-paper-ink-2)' }}>
                       ships
@@ -191,7 +174,6 @@ export function HowItWorks() {
           </div>
         </div>
 
-        {/* Real conflicts */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -231,7 +213,6 @@ export function HowItWorks() {
           </div>
         </motion.div>
 
-        {/* Module marquee */}
         <motion.div
           className="mt-20 md:mt-24 pt-6 overflow-hidden"
           style={{ borderTop: 'var(--v2-rule) solid var(--v2-paper-rule)' }}

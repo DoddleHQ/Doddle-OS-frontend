@@ -13,7 +13,6 @@ import { ReportsWindow } from '@/components/v3/windows/HistoryWindow';
 import { AssignmentsWindow } from '@/components/v3/windows/AssignmentsWindow';
 import { EmptyWindow } from '@/components/v3/windows/EmptyWindow';
 
-/** v13 titlebar chips: the reference's per-window state, triage counts live. */
 function TitlebarChip({ id, mode }: { id: V3WindowState['id']; mode: V3WindowState['mode'] }) {
   const unread = useV3OS((s) => (id === 'reports' ? s.sessionFeed.filter((x) => v3SessionStatus(x) === 'attention').length : 0));
   const chip = id === 'reports' ? `${unread} waiting` : V3_APP_META[id].chip ?? (mode === 'page' ? 'page' : '⌘');
@@ -38,7 +37,6 @@ function OSWindow({ win }: { win: V3WindowState }) {
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (win.mode !== 'window' || e.button !== 0) return;
-    // drag starts only on the titlebar (this handler), not the traffic lights
     if ((e.target as HTMLElement).closest('button')) return;
     drag.current = { px: e.clientX, py: e.clientY, x: win.x, y: win.y };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);

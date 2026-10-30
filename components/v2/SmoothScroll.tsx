@@ -3,16 +3,6 @@
 import { useEffect } from 'react';
 import Lenis from 'lenis';
 
-/*
- * SmoothScroll — Lenis inertia scroll, scoped to the v2 landing only.
- * The dashboard interiors (later sessions) keep native scroll; smooth scroll
- * fights dense data views.
- *
- * Also drives the register-aware document scrollbar: the v2 page spans two
- * registers (warm paper + tinted ink), so the scrollbar track/thumb should
- * follow whichever register currently dominates the viewport. This sets the
- * --st-track / --st-thumb CSS vars on :root based on the topmost section.
- */
 export function SmoothScroll({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -30,14 +20,9 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
         rafId = requestAnimationFrame(raf);
       };
       rafId = requestAnimationFrame(raf);
-      // stash cleanup
       (lenis as any).__rafId = rafId;
     }
 
-    // --- Register-aware scrollbar ---
-    // Detect whether the section at the viewport top is an ink (.v2-ink) or
-    // paper section, and set the scrollbar vars on :root accordingly so the
-    // document scrollbar's track matches the visible surface.
     const root = document.documentElement;
     const updateScrollbarRegister = () => {
       const probe = document.elementFromPoint(window.innerWidth - 5, 1);

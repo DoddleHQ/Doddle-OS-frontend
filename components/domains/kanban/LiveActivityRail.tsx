@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/Badge';
 import { Clock, Activity, Zap, Shield, CheckCircle2, AlertCircle, Bot, User, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Types
 interface AgentStatus {
   name: string;
   status: 'active' | 'idle' | 'offline';
@@ -34,13 +33,11 @@ interface LiveActivityRailProps {
   className?: string;
 }
 
-// Helper: Format Timestamp
 const formatTimestamp = (timestamp: Date | string): string => {
   try {
     const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
-    if (isNaN(date.getTime())) return 'Just now'; // Fallback for invalid dates
+    if (isNaN(date.getTime())) return 'Just now';
 
-    // If today, show time
     const now = new Date();
     if (date.toDateString() === now.toDateString()) {
       return date.toLocaleTimeString('en-US', {
@@ -49,7 +46,6 @@ const formatTimestamp = (timestamp: Date | string): string => {
       });
     }
 
-    // Otherwise show Date
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   } catch (e) {
     return 'Just now';
@@ -79,7 +75,6 @@ export const LiveActivityRail = ({ activities = [], agents = [], className }: Li
   return (
     <div className={cn('flex flex-col h-full gap-6', className)}>
 
-      {/* SECTION: System Intelligence */}
       <div className="space-y-3">
         <div className="flex items-center gap-2 px-1">
           <Shield className="w-4 h-4 text-indigo-500" />
@@ -87,7 +82,6 @@ export const LiveActivityRail = ({ activities = [], agents = [], className }: Li
         </div>
 
         <Card className="p-4 bg-white border-slate-200 shadow-sm space-y-4">
-          {/* Internal Metrics */}
           <div className="grid grid-cols-2 gap-4 pb-4 border-b border-slate-100">
             <div>
               <p className="text-xs text-slate-500 font-medium mb-1">System Health</p>
@@ -105,7 +99,6 @@ export const LiveActivityRail = ({ activities = [], agents = [], className }: Li
             </div>
           </div>
 
-          {/* Agent Status List */}
           <div className="space-y-2">
             <p className="text-xs font-semibold text-slate-400 uppercase">Agent Status</p>
             <div className="space-y-2">
@@ -139,7 +132,6 @@ export const LiveActivityRail = ({ activities = [], agents = [], className }: Li
             </div>
           </div>
 
-          {/* Recent Alerts (Placeholder based on user request) */}
           <div className="pt-2">
             <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 p-2 rounded border border-slate-100">
               <AlertCircle className="w-3 h-3 text-amber-500 shrink-0" />
@@ -149,7 +141,6 @@ export const LiveActivityRail = ({ activities = [], agents = [], className }: Li
         </Card>
       </div>
 
-      {/* SECTION: Live Activity Feed */}
       <div className="flex-1 flex flex-col min-h-0">
         {(!activities || activities.length === 0) ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 text-sm border-2 border-dashed border-slate-200/50 rounded-lg bg-slate-50/30 p-6 text-center">
@@ -172,7 +163,6 @@ export const LiveActivityRail = ({ activities = [], agents = [], className }: Li
             <div className="flex-1 overflow-y-auto pr-2 space-y-4">
               {activities.map((activity, index) => (
                 <div key={activity.id || index} className="relative pl-4 border-l border-slate-200 pb-1 last:border-l-0">
-                  {/* Timeline Dot */}
                   <div className={cn(
                     "absolute left-[-4.5px] top-1.5 w-2 h-2 rounded-full border-2 border-white ring-1 ring-slate-200",
                     activity.type === 'resolution' ? "bg-emerald-500 ring-emerald-100" :
@@ -193,7 +183,6 @@ export const LiveActivityRail = ({ activities = [], agents = [], className }: Li
 
                   <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
                     <div className="flex items-start gap-2.5">
-                      {/* Icon */}
                       <div className="mt-0.5 shrink-0">
                         {getActivityIcon(activity.type)}
                       </div>

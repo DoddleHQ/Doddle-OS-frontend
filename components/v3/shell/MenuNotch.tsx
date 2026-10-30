@@ -7,10 +7,6 @@ import { LayoutDashboard, Terminal, Layers, Bot, Inbox, BarChart3, Search, Setti
 import { useV3OS } from '@/lib/v3/osStore';
 import { v3SessionStatus } from '@/lib/v3/data';
 
-/** v13 notch, exact (post launch-consolidation): sections island
- *  (home/launchpad/assignments — agents lives in Spotlight only), the
- *  centered ⌘K search island, and the system island (triage with badge,
- *  reports, settings, clock). */
 export function MenuNotch() {
   const menu = useV3OS((s) => s.menu);
   const workspaceId = useV3OS((s) => s.workspaceId);

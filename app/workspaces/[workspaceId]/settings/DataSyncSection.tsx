@@ -28,17 +28,6 @@ import type {
 import { FREQUENCY_OPTIONS, cronToFrequency, type SyncFrequency } from '@/lib/utils/cron';
 import { notify } from '@/lib/stores/notificationStore';
 
-/*
- * DataSyncSection — data-source connection management.
- *
- * Four sources grouped by category:
- *   E-commerce: Magento
- *   Google: Search Console, Merchant Center, Analytics 4
- *
- * Each source is a collapsible panel showing connect/disconnect/sync.
- * Follows impeccable Operate rules.
- */
-
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 export function DataSyncSection({ workspaceId }: { workspaceId: string }) {
@@ -52,7 +41,6 @@ export function DataSyncSection({ workspaceId }: { workspaceId: string }) {
             const data = await connectionService.listConnections(workspaceId);
             setConnections(data);
         } catch {
-            // Silently fail — the connect forms still work without the list
         } finally {
             setLoading(false);
         }
@@ -84,7 +72,6 @@ export function DataSyncSection({ workspaceId }: { workspaceId: string }) {
 
     return (
         <div className="space-y-6">
-            {/* E-commerce */}
             <CategoryGroup label="E-commerce">
                 <SourcePanel
                     {...panelProps}
@@ -98,7 +85,6 @@ export function DataSyncSection({ workspaceId }: { workspaceId: string }) {
                 />
             </CategoryGroup>
 
-            {/* Google */}
             <CategoryGroup label="Google">
                 <SourcePanel
                     {...panelProps}
@@ -135,7 +121,6 @@ export function DataSyncSection({ workspaceId }: { workspaceId: string }) {
     );
 }
 
-/* === Category group label === */
 function CategoryGroup({ label, children }: { label: string; children: React.ReactNode }) {
     return (
         <div>
@@ -150,7 +135,6 @@ function CategoryGroup({ label, children }: { label: string; children: React.Rea
     );
 }
 
-/* === Source panel (collapsible) === */
 function SourcePanel({
     sourceType,
     title,
@@ -186,7 +170,6 @@ function SourcePanel({
             className="rounded-[10px] overflow-hidden"
             style={{ border: '1px solid var(--v2-paper-rule)' }}
         >
-            {/* Header row */}
             <button
                 onClick={onToggle}
                 className="w-full flex items-center justify-between px-4 py-3 transition-colors text-left"
@@ -235,7 +218,6 @@ function SourcePanel({
                 </div>
             </button>
 
-            {/* Expanded content */}
             {expanded && (
                 <motion.div
                     initial={{ opacity: 0, height: 0 }}
@@ -268,7 +250,6 @@ function SourcePanel({
     );
 }
 
-/* === Status badge === */
 function StatusBadge({ connected, loading }: { connected: boolean; loading: boolean }) {
     if (loading) return <Loader2 className="w-3 h-3 animate-spin" style={{ color: 'var(--v2-paper-ink-2)' }} />;
     return (
@@ -284,7 +265,6 @@ function StatusBadge({ connected, loading }: { connected: boolean; loading: bool
     );
 }
 
-/* === Connected view (summary + actions) === */
 function ConnectedView({
     sourceType,
     connection,
@@ -306,7 +286,6 @@ function ConnectedView({
             setSyncing(true);
             const result = await connectionService.triggerSync(workspaceId, sourceType);
             notify(result.message, 'success');
-            // Fetch sync states after triggering
             const states = await connectionService.getSyncStates(workspaceId, sourceType);
             setSyncStates(states);
             setShowSyncStates(true);
@@ -343,7 +322,6 @@ function ConnectedView({
 
     return (
         <div className="space-y-3">
-            {/* Connection details */}
             {sourceType === 'magento' && connection.magento && (
                 <>
                     <DetailRow label="Base URL" value={connection.magento.baseUrl} mono />
@@ -377,7 +355,6 @@ function ConnectedView({
                 </>
             )}
 
-            {/* Schedule */}
             <DetailRow
                 label="Sync frequency"
                 value={FREQUENCY_OPTIONS.find((f) => f.value === cronToFrequency(connection.schedule.syncCron))?.label || connection.schedule.syncCron || 'Manual only'}
@@ -388,7 +365,6 @@ function ConnectedView({
                 mono
             />
 
-            {/* Sync states */}
             {showSyncStates && syncStates.length > 0 && (
                 <div className="pt-2" style={{ borderTop: '1px solid var(--v2-paper-rule)' }}>
                     <div className="v2-label text-[7px] mb-2" style={{ color: 'var(--v2-paper-ink-2)' }}>Sync State</div>
@@ -398,7 +374,6 @@ function ConnectedView({
                 </div>
             )}
 
-            {/* Actions */}
             <div className="flex items-center gap-2 pt-2" style={{ borderTop: '1px solid var(--v2-paper-rule)' }}>
                 <ActionButton
                     onClick={handleSync}
@@ -425,7 +400,6 @@ function ConnectedView({
     );
 }
 
-/* === Sync state row === */
 function SyncStateRow({ state }: { state: SyncState }) {
     const statusColor =
         state.lastSyncStatus === 'success'
@@ -463,7 +437,6 @@ function SyncStateRow({ state }: { state: SyncState }) {
     );
 }
 
-/* === Magento connect form === */
 function MagentoConnectForm({
     workspaceId,
     onConnected,
@@ -495,9 +468,9 @@ function MagentoConnectForm({
                 schedule: { syncCron: cronExpr, syncTimezone: 'UTC' },
             };
             const conn = await connectionService.connectMagento(workspaceId, req);
-            onConnect(conn); // optimistic — badge flips immediately
+            onConnect(conn);
             notify('Magento connected', 'success');
-            onConnected(); // refetch in background to confirm
+            onConnected();
         } catch (err) {
             notify(err instanceof Error ? err.message : 'Connection failed', 'error');
         } finally {
@@ -534,7 +507,6 @@ function MagentoConnectForm({
     );
 }
 
-/* === GSC connect form === */
 function GscConnectForm({
     workspaceId,
     onConnected,
@@ -563,9 +535,9 @@ function GscConnectForm({
                 credentials: { siteUrl, clientId, clientSecret, refreshToken },
                 schedule: { syncCron: cronExpr, syncTimezone: 'UTC' },
             });
-            onConnect(conn); // optimistic — badge flips immediately
+            onConnect(conn);
             notify('Google Search Console connected', 'success');
-            onConnected(); // refetch in background to confirm
+            onConnected();
         } catch (err) {
             notify(err instanceof Error ? err.message : 'Connection failed', 'error');
         } finally {
@@ -590,7 +562,6 @@ function GscConnectForm({
     );
 }
 
-/* === GMC connect form === */
 function GmcConnectForm({
     workspaceId,
     onConnected,
@@ -644,7 +615,6 @@ function GmcConnectForm({
     );
 }
 
-/* === GA4 connect form === */
 function Ga4ConnectForm({
     workspaceId,
     onConnected,
@@ -697,8 +667,6 @@ function Ga4ConnectForm({
         />
     );
 }
-
-/* === Shared form primitives === */
 
 const selectStyle: React.CSSProperties = {
     fontFamily: 'var(--v2-font-sans)',

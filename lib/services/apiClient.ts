@@ -1,23 +1,10 @@
-/**
- * API Client — a thin fetch wrapper with automatic 401 → refresh → retry.
- *
- * This module is NOT a React hook so it can be used from any service function.
- * It coordinates with the AuthContext via a shared refresh-promise pattern.
- */
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
-/** Default request timeout — 15 seconds (slightly longer than auth calls). */
 const REQUEST_TIMEOUT_MS = 15_000;
-
-// ---------------------------------------------------------------------------
-// Refresh lock — ensures only one refresh happens at a time
-// ---------------------------------------------------------------------------
 
 let refreshPromise: Promise<boolean> | null = null;
 
 async function refreshAccessTokenOnce(): Promise<boolean> {
-    // Dynamic import to avoid circular deps at module level
     const { refreshAccessToken } = await import('@/lib/services/authService');
     try {
         await refreshAccessToken();
@@ -36,13 +23,6 @@ function getRefreshPromise(): Promise<boolean> {
     return refreshPromise;
 }
 
-// ---------------------------------------------------------------------------
-// Public fetch wrapper
-// ---------------------------------------------------------------------------
-
-/**
- * Human-readable fallback messages for common HTTP status codes.
- */
 function getStatusMessage(status: number): string {
     switch (status) {
         case 400: return 'Invalid request. Please check your input.';
@@ -57,10 +37,6 @@ function getStatusMessage(status: number): string {
     }
 }
 
-/**
- * Parse an error response into a human-readable message.
- * Handles multiple backend error formats and empty bodies.
- */
 async function parseErrorMessage(res: Response): Promise<string> {
     const contentType = res.headers.get('content-type') || '';
 
@@ -78,12 +54,6 @@ async function parseErrorMessage(res: Response): Promise<string> {
     }
 }
 
-/**
- * Auth-aware fetch that:
- * 1. Sends requests with `credentials: 'include'` (HttpOnly cookies).
- * 2. On 401, refreshes the access token once and retries the request.
- * 3. If refresh also fails, rejects with an error.
- */
 export async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
     const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
 
@@ -102,10 +72,8 @@ export async function apiFetch(url: string, init?: RequestInit): Promise<Respons
     }
 
     if (res.status === 401) {
-        // Try to refresh the token
         const refreshed = await getRefreshPromise();
         if (refreshed) {
-            // Retry the original request with the new cookie
             return fetch(fullUrl, {
                 ...init,
                 credentials: 'include',
@@ -116,9 +84,6 @@ export async function apiFetch(url: string, init?: RequestInit): Promise<Respons
     return res;
 }
 
-/**
- * Convenience: JSON GET
- */
 export async function apiGet<T = unknown>(url: string): Promise<T> {
     const res = await apiFetch(url, {
         headers: { 'Content-Type': 'application/json' },
@@ -130,9 +95,6 @@ export async function apiGet<T = unknown>(url: string): Promise<T> {
     return res.json();
 }
 
-/**
- * Convenience: JSON POST
- */
 export async function apiPost<T = unknown>(url: string, body?: unknown): Promise<T> {
     const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
 
@@ -149,9 +111,6 @@ export async function apiPost<T = unknown>(url: string, body?: unknown): Promise
     return res.json();
 }
 
-/**
- * Convenience: JSON PATCH
- */
 export async function apiPatch<T = unknown>(url: string, body?: unknown): Promise<T> {
     const res = await apiFetch(url, {
         method: 'PATCH',
@@ -165,9 +124,6 @@ export async function apiPatch<T = unknown>(url: string, body?: unknown): Promis
     return res.json();
 }
 
-/**
- * Convenience: JSON PUT
- */
 export async function apiPut<T = unknown>(url: string, body?: unknown): Promise<T> {
     const res = await apiFetch(url, {
         method: 'PUT',
@@ -181,9 +137,6 @@ export async function apiPut<T = unknown>(url: string, body?: unknown): Promise<
     return res.json();
 }
 
-/**
- * Convenience: JSON DELETE
- */
 export async function apiDelete(url: string): Promise<void> {
     const res = await apiFetch(url, { method: 'DELETE' });
     if (!res.ok) {

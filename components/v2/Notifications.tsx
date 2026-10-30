@@ -4,14 +4,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react';
 import { useNotificationStore, type NotificationType } from '@/lib/stores/notificationStore';
 
-/*
- * Notifications — v2 Specimen Terminal toast renderer.
- *
- * Mounted once in providers. Reads from the Zustand notification store
- * and renders dismissible toasts in the top-right corner using paper/ink
- * tokens with semantic left-border accents.
- */
-
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 const CONFIG: Record<NotificationType, { border: string; icon: React.ReactNode }> = {

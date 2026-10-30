@@ -1,6 +1,3 @@
-// Mission Control Mock Data
-// Used for the Kanban-style Mission Control Dashboard
-
 export interface KPIChip {
   label: string;
   value: string;
@@ -37,7 +34,6 @@ export interface LiveActivity {
 }
 
 export const mockMissionControlData = {
-  // KPI / Insights Strip
   stats: [
     { label: 'System Health', value: '94%', trend: 'up' },
     { label: 'Pending Actions', value: '12', trend: 'down' },
@@ -46,7 +42,6 @@ export const mockMissionControlData = {
     { label: 'Avg Latency', value: '420ms', trend: 'neutral' },
   ] as KPIChip[],
 
-  // Domain Health Chips
   domainHealth: [
     { domain: 'SEO_Cluster', health: 95, status: 'healthy', threads: 4 },
     { domain: 'Content_Factory', health: 82, status: 'warning', threads: 7 },
@@ -54,7 +49,6 @@ export const mockMissionControlData = {
     { domain: 'SaaS_Launch_Ops', health: 76, status: 'warning', threads: 5 },
   ] as DomainHealth[],
 
-  // Kanban Columns
   columns: [
     { id: 'inbox', title: 'Inbox' },
     { id: 'in-progress', title: 'In Progress' },
@@ -63,7 +57,6 @@ export const mockMissionControlData = {
     { id: 'done', title: 'Done' },
   ] as KanbanColumn[],
 
-  // Kanban Board Threads
   items: [
     {
       id: 'thread-1',
@@ -127,7 +120,6 @@ export const mockMissionControlData = {
     },
   ],
 
-  // Active Agents for System Intelligence
   activeAgents: [
     { name: 'SEO_Lead', status: 'active' },
     { name: 'Content_Writer', status: 'active' },
@@ -135,7 +127,6 @@ export const mockMissionControlData = {
     { name: 'Launch_Coord', status: 'idle' },
   ],
 
-  // Live Agent Activity Feed
   liveActivity: [
     {
       id: 'act-1',

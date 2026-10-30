@@ -20,12 +20,6 @@ import MarkdownRenderer from '@/components/content-factory/chat/artifacts/Markdo
 import Notification from '@/components/ui/Notification';
 import { extractArtifactMarkdown } from '@/components/content-factory/chat/artifacts/artifactContentUtils';
 
-/**
- * New Project Page - Chat Interface with LangGraph Streaming
- *
- * A chat interface that takes a website URL and streams LangGraph workflow events
- * in real-time using the unified event system.
- */
 export default function NewProjectPage() {
     const params = useParams();
     const router = useRouter();
@@ -51,7 +45,6 @@ export default function NewProjectPage() {
     const sentMessageRef = useRef<string | null>(null);
     const [dbThreadId, setDbThreadId] = useState<string | null>(null);
 
-    // Use the LangGraph stream hook
     const {
         state: streamState,
         startStream,
@@ -75,7 +68,6 @@ export default function NewProjectPage() {
         },
     });
 
-    // Extract URL from message and start workflow
     const handleSendMessage = useCallback((message: string) => {
         setChatInputValue('');
         sentMessageRef.current = message;
@@ -109,14 +101,12 @@ export default function NewProjectPage() {
         }
     }, [isRunning, isHITLPending, streamState.pendingHITL, startStream, respondToHITL, addMessage, searchAnalytics]);
 
-    // Handle HITL response from the HITL card
     const handleHITLRespond = useCallback((response: unknown) => {
         if (streamState.pendingHITL) {
             respondToHITL(streamState.pendingHITL.requestId, response);
         }
     }, [streamState.pendingHITL, respondToHITL]);
 
-    // Copy artifact content to clipboard
     const handleCopyArtifact = useCallback(async (artifact: ArtifactPayload) => {
         const markdownContent = extractArtifactMarkdown(artifact);
         await navigator.clipboard.writeText(markdownContent);
@@ -124,7 +114,6 @@ export default function NewProjectPage() {
         setTimeout(() => setCopiedArtifactId(null), 2000);
     }, []);
 
-    // Download artifact
     const handleDownloadArtifact = useCallback((artifact: ArtifactPayload) => {
         const markdownContent = extractArtifactMarkdown(artifact);
         const blob = new Blob([markdownContent], { type: 'text/markdown' });
@@ -138,7 +127,6 @@ export default function NewProjectPage() {
         URL.revokeObjectURL(url);
     }, []);
 
-    // Redirect if workspaceId is not available
     useEffect(() => {
         if (!workspaceId || workspaceId === 'undefined') {
             router.push('/workspaces');
@@ -197,29 +185,24 @@ export default function NewProjectPage() {
         }
     }, [isComplete, completeEvent, dbThreadId, workspaceId, updateThread]);
 
-    // Auto-scroll to bottom when new messages arrive
     useEffect(() => {
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
     }, [messages]);
 
-    // Don't render if workspaceId is not available - AFTER all hooks
     if (!workspaceId || workspaceId === 'undefined') {
         return null;
     }
 
-    // Input is disabled when workflow is running and no HITL is pending
     const isInputDisabled = isRunning && !isHITLPending;
 
-    // Calculate overall progress
     const overallProgress = currentStep
         ? calculateOverallProgress(currentStep.stepNumber, currentStep.totalSteps, progress?.current ? (progress.current / progress.total) * 100 : undefined)
         : 0;
 
     return (
         <div className="flex flex-col h-full bg-slate-50 min-h-[calc(100vh-100px)] lg:rounded-2xl lg:border lg:border-slate-200 lg:shadow-sm overflow-hidden relative">
-            {/* Error notification */}
             <Notification
                 message={error?.message || ''}
                 variant="error"
@@ -227,7 +210,6 @@ export default function NewProjectPage() {
                 onClose={clearError}
             />
 
-            {/* Success notification when workflow completes successfully */}
             <Notification
                 message={completeEvent?.message || 'Workflow completed successfully!'}
                 variant="success"
@@ -235,7 +217,6 @@ export default function NewProjectPage() {
                 onClose={() => setSuccessDismissed(true)}
             />
 
-            {/* Status indicator when running (but not during HITL) */}
             {isRunning && !isHITLPending && (
                 <div className="flex-shrink-0 bg-blue-50/50 backdrop-blur border-b border-blue-100/50 px-6 py-2.5 sticky top-0 z-10 transition-all">
                     <div className="max-w-6xl mx-auto">
@@ -248,7 +229,6 @@ export default function NewProjectPage() {
                                 }
                             </span>
                         </div>
-                        {/* Progress bar */}
                         <div className="w-full bg-blue-100 rounded-full h-1.5">
                             <div
                                 className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
@@ -259,7 +239,6 @@ export default function NewProjectPage() {
                 </div>
             )}
 
-            {/* HITL Pending Status Banner */}
             {isHITLPending && (
                 <div className="flex-shrink-0 bg-amber-50/50 backdrop-blur border-b border-amber-100/50 px-6 py-2.5 sticky top-0 z-10 transition-all">
                     <div className="max-w-6xl mx-auto">
@@ -271,13 +250,11 @@ export default function NewProjectPage() {
                 </div>
             )}
 
-            {/* Chat Messages Area */}
             <div
                 ref={chatContainerRef}
                 className="flex-1 overflow-y-auto px-4 sm:px-6 py-8 scroll-smooth"
             >
                 <div className="w-full space-y-6">
-                    {/* Welcome message if no messages yet */}
                     {messages.length === 0 && (
                         <div className="flex flex-col items-center justify-center h-full min-h-[50vh] text-center px-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
                             <div className="w-20 h-20 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-2xl shadow-xl shadow-blue-500/20 flex items-center justify-center mb-6 transform transition-transform hover:scale-105">
@@ -303,7 +280,6 @@ export default function NewProjectPage() {
                         </div>
                     )}
 
-                    {/* Chat messages */}
                     {messages.map((message) => (
                         <MessageRenderer
                             key={message.id}
@@ -320,7 +296,6 @@ export default function NewProjectPage() {
                         />
                     ))}
 
-                    {/* Typing indicator when workflow is running */}
                     {isRunning && !isHITLPending && (
                         <div className="flex justify-start my-4 animate-in fade-in slide-in-from-bottom-2">
                             <div className="bg-white border border-slate-200 px-5 py-4 rounded-2xl rounded-bl-sm shadow-sm">
@@ -341,7 +316,6 @@ export default function NewProjectPage() {
                         </div>
                     )}
 
-                    {/* Completion message */}
                     {streamState.status === 'complete' && (
                         <div className="flex justify-center my-4">
                             <div className="bg-green-50 border border-green-200 rounded-xl p-5 max-w-md text-center">
@@ -361,9 +335,7 @@ export default function NewProjectPage() {
                 </div>
             </div>
 
-            {/* Search Analytics Toggle + Chat Input */}
             <div className="border-t border-slate-200/80 bg-white/80 backdrop-blur-sm">
-                {/* Toggle - only show before workflow starts */}
                 {!isRunning && messages.length === 0 && (
                     <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3">
                         <button
@@ -404,10 +376,6 @@ export default function NewProjectPage() {
     );
 }
 
-// ============================================
-// Message Renderer Component
-// ============================================
-
 interface MessageRendererProps {
     message: ChatMessageType;
     artifacts: ArtifactPayload[];
@@ -431,7 +399,6 @@ function MessageRenderer({
 }: MessageRendererProps) {
     const metadata = message.metadata;
 
-    // User messages - right aligned
     if (message.type === 'user') {
         return (
             <div className="flex justify-end my-4">
@@ -442,7 +409,6 @@ function MessageRenderer({
         );
     }
 
-    // System messages - center aligned, smaller
     if (message.type === 'system') {
         return (
             <div className="flex justify-center my-2">
@@ -453,7 +419,6 @@ function MessageRenderer({
         );
     }
 
-    // Step messages - show description without step counter
     if (message.type === 'step') {
         return (
             <div className="flex justify-start my-4">
@@ -469,7 +434,6 @@ function MessageRenderer({
         );
     }
 
-    // Agent messages - left aligned with avatar
     if (message.type === 'agent') {
         return (
             <div className="flex justify-start my-4">
@@ -488,7 +452,6 @@ function MessageRenderer({
         );
     }
 
-    // Artifact messages - routed to dedicated card components
     if (message.type === 'artifact') {
         const artifactId = metadata?.artifactId;
         const artifact = artifacts.find(a => a.artifactId === artifactId);
@@ -507,14 +470,11 @@ function MessageRenderer({
         );
     }
 
-    // HITL messages - interactive card (or static if already responded)
     if (message.type === 'hitl') {
         const isActive = pendingHITL !== null && pendingHITL.requestId === metadata?.requestId;
         const hitlData = isActive ? pendingHITL : (metadata?.data as HITLRequestPayload | undefined);
 
-        // Use HITLMessageCard for selection and multi_selection types (have options, but not url_selection)
         if (hitlData && hitlData.options && hitlData.options.length > 0 && hitlData.requestType !== 'url_selection') {
-            // Check if there's a link_list artifact present - if so, don't render multi_selection card
             const hasLinkListArtifact = artifacts.some(a => a.artifactType === 'link_list');
             if (hitlData.requestType === 'multi_selection' && hasLinkListArtifact) {
                 return null;
@@ -542,38 +502,32 @@ function MessageRenderer({
                             <MarkdownRenderer content={message.content} accentColor="amber" />
                         </div>
 
-                        {/* Show interactive elements only when HITL is active */}
                         {hitlData && (
                             <>
-                                {/* Confirmation type - informational message only */}
                                 {hitlData.requestType === 'confirmation' && (
                                     <p className="text-xs text-amber-600 italic">
                                         Please provide your confirmation in the chat input below
                                     </p>
                                 )}
 
-                                {/* Feedback type - handled by chat input */}
                                 {hitlData.requestType === 'feedback' && (
                                     <p className="text-xs text-amber-600 italic">
                                         Type your feedback in the chat input below
                                     </p>
                                 )}
 
-                                {/* Data input type - handled by chat input */}
                                 {hitlData.requestType === 'data_input' && (
                                     <p className="text-xs text-amber-600 italic">
                                         Type your input in the chat input below
                                     </p>
                                 )}
 
-                                {/* Topic input type - handled by chat input */}
                                 {hitlData.requestType === 'topic_input' && (
                                     <p className="text-xs text-amber-600 italic">
                                         Type your topic or question in the chat input below
                                     </p>
                                 )}
 
-                                {/* URL selection type */}
                                 {hitlData.requestType === 'url_selection' && hitlData.options && (
                                     <div className="space-y-2">
                                         {hitlData.options.map((option) => (
@@ -588,7 +542,6 @@ function MessageRenderer({
                                     </div>
                                 )}
 
-                                {/* Content review type */}
                                 {hitlData.requestType === 'content_review' && (
                                     <div className="flex gap-2">
                                         <button
@@ -606,7 +559,6 @@ function MessageRenderer({
                                     </div>
                                 )}
 
-                                {/* Fallback: if no specific type matched, show text input hint */}
                                 {!hitlData.options &&
                                     !['feedback', 'data_input', 'topic_input', 'content_review'].includes(hitlData.requestType || '') && (
                                         <p className="text-xs text-amber-600 italic">
@@ -616,7 +568,6 @@ function MessageRenderer({
                             </>
                         )}
 
-                        {/* Show "responded" indicator when no longer active */}
                         {!isActive && (
                             <p className="text-xs text-slate-400 mt-2 flex items-center gap-1">
                                 <CheckCircle2 className="w-3 h-3" /> Responded

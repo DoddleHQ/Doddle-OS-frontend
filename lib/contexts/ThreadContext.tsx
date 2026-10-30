@@ -209,8 +209,6 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
             } catch (err) {
                 const message = err instanceof Error ? err.message : 'Failed to delete thread';
                 setError(message);
-                // Rethrow so callers can distinguish success from failure
-                // (prevents false-positive success toasts)
                 throw err;
             }
         },

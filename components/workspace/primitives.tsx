@@ -3,7 +3,6 @@
 import type { SwarmStatus } from '@/lib/demo/osStore';
 import type { ThreadStatus } from '@/lib/demo/types';
 
-/** The Doddle OS logo (public/Doddle_Logo.jpeg). */
 export function BrandMark({ className }: { className?: string }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -16,7 +15,6 @@ export function BrandMark({ className }: { className?: string }) {
   );
 }
 
-/** Thread status → the service-state grammar shown on the board. */
 function toService(status: SwarmStatus | ThreadStatus | 'idle'): SwarmStatus | 'idle' {
   if (status === 'done') return 'completed';
   if (status === 'failed' || status === 'aborted') return 'halted';
@@ -24,14 +22,12 @@ function toService(status: SwarmStatus | ThreadStatus | 'idle'): SwarmStatus | '
   return 'idle';
 }
 
-/** Section label: tracked caps with a rule running off the text. */
 export function SectionLabel({ children, tone }: { children: React.ReactNode; tone?: string }) {
   return (
     <span className="label-rule" style={tone ? { color: tone } : undefined}>{children}</span>
   );
 }
 
-/** Status badge in the source HTML's own words: idle / running / completed / halted. */
 export function SwarmBadge({ status }: { status: SwarmStatus | ThreadStatus | 'idle' }) {
   const s = toService(status);
   if (s === 'running') {
@@ -46,7 +42,6 @@ export function SwarmBadge({ status }: { status: SwarmStatus | ThreadStatus | 'i
   return <span className="agent-badge"><span className="w-1.5 h-1.5 rounded-full border border-current" /> idle</span>;
 }
 
-/** Progress bar — ink filling a hairline track. */
 export function ProgressBar({ pct, status }: { pct: number; status: SwarmStatus | ThreadStatus | 'idle' }) {
   const s = toService(status);
   const ink =

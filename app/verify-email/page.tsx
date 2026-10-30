@@ -57,7 +57,6 @@ function VerifyEmailContent() {
     }, [status, router]);
 
     const renderState = () => {
-        // Loading
         if (status === 'loading') return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
                 <div className="w-8 h-8 mx-auto rounded-full border-2 border-current border-t-transparent animate-spin mb-4" style={{ color: 'var(--v2-vermilion)' }} />
@@ -65,7 +64,6 @@ function VerifyEmailContent() {
             </motion.div>
         );
 
-        // Verified
         if (status === 'verified') return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
                 <motion.div className="w-14 h-14 mx-auto mb-5 rounded-full flex items-center justify-center" style={{ background: 'var(--v2-vermilion)' }} initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
@@ -79,7 +77,6 @@ function VerifyEmailContent() {
             </motion.div>
         );
 
-        // Already verified
         if (status === 'already_verified') return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
                 <motion.div className="w-14 h-14 mx-auto mb-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(200,50,27,0.08)' }} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
@@ -91,7 +88,6 @@ function VerifyEmailContent() {
             </motion.div>
         );
 
-        // Expired / Invalid
         if (status === 'expired' || status === 'invalid') return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
                 <motion.div className="w-14 h-14 mx-auto mb-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(200,50,27,0.08)' }} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
@@ -115,7 +111,6 @@ function VerifyEmailContent() {
             </motion.div>
         );
 
-        // Generic error
         return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
                 <motion.div className="w-14 h-14 mx-auto mb-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(200,50,27,0.08)' }} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>

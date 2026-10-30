@@ -7,17 +7,12 @@ import { sendVerification } from '@/lib/services/authService';
 type ResendStatus = 'idle' | 'loading' | 'sent' | 'rate_limited' | 'error';
 
 type ResendVerificationEmailProps = {
-    /** The email address to send the verification link to. */
     email: string;
-    /** Optional label for the button. Defaults to "Resend Verification Email". */
     label?: string;
-    /** Optional variant for styling. Defaults to 'primary'. */
     variant?: 'primary' | 'secondary' | 'link';
-    /** Optional className override. */
     className?: string;
 };
 
-/** Cooldown duration in seconds after a successful resend. */
 const COOLDOWN_SECONDS = 60;
 
 export function ResendVerificationEmail({
@@ -31,7 +26,6 @@ export function ResendVerificationEmail({
     const [rateLimitMessage, setRateLimitMessage] = useState('');
     const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    // Cleanup interval on unmount
     useEffect(() => {
         return () => {
             if (cooldownTimerRef.current) {
@@ -40,7 +34,6 @@ export function ResendVerificationEmail({
         };
     }, []);
 
-    // Cooldown countdown
     useEffect(() => {
         if (cooldownRemaining <= 0) return;
 
@@ -65,7 +58,6 @@ export function ResendVerificationEmail({
             setCooldownRemaining(COOLDOWN_SECONDS);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Failed to send verification email.';
-            // Check for rate-limit message
             if (message.toLowerCase().includes('too many') || message.toLowerCase().includes('rate')) {
                 setStatus('rate_limited');
                 setRateLimitMessage(message);
@@ -77,7 +69,6 @@ export function ResendVerificationEmail({
 
     const isDisabled = status === 'loading' || cooldownRemaining > 0;
 
-    // Link variant — minimal styling
     if (variant === 'link') {
         return (
             <div className="space-y-2">
@@ -122,7 +113,6 @@ export function ResendVerificationEmail({
         );
     }
 
-    // Button variants (primary / secondary)
     const baseClasses = variant === 'primary'
         ? 'flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-3 text-base font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
         : 'flex items-center justify-center gap-2 rounded-lg border border-neutral-200 px-4 py-3 text-base font-medium text-neutral-700 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors';

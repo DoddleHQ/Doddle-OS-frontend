@@ -1,10 +1,3 @@
-/*
- * v3 Launchpad catalog — the REAL module routes of this app, presented in
- * the v13 blueprint-library grammar. Every entry links to a live page;
- * nothing here is a mock. `tags` power the domain filters and the vehicle
- * picker's keyword scoring.
- */
-
 import {
   Search,
   Factory,
@@ -22,14 +15,12 @@ import type { LucideIcon } from 'lucide-react';
 export type V3ModuleDomain = 'seo' | 'content' | 'social' | 'ads' | 'analytics' | 'ops' | 'brand';
 
 export interface V3Module {
-  /** route slug under /workspaces/{id}/modules/ (or root for brand-persona) */
   slug: string;
   name: string;
   blurb: string;
   domain: V3ModuleDomain;
   tags: string[];
   icon: LucideIcon;
-  /** root-level routes skip the /modules/ segment */
   root?: boolean;
 }
 
@@ -127,18 +118,12 @@ export const V3_MODULES: V3Module[] = [
   },
 ];
 
-/** Real route for a module in a workspace (exists in this app today). */
 export function v3ModuleHref(slug: string, workspaceId: string): string {
   const m = V3_MODULES.find((x) => x.slug === slug);
   const base = m?.root ? `/workspaces/${workspaceId}` : `/workspaces/${workspaceId}/modules`;
   return `${base}/${slug}`;
 }
 
-/**
- * The v13 vehicle picker, honestly: keyword-score the module catalog against
- * a free-text outcome and return ranked suggestions (best first). Pure
- * client-side matching — no fabricated confidence beyond the score itself.
- */
 export function v3SuggestModules(text: string): Array<{ module: V3Module; score: number }> {
   const q = text.trim().toLowerCase();
   if (!q) return [];

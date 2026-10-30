@@ -12,11 +12,6 @@ import { V3Markdown } from '@/components/v3/ui/V3Markdown';
 import { Glide } from '@/components/v3/ui/Glide';
 import { COMPOSER_MODES } from '@/components/v3/ui/Composer';
 
-/* ------------------------------------------------------------------ */
-/* Roster — v13 exact: deploy-prompt composer, ACTIVE/IDLE columns, dock */
-/* ------------------------------------------------------------------ */
-
-/** v13 category language for the roster badges + telemetry words. */
 const SUITE_CAT: Record<string, { cat: string; label: string; color: string }> = {
   'SEO Audit Suite': { cat: 'research', label: 'Research', color: 'var(--task-research)' },
   'Website Content Suite': { cat: 'writing', label: 'Writing', color: 'var(--task-writing)' },
@@ -94,7 +89,6 @@ function RosterView({ onLaunchTask }: { onLaunchTask: (text: string) => void }) 
       .sort((x, y) => y[1] - x[1])[0]?.[0];
   }, [q, visible]);
 
-  /** v13 startAgentTask: the picked agent (or best match) runs here as a task. */
   function launchAgent(target = pickedKey ?? best?.key ?? null) {
     if (!target) return;
     const desc = q.trim();
@@ -363,11 +357,6 @@ function RosterView({ onLaunchTask }: { onLaunchTask: (text: string) => void }) 
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Exec view — v13 exact: centered head pane, terminal log, glass       */
-/* threads table, composer with Deploy ⌘⏎, sess-state line             */
-/* ------------------------------------------------------------------ */
-
 function AgentExecView({
   agentKey,
   minimized,
@@ -403,7 +392,6 @@ function AgentExecView({
       const res = await fetch(`/api/power-agents/threads?agentKey=${encodeURIComponent(agent.key)}&workspaceId=${encodeURIComponent(workspaceId)}`);
       if (res.ok) setSessions((await res.json()) as V3Session[]);
     } catch {
-      /* list is best-effort */
     }
   }, [agent, workspaceId]);
 
@@ -526,7 +514,6 @@ function AgentExecView({
         }
       }
     } catch {
-      /* keep current session on failure */
     }
   }
 
@@ -546,7 +533,6 @@ function AgentExecView({
       seen(id);
       if (t.busy) void joinActiveStream(id);
     } catch {
-      /* stay on current */
     }
   }
 
@@ -613,7 +599,6 @@ function AgentExecView({
         }
       }
     } catch {
-      /* join is best-effort */
     } finally {
       setLiveJoin(false);
     }
@@ -646,7 +631,6 @@ function AgentExecView({
     try {
       await fetch(`/api/power-agents/threads/${id}`, { method: 'DELETE' });
     } catch {
-      /* chip stays gone; the server list reconciles on next refresh */
     }
     refreshSessions();
   }
@@ -685,7 +669,6 @@ function AgentExecView({
           setSessions((s) => (s.some((c) => c.id === id) ? s : [{ id, title: t.title ?? 'New session', agentKey: agent.key, createdAt: null, updatedAt: null }, ...s]));
         }
       } catch {
-        /* fall back to the server's lazy thread creation on send */
       }
     }
     await sendMessage({ text });
@@ -881,7 +864,6 @@ function AgentExecView({
   );
 }
 
-/** The v13 agent-log: terminal lines — $ user, markdown replies, tool runs. */
 function TerminalFeed({ messages }: { messages: UIMessage[] }) {
   type ToolInfo = { key: string; name: string; state: string };
   type Item =
@@ -993,8 +975,6 @@ function TerminalFeed({ messages }: { messages: UIMessage[] }) {
 export function AgentsWindow() {
   const selected = useV3OS((s) => s.selectedAgentKey);
   const agents = useV3Fetch(fetchV3PowerAgents, []);
-  // task-takes-over-chrome: while the exec view runs, the window title is the
-  // agent and the browser-style traffic lives in the titlebar
   const selectedAgent = v3AgentByKey(agents.data ?? [], selected);
   const [taskMin, setTaskMin] = useState(false);
   const [taskZoom, setTaskZoom] = useState(false);

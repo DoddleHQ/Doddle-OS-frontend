@@ -3,10 +3,6 @@
 import { useEffect, useRef } from 'react';
 import { useV3OS } from '@/lib/v3/osStore';
 
-/*
- * Lively wallpaper: theme-aware gradient ground + 3 slow aurora blobs on canvas.
- * Static under prefers-reduced-motion; null-context safe (jsdom/tests).
- */
 export function Wallpaper() {
   const backdrop = useV3OS((s) => s.backdrop);
   const theme = useV3OS((s) => s.theme);
@@ -46,8 +42,6 @@ export function Wallpaper() {
     window.addEventListener('resize', size);
 
     let raf = 0;
-    // reference throttle: pause the aurora when the tab is hidden or the
-    // operator has been idle for a minute (mouse/key/touch re-arms it)
     let idleTimer: ReturnType<typeof setTimeout> | null = null;
     let isIdle = false;
     const armIdle = () => {

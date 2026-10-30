@@ -1,6 +1,5 @@
 import { Thread, Event, Conflict, Agent } from './mockData';
 
-// Define sample agents for the thread
 const techLeadAgent: Agent = {
   id: 'agent-tech-lead',
   name: 'Tech_Lead',
@@ -34,7 +33,6 @@ const contentStrategistAgent: Agent = {
   }
 };
 
-// Define events for the thread
 const threadEvents: Event[] = [
   {
     type: 'message',
@@ -99,7 +97,6 @@ const threadEvents: Event[] = [
   }
 ];
 
-// Define the conflict for the thread
 const threadConflict: Conflict = {
   id: 'conf-001',
   reason: 'Technical debt vs. Content deadline - Agents disagree on task prioritization',
@@ -125,7 +122,6 @@ const threadConflict: Conflict = {
   ]
 };
 
-// Define the sample thread
 export const sampleThread: Thread = {
   id: 'thread-q1-content-pipeline',
   slug: 'q1-content-pipeline',
@@ -142,7 +138,6 @@ export const sampleThread: Thread = {
   }
 };
 
-// Helper function to get thread by slug
 export const getThreadBySlug = (slug: string): Thread | undefined => {
   if (slug === sampleThread.slug) {
     return sampleThread;

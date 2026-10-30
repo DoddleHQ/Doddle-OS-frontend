@@ -18,19 +18,13 @@ interface DockProps {
   workspaceId: string;
 }
 
-/** Grace period before collapsing — stops flicker when the pointer skips across gaps. */
 const CLOSE_DELAY_MS = 150;
 
-/** Shared easing with the pill nav and thread transitions. */
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/** Rail (collapsed) and dock (expanded) widths. The rail holds the layout slot. */
 const RAIL_W = 72;
 const OPEN_W = 224;
 
-/** Label reveal used across tile, nav links, and footer — mirrors the pill nav.
- *  Text is hidden purely by the width clip; no opacity fade, so it reads
- *  crisply from the first frame of the expansion. */
 function labelAnim(expanded: boolean) {
   return {
     width: expanded ? ('auto' as const) : 0,
@@ -72,13 +66,10 @@ export function Dock({ workspaceId }: DockProps) {
   const currentDomain = currentWs?.websiteDomain || '';
   const currentInitial = currentName.trim().split(' ')[0]?.[0]?.toUpperCase() ?? '?';
 
-  // Split routes into logical groups
-  const executionRoutes = routes.slice(0, 3); // dashboard, launchpad, power_agents
-  const managementRoutes = routes.slice(3);   // graphs, agency_hub, settings
+  const executionRoutes = routes.slice(0, 3);
+  const managementRoutes = routes.slice(3);
 
   return (
-    /* the rail holds the collapsed width in the layout; the dock itself overlays
-       content while expanded so hovering never shifts the page */
     <div className="relative shrink-0 z-40 w-[72px]">
       <motion.div
         onMouseEnter={openDock}
@@ -92,14 +83,12 @@ export function Dock({ workspaceId }: DockProps) {
         transition={{ duration: 0.3, ease: EASE }}
         className="agency-panel border-r agency-border absolute inset-y-0 left-0 flex flex-col px-3 py-4 overflow-hidden"
       >
-        {/* ── top: logo ── */}
         <div className="flex items-center mb-3.5">
           <Link href="/" title="Doddle OS" className="hover:opacity-85 transition-opacity">
             <BrandMark className="w-9 h-9" />
           </Link>
         </div>
 
-        {/* ── workspace card ── */}
         <div className="mb-3">
           <button
             type="button"
@@ -136,9 +125,6 @@ export function Dock({ workspaceId }: DockProps) {
             </motion.span>
           </button>
 
-          {/* workspace dropdown — every workspace under its organization;
-              org headers only when there is more than one org, otherwise
-              they just detach the current workspace from its context */}
           {wsListOpen && expanded && (
             <div className="mt-1.5 space-y-1 border border-[var(--hairline)] rounded-[8px] p-1.5 bg-[var(--net-panel)] max-h-[60vh] overflow-y-auto">
               {(() => {
@@ -189,7 +175,6 @@ export function Dock({ workspaceId }: DockProps) {
           )}
         </div>
 
-        {/* ── nav: grouped into Execution / Management ── */}
         <div className="flex-1 flex flex-col gap-2 min-h-0 overflow-y-auto">
           <div>
             <motion.p
@@ -226,7 +211,6 @@ export function Dock({ workspaceId }: DockProps) {
           </div>
         </div>
 
-        {/* ── footer: user ── */}
         <div className="shrink-0 pt-3 border-t border-[var(--hairline)] mt-3">
           <Link
             href={`${basePath}/settings`}
@@ -254,7 +238,6 @@ export function Dock({ workspaceId }: DockProps) {
   );
 }
 
-/** Individual nav link — icon always visible, label animates in step with the dock width */
 function NavLink({ route, expanded, isActive, runActive }: {
   route: { path: string; label: string; icon: string };
   expanded: boolean;

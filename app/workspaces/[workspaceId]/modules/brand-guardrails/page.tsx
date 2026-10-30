@@ -8,18 +8,6 @@ import { workspaceService } from '@/lib/services/workspaceService';
 import { V2Markdown } from '@/components/v2/onboarding/V2Markdown';
 import { notify } from '@/lib/stores/notificationStore';
 
-/*
- * Brand Guardrails — brand persona editor.
- *
- * Fetches the workspace's brand persona (GET /workspaces/{id}/persona) and
- * shows it in an editable markdown editor. User edits → Save (PUT) → stored.
- *
- * Operate mode: single sans (Hanken Grotesk), accent reserved for actions,
- * functional 150-250ms motion, complete loading/error/empty states.
- * The editor is a simple textarea (edit mode) / markdown preview (read mode)
- * toggle — no heavy WYSIWYG dependency.
- */
-
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 type ViewState = 'loading' | 'editing' | 'error' | 'empty';
@@ -54,7 +42,7 @@ export default function BrandGuardrailsPage() {
     }, [workspaceId]);
 
     useEffect(() => {
-        setShowPreview(true); // Always start in preview mode
+        setShowPreview(true);
         fetchPersona();
     }, [fetchPersona]);
 
@@ -75,7 +63,6 @@ export default function BrandGuardrailsPage() {
 
     const hasChanges = persona !== original;
 
-    // === Loading state ===
     if (view === 'loading') {
         return (
             <div className="p-5 md:p-6 max-w-[720px] mx-auto">
@@ -85,7 +72,6 @@ export default function BrandGuardrailsPage() {
         );
     }
 
-    // === Error state ===
     if (view === 'error') {
         return (
             <div className="p-5 md:p-6 max-w-[720px] mx-auto">
@@ -108,7 +94,6 @@ export default function BrandGuardrailsPage() {
 
     return (
         <div className="p-5 md:p-6 max-w-[720px] mx-auto">
-            {/* Page heading */}
             <motion.div
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -131,14 +116,12 @@ export default function BrandGuardrailsPage() {
                         {updatedAt ? `Last updated ${new Date(updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : 'Define your brand voice, tone, and guidelines'}
                     </p>
                 </div>
-                {/* Preview / Edit toggle */}
                 <div className="flex items-center gap-1">
                     <ToggleButton active={showPreview} onClick={() => setShowPreview(true)} label="Preview" />
                     <ToggleButton active={!showPreview} onClick={() => setShowPreview(false)} label="Edit" />
                 </div>
             </motion.div>
 
-            {/* Empty state — no persona yet */}
             {view === 'empty' && (
                 <div
                     className="rounded-[10px] p-6 mb-4 text-center"
@@ -161,7 +144,6 @@ export default function BrandGuardrailsPage() {
                 </div>
             )}
 
-            {/* Editor / Preview */}
             {(view === 'editing' || view === 'empty') && (
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -169,7 +151,6 @@ export default function BrandGuardrailsPage() {
                     transition={{ duration: 0.15 }}
                 >
                     {showPreview ? (
-                        /* Preview mode — render markdown */
                         <div
                             className="rounded-[10px] p-5 min-h-[300px]"
                             style={{
@@ -186,7 +167,6 @@ export default function BrandGuardrailsPage() {
                             )}
                         </div>
                     ) : (
-                        /* Edit mode — textarea */
                         <textarea
                             value={persona}
                             onChange={(e) => setPersona(e.target.value)}
@@ -208,7 +188,6 @@ export default function BrandGuardrailsPage() {
                 </motion.div>
             )}
 
-            {/* Action bar */}
             {(view === 'editing' || view === 'empty') && !showPreview && (
                 <div className="flex items-center justify-between mt-4">
                     <p className="v2-mono" style={{ fontSize: '0.65rem', color: 'var(--v2-paper-ink-2)' }}>
@@ -232,7 +211,6 @@ export default function BrandGuardrailsPage() {
                 </div>
             )}
 
-            {/* Unsaved changes indicator */}
             {hasChanges && !showPreview && (
                 <motion.p
                     initial={{ opacity: 0 }}
@@ -247,7 +225,6 @@ export default function BrandGuardrailsPage() {
     );
 }
 
-/* === Toggle button (Edit / Preview) === */
 function ToggleButton({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
     return (
         <button

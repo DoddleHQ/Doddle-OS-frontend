@@ -7,15 +7,6 @@ import type { V3Agent } from '@/lib/v3/powerAgents';
 import { SUITE_TINT } from '@/lib/v3/powerAgents';
 import { V3Markdown } from '@/components/v3/ui/V3Markdown';
 
-/**
- * The conversation feed, in the v13 chat grammar: every turn is a chat
- * message (avatar · name · time · bubble) and tool calls render as nested
- * replies under the flow. Tool grouping is unchanged: across message
- * boundaries, per tool name — within an uninterrupted run (no text
- * between), repeated invocations of the SAME tool collapse into one
- * accordion row (name ×N); distinct tools stay their own rows and are
- * never merged into a generic blob.
- */
 export function ChatFeed({ messages, agent }: { messages: UIMessage[]; agent?: V3Agent }) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const tint = agent ? SUITE_TINT[agent.suite] : undefined;
@@ -28,7 +19,6 @@ export function ChatFeed({ messages, agent }: { messages: UIMessage[]; agent?: V
     | { kind: 'tool'; tool: ToolInfo }
     | { kind: 'toolgroup'; key: string; label: string; tools: ToolInfo[] };
 
-  // UIMessage.createdAt (when the stream provides it) → "HH:MM" chat time
   const timeOf = (m: UIMessage): string | null => {
     const t = (m as { createdAt?: unknown }).createdAt;
     if (!t) return null;
@@ -41,8 +31,6 @@ export function ChatFeed({ messages, agent }: { messages: UIMessage[]; agent?: V
   let toolRun: ToolInfo[] = [];
   const flushRun = () => {
     if (toolRun.length === 0) return;
-    // group the run by tool name, preserving first-appearance order —
-    // repeats of the same tool collapse; different tools never merge
     const byName = new Map<string, ToolInfo[]>();
     toolRun.forEach((t) => {
       const list = byName.get(t.name) ?? [];
@@ -62,7 +50,7 @@ export function ChatFeed({ messages, agent }: { messages: UIMessage[]; agent?: V
   messages.forEach((m) => {
     const time = timeOf(m);
     if (m.role === 'user') {
-      flushRun(); // a user turn breaks any tool run
+      flushRun();
       const text = m.parts?.map((p) => (p.type === 'text' ? (p as { text?: string }).text ?? '' : '')).join('');
       if (text) items.push({ kind: 'user', key: `usr-${m.id}`, text, time });
       return;

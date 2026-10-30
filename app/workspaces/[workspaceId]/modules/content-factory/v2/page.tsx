@@ -8,11 +8,6 @@ import { AGENT_LIST } from '@/components/v2/content-factory/agents';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/*
- * Content Factory v2 landing — agent selection list.
- * Accessible at /workspaces/{id}/modules/content-factory/v2/
- */
-
 export default function ContentFactoryV2Landing() {
     const params = useParams();
     const workspaceId = params.workspaceId as string;

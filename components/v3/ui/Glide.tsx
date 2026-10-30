@@ -11,10 +11,6 @@ export interface GlideOption {
   hint?: string;
 }
 
-/**
- * The v13 glide menu: a compact mono dropdown that opens upward (composer
- * context). Presentational — the selection semantics belong to the caller.
- */
 export function Glide({
   value,
   options,

@@ -2,7 +2,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TriageWindow } from '@/components/v3/windows/TriageWindow';
 import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3PowerAgents, type V3Agent } from '@/lib/v3/powerAgents';
-// path navigation: router/pathname stubs
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
   usePathname: () => '/v3',
@@ -14,7 +13,6 @@ jest.mock('@/lib/v3/powerAgents', () => {
 });
 const mockedAgents = fetchV3PowerAgents as jest.MockedFunction<typeof fetchV3PowerAgents>;
 
-// the exec view's chat transport isn't under test here
 jest.mock('@ai-sdk/react', () => ({
   useChat: () => ({ messages: [], setMessages: jest.fn(), sendMessage: jest.fn(), status: 'ready', stop: jest.fn(), error: null }),
 }));
@@ -42,7 +40,7 @@ function seedFeed() {
     ],
     windows: [],
   });
-  window.localStorage.setItem('v3.seen.th.t2', String(Date.now())); // t2 is read
+  window.localStorage.setItem('v3.seen.th.t2', String(Date.now()));
 }
 
 describe('TriageWindow · 3-pane on real unread sessions', () => {
@@ -52,11 +50,9 @@ describe('TriageWindow · 3-pane on real unread sessions', () => {
     try {
       window.localStorage.clear();
     } catch {
-      /* ignore */
     }
     mockedAgents.mockResolvedValue([agent({})]);
     seedFeed();
-    // default history mock; individual tests override
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ messages: [] }),
@@ -68,7 +64,7 @@ describe('TriageWindow · 3-pane on real unread sessions', () => {
 
   it('queue lists only unread sessions; the reviewed one is absent', async () => {
     render(<TriageWindow />);
-    expect((await screen.findAllByText('Q4 site audit')).length).toBeGreaterThanOrEqual(1); // queue row + details
+    expect((await screen.findAllByText('Q4 site audit')).length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText('already reviewed')).toBeNull();
     expect(screen.getByText(/QUEUE · REVIEW — NOTHING SHIPS WITHOUT YOU/i)).toBeTruthy();
   });
