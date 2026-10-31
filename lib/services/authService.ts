@@ -53,6 +53,11 @@ const REQUEST_TIMEOUT_MS = 10_000;
 
 export const DEFAULT_EXPIRES_IN = 900;
 
+// Google OAuth: backend-driven handshake. Must be a plain browser
+// navigation (never fetch) — the backend answers with a 302 to Google
+// and later lands back on /login with cookies set or ?error=<code>.
+export const GOOGLE_LOGIN_URL = `${API_BASE_URL}/api/v1/auth/google/login`;
+
 function authHeaders(): Record<string, string> {
     return {
         'Content-Type': 'application/json',

@@ -7,12 +7,20 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import { AuthLayout } from '@/components/v2/AuthLayout';
 import { AuthInput } from '@/components/v2/AuthInput';
-import { login, loginForce, sendVerification, LoginError } from '@/lib/services/authService';
+import { login, loginForce, sendVerification, getMe, LoginError } from '@/lib/services/authService';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { workspaceService } from '@/lib/services/workspaceService';
+import { GoogleAuthButton, AuthDivider } from '@/components/v2/GoogleAuthButton';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type Status = 'idle' | 'loading' | 'success';
+
+const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
+  state: 'Your Google sign-in link expired or was already used. Please try again.',
+  inactive: 'Your account is deactivated. Please contact support.',
+  google: 'Google could not complete the sign-in. Please try again.',
+  email: 'Google returned an unverified email address. Verify your email with Google, then try again.',
+};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,6 +43,68 @@ export default function LoginPage() {
 
   const [resendStatus, setResendStatus] = useState<'idle' | 'loading' | 'sent' | 'error'>('idle');
   const [cooldown, setCooldown] = useState(0);
+
+  const routeAfterLogin = async () => {
+    let next = new URLSearchParams(window.location.search).get('next');
+    if (!next) {
+      try {
+        next = sessionStorage.getItem('pendingNext');
+        if (next) sessionStorage.removeItem('pendingNext');
+      } catch { next = null; }
+    }
+    if (next) {
+      setTimeout(() => {
+        router.push(next);
+      }, 1200);
+      return;
+    }
+    try {
+      const workspaceRes = await workspaceService.listWorkspaces(0, 100);
+      if (workspaceRes.items && workspaceRes.items.length > 0) {
+        const firstWorkspace = workspaceRes.items[0];
+        setTimeout(() => {
+          router.push(`/workspaces/${firstWorkspace.workspaceId}`);
+        }, 1200);
+      } else {
+        setTimeout(() => {
+          router.push('/workspaces');
+        }, 1200);
+      }
+    } catch (err) {
+      setTimeout(() => {
+        router.push('/workspaces');
+      }, 1200);
+    }
+  };
+
+  // Google OAuth return trip: the backend lands on /login either with
+  // ?error=<code> (handshake failed) or with auth cookies already set.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const oauthError = params.get('error');
+    if (oauthError) {
+      const friendly = GOOGLE_ERROR_MESSAGES[oauthError] ?? 'Please try again.';
+      setApiError(`Google sign-in failed. ${friendly}`);
+      params.delete('error');
+      const qs = params.toString();
+      window.history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : ''));
+      return;
+    }
+    let cancelled = false;
+    getMe()
+      .then(() => {
+        if (cancelled) return;
+        setStatus('success');
+        routeAfterLogin();
+      })
+      .catch(() => {
+        // Not signed in — normal visit, show the form.
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -88,37 +158,7 @@ export default function LoginPage() {
       }
       loginSuccess(result);
       setStatus('success');
-
-      let next = new URLSearchParams(window.location.search).get('next');
-      if (!next) {
-        try {
-          next = sessionStorage.getItem('pendingNext');
-          if (next) sessionStorage.removeItem('pendingNext');
-        } catch { next = null; }
-      }
-      if (next) {
-        setTimeout(() => {
-          router.push(next);
-        }, 1200);
-      } else {
-        try {
-          const workspaceRes = await workspaceService.listWorkspaces(0, 100);
-          if (workspaceRes.items && workspaceRes.items.length > 0) {
-            const firstWorkspace = workspaceRes.items[0];
-            setTimeout(() => {
-              router.push(`/workspaces/${firstWorkspace.workspaceId}`);
-            }, 1200);
-          } else {
-            setTimeout(() => {
-              router.push('/workspaces');
-            }, 1200);
-          }
-        } catch (err) {
-          setTimeout(() => {
-            router.push('/workspaces');
-          }, 1200);
-        }
-      }
+      await routeAfterLogin();
     } catch (err: unknown) {
       setStatus('idle');
       if (err instanceof LoginError) {
@@ -234,6 +274,21 @@ export default function LoginPage() {
                   )}
                 </AnimatePresence>
               </motion.button>
+
+              <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="my-5">
+                <AuthDivider />
+              </motion.div>
+
+              <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }}>
+                <GoogleAuthButton
+                  onNavigate={() => {
+                    const next = new URLSearchParams(window.location.search).get('next');
+                    if (next) {
+                      try { sessionStorage.setItem('pendingNext', next); } catch {}
+                    }
+                  }}
+                />
+              </motion.div>
 
               <motion.p variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="v2-mono text-[12px] text-center mt-6" style={{ color: 'var(--v2-paper-ink-2)' }}>
                 No account? <Link href={signupHref} className="hover:underline font-medium font-bold" style={{ color: 'var(--v2-vermilion)' }}>Create one</Link>
