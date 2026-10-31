@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Eye, EyeOff, Check, X, ArrowRight, Mail } from 'lucide-react';
 import { AuthLayout } from '@/components/v2/AuthLayout';
 import { AuthInput } from '@/components/v2/AuthInput';
+import { GoogleAuthButton, AuthDivider } from '@/components/v2/GoogleAuthButton';
 import { signup } from '@/lib/services/authService';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -149,6 +150,21 @@ export default function SignupPage() {
                   )}
                 </AnimatePresence>
               </motion.button>
+
+              <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="my-5">
+                <AuthDivider />
+              </motion.div>
+
+              <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }}>
+                <GoogleAuthButton
+                  onNavigate={() => {
+                    const next = new URLSearchParams(window.location.search).get('next');
+                    if (next) {
+                      try { sessionStorage.setItem('pendingNext', next); } catch {}
+                    }
+                  }}
+                />
+              </motion.div>
 
               <motion.p variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="v2-mono text-[12px] text-center mt-6" style={{ color: 'var(--v2-paper-ink-2)' }}>
                 Already have an account? <Link href="/login" className="hover:underline font-medium font-bold" style={{ color: 'var(--v2-vermilion)' }}>Sign in</Link>
