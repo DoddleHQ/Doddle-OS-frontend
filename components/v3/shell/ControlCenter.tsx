@@ -1,12 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Wifi, Moon } from 'lucide-react';
+import { Wifi, Moon, LogOut } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 export function ControlCenter() {
   const open = useV3OS((s) => s.ccOpen);
   const { toggleTheme, toggleCC } = useV3OS.getState();
+  const { user, logout } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
   const [brightness, setBrightness] = useState(70);
   const [verbosity, setVerbosity] = useState(40);
   const [wifi, setWifi] = useState(true);
@@ -69,6 +72,23 @@ export function ControlCenter() {
       <div className="flex gap-2 mt-3">
         <button className="btn-ghost flex-1" onClick={toggleTheme}>toggle theme</button>
         <button className="btn-ghost flex-1" onClick={() => toggleCC(false)}>settings</button>
+      </div>
+      <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--glass-border)' }}>
+        <p className="font-mono text-xs truncate" title={user?.email || ''}>
+          {user?.name || 'Operator'}
+        </p>
+        <button
+          className="btn-ghost w-full flex items-center justify-center gap-2 mt-2"
+          onClick={async () => {
+            if (signingOut) return;
+            setSigningOut(true);
+            await logout();
+          }}
+          disabled={signingOut}
+        >
+          <LogOut size={14} />
+          {signingOut ? 'signing out…' : 'log out'}
+        </button>
       </div>
     </div>
   );
