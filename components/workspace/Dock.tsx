@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Check, ChevronDown, Plus } from 'lucide-react';
+import { Check, ChevronDown, LogOut, Plus, Settings } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCurrentWorkspace } from '@/lib/hooks/useCurrentWorkspace';
 import { useWorkspaces } from '@/lib/contexts/WorkspaceContext';
@@ -35,11 +35,13 @@ function labelAnim(expanded: boolean) {
 export function Dock({ workspaceId }: DockProps) {
   const pathname = usePathname();
   const runActive = useOS((s) => s.runActive);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { workspaces } = useWorkspaces();
   const { workspace: currentWs } = useCurrentWorkspace(workspaceId);
   const [expanded, setExpanded] = useState(false);
   const [wsListOpen, setWsListOpen] = useState(false);
+  const [acctOpen, setAcctOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const routes = buildDemoRoutes(workspaceId);
   const basePath = `/workspaces/${workspaceId}`;
@@ -57,7 +59,15 @@ export function Dock({ workspaceId }: DockProps) {
     closeTimer.current = setTimeout(() => {
       setExpanded(false);
       setWsListOpen(false);
+      setAcctOpen(false);
     }, CLOSE_DELAY_MS);
+  };
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    setAcctOpen(false);
+    await logout();
   };
 
   const userName = user?.name || 'Operator';
@@ -212,10 +222,13 @@ export function Dock({ workspaceId }: DockProps) {
         </div>
 
         <div className="shrink-0 pt-3 border-t border-[var(--hairline)] mt-3">
-          <Link
-            href={`${basePath}/settings`}
+          <button
+            type="button"
+            onClick={() => setAcctOpen((v) => !v)}
+            aria-label={`Account menu (signed in as ${userName})`}
+            aria-expanded={acctOpen}
             title={userName}
-            className="flex items-center h-10 px-1 rounded-[8px] hover:bg-[var(--net-panel-2)] transition-colors"
+            className={`w-full flex items-center h-10 px-1 rounded-[8px] transition-colors text-left ${acctOpen ? 'bg-[var(--net-panel-2)]' : 'hover:bg-[var(--net-panel-2)]'}`}
           >
             <span className="w-8 h-8 rounded-full border border-[var(--hairline)] flex items-center justify-center text-[11px] font-bold font-mono bg-[var(--net-panel-2)] shrink-0">
               {userInitial}
@@ -231,7 +244,37 @@ export function Dock({ workspaceId }: DockProps) {
                 <span className="block text-[9px] font-mono text-[var(--ink-faint)] truncate">{user?.email || ''}</span>
               </span>
             </motion.span>
-          </Link>
+            <motion.span
+              initial={false}
+              animate={{ width: expanded ? 'auto' : 0, marginLeft: expanded ? 4 : 0 }}
+              transition={{ duration: 0.16, ease: EASE }}
+              className="overflow-hidden shrink-0"
+            >
+              <ChevronDown className={`w-3 h-3 text-[var(--ink-faint)] transition-transform ${acctOpen ? 'rotate-180' : ''}`} />
+            </motion.span>
+          </button>
+
+          {acctOpen && expanded && (
+            <div className="mt-1.5 space-y-1 border border-[var(--hairline)] rounded-[8px] p-1.5 bg-[var(--net-panel)]">
+              <Link
+                href={`${basePath}/settings`}
+                onClick={() => setAcctOpen(false)}
+                className="flex items-center gap-2.5 h-8 px-2 rounded-[6px] hover:bg-[var(--net-panel-2)] transition-colors"
+              >
+                <Settings className="w-3.5 h-3.5 text-[var(--ink-faint)] shrink-0" />
+                <span className="text-[10px] font-mono">Account settings</span>
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="w-full flex items-center gap-2.5 h-8 px-2 rounded-[6px] hover:bg-[var(--net-panel-2)] transition-colors disabled:opacity-60"
+              >
+                <LogOut className="w-3.5 h-3.5 text-[var(--ink-faint)] shrink-0" />
+                <span className="text-[10px] font-mono">{loggingOut ? 'Signing out…' : 'Log out'}</span>
+              </button>
+            </div>
+          )}
         </div>
       </motion.div>
     </div>
