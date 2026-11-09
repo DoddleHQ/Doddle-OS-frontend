@@ -101,7 +101,7 @@ export function ThreadSidebar({
                 className="flex items-center justify-between px-3 pt-3 pb-1.5 flex-shrink-0"
             >
                 <Link
-                    href={`/workspaces/${workspaceId}/modules/content-factory/v2`}
+                    href={`/legacy/workspaces/${workspaceId}/modules/content-factory/v2`}
                     className="v2-label transition-colors"
                     style={{ fontSize: '0.58rem', color: 'var(--v2-paper-ink-2)', letterSpacing: '0.1em' }}
                     title="All agents"
@@ -116,7 +116,7 @@ export function ThreadSidebar({
                 </span>
                 <div className="flex items-center gap-0.5">
                     <Link
-                        href={`/workspaces/${workspaceId}/modules/content-factory/v2/${agent.slug}/new`}
+                        href={`/legacy/workspaces/${workspaceId}/modules/content-factory/v2/${agent.slug}/new`}
                         className="p-1 rounded-[4px] transition-colors"
                         style={{ color: 'var(--v2-paper-ink-2)' }}
                         title="New thread"
@@ -149,7 +149,7 @@ export function ThreadSidebar({
                             No threads yet.
                         </p>
                         <Link
-                            href={`/workspaces/${workspaceId}/modules/content-factory/v2/${agent.slug}/new`}
+                            href={`/legacy/workspaces/${workspaceId}/modules/content-factory/v2/${agent.slug}/new`}
                             className="inline-block mt-2 px-3 py-1.5 rounded-[6px] v2-label text-[9px]"
                             style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)' }}
                         >
@@ -264,7 +264,7 @@ function ThreadRow({
     onDelete: () => void;
 }) {
     const hasChildren = childThreads.length > 0;
-    const href = `/workspaces/${workspaceId}/modules/content-factory/v2/${agentSlug}/${thread.id}`;
+    const href = `/legacy/workspaces/${workspaceId}/modules/content-factory/v2/${agentSlug}/${thread.id}`;
     const activeBg = 'rgba(200,50,27,0.08)';
     const hoverBg = 'rgba(0,0,0,0.03)';
     const isRunning = thread.status === 'running';
@@ -336,7 +336,7 @@ function ThreadRow({
 
                 {hasChildren && (
                     <Link
-                        href={`/workspaces/${workspaceId}/modules/content-factory/v2/${agentSlug}/new?parent=${thread.id}`}
+                        href={`/legacy/workspaces/${workspaceId}/modules/content-factory/v2/${agentSlug}/new?parent=${thread.id}`}
                         className="flex-shrink-0 p-0.5 opacity-0 hover:opacity-100 transition-opacity"
                         style={{ color: 'var(--v2-paper-ink-2)' }}
                         title="Add sub-thread"
@@ -358,7 +358,7 @@ function ThreadRow({
                         className="overflow-hidden"
                     >
                         {childThreads.map((child) => {
-                            const childHref = `/workspaces/${workspaceId}/modules/content-factory/v2/${agentSlug}/${child.id}`;
+                            const childHref = `/legacy/workspaces/${workspaceId}/modules/content-factory/v2/${agentSlug}/${child.id}`;
                             const childActive = activeThreadId === child.id;
                             return (
                                 <Link

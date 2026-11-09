@@ -27,7 +27,7 @@ export function RunningProcesses({ workspaceId }: { workspaceId: string }) {
           <FileText className="w-4 h-4" style={{ color: 'var(--line-cobalt)' }} /> Threads
         </h3>
         <Link
-          href={`/workspaces/${workspaceId}/modules/content-factory`}
+          href={`/legacy/workspaces/${workspaceId}/modules/content-factory`}
           className="text-[11px] font-mono text-[var(--ink-dim)] hover:text-[var(--ink)] transition-colors"
         >
           View All
@@ -48,7 +48,7 @@ export function RunningProcesses({ workspaceId }: { workspaceId: string }) {
           threads.slice(0, 8).map((t) => (
             <Link
               key={t.id}
-              href={`/workspaces/${workspaceId}/modules/${t.moduleId}`}
+              href={`/legacy/workspaces/${workspaceId}/modules/${t.moduleId}`}
               className="dense-row"
             >
               <span className="w-[38%] flex flex-col min-w-0">

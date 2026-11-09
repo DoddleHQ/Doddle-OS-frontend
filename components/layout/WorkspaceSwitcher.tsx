@@ -59,7 +59,7 @@ export function WorkspaceSwitcher() {
                     workspaces.map((workspace) => (
                         <Link
                             key={workspace.workspaceId}
-                            href={`/workspaces/${workspace.workspaceId}`}
+                            href={`/legacy/workspaces/${workspace.workspaceId}`}
                         >
                             <WorkspaceButton
                                 label={workspace.name || 'Untitled'}

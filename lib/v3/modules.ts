@@ -120,7 +120,7 @@ export const V3_MODULES: V3Module[] = [
 
 export function v3ModuleHref(slug: string, workspaceId: string): string {
   const m = V3_MODULES.find((x) => x.slug === slug);
-  const base = m?.root ? `/workspaces/${workspaceId}` : `/workspaces/${workspaceId}/modules`;
+  const base = m?.root ? `/legacy/workspaces/${workspaceId}` : `/legacy/workspaces/${workspaceId}/modules`;
   return `${base}/${slug}`;
 }
 

@@ -126,7 +126,7 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
         <div className="flex flex-col h-full">
             <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0" style={{ borderBottom: '1px solid var(--v2-paper-rule)' }}>
                 <Link
-                    href={`/workspaces/${workspaceId}/modules/content-factory/v2/${config.slug}`}
+                    href={`/legacy/workspaces/${workspaceId}/modules/content-factory/v2/${config.slug}`}
                     className="flex items-center gap-2 transition-colors"
                     style={{ color: 'var(--v2-paper-ink-2)' }}
                 >
@@ -283,7 +283,7 @@ export function AgentStream({ config, workspaceId, runId: runIdProp }: {
                                 </p>
                             )}
                             <Link
-                                href={`/workspaces/${workspaceId}/modules/content-factory/v2/${config.slug}`}
+                                href={`/legacy/workspaces/${workspaceId}/modules/content-factory/v2/${config.slug}`}
                                 className="inline-flex items-center gap-2 px-4 py-2 v2-label text-[10px] rounded-[8px]"
                                 style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)' }}
                             >

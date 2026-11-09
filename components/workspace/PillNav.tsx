@@ -22,7 +22,7 @@ export function PillNav({ workspaceId }: { workspaceId: string }) {
   const [hovered, setHovered] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const routes = buildDemoRoutes(workspaceId);
-  const basePath = `/workspaces/${workspaceId}`;
+  const basePath = `/legacy/workspaces/${workspaceId}`;
 
   const isActive = (path: string) =>
     path === basePath ? pathname === basePath : pathname.startsWith(path);

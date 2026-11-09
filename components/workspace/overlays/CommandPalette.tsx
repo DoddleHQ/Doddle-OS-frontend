@@ -14,7 +14,7 @@ interface Cmd {
 }
 
 function buildCommands(navigate: (path: string) => void, workspaceId: string): Cmd[] {
-  const base = `/workspaces/${workspaceId}`;
+  const base = `/legacy/workspaces/${workspaceId}`;
   return [
     { icon: 'layout-dashboard', label: 'Go to Dashboard', run: () => navigate(base) },
     { icon: 'terminal', label: 'Go to Launchpad', run: () => navigate(`${base}/launchpad`) },

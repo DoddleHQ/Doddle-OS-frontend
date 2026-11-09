@@ -10,7 +10,7 @@ interface GoogleAnalystButtonProps {
 
 export function GoogleAnalystButton({ workspaceId }: GoogleAnalystButtonProps) {
     return (
-        <Link href={`/workspaces/${workspaceId}/modules/analytics-action/google-analyst/new`}>
+        <Link href={`/legacy/workspaces/${workspaceId}/modules/analytics-action/google-analyst/new`}>
             <Button variant="primary" className="gap-2">
                 <BarChart3 className="h-4 w-4" />
                 New Analysis

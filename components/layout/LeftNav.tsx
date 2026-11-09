@@ -43,7 +43,7 @@ export function LeftNav({ workspaceId }: LeftNavProps) {
       <nav className="flex-1 overflow-y-auto p-3">
         <div className="space-y-1">
           <Link
-            href={`/workspaces/${workspaceId}`}
+            href={`/legacy/workspaces/${workspaceId}`}
             className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             <LucideLayoutDashboard className="h-4 w-4" />
@@ -59,7 +59,7 @@ export function LeftNav({ workspaceId }: LeftNavProps) {
               return (
                 <Link
                   key={module.id}
-                  href={`/workspaces/${workspaceId}/modules/${module.id}`}
+                  href={`/legacy/workspaces/${workspaceId}/modules/${module.id}`}
                   className="group flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   <div className="flex items-center gap-3">
@@ -78,7 +78,7 @@ export function LeftNav({ workspaceId }: LeftNavProps) {
 
           <div className="mt-4">
             <Link
-              href={`/workspaces/${workspaceId}/settings`}
+              href={`/legacy/workspaces/${workspaceId}/settings`}
               className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               <LucideSettings className="h-4 w-4" />

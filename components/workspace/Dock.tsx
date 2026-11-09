@@ -44,7 +44,7 @@ export function Dock({ workspaceId }: DockProps) {
   const [loggingOut, setLoggingOut] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const routes = buildDemoRoutes(workspaceId);
-  const basePath = `/workspaces/${workspaceId}`;
+  const basePath = `/legacy/workspaces/${workspaceId}`;
 
   const isActive = (path: string) =>
     path === basePath ? pathname === basePath : pathname.startsWith(path);
@@ -152,7 +152,7 @@ export function Dock({ workspaceId }: DockProps) {
                       return (
                         <Link
                           key={ws.workspaceId}
-                          href={`/workspaces/${ws.workspaceId}`}
+                          href={`/legacy/workspaces/${ws.workspaceId}`}
                           onClick={() => setWsListOpen(false)}
                           aria-current={isCurrent ? 'page' : undefined}
                           className={`flex items-center gap-2.5 h-8 px-2 rounded-[6px] transition-colors ${isCurrent ? 'bg-[var(--accent-soft)]' : 'hover:bg-[var(--net-panel-2)]'}`}

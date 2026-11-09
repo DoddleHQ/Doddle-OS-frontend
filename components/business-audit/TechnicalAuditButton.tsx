@@ -21,7 +21,7 @@ export const TechnicalAuditButton: React.FC<TechnicalAuditButtonProps> = ({
     testId = 'technical-audit-button',
 }) => {
     return (
-        <Link href={`/workspaces/${workspaceId}/modules/business-audit/new`}>
+        <Link href={`/legacy/workspaces/${workspaceId}/modules/business-audit/new`}>
             <Button
                 variant="primary"
                 disabled={disabled}

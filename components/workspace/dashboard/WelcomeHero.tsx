@@ -104,7 +104,7 @@ function QuickStart({ workspaceId }: { workspaceId: string }) {
     if (!prompt.trim()) return;
     const agent = AGENT_LIST.find((a) => a.slug === selectedAgent);
     if (!agent) return;
-    const url = `/workspaces/${workspaceId}/modules/content-factory/v2/${selectedAgent}/new${prompt.trim() ? `?prompt=${encodeURIComponent(prompt.trim())}` : ''}`;
+    const url = `/legacy/workspaces/${workspaceId}/modules/content-factory/v2/${selectedAgent}/new${prompt.trim() ? `?prompt=${encodeURIComponent(prompt.trim())}` : ''}`;
     window.location.href = url;
   };
 
@@ -159,7 +159,7 @@ function PendingApprovals({ threads, workspaceId }: { threads: AuditThread[]; wo
         <span className="service-chip" style={{ ['--chip' as string]: 'var(--line-amber)' }}>{pending.length}</span>
       </div>
       {pending.slice(0, 3).map((t) => (
-        <Link key={t.id} href={`/workspaces/${workspaceId}/modules/${t.moduleId}`} className="dense-row">
+        <Link key={t.id} href={`/legacy/workspaces/${workspaceId}/modules/${t.moduleId}`} className="dense-row">
           <span className="flex-1 min-w-0 flex flex-col">
             <span className="text-xs font-semibold truncate">{t.title || 'Untitled'}</span>
             <span className="text-[10px] text-[var(--ink-faint)] font-mono mt-0.5">
@@ -277,7 +277,7 @@ function AgentDirectory({ workspaceId }: { workspaceId: string; magentoConnected
           <Users className="w-4 h-4" style={{ color: 'var(--line-cobalt)' }} /> Power Agents
         </h3>
         <Link
-          href={`/workspaces/${workspaceId}/power-agents`}
+          href={`/legacy/workspaces/${workspaceId}/power-agents`}
           className="text-[11px] font-mono text-[var(--ink-dim)] hover:text-[var(--ink)] transition-colors"
         >
           View All
@@ -287,7 +287,7 @@ function AgentDirectory({ workspaceId }: { workspaceId: string; magentoConnected
         {suites.map((suite) => (
           <Link
             key={suite.label}
-            href={`/workspaces/${workspaceId}/power-agents`}
+            href={`/legacy/workspaces/${workspaceId}/power-agents`}
             className="agency-card p-4 flex flex-col gap-2"
           >
             <div className="flex items-center justify-between">
@@ -339,7 +339,7 @@ function ActivityFeed({ threads, workspaceId }: { threads: AuditThread[]; worksp
         feed.map((t) => {
           const ink = t.status === 'running' ? 'var(--line-cobalt)' : t.status === 'complete' ? 'var(--line-green)' : 'var(--ink-faint)';
           return (
-            <Link key={t.id} href={`/workspaces/${workspaceId}/modules/${t.moduleId}`} className="dense-row">
+            <Link key={t.id} href={`/legacy/workspaces/${workspaceId}/modules/${t.moduleId}`} className="dense-row">
               <span className="w-2 h-2 rounded-full shrink-0" style={{ background: ink }} />
               <span className="flex-1 min-w-0 flex flex-col">
                 <span className="text-xs font-semibold truncate">{t.title || 'Untitled'}</span>
@@ -371,7 +371,7 @@ function TeamSection({ workspaceId }: { workspaceId: string }) {
     <div className="plate overflow-hidden">
       <div className="px-4 md:px-5 py-3 md:py-3.5 border-b agency-border flex items-center justify-between">
         <h3 className="text-xs font-semibold font-mono tracking-wide">Team</h3>
-        <Link href={`/workspaces/${workspaceId}/settings`} className="text-[11px] font-mono text-[var(--ink-dim)] hover:text-[var(--ink)]">
+        <Link href={`/legacy/workspaces/${workspaceId}/settings`} className="text-[11px] font-mono text-[var(--ink-dim)] hover:text-[var(--ink)]">
           Manage
         </Link>
       </div>
@@ -427,7 +427,7 @@ export function WelcomeHero({ workspaceId }: { workspaceId: string }) {
                 <span className="font-bold" style={{ color: 'var(--line-amber)' }}>Brand Persona:</span>{' '}
                 not configured — agents need your brand voice.
               </p>
-              <Link href={`/workspaces/${workspaceId}/settings`} className="btn-outline !py-1.5 !px-3 !text-[10px] shrink-0 self-start sm:self-auto">
+              <Link href={`/legacy/workspaces/${workspaceId}/settings`} className="btn-outline !py-1.5 !px-3 !text-[10px] shrink-0 self-start sm:self-auto">
                 Configure
               </Link>
             </div>

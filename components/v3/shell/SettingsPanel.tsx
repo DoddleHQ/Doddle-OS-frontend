@@ -1,7 +1,7 @@
 'use client';
 
 import { useV3OS } from '@/lib/v3/osStore';
-import { DataSyncSection } from '@/components/workspace/settings/DataSyncSection';
+import { ConnectionsPanel } from '@/components/v3/ui/ConnectionsPanel';
 
 export function SettingsPanel() {
   const open = useV3OS((s) => s.settingsOpen);
@@ -19,12 +19,7 @@ export function SettingsPanel() {
         </button>
       </div>
       {workspaceId ? (
-        <div
-          className="rounded-lg overflow-y-auto"
-          style={{ background: 'var(--v3-settings-surface, #fff)', color: 'var(--ink, #141f3f)', padding: 14, maxHeight: '60vh' }}
-        >
-          <DataSyncSection workspaceId={workspaceId} />
-        </div>
+        <ConnectionsPanel workspaceId={workspaceId} />
       ) : (
         <p className="font-mono text-xs">Select a workspace to manage its data connections.</p>
       )}

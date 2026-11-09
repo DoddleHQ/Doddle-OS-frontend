@@ -21,7 +21,7 @@ export const GTMStrategyButton: React.FC<GTMStrategyButtonProps> = ({
     testId = 'gtm-strategy-button',
 }) => {
     return (
-        <Link href={`/workspaces/${workspaceId}/modules/social-growth/new`}>
+        <Link href={`/legacy/workspaces/${workspaceId}/modules/social-growth/new`}>
             <Button
                 variant="primary"
                 disabled={disabled}
