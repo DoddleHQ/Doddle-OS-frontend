@@ -1,6 +1,7 @@
 'use client';
 
-import { Building2, SlidersHorizontal, SunMoon, Briefcase } from 'lucide-react';
+import Link from 'next/link';
+import { Building2, SlidersHorizontal, SunMoon, Briefcase, Plus, Plug } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 import { v3SessionStatus } from '@/lib/v3/data';
 
@@ -10,7 +11,7 @@ export function NotchMenus() {
   const workspaces = useV3OS((s) => s.workspaces);
   const theme = useV3OS((s) => s.theme);
   const sessionFeed = useV3OS((s) => s.sessionFeed);
-  const { setMenu, setWorkspace, openApp, toggleCC, toggleTheme } = useV3OS.getState();
+  const { setMenu, setWorkspace, openApp, toggleCC, toggleSettings, toggleTheme } = useV3OS.getState();
 
   if (menu === 'ws') {
     const sessions = sessionFeed;
@@ -43,6 +44,17 @@ export function NotchMenus() {
             </button>
           );
         })}
+        <Link href="/onboarding" className="spot-item v3-ws-item" onClick={() => setMenu(null)}>
+          <span className="v3-ws-ico" aria-hidden="true">
+            <Plus size={14} />
+          </span>
+          <span className="min-w-0">
+            <span className="block font-mono font-bold text-xs">New workspace</span>
+            <span className="block font-mono text-[10px] truncate" style={{ color: 'var(--muted)' }}>
+              set up a new brand or client
+            </span>
+          </span>
+        </Link>
       </div>
     );
   }
@@ -55,6 +67,9 @@ export function NotchMenus() {
         </button>
         <button className="spot-item" onClick={() => { setMenu(null); toggleCC(); }}>
           <SlidersHorizontal size={16} /> Control Center
+        </button>
+        <button className="spot-item" onClick={() => { setMenu(null); toggleSettings(true); }}>
+          <Plug size={16} /> Data connections
         </button>
         <button className="spot-item" onClick={toggleTheme}>
           <SunMoon size={16} /> Appearance: {theme}

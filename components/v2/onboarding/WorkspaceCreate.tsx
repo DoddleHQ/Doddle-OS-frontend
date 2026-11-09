@@ -56,7 +56,7 @@ export function WorkspaceCreate() {
         ]);
       } catch {}
 
-      router.replace(`/workspaces/${ws.workspaceId}`);
+      router.replace('/v3');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create workspace');
       setCreating(false);

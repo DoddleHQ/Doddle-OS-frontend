@@ -124,7 +124,10 @@ function firstVisitMs(): number {
   }
 }
 
-export function isV3SessionUnread(s: { id: string; updatedAt?: string | null; createdAt?: string | null }): boolean {
+type SessionLike = { id: string; triageStatus?: string | null; updatedAt?: string | null; createdAt?: string | null };
+
+export function isV3SessionUnread(s: SessionLike): boolean {
+  if (s.triageStatus === 'approved') return false;
   const t = s.updatedAt ?? s.createdAt;
   if (!t) return false;
   const ms = new Date(t).getTime();
@@ -137,7 +140,7 @@ export type V3SessionStatus = 'running' | 'attention' | 'done';
 
 const V3_HOT_MS = 30 * 60_000;
 
-export function v3SessionStatus(s: { id: string; updatedAt?: string | null; createdAt?: string | null }): V3SessionStatus {
+export function v3SessionStatus(s: SessionLike): V3SessionStatus {
   if (!isV3SessionUnread(s)) return 'done';
   const t = new Date(s.updatedAt ?? s.createdAt ?? 0).getTime();
   return Number.isFinite(t) && Date.now() - t < V3_HOT_MS ? 'running' : 'attention';

@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 
 export function ControlCenter() {
   const open = useV3OS((s) => s.ccOpen);
-  const { toggleTheme, toggleCC } = useV3OS.getState();
+  const { toggleTheme, toggleCC, toggleSettings } = useV3OS.getState();
   const { user, logout } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
   const [brightness, setBrightness] = useState(70);
@@ -71,7 +71,15 @@ export function ControlCenter() {
       />
       <div className="flex gap-2 mt-3">
         <button className="btn-ghost flex-1" onClick={toggleTheme}>toggle theme</button>
-        <button className="btn-ghost flex-1" onClick={() => toggleCC(false)}>settings</button>
+        <button
+          className="btn-ghost flex-1"
+          onClick={() => {
+            toggleCC(false);
+            toggleSettings(true);
+          }}
+        >
+          settings
+        </button>
       </div>
       <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--glass-border)' }}>
         <p className="font-mono text-xs truncate" title={user?.email || ''}>

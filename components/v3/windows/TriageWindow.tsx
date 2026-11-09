@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Check, Undo2, BarChart3 } from 'lucide-react';
 import { useV3OS } from '@/lib/v3/osStore';
 import { useV3Fetch, v3Ago, markThreadSeen, v3SessionStatus } from '@/lib/v3/data';
-import { fetchV3PowerAgents, v3AgentByKey } from '@/lib/v3/powerAgents';
+import { fetchV3PowerAgents, fetchV3Sessions, v3AgentByKey } from '@/lib/v3/powerAgents';
 import { ChatFeed } from '@/components/v3/windows/AgentsChatFeed';
 import type { UIMessage } from 'ai';
 
@@ -13,6 +13,8 @@ export function TriageWindow() {
   const router = useRouter();
   const feed = useV3OS((s) => s.sessionFeed);
   const feedError = useV3OS((s) => s.sessionFeedError);
+  const workspaceId = useV3OS((s) => s.workspaceId);
+  const setSessionFeed = useV3OS((s) => s.setSessionFeed);
   const { viewThread } = useV3OS.getState();
   const agents = useV3Fetch(fetchV3PowerAgents, []);
 
@@ -58,17 +60,36 @@ export function TriageWindow() {
     };
   }, [current?.id]);
 
+  async function decide(triage: 'approved' | 'changes_requested') {
+    if (!current) return;
+    const id = current.id;
+    try {
+      await fetch(`/api/power-agents/threads/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ triage }),
+      });
+      if (workspaceId) {
+        const list = await fetchV3Sessions(workspaceId);
+        setSessionFeed(list);
+      }
+    } catch {
+    }
+  }
+
   function approve() {
     if (!current) return;
+    void decide('approved');
     markThreadSeen(current.id);
     setSelected(null);
     setExpanded(false);
     setSeenTick((t) => t + 1);
   }
 
-  function sendChanges() {
+  async function sendChanges() {
     if (!current) return;
     if (!feedback.trim()) return;
+    void decide('changes_requested');
     if (current.agentKey) {
       viewThread(current.agentKey, current.id);
       router.push('/v3/agents');

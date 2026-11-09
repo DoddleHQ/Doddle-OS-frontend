@@ -13,6 +13,7 @@ import { ActivityRail } from './ActivityRail';
 import { Spotlight } from './Spotlight';
 import { Notifications } from './Notifications';
 import { ControlCenter } from './ControlCenter';
+import { SettingsPanel } from './SettingsPanel';
 
 const SHORTCUT_PATHS = ['/v3', '/v3/launchpad', '/v3/agents', '/v3/assignments', '/v3/triage', '/v3/blueprints'];
 
@@ -75,6 +76,7 @@ export function OSRoot({ children }: { children?: React.ReactNode }) {
       <Spotlight />
       <Notifications />
       <ControlCenter />
+      <SettingsPanel />
     </div>
   );
 }

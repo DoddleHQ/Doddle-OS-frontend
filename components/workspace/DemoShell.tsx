@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useOS } from '@/lib/demo/osStore';
 import { Dock } from './Dock';
@@ -73,6 +74,17 @@ export function DemoShell({ children, workspaceId }: DemoShellProps) {
         </div>
       </div>
       {!showDock && <PillNav workspaceId={workspaceId} />}
+      <div
+        className="fixed bottom-4 right-4 z-50 flex items-center gap-2.5 border rounded-full pl-3.5 pr-3 py-1.5 shadow-sm"
+        style={{ background: 'var(--net-panel)', borderColor: 'var(--hairline)' }}
+      >
+        <span className="text-[10px] font-mono" style={{ color: 'var(--ink-faint)' }}>
+          legacy view
+        </span>
+        <Link href="/v3" className="text-[10px] font-mono font-bold underline" style={{ color: 'var(--line-cobalt)' }}>
+          switch to DoddleOS
+        </Link>
+      </div>
       <CommandPalette workspaceId={workspaceId} />
       <ToastStack />
     </div>

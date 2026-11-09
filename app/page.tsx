@@ -16,7 +16,7 @@ export default function RootPage() {
     if (authStatus === 'authenticated' && workspacesLoading) return;
 
     if (authStatus === 'authenticated' && workspaces.length > 0) {
-      router.replace(`/workspaces/${workspaces[0].workspaceId}`);
+      router.replace('/v3');
     } else if (authStatus === 'authenticated' && workspaces.length === 0) {
       router.replace('/onboarding');
     } else if (authStatus === 'unauthenticated') {
