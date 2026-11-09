@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
     rows.map((t) => ({
       id: t.thread_id,
       title: (t.metadata?.title as string) ?? 'Untitled session',
+      triageStatus: (t.metadata?.triage_status as string) ?? null,
       createdAt: t.created_at,
       updatedAt: t.updated_at,
     })),

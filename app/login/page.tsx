@@ -9,7 +9,6 @@ import { AuthLayout } from '@/components/v2/AuthLayout';
 import { AuthInput } from '@/components/v2/AuthInput';
 import { login, loginForce, sendVerification, getMe, LoginError } from '@/lib/services/authService';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { workspaceService } from '@/lib/services/workspaceService';
 import { GoogleAuthButton, AuthDivider } from '@/components/v2/GoogleAuthButton';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -52,29 +51,10 @@ export default function LoginPage() {
         if (next) sessionStorage.removeItem('pendingNext');
       } catch { next = null; }
     }
-    if (next) {
-      setTimeout(() => {
-        router.push(next);
-      }, 1200);
-      return;
-    }
-    try {
-      const workspaceRes = await workspaceService.listWorkspaces(0, 100);
-      if (workspaceRes.items && workspaceRes.items.length > 0) {
-        const firstWorkspace = workspaceRes.items[0];
-        setTimeout(() => {
-          router.push(`/workspaces/${firstWorkspace.workspaceId}`);
-        }, 1200);
-      } else {
-        setTimeout(() => {
-          router.push('/workspaces');
-        }, 1200);
-      }
-    } catch (err) {
-      setTimeout(() => {
-        router.push('/workspaces');
-      }, 1200);
-    }
+    if (!next) next = '/v3';
+    setTimeout(() => {
+      router.push(next);
+    }, 1200);
   };
 
   // Google OAuth return trip: the backend lands on /login either with

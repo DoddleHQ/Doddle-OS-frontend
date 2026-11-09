@@ -36,6 +36,7 @@ export interface V3Session {
   id: string;
   title: string;
   agentKey: string | null;
+  triageStatus?: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -118,14 +119,14 @@ export function v3AgentByKey(agents: V3Agent[], key: string | null): V3Agent | u
 }
 
 export async function fetchV3Sessions(workspaceId: string): Promise<V3Session[]> {
-  const raw = await getJson<{ id: string; title: string; agentKey: string | null; createdAt: string | null; updatedAt: string | null }[]>(
+  const raw = await getJson<{ id: string; title: string; agentKey: string | null; triageStatus?: string | null; createdAt: string | null; updatedAt: string | null }[]>(
     `/api/power-agents/feed?workspaceId=${encodeURIComponent(workspaceId)}`,
   );
   return raw.length > 0 ? raw : demoSessions();
 }
 
 export async function fetchV3SessionsForAgent(workspaceId: string, agentKey: string): Promise<V3Session[]> {
-  const raw = await getJson<{ id: string; title: string; createdAt: string | null; updatedAt: string | null }[]>(
+  const raw = await getJson<{ id: string; title: string; triageStatus?: string | null; createdAt: string | null; updatedAt: string | null }[]>(
     `/api/power-agents/threads?agentKey=${encodeURIComponent(agentKey)}&workspaceId=${encodeURIComponent(workspaceId)}`,
   );
   if (raw.length > 0) return raw.map((r) => ({ ...r, agentKey }));

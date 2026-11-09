@@ -111,18 +111,27 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const body = (await req.json()) as { title: string };
+  const body = (await req.json()) as { title?: string; triage?: string };
+  const metadata: Record<string, unknown> = {};
+  if (body.title !== undefined) metadata.title = body.title;
+  if (body.triage !== undefined) {
+    metadata.triage_status = body.triage;
+    metadata.triage_at = new Date().toISOString();
+  }
+  if (Object.keys(metadata).length === 0) {
+    return NextResponse.json({ error: 'nothing to update' }, { status: 400 });
+  }
   const res = await fetch(`${getLangGraphApiUrl()}/threads/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...langgraphAuthHeaders(req) },
-    body: JSON.stringify({ metadata: { title: body.title } }),
+    body: JSON.stringify({ metadata }),
   });
   if (res.status === 404) {
     return NextResponse.json({ error: 'thread not found' }, { status: 404 });
   }
   if (!res.ok) {
     return NextResponse.json(
-      { error: `thread rename failed: ${res.status}` },
+      { error: `thread update failed: ${res.status}` },
       { status: res.status === 401 ? 401 : 502 },
     );
   }

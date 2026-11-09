@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
         id: t.thread_id,
         title: (t.metadata?.title as string) ?? 'Untitled session',
         agentKey: (t.metadata?.agent_key as string) ?? null,
+        triageStatus: (t.metadata?.triage_status as string) ?? null,
         createdAt: t.created_at ?? null,
         updatedAt: t.updated_at ?? null,
       })),

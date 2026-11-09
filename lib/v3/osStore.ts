@@ -64,6 +64,7 @@ interface V3OSState {
   spotlightOpen: boolean;
   notifsOpen: boolean;
   ccOpen: boolean;
+  settingsOpen: boolean;
   menu: 'ws' | 'settings' | null;
   railPinned: boolean;
   hydrated: boolean;
@@ -94,6 +95,7 @@ interface V3OSState {
   toggleSpot(force?: boolean): void;
   toggleNotifs(force?: boolean): void;
   toggleCC(force?: boolean): void;
+  toggleSettings(force?: boolean): void;
   setMenu(m: 'ws' | 'settings' | null): void;
   closeTopOverlay(): void;
   pinRail(v: boolean): void;
@@ -107,6 +109,7 @@ export const useV3OS = create<V3OSState>((set, get) => ({
   spotlightOpen: false,
   notifsOpen: false,
   ccOpen: false,
+  settingsOpen: false,
   menu: null,
   railPinned: false,
   hydrated: false,
@@ -198,18 +201,21 @@ export const useV3OS = create<V3OSState>((set, get) => ({
       }),
     })),
   toggleSpot: (force) =>
-    set((st) => ({ spotlightOpen: force ?? !st.spotlightOpen, notifsOpen: false, ccOpen: false, menu: null })),
+    set((st) => ({ spotlightOpen: force ?? !st.spotlightOpen, notifsOpen: false, ccOpen: false, settingsOpen: false, menu: null })),
   toggleNotifs: (force) =>
-    set((st) => ({ notifsOpen: force ?? !st.notifsOpen, spotlightOpen: false, ccOpen: false, menu: null })),
+    set((st) => ({ notifsOpen: force ?? !st.notifsOpen, spotlightOpen: false, ccOpen: false, settingsOpen: false, menu: null })),
   toggleCC: (force) =>
-    set((st) => ({ ccOpen: force ?? !st.ccOpen, spotlightOpen: false, notifsOpen: false, menu: null })),
+    set((st) => ({ ccOpen: force ?? !st.ccOpen, spotlightOpen: false, notifsOpen: false, settingsOpen: false, menu: null })),
+  toggleSettings: (force) =>
+    set((st) => ({ settingsOpen: force ?? !st.settingsOpen, spotlightOpen: false, notifsOpen: false, ccOpen: false, menu: null })),
   setMenu: (m) =>
-    set((st) => ({ menu: m, spotlightOpen: false, notifsOpen: false, ccOpen: false })),
+    set((st) => ({ menu: m, spotlightOpen: false, notifsOpen: false, ccOpen: false, settingsOpen: false })),
   closeTopOverlay: () => {
     const st = get();
     if (st.spotlightOpen) return set({ spotlightOpen: false });
     if (st.notifsOpen) return set({ notifsOpen: false });
     if (st.ccOpen) return set({ ccOpen: false });
+    if (st.settingsOpen) return set({ settingsOpen: false });
     if (st.menu) return set({ menu: null });
   },
   pinRail: (v) => {
