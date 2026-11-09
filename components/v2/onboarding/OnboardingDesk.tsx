@@ -132,7 +132,7 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
       if (isWorkspaceScoped && workspaceId) {
         const { workspaceService } = await import('@/lib/services/workspaceService');
         await workspaceService.upsertPersona(workspaceId, personaMarkdown || '');
-        router.replace(`/workspaces/${workspaceId}`);
+        router.replace(`/legacy/workspaces/${workspaceId}`);
       } else {
         const ws = await createWorkspace(
           workspaceName || '',
@@ -145,7 +145,7 @@ export function OnboardingDesk({ workspaceId }: { workspaceId?: string }) {
         } catch {
         }
 
-        router.replace(`/workspaces/${ws.workspaceId}`);
+        router.replace(`/legacy/workspaces/${ws.workspaceId}`);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save';

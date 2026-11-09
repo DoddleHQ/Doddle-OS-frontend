@@ -11,7 +11,7 @@ interface MerchantAnalystButtonProps {
 
 export function MerchantAnalystButton({ workspaceId }: MerchantAnalystButtonProps) {
     return (
-        <Link href={`/workspaces/${workspaceId}/modules/analytics-action/merchant-analyst/new`}>
+        <Link href={`/legacy/workspaces/${workspaceId}/modules/analytics-action/merchant-analyst/new`}>
             <Button variant="primary" className="gap-2">
                 <Store className="h-4 w-4" />
                 New Analysis

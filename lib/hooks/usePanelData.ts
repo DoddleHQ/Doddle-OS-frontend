@@ -27,12 +27,12 @@ async function fetchAllThreads(workspaceId: string): Promise<AuditThread[]> {
 export function threadHref(workspaceId: string, thread: AuditThread): string {
     const m = thread.moduleId;
     if (AGENT_LIST.some((a) => a.moduleId === m)) {
-        return `/workspaces/${workspaceId}/modules/content-factory/v2/${m}/${thread.id}`;
+        return `/legacy/workspaces/${workspaceId}/modules/content-factory/v2/${m}/${thread.id}`;
     }
     if (m === 'magento-content-writer') {
-        return `/workspaces/${workspaceId}/modules/content-factory/${m}/${thread.id}`;
+        return `/legacy/workspaces/${workspaceId}/modules/content-factory/${m}/${thread.id}`;
     }
-    return `/workspaces/${workspaceId}/modules/${m}`;
+    return `/legacy/workspaces/${workspaceId}/modules/${m}`;
 }
 
 export function useAttentionThreads(workspaceId: string, enabled: boolean) {

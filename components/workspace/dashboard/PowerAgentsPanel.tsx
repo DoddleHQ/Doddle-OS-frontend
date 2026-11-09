@@ -42,7 +42,7 @@ export function PowerAgentsPanel({ workspaceId }: { workspaceId: string }) {
           {WORKSPACE_MODULES.map((mod) => (
             <Link
               key={mod.path}
-              href={`/workspaces/${workspaceId}/${mod.path}`}
+              href={`/legacy/workspaces/${workspaceId}/${mod.path}`}
               className="flex items-center gap-3 p-2.5 hover:bg-[var(--net-panel-2)] rounded-[6px] transition-colors"
             >
               <DemoIcon
@@ -69,7 +69,7 @@ export function PowerAgentsPanel({ workspaceId }: { workspaceId: string }) {
           ].map((src) => (
             <Link
               key={src.name}
-              href={`/workspaces/${workspaceId}/settings`}
+              href={`/legacy/workspaces/${workspaceId}/settings`}
               className="flex items-center gap-3 p-2.5 hover:bg-[var(--net-panel-2)] rounded-[6px] transition-colors"
             >
               <span

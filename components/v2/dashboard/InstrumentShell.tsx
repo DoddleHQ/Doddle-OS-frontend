@@ -110,7 +110,7 @@ export function InstrumentShell({ workspaceId, workspace, children }: Instrument
             className="flex-shrink-0 overflow-hidden"
           >
             <Link
-              href={`/workspaces/${workspaceId}/brand-persona`}
+              href={`/legacy/workspaces/${workspaceId}/brand-persona`}
               className="flex items-center gap-2.5 px-5 py-2.5 transition-colors group"
               style={{ background: 'rgba(200,50,27,0.05)', borderBottom: '1px solid var(--v2-paper-rule)' }}
             >
@@ -225,7 +225,7 @@ function ModuleNavList({
           return (
             <NavItem
               key={mod.path}
-              href={`/workspaces/${workspaceId}/${mod.path}`}
+              href={`/legacy/workspaces/${workspaceId}/${mod.path}`}
               active={pathname.includes(mod.path)}
               icon={<Icon className="w-4 h-4" strokeWidth={1.75} />}
               label={mod.name}
@@ -242,7 +242,7 @@ function ModuleNavList({
           return (
             <NavItem
               key={mod.path}
-              href={`/workspaces/${workspaceId}/${mod.path}`}
+              href={`/legacy/workspaces/${workspaceId}/${mod.path}`}
               active={pathname.includes(mod.path)}
               icon={<Icon className="w-4 h-4" strokeWidth={1.75} />}
               label={mod.name}
@@ -253,7 +253,7 @@ function ModuleNavList({
 
       <div className="p-2" style={{ borderTop: '1px solid var(--v2-paper-rule)' }}>
         <NavItem
-          href={`/workspaces/${workspaceId}/settings`}
+          href={`/legacy/workspaces/${workspaceId}/settings`}
           active={pathname.includes('/settings')}
           icon={<Settings className="w-4 h-4" strokeWidth={1.75} />}
           label="Settings"
@@ -288,7 +288,7 @@ function IconRail({ workspaceId, workspaces }: { workspaceId: string; workspaces
           return (
             <Link
               key={ws.workspaceId}
-              href={`/workspaces/${ws.workspaceId}/mission-control`}
+              href={`/legacy/workspaces/${ws.workspaceId}/mission-control`}
               className="w-9 h-9 flex items-center justify-center flex-shrink-0"
               style={{
                 borderRadius: 10,
@@ -307,7 +307,7 @@ function IconRail({ workspaceId, workspaces }: { workspaceId: string; workspaces
           );
         })}
         <Link
-          href="/workspaces"
+          href="/legacy/workspaces"
           className="w-9 h-9 flex items-center justify-center flex-shrink-0"
           style={{ color: 'var(--v2-ink-text-2)' }}
           title="All workspaces"
@@ -481,7 +481,7 @@ function MobileNavContent({
             return (
               <NavItem
                 key={mod.path}
-                href={`/workspaces/${workspaceId}/${mod.path}`}
+                href={`/legacy/workspaces/${workspaceId}/${mod.path}`}
                 active={pathname.includes(mod.path)}
                 onClick={onNavigate}
                 onInk
@@ -500,7 +500,7 @@ function MobileNavContent({
             return (
               <NavItem
                 key={mod.path}
-                href={`/workspaces/${workspaceId}/${mod.path}`}
+                href={`/legacy/workspaces/${workspaceId}/${mod.path}`}
                 active={pathname.includes(mod.path)}
                 onClick={onNavigate}
                 onInk
@@ -511,7 +511,7 @@ function MobileNavContent({
           })}
           <div className="mx-1 my-2" style={{ borderTop: '1px solid var(--v2-ink-rule)' }} />
           <NavItem
-            href={`/workspaces/${workspaceId}/settings`}
+            href={`/legacy/workspaces/${workspaceId}/settings`}
             active={pathname.includes('/settings')}
             onClick={onNavigate}
             onInk

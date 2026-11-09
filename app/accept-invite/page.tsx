@@ -106,7 +106,7 @@ function AcceptInviteContent() {
                                 {message}
                             </p>
                             <button
-                                onClick={() => router.push('/workspaces')}
+                                onClick={() => router.push('/legacy/workspaces')}
                                 className="inline-flex items-center gap-2 px-5 py-2.5 v2-label text-[11px] rounded-[8px] transition-transform"
                                 style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)' }}
                             >

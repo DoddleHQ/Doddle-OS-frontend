@@ -25,7 +25,7 @@ export function DemoShell({ children, workspaceId }: DemoShellProps) {
   const routes = buildDemoRoutes(workspaceId);
   const gPressed = useRef(false);
   const gTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const basePath = `/workspaces/${workspaceId}`;
+  const basePath = `/legacy/workspaces/${workspaceId}`;
 
   const showDock = pathname === basePath;
 

@@ -21,7 +21,7 @@ export const QuickActionButton: React.FC<QuickActionButtonProps> = ({
     testId = 'quick-action-button',
 }) => {
     return (
-        <Link href={`/workspaces/${workspaceId}/modules/content-factory/content-architect/new`}>
+        <Link href={`/legacy/workspaces/${workspaceId}/modules/content-factory/content-architect/new`}>
             <Button
                 variant="primary"
                 disabled={disabled}

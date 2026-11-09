@@ -47,7 +47,7 @@ export function CreateWorkspaceModal({ isOpen, onClose }: CreateWorkspaceModalPr
 
     const handleGoToWorkspace = () => {
         if (createdWorkspaceId) {
-            router.push(`/workspaces/${createdWorkspaceId}`);
+            router.push(`/legacy/workspaces/${createdWorkspaceId}`);
         }
         handleClose();
     };

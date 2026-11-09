@@ -21,7 +21,7 @@ export const MagentoContentWriterButton: React.FC<MagentoContentWriterButtonProp
     testId = 'magento-content-writer-button',
 }) => {
     return (
-        <Link href={`/workspaces/${workspaceId}/modules/content-factory/magento-content-writer/new`}>
+        <Link href={`/legacy/workspaces/${workspaceId}/modules/content-factory/magento-content-writer/new`}>
             <Button
                 variant="primary"
                 disabled={disabled}

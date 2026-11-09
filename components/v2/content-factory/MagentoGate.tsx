@@ -79,7 +79,7 @@ export function MagentoGate({
                 </p>
                 <div className="flex justify-center">
                     <Link
-                        href={`/workspaces/${workspaceId}/settings?tab=sync`}
+                        href={`/legacy/workspaces/${workspaceId}/settings?tab=sync`}
                         className="inline-flex items-center gap-2 px-4 py-2 v2-label text-[10px] rounded-[8px]"
                         style={{ background: 'var(--v2-vermilion)', color: 'var(--v2-vermilion-ink)' }}
                     >

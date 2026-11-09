@@ -138,5 +138,5 @@ export function isRunLive(status: RunStatus): boolean {
 }
 
 export function liveRunUrl(workspaceId: string, agentSlug: string, runId: string): string {
-    return `/workspaces/${workspaceId}/modules/content-factory/v2/${agentSlug}/live/${runId}`;
+    return `/legacy/workspaces/${workspaceId}/modules/content-factory/v2/${agentSlug}/live/${runId}`;
 }

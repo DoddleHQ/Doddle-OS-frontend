@@ -22,7 +22,7 @@ export function useEntryCta(): EntryCta {
         return { href: '/onboarding', label: 'Set up your workspace' };
     }
     return {
-        href: `/workspaces/${workspaces[0].workspaceId}`,
+        href: `/legacy/workspaces/${workspaces[0].workspaceId}`,
         label: 'Enter the OS',
     };
 }
