@@ -100,13 +100,13 @@ export function Dashboard() {
     const target = mentioned(ask);
     if (target) {
       selectAgent(target.key);
-      router.push('/v3/agents');
+      router.push('/agents');
     } else {
       const params = new URLSearchParams({ ask: ask.trim() });
       if (blueprint) params.set('bp', blueprint);
       const picked = (agents.data ?? []).find((a) => a.handle === agentPick || a.key === agentPick);
       if (picked) params.set('agent', picked.key);
-      router.push(`/v3/launchpad?${params.toString()}`);
+      router.push(`/launchpad?${params.toString()}`);
     }
     setAsk('');
   };
@@ -167,27 +167,27 @@ export function Dashboard() {
           )}
 
           <div className="hero-quick">
-            <Link href="/v3/launchpad?type=research">↗ Research task</Link>
-            <Link href="/v3/agents">↗ Deploy research agent</Link>
-            <Link href="/v3/triage">↗ Needs review (<span>{reviewCount}</span>)</Link>
+            <Link href="/launchpad?type=research">↗ Research task</Link>
+            <Link href="/agents">↗ Deploy research agent</Link>
+            <Link href="/triage">↗ Needs review (<span>{reviewCount}</span>)</Link>
           </div>
 
           <div className="dash-cards" style={{ marginTop: 20 }}>
-            <Link className="bento-item text-left" href="/v3/assignments" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link className="bento-item text-left" href="/assignments" style={{ textDecoration: 'none', color: 'inherit' }}>
               <Layers size={20} className="mb-2" style={{ color: 'var(--green)' }} />
               <p className="font-bold text-sm">Assignments</p>
               <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
                 Tasks by type, in-progress first.
               </p>
             </Link>
-            <Link className="bento-item text-left" href="/v3/agents" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link className="bento-item text-left" href="/agents" style={{ textDecoration: 'none', color: 'inherit' }}>
               <Bot size={20} className="mb-2" style={{ color: 'var(--violet)' }} />
               <p className="font-bold text-sm">Agents</p>
               <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
                 Contextual agents. Pick one to run it.
               </p>
             </Link>
-            <Link className="bento-item text-left" href="/v3/assignments" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link className="bento-item text-left" href="/assignments" style={{ textDecoration: 'none', color: 'inherit' }}>
               <Activity size={20} className="mb-2" style={{ color: 'var(--accent)' }} />
               <p className="font-bold text-sm">
                 Active Execution {active ? <span className="font-mono text-xs" style={{ color: 'var(--muted)' }}>· {list.length} active</span> : null}
@@ -196,7 +196,7 @@ export function Dashboard() {
                 {active ? `${active.title} — ${activePct}%. Open Active Execution to follow it.` : 'No active project. Start a task to see progress.'}
               </p>
             </Link>
-            <Link className="bento-item text-left" href="/v3/triage" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link className="bento-item text-left" href="/triage" style={{ textDecoration: 'none', color: 'inherit' }}>
               <Inbox size={20} className="mb-2" style={{ color: '#f87171' }} />
               <p className="font-bold text-sm">
                 Triage Queue <span style={{ color: '#f87171' }}>{reviewCount}</span>
@@ -314,7 +314,7 @@ export function Dashboard() {
                   </div>
                 </div>
               )}
-              <Link className="btn-ghost w-full" style={{ marginTop: 8, textDecoration: 'none' }} href="/v3/agents">
+              <Link className="btn-ghost w-full" style={{ marginTop: 8, textDecoration: 'none' }} href="/agents">
                 open agents
               </Link>
             </div>

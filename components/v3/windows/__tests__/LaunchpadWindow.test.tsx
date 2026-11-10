@@ -4,7 +4,7 @@ import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3PowerAgents } from '@/lib/v3/powerAgents';
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
-  usePathname: () => '/v3',
+  usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
 }));
 

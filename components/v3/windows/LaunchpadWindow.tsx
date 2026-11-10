@@ -81,7 +81,7 @@ export function LaunchpadWindow() {
   };
   const send = () => {
     if (vehicle) launch();
-    else router.push('/v3/agents');
+    else router.push('/agents');
   };
 
   const lpState = vehicle ? `matched · ${vehicle.name}` : 'choose to begin';
@@ -90,7 +90,7 @@ export function LaunchpadWindow() {
     <section id="win-launchpad" className="os-window glass" style={{ left: '2%', top: '1%', width: 'min(1180px,96%)', maxHeight: '94%' }} data-app="launchpad">
       <div className="titlebar">
         <div className="traffic">
-          <button className="t-close" onClick={() => router.push('/v3')} aria-label="Close" />
+          <button className="t-close" onClick={() => router.push('/')} aria-label="Close" />
           <button className="t-min" aria-label="Minimize" />
           <button className="t-max" aria-label="Maximize" />
         </div>
@@ -228,7 +228,7 @@ export function LaunchpadWindow() {
                     const a = v3AgentByKey(agents.data ?? [], s.agentKey ?? null);
                     const dot = st === 'running' ? 'var(--accent)' : st === 'attention' ? 'var(--amber)' : '#10b981';
                     return (
-                      <div className="hrow" key={s.id} style={{ cursor: 'pointer' }} onClick={() => { if (s.agentKey) { viewThread(s.agentKey, s.id); router.push('/v3/agents'); } }}>
+                      <div className="hrow" key={s.id} style={{ cursor: 'pointer' }} onClick={() => { if (s.agentKey) { viewThread(s.agentKey, s.id); router.push('/agents'); } }}>
                         <span style={{ width: 8, height: 8, borderRadius: '50%', background: dot, flexShrink: 0 }} />
                         <div className="meta">
                           <p className="font-mono font-bold text-xs">{s.title}</p>

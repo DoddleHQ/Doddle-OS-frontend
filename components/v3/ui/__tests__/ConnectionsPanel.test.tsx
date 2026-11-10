@@ -4,7 +4,7 @@ import { connectionService } from '@/lib/services/connectionService';
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
-  usePathname: () => '/v3',
+  usePathname: () => '/',
 }));
 
 jest.mock('@/lib/services/connectionService', () => ({

@@ -24,17 +24,17 @@ export function Spotlight() {
   const items = useMemo<SpotItem[]>(() => {
     const go = (p: string) => () => router.push(p);
     return [
-      { key: 'home dashboard status reviews', label: 'Home — status & reviews', icon: LayoutDashboard, color: '#1d4ed8', hint: '1', run: go('/v3') },
-      { key: 'launchpad choose graph agent describe outcome', label: 'Launchpad — what to launch?', icon: Terminal, color: 'var(--cyan)', hint: '2', run: go('/v3/launchpad') },
-      { key: 'blueprint library catalog playbook sop template', label: 'Blueprints — library', icon: BookOpen, color: 'var(--green)', run: go('/v3/blueprints') },
-      { key: 'agent contextual roster helper writer data', label: 'Agents — contextual roster', icon: Bot, color: 'var(--violet)', hint: '3', run: go('/v3/agents') },
-      { key: 'project task assignment review start', label: 'Assignments — in progress + review', icon: Layers, color: 'var(--green)', hint: '4', run: go('/v3/assignments') },
-      { key: 'hub settings billing workspace', label: 'Agency Hub', icon: Building2, color: 'var(--amber)', hint: '5', run: go('/v3?open=hub') },
-      { key: 'run new execute campaign', label: '/run — start execution', icon: Play, color: '#10b981', run: go('/v3/launchpad') },
-      { key: 'triage queue review approve inbox active execution', label: 'Active Execution — everything in flight', icon: Activity, color: 'var(--accent)', run: go('/v3/assignments') },
-      { key: 'triage queue review approve inbox', label: 'Triage Queue (needs you)', icon: Inbox, color: '#f87171', run: go('/v3/triage') },
-      { key: 'report analytics gallery board export', label: 'Reports — gallery + analytics', icon: BarChart3, color: 'var(--accent)', hint: '6', run: go('/v3/reports') },
-      { key: 'task assign agent human active inventory', label: 'Tasks — route to agent or human', icon: ListChecks, color: 'var(--violet)', hint: '7', run: go('/v3/assignments?open=assign') },
+      { key: 'home dashboard status reviews', label: 'Home — status & reviews', icon: LayoutDashboard, color: '#1d4ed8', hint: '1', run: go('/') },
+      { key: 'launchpad choose graph agent describe outcome', label: 'Launchpad — what to launch?', icon: Terminal, color: 'var(--cyan)', hint: '2', run: go('/launchpad') },
+      { key: 'blueprint library catalog playbook sop template', label: 'Blueprints — library', icon: BookOpen, color: 'var(--green)', run: go('/blueprints') },
+      { key: 'agent contextual roster helper writer data', label: 'Agents — contextual roster', icon: Bot, color: 'var(--violet)', hint: '3', run: go('/agents') },
+      { key: 'project task assignment review start', label: 'Assignments — in progress + review', icon: Layers, color: 'var(--green)', hint: '4', run: go('/assignments') },
+      { key: 'hub settings billing workspace', label: 'Agency Hub', icon: Building2, color: 'var(--amber)', hint: '5', run: go('/?open=hub') },
+      { key: 'run new execute campaign', label: '/run — start execution', icon: Play, color: '#10b981', run: go('/launchpad') },
+      { key: 'triage queue review approve inbox active execution', label: 'Active Execution — everything in flight', icon: Activity, color: 'var(--accent)', run: go('/assignments') },
+      { key: 'triage queue review approve inbox', label: 'Triage Queue (needs you)', icon: Inbox, color: '#f87171', run: go('/triage') },
+      { key: 'report analytics gallery board export', label: 'Reports — gallery + analytics', icon: BarChart3, color: 'var(--accent)', hint: '6', run: go('/reports') },
+      { key: 'task assign agent human active inventory', label: 'Tasks — route to agent or human', icon: ListChecks, color: 'var(--violet)', hint: '7', run: go('/assignments?open=assign') },
     ];
   }, []);
 

@@ -92,7 +92,7 @@ export function TriageWindow() {
     void decide('changes_requested');
     if (current.agentKey) {
       viewThread(current.agentKey, current.id);
-      router.push('/v3/agents');
+      router.push('/agents');
     }
   }
 
@@ -102,7 +102,7 @@ export function TriageWindow() {
     <section id="win-triage" className={`os-window glass${expanded ? '' : ' cols-1'}`} data-app="triage">
       <div className="titlebar">
         <div className="traffic">
-          <button className="t-close" onClick={() => router.push('/v3')} aria-label="Close" />
+          <button className="t-close" onClick={() => router.push('/')} aria-label="Close" />
         </div>
         <strong className="text-sm">Triage</strong>
         <span className="chip" style={{ marginLeft: 'auto' }} id="triage-count">
@@ -160,10 +160,10 @@ export function TriageWindow() {
               </div>
             </div>
             <div className="flex gap-2 mt-3 flex-wrap">
-              <button className="chip" onClick={() => router.push('/v3/assignments')}>
+              <button className="chip" onClick={() => router.push('/assignments')}>
                 see on Gantt →
               </button>
-              <button className="chip" style={{ textDecoration: 'none' }} onClick={() => router.push('/v3/reports')}>
+              <button className="chip" style={{ textDecoration: 'none' }} onClick={() => router.push('/reports')}>
                 artefact gallery →
               </button>
             </div>
@@ -244,7 +244,7 @@ export function TriageWindow() {
                         </span>
                         <span className="glabel">Request changes</span>
                       </button>
-                      <button className="gseg" onClick={() => router.push('/v3/reports')}>
+                      <button className="gseg" onClick={() => router.push('/reports')}>
                         <span className="gchip">
                           <BarChart3 size={14} />
                         </span>

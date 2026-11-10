@@ -15,7 +15,7 @@ import { Notifications } from './Notifications';
 import { ControlCenter } from './ControlCenter';
 import { SettingsPanel } from './SettingsPanel';
 
-const SHORTCUT_PATHS = ['/v3', '/v3/launchpad', '/v3/agents', '/v3/assignments', '/v3/triage', '/v3/blueprints'];
+const SHORTCUT_PATHS = ['/', '/launchpad', '/agents', '/assignments', '/triage', '/blueprints'];
 
 export function OSRoot({ children }: { children?: React.ReactNode }) {
   const theme = useV3OS((s) => s.theme);
@@ -43,6 +43,11 @@ export function OSRoot({ children }: { children?: React.ReactNode }) {
     if (workspaces.data) setWorkspaces(workspaces.data);
     else if (workspaces.error) setWorkspaces([], workspaces.error);
   }, [workspaces.data, workspaces.error, setWorkspaces]);
+
+  useEffect(() => {
+    if (workspaces.loading || workspaces.error) return;
+    if ((workspaces.data ?? []).length === 0) router.replace('/onboarding');
+  }, [workspaces.data, workspaces.loading, workspaces.error, router]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

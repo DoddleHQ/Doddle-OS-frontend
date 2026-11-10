@@ -6,7 +6,7 @@ import { fetchV3PowerAgents, type V3Agent } from '@/lib/v3/powerAgents';
 const pushes: string[] = [];
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: (p: string) => pushes.push(p), replace: jest.fn() }),
-  usePathname: () => '/v3/assignments',
+  usePathname: () => '/assignments',
 }));
 
 jest.mock('@/lib/v3/powerAgents', () => {
