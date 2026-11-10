@@ -93,7 +93,7 @@ export function BlueprintsWindow() {
     <section id="win-library" className="os-window glass page" data-app="library">
       <div className="titlebar">
         <div className="traffic">
-          <button className="t-close" onClick={() => router.push('/v3')} aria-label="Close" />
+          <button className="t-close" onClick={() => router.push('/')} aria-label="Close" />
         </div>
         <strong className="text-sm">Blueprints</strong>
         <span className="chip" style={{ marginLeft: 'auto' }}>

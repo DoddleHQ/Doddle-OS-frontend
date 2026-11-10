@@ -101,7 +101,7 @@ export function powerAgentMeta(key: string): { name: string; role: string; suite
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
   if (res.status === 401) {
-    window.location.href = '/login?next=' + encodeURIComponent('/v3');
+    window.location.href = '/login?next=' + encodeURIComponent('/');
     throw new Error('session expired');
   }
   if (!res.ok) throw new Error(`HTTP ${res.status}`);

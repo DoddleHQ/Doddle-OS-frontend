@@ -104,7 +104,7 @@ function withAuthCookies(response: NextResponse, result: AuthResult): NextRespon
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    const isPublic = pathname === '/' || PUBLIC_PATHS.some((path) => pathname.startsWith(path));
+    const isPublic = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
     const isAuthRoute = pathname === '/login' || pathname === '/signup';
 
     if (isPublic) {

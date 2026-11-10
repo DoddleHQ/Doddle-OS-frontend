@@ -18,12 +18,12 @@ export function MenuNotch() {
   const workspace = workspaces.find((w) => w.id === workspaceId) ?? workspaces[0];
   const workspaceLabel = workspace ? workspace.name : wsError ? 'offline' : '…';
   const reviewCount = useV3OS((s) => s.sessionFeed.filter((x) => v3SessionStatus(x) === 'attention').length);
-  const isOn = (path: string) => (path === '/v3' ? pathname === '/v3' : pathname.startsWith(path));
+  const isOn = (path: string) => (path === '/' ? pathname === '/' : pathname.startsWith(path));
 
   const NAV: { path: string; icon: typeof Bot; color: string; title: string }[] = [
-    { path: '/v3', icon: LayoutDashboard, color: '#1d4ed8', title: 'Home · full OS' },
-    { path: '/v3/launchpad', icon: Terminal, color: 'var(--cyan)', title: 'Launchpad · define' },
-    { path: '/v3/assignments', icon: Layers, color: 'var(--green)', title: 'Assignments · track' },
+    { path: '/', icon: LayoutDashboard, color: '#1d4ed8', title: 'Home · full OS' },
+    { path: '/launchpad', icon: Terminal, color: 'var(--cyan)', title: 'Launchpad · define' },
+    { path: '/assignments', icon: Layers, color: 'var(--green)', title: 'Assignments · track' },
   ];
 
   return (
@@ -64,11 +64,11 @@ export function MenuNotch() {
         </button>
       </nav>
       <nav id="notch-right" className="glass island-nav no-select" aria-label="System">
-        <Link className={`notch-btn${isOn('/v3/triage') ? ' active' : ''}`} href="/v3/triage" title="Triage · review">
+        <Link className={`notch-btn${isOn('/triage') ? ' active' : ''}`} href="/triage" title="Triage · review">
           <Inbox size={20} style={{ color: '#f87171' }} />
           {reviewCount > 0 && <span className="triage-badge">{reviewCount}</span>}
         </Link>
-        <Link className={`notch-btn${isOn('/v3/reports') ? ' active' : ''}`} href="/v3/reports" title="Reports · progress">
+        <Link className={`notch-btn${isOn('/reports') ? ' active' : ''}`} href="/reports" title="Reports · progress">
           <BarChart3 size={20} style={{ color: 'var(--accent)' }} />
         </Link>
         <div className="notch-sep" />

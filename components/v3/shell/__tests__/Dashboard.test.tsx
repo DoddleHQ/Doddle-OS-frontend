@@ -6,7 +6,7 @@ import { useV3OperatorName } from '@/lib/v3/data';
 const pushes: string[] = [];
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: (p: string) => pushes.push(p), replace: jest.fn() }),
-  usePathname: () => '/v3',
+  usePathname: () => '/',
 }));
 
 jest.mock('@/lib/v3/data', () => {
@@ -86,14 +86,14 @@ describe('Dashboard (real power-agent data)', () => {
     mockedAgents.mockResolvedValue([agent({})]);
     useV3OS.setState({ sessionFeed: [session({})] });
     render(<Dashboard />);
-    expect(screen.getByRole('link', { name: /↗ Research task/i }).getAttribute('href')).toBe('/v3/launchpad?type=research');
-    expect(screen.getByRole('link', { name: /↗ Deploy research agent/i }).getAttribute('href')).toBe('/v3/agents');
-    expect(screen.getByRole('link', { name: /Needs review/ }).getAttribute('href')).toBe('/v3/triage');
-    expect(screen.getByRole('link', { name: /Assignments/i }).getAttribute('href')).toBe('/v3/assignments');
-    expect(screen.getByRole('link', { name: /^Agents/i }).getAttribute('href')).toBe('/v3/agents');
-    expect(screen.getByRole('link', { name: /Active Execution/i }).getAttribute('href')).toBe('/v3/assignments');
-    expect(screen.getByRole('link', { name: /Triage Queue/i }).getAttribute('href')).toBe('/v3/triage');
-    expect(screen.getByRole('link', { name: /open agents/i }).getAttribute('href')).toBe('/v3/agents');
+    expect(screen.getByRole('link', { name: /↗ Research task/i }).getAttribute('href')).toBe('/launchpad?type=research');
+    expect(screen.getByRole('link', { name: /↗ Deploy research agent/i }).getAttribute('href')).toBe('/agents');
+    expect(screen.getByRole('link', { name: /Needs review/ }).getAttribute('href')).toBe('/triage');
+    expect(screen.getByRole('link', { name: /Assignments/i }).getAttribute('href')).toBe('/assignments');
+    expect(screen.getByRole('link', { name: /^Agents/i }).getAttribute('href')).toBe('/agents');
+    expect(screen.getByRole('link', { name: /Active Execution/i }).getAttribute('href')).toBe('/assignments');
+    expect(screen.getByRole('link', { name: /Triage Queue/i }).getAttribute('href')).toBe('/triage');
+    expect(screen.getByRole('link', { name: /open agents/i }).getAttribute('href')).toBe('/agents');
   });
 
   it('AGENTS_IN_FLOW mirrors v13: busy agent row + idle row', async () => {

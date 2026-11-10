@@ -27,7 +27,7 @@ export function Notifications() {
             className="chip"
             onClick={() => {
               useV3OS.getState().toggleNotifs(false);
-              router.push('/v3/triage');
+              router.push('/triage');
             }}
           >
             open triage
@@ -53,7 +53,7 @@ export function Notifications() {
                 finished · {v3Ago(r.updatedAt ?? r.createdAt)} — awaiting your review
               </p>
               <div className="flex gap-2 mt-3">
-                <button className="btn-ghost flex-1" onClick={() => { useV3OS.getState().viewThread(r.agentKey ?? '', r.id); router.push('/v3/agents'); }}>
+                <button className="btn-ghost flex-1" onClick={() => { useV3OS.getState().viewThread(r.agentKey ?? '', r.id); router.push('/agents'); }}>
                   review()
                 </button>
                 <button

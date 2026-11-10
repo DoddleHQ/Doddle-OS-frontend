@@ -81,7 +81,7 @@ export function DemoShell({ children, workspaceId }: DemoShellProps) {
         <span className="text-[10px] font-mono" style={{ color: 'var(--ink-faint)' }}>
           legacy view
         </span>
-        <Link href="/v3" className="text-[10px] font-mono font-bold underline" style={{ color: 'var(--line-cobalt)' }}>
+        <Link href="/" className="text-[10px] font-mono font-bold underline" style={{ color: 'var(--line-cobalt)' }}>
           switch to DoddleOS
         </Link>
       </div>

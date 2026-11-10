@@ -1,6 +1,6 @@
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
-  usePathname: () => '/v3',
+  usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
 }));
 jest.mock('@/components/v3/windows/TriageWindow', () => ({

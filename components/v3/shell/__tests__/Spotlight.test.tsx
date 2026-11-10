@@ -4,7 +4,7 @@ import { useV3OS } from '@/lib/v3/osStore';
 const pushes: string[] = [];
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: (p: string) => pushes.push(p), replace: jest.fn() }),
-  usePathname: () => '/v3',
+  usePathname: () => '/',
 }));
 
 beforeEach(() => useV3OS.setState({ spotlightOpen: true, theme: 'light', windows: [] }));
@@ -31,7 +31,7 @@ describe('Spotlight', () => {
     render(<Spotlight />);
     fireEvent.change(screen.getByPlaceholderText(/Spotlight/i), { target: { value: 'launch' } });
     fireEvent.keyDown(screen.getByPlaceholderText(/Spotlight/i), { key: 'Enter' });
-    expect(pushes).toContain('/v3/launchpad');
+    expect(pushes).toContain('/launchpad');
     expect(useV3OS.getState().spotlightOpen).toBe(false);
   });
 

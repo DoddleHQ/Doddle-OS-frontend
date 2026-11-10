@@ -5,7 +5,7 @@ import { useV3OS } from '@/lib/v3/osStore';
 import { fetchV3PowerAgents, fetchV3Sessions, fetchV3SessionsForAgent, type V3Agent, type V3Session } from '@/lib/v3/powerAgents';
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
-  usePathname: () => '/v3',
+  usePathname: () => '/',
 }));
 
 jest.mock('@/lib/v3/powerAgents', () => {

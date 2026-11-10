@@ -14,7 +14,7 @@ export default function V3TriagePage() {
   const queueEmpty = useV3OS((s) => !s.sessionFeed.some((x) => v3SessionStatus(x) === 'attention'));
 
   useEffect(() => {
-    if (feedLoaded && queueEmpty && !feedError) router.replace('/v3/assignments');
+    if (feedLoaded && queueEmpty && !feedError) router.replace('/assignments');
   }, [feedLoaded, queueEmpty, feedError, router]);
 
   return (

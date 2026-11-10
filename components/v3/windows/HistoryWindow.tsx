@@ -163,7 +163,7 @@ export function ReportsWindow() {
     <section id="win-reports" className="os-window glass page" data-app="reports">
       <div className="titlebar">
         <div className="traffic">
-          <button className="t-close" onClick={() => router.push('/v3')} aria-label="Close" />
+          <button className="t-close" onClick={() => router.push('/')} aria-label="Close" />
           <button className="t-min" aria-label="Minimize" />
           <button className="t-max" aria-label="Maximize" />
         </div>

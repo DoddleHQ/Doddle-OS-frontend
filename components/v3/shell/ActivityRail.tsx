@@ -35,7 +35,7 @@ export function ActivityRail() {
         title={`${s.title} — ${status === 'done' ? 'done' : status === 'running' ? `running ${pct}%` : 'attention'} · ${v3Ago(s.updatedAt ?? s.createdAt)}`}
         aria-label={`${s.title}. Opens the agent execution view.`}
         onClick={() => {
-          router.push('/v3/agents');
+          router.push('/agents');
           if (s.agentKey) selectAgent(s.agentKey);
         }}
       >
@@ -70,7 +70,7 @@ export function ActivityRail() {
         <div className="rail-sep" />
         <button
           className="rail-btn"
-          onClick={() => router.push('/v3/reports')}
+          onClick={() => router.push('/reports')}
           title="History — all work, searchable"
           aria-label="History. All work, searchable."
         >

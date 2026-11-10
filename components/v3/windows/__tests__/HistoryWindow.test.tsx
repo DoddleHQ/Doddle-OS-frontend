@@ -3,7 +3,7 @@ import { ReportsWindow } from '@/components/v3/windows/HistoryWindow';
 import { useV3OS } from '@/lib/v3/osStore';
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
-  usePathname: () => '/v3',
+  usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
 }));
 import { fetchV3PowerAgents, type V3Agent } from '@/lib/v3/powerAgents';

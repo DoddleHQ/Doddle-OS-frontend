@@ -51,7 +51,7 @@ export default function LoginPage() {
         if (next) sessionStorage.removeItem('pendingNext');
       } catch { next = null; }
     }
-    if (!next) next = '/v3';
+    if (!next) next = '/';
     setTimeout(() => {
       router.push(next);
     }, 1200);

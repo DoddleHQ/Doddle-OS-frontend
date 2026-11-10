@@ -5,7 +5,7 @@ import { fetchV3PowerAgents, fetchV3Sessions, type V3Agent, type V3Session } fro
 const pushes: string[] = [];
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: (p: string) => pushes.push(p), replace: jest.fn() }),
-  usePathname: () => '/v3',
+  usePathname: () => '/',
 }));
 
 jest.mock('@/lib/v3/powerAgents', () => {
@@ -69,7 +69,7 @@ describe('ActivityRail (reference #activity-rail DOM)', () => {
         expect(block.className).toContain('st-running');
     fireEvent.click(block);
     expect(useV3OS.getState().selectedAgentKey).toBe('crawlability_audit');
-    expect(pushes).toContain('/v3/agents');
+    expect(pushes).toContain('/agents');
   });
 
   it('live runs sit in DOING (running), reviewed ones in DONE', async () => {

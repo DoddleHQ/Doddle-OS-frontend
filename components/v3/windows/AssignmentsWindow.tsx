@@ -144,7 +144,7 @@ export function AssignmentsWindow() {
     <section id="win-assignments" className="os-window glass page focused" data-app="campaigns">
       <div className="titlebar">
         <div className="traffic">
-          <button className="t-close" onClick={() => router.push('/v3')} aria-label="Close" />
+          <button className="t-close" onClick={() => router.push('/')} aria-label="Close" />
           <button className="t-min" aria-label="Minimize" />
           <button className="t-max" aria-label="Maximize" />
         </div>
@@ -232,12 +232,12 @@ export function AssignmentsWindow() {
             <div className={`proj-tab${tab === 'board' ? ' on' : ''}`} id="proj-tab-board">
               <div className="pane" style={{ marginBottom: 10 }}>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <button className="btn-deploy" onClick={() => router.push('/v3/launchpad')}>
+                  <button className="btn-deploy" onClick={() => router.push('/launchpad')}>
                     + Route new task → agent / human
                   </button>
                   <div className="flex gap-2 flex-wrap">
                     {['research', 'code', 'data', 'writing', 'admin', 'design'].map((c) => (
-                      <button key={c} className="fchip" onClick={() => router.push(`/v3/launchpad?type=${c}`)}>
+                      <button key={c} className="fchip" onClick={() => router.push(`/launchpad?type=${c}`)}>
                         {c}
                       </button>
                     ))}
@@ -250,7 +250,7 @@ export function AssignmentsWindow() {
                 wsLabel={wsLabel}
                 activeCol={activeBoardCol}
                 onCol={(k) => setActiveBoardCol(k)}
-                onAdd={() => router.push('/v3/launchpad?type=generic')}
+                onAdd={() => router.push('/launchpad?type=generic')}
                 onOpen={(id) => setOpen(feed.find((s) => s.id === id) ?? null)}
               />
               <div className="fizzy-bottom">
@@ -308,7 +308,7 @@ export function AssignmentsWindow() {
           onApprove={approve}
           onOpenExecution={(agentKey, threadId) => {
             viewThread(agentKey, threadId);
-            router.push('/v3/agents');
+            router.push('/agents');
           }}
         />
       )}
